@@ -11,3 +11,10 @@ venv/
 # 운영체제 생성 파일
 .DS_Store
 Thumbs.db
+# Local runtime data
+baseball/pg_data/
+baseball/metabase_data/
+kbo_analytics/pg_data/
+kbo_analytics/metabase_data/
+kbo_analytics/.venv/
+**/.ipynb_checkpoints/

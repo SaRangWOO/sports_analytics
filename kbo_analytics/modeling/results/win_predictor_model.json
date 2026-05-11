@@ -1,0 +1,87 @@
+{
+  "model": "from_scratch_logistic_regression",
+  "updated_at": "2026-05-11T09:50:43",
+  "train_rows": 4,
+  "test_rows": 2,
+  "metrics": {
+    "accuracy": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "confusion_matrix": {
+      "tp": 0,
+      "tn": 0,
+      "fp": 1,
+      "fn": 1
+    }
+  },
+  "top_features": [
+    {
+      "feature": "series_game_no",
+      "coefficient": 3.968969
+    },
+    {
+      "feature": "avg_score_last_5",
+      "coefficient": -1.647789
+    },
+    {
+      "feature": "avg_allowed_last_5",
+      "coefficient": -1.088505
+    },
+    {
+      "feature": "recent_5_win_rate",
+      "coefficient": -0.4504
+    },
+    {
+      "feature": "is_home",
+      "coefficient": -0.415732
+    },
+    {
+      "feature": "month",
+      "coefficient": 0.391108
+    },
+    {
+      "feature": "opponent_Hanwha",
+      "coefficient": -0.391108
+    },
+    {
+      "feature": "opponent_SSG",
+      "coefficient": 0.391108
+    },
+    {
+      "feature": "avg_run_diff_last_5",
+      "coefficient": 0.258947
+    },
+    {
+      "feature": "rest_days",
+      "coefficient": 0.0
+    }
+  ],
+  "feature_mean": {
+    "is_home": 0.5,
+    "month": 3.75,
+    "series_game_no": 1.25,
+    "rest_days": 1.0,
+    "recent_5_win_rate": 0.208333,
+    "avg_score_last_5": 4.25,
+    "avg_allowed_last_5": 8.25,
+    "avg_run_diff_last_5": -3.708333,
+    "opponent_Doosan": 0.0,
+    "opponent_Hanwha": 0.25,
+    "opponent_SSG": 0.75
+  },
+  "feature_std": {
+    "is_home": 0.57735,
+    "month": 0.5,
+    "series_game_no": 0.5,
+    "rest_days": 1.0,
+    "recent_5_win_rate": 0.25,
+    "avg_score_last_5": 1.258306,
+    "avg_allowed_last_5": 3.098686,
+    "avg_run_diff_last_5": 4.137397,
+    "opponent_Doosan": 1.0,
+    "opponent_Hanwha": 0.5,
+    "opponent_SSG": 0.5
+  },
+  "bias": -2.873566
+}
