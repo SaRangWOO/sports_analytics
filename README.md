@@ -38,4 +38,3 @@ DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekl
 - Metabase: `http://<server-ip>:3000`
 - 모델 결과: `kbo_analytics/modeling/results/win_predictor_model.json`
 
-서버 IP, 계정, 비밀번호는 README와 Git에 기록하지 않고 실행 환경에서만 사용합니다.
