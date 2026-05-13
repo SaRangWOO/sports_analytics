@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY main.py .
 COPY data.csv .
+COPY player_roster_mapping.csv .
 
 EXPOSE 8000
 

@@ -8,6 +8,7 @@ import zlib
 app = FastAPI(title="Mock KBO API", version="1.0.0")
 
 DATA_FILE = "data.csv"
+ROSTER_FILE = "player_roster_mapping.csv"
 POSITIONS = ["C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "DH"]
 KT_PLAYERS = [
     ("KT01", "KT Batter 1"), ("KT02", "KT Batter 2"), ("KT03", "KT Batter 3"),
@@ -23,6 +24,14 @@ try:
 except Exception as e:
     print(f"❌ Failed to load data: {e}")
     df = pd.DataFrame()
+
+try:
+    roster_df = pd.read_csv(ROSTER_FILE)
+    roster_df = roster_df.sort_values(["team", "slot"])
+    print(f"✅ Roster Loaded: {len(roster_df)} players")
+except Exception as e:
+    print(f"❌ Failed to load roster mapping: {e}")
+    roster_df = pd.DataFrame()
 
 # 모델 정의
 class Game(BaseModel):
@@ -90,8 +99,21 @@ def _rng_for(*parts: str) -> np.random.Generator:
     return np.random.default_rng(seed)
 
 def _opponent_players(opponent: str) -> list[tuple[str, str]]:
+    players = _team_players(opponent)
+    if players:
+        return players
     prefix = opponent[:3].upper()
     return [(f"{prefix}{i:02d}", f"{opponent} Player {i}") for i in range(1, 13)]
+
+def _team_players(team: str) -> list[tuple[str, str]]:
+    if roster_df.empty:
+        return KT_PLAYERS if team == "KT" else []
+
+    team_rows = roster_df[roster_df["team"] == team].sort_values("slot")
+    if len(team_rows) < 12:
+        return KT_PLAYERS if team == "KT" else []
+
+    return list(zip(team_rows["player_id"], team_rows["player_name"]))
 
 def _make_batter_row(game: dict, player_id: str, player_name: str, idx: int, team: str, opponent: str, home_away: str):
     rng = _rng_for(game["game_id"], player_id, "bat")
@@ -172,7 +194,7 @@ def _generate_player_stats(games_df: pd.DataFrame) -> pd.DataFrame:
             continue
 
         teams = [
-            (game["team"], game["opponent"], game["home_away"], KT_PLAYERS),
+            (game["team"], game["opponent"], game["home_away"], _team_players(game["team"])),
             (game["opponent"], game["team"], "A" if game["home_away"] == "H" else "H", _opponent_players(game["opponent"])),
         ]
 

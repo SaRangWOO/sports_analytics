@@ -78,9 +78,14 @@ if __name__ == "__main__":
     parser.add_argument("--start-date", help="YYYY-MM-DD. 생략하면 지난주 월요일")
     parser.add_argument("--end-date", help="YYYY-MM-DD. 생략하면 지난주 일요일")
     parser.add_argument("--reference-date", help="YYYY-MM-DD. 지난주 계산 기준일")
+    parser.add_argument("--season-to-date", action="store_true", help="시즌 시작일부터 오늘까지 다시 적재")
+    parser.add_argument("--season-start", default="2026-03-24", help="YYYY-MM-DD. --season-to-date 시작일")
     args = parser.parse_args()
 
-    if args.reference_date and not (args.start_date and args.end_date):
+    if args.season_to_date:
+        args.start_date = args.season_start
+        args.end_date = args.end_date or date.today().isoformat()
+    elif args.reference_date and not (args.start_date and args.end_date):
         reference_date = datetime.strptime(args.reference_date, "%Y-%m-%d").date()
         args.start_date, args.end_date = get_previous_week_window(reference_date)
 

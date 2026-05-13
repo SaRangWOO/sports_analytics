@@ -8,7 +8,7 @@
 ## 운영 구조
 
 ```text
-External game/player data API
+Mock KBO game/player API
         |
         v
 collector.py
@@ -32,10 +32,14 @@ weekly_update.py
 
 ```text
 kbo_analytics/
-├── collector.py                 # 지난주 경기/선수 기록 수집 후 PostgreSQL 적재
+├── collector.py                 # 시즌 누적 또는 지난주 경기/선수 기록 수집 후 PostgreSQL 적재
 ├── weekly_update.py             # DB 기반 대시보드와 승패 예측 결과 생성
 ├── docker-compose.yaml          # API, PostgreSQL, Metabase 실행
 ├── mock_api/                    # 실제 데이터 API 연결 전까지 쓰는 임시 데이터 API
+│   └── player_roster_mapping.csv # KBO 기록실 기준 선수명 매핑
+├── scripts/
+│   ├── build_player_roster_mapping.py # KBO 기록실에서 선수명 매핑 생성
+│   └── weekly_kbo_update.sh     # 매주 월요일 증분 적재/대시보드/모델/GitHub push
 ├── data/weekly/                 # DB 내용을 CSV로 내보낸 결과
 ├── dashboard/                   # 확인용 HTML/Markdown 대시보드
 ├── modeling/                    # 승패 예측 모델
@@ -52,7 +56,14 @@ API_BASE_URL=http://localhost:8000 DB_URL=postgresql://user:password@localhost:5
 DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekly_update.py
 ```
 
-`collector.py`는 실행일 기준 지난주 월요일부터 일요일까지의 데이터를 가져옵니다. 특정 기간을 다시 적재하려면 아래처럼 실행합니다.
+처음 운영을 시작하거나 데이터베이스를 다시 만들었을 때는 시즌 시작일부터 오늘까지 누적 적재합니다.
+
+```bash
+API_BASE_URL=http://localhost:8000 DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python collector.py --season-to-date
+DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekly_update.py
+```
+
+이후 `collector.py`는 실행일 기준 지난주 월요일부터 일요일까지의 데이터를 가져옵니다. 매주 월요일 cron은 이 방식으로 지난주 경기와 선수 기록만 교체 적재하고, 대시보드와 모델 결과를 다시 생성합니다. 특정 기간을 다시 적재하려면 아래처럼 실행합니다.
 
 ```bash
 API_BASE_URL=http://localhost:8000 DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python collector.py --start-date 2026-03-30 --end-date 2026-04-05
@@ -69,6 +80,8 @@ DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekl
 - 예측 모델 성능 이력: `modeling/results/model_history.json`
 - Metabase: PostgreSQL의 `game_results`, `player_game_stats` 테이블 연결
 
+서버에서는 HTML 대시보드가 dashboard 컨테이너를 통해 제공됩니다. 운영 접속 정보는 Git에 기록하지 않고 서버의 실행 환경과 `.env`에서만 관리합니다.
+
 ## 대시보드 구성
 
 - 경기 흐름: 최근 경기 결과, 스코어, 득실차
@@ -77,7 +90,7 @@ DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekl
 - 투수 지표: ERA, WHIP, K/9, 투구수, 탈삼진, 볼넷, 피안타
 - 승패 예측: 후보 모델별 정확도, 선택 모델 주요 변수, 최근 경기별 예측 확률
 
-현재 mock API의 선수명은 실제 선수명이 아니므로 대시보드에서는 `한화 선발`, `롯데 불펜 2`, `KT 타자 1`처럼 팀/역할 기반 한국어 표시명으로 변환합니다. 실제 선수 데이터 소스가 연결되면 원본 선수명을 그대로 표시하도록 바꿀 수 있습니다.
+타자/투수 표의 선수명은 `scripts/build_player_roster_mapping.py`가 KBO 기록실의 팀별 타자/투수 기록 페이지에서 가져온 `mock_api/player_roster_mapping.csv`를 기준으로 표시합니다. mock 경기 기록은 실제 경기 상세 box score가 아니므로, 선수별 수치는 분석 파이프라인 검증용 합성 기록입니다.
 
 ## 승패 예측 모델
 
