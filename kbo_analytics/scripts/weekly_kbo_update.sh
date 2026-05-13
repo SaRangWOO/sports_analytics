@@ -25,4 +25,11 @@ docker compose up -d kbo-db kbo-api dashboard
 "$PYTHON_BIN" weekly_update.py
 
 curl -fsS "http://localhost:8501/latest.html" >/dev/null
+
+if ! git diff --quiet -- dashboard data/weekly modeling/results; then
+  git add dashboard data/weekly modeling/results
+  git commit -m "Update KBO weekly analytics outputs $(date +%F)"
+  git push origin main
+fi
+
 echo "[$(date --iso-8601=seconds)] weekly KBO update completed"
