@@ -26,6 +26,7 @@ DATA_DIR = BASE_DIR / "data" / "weekly"
 DASHBOARD_DIR = BASE_DIR / "dashboard"
 RESULTS_DIR = BASE_DIR / "modeling" / "results"
 DB_URL = os.getenv("DB_URL", "postgresql://tera:tera@localhost:5432/baseball")
+MODEL_HISTORY_PATH = RESULTS_DIR / "model_history.json"
 
 FEATURE_LABELS = {
     "is_home": "홈 경기 여부",
@@ -81,6 +82,132 @@ def team_label(name: str):
     return TEAM_LABELS.get(str(name), str(name))
 
 
+def player_label(player_name: str, team: str):
+    name = str(player_name)
+    team_ko = team_label(team)
+    if name == "KT Starter":
+        return "KT 선발"
+    if name.startswith("KT Reliever"):
+        return name.replace("KT Reliever", "KT 불펜")
+    if name.startswith("KT Batter"):
+        return name.replace("KT Batter", "KT 타자")
+    if " Player " in name:
+        try:
+            number_part = int(name.rsplit(" ", 1)[-1])
+        except ValueError:
+            return name
+        if 1 <= number_part <= 9:
+            return f"{team_ko} 타자 {number_part}"
+        if number_part == 10:
+            return f"{team_ko} 선발"
+        return f"{team_ko} 불펜 {number_part - 10}"
+    return name
+
+
+def model_candidates():
+    return [
+        {
+            "name": "전체 변수 로지스틱 회귀",
+            "columns": None,
+            "learning_rate": 0.08,
+            "epochs": 3000,
+            "thresholds": [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85],
+        },
+        {
+            "name": "공격/실점 흐름 중심 로지스틱 회귀",
+            "columns": ["recent_5_win_rate", "avg_score_last_5", "avg_allowed_last_5", "avg_run_diff_last_5"],
+            "learning_rate": 0.05,
+            "epochs": 4500,
+            "thresholds": [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85],
+        },
+        {
+            "name": "구장/일정 포함 로지스틱 회귀",
+            "columns": ["is_home", "rest_days", "series_game_no", "recent_5_win_rate", "avg_run_diff_last_5"],
+            "learning_rate": 0.05,
+            "epochs": 4500,
+            "thresholds": [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85],
+        },
+    ]
+
+
+def evaluate_with_threshold(y_true: np.ndarray, probability: np.ndarray, threshold: float):
+    y_pred = (probability >= threshold).astype(int)
+    tp = int(((y_pred == 1) & (y_true == 1)).sum())
+    tn = int(((y_pred == 0) & (y_true == 0)).sum())
+    fp = int(((y_pred == 1) & (y_true == 0)).sum())
+    fn = int(((y_pred == 0) & (y_true == 1)).sum())
+    accuracy = (tp + tn) / len(y_true)
+    precision = tp / max(tp + fp, 1)
+    recall = tp / max(tp + fn, 1)
+    f1 = 2 * precision * recall / max(precision + recall, 1e-9)
+    return {
+        "accuracy": round(accuracy, 3),
+        "precision": round(precision, 3),
+        "recall": round(recall, 3),
+        "f1": round(f1, 3),
+        "confusion_matrix": {"tp": tp, "tn": tn, "fp": fp, "fn": fn},
+    }
+
+
+def select_candidate(x: pd.DataFrame, y: np.ndarray, split_index: int):
+    best = None
+    all_results = []
+    x_train, x_test = x.iloc[:split_index], x.iloc[split_index:]
+    y_train, y_test = y[:split_index], y[split_index:]
+
+    for candidate in model_candidates():
+        cols = candidate["columns"] or list(x.columns)
+        current_train = x_train[cols]
+        current_test = x_test[cols]
+        train_scaled, test_scaled, mean, std = standardize_train_test(current_train, current_test)
+        weights, bias = train_logistic_regression(
+            train_scaled.to_numpy(),
+            y_train,
+            lr=candidate["learning_rate"],
+            epochs=candidate["epochs"],
+        )
+        probability = sigmoid(test_scaled.to_numpy() @ weights + bias)
+        threshold_results = [
+            (threshold, evaluate_with_threshold(y_test, probability, threshold))
+            for threshold in candidate["thresholds"]
+        ]
+        threshold, metrics = max(
+            threshold_results,
+            key=lambda item: (item[1]["accuracy"], item[1]["f1"], item[1]["recall"]),
+        )
+        result = {
+            "candidate": candidate,
+            "columns": cols,
+            "weights": weights,
+            "bias": bias,
+            "mean": mean,
+            "std": std,
+            "threshold": threshold,
+            "metrics": metrics,
+        }
+        all_results.append(
+            {
+                "name": candidate["name"],
+                "features": [feature_label(col) for col in cols],
+                "threshold": threshold,
+                "metrics": metrics,
+            }
+        )
+        if best is None or (
+            metrics["accuracy"],
+            metrics["f1"],
+            metrics["recall"],
+        ) > (
+            best["metrics"]["accuracy"],
+            best["metrics"]["f1"],
+            best["metrics"]["recall"],
+        ):
+            best = result
+
+    best["all_results"] = all_results
+    return best
+
+
 def train_model(games_path: Path):
     features = build_features(games_path)
     if len(features) < 4:
@@ -89,21 +216,15 @@ def train_model(games_path: Path):
     x, y = prepare_matrix(features)
     split_index = max(int(len(x) * 0.8), 1)
     split_index = min(split_index, len(x) - 1)
-    x_train, x_test = x.iloc[:split_index], x.iloc[split_index:]
-    y_train, y_test = y[:split_index], y[split_index:]
-
-    x_train_scaled, x_test_scaled, mean, std = standardize_train_test(x_train, x_test)
-    weights, bias = train_logistic_regression(x_train_scaled.to_numpy(), y_train)
-    probability = sigmoid(x_test_scaled.to_numpy() @ weights + bias)
-    metrics = evaluate(y_test, probability)
-
-    x_all_scaled = (x - mean) / std
-    all_probability = sigmoid(x_all_scaled.to_numpy() @ weights + bias)
+    selected = select_candidate(x, y, split_index)
+    selected_x = x[selected["columns"]]
+    x_all_scaled = (selected_x - selected["mean"]) / selected["std"]
+    all_probability = sigmoid(x_all_scaled.to_numpy() @ selected["weights"] + selected["bias"])
     features = features.copy()
     features["predicted_win_probability"] = np.round(all_probability, 3)
-    features["predicted_result"] = np.where(all_probability >= 0.5, "승리 예측", "패배 예측")
+    features["predicted_result"] = np.where(all_probability >= selected["threshold"], "승리 예측", "패배 예측")
 
-    coefficients = sorted(zip(x.columns, weights), key=lambda item: abs(item[1]), reverse=True)
+    coefficients = sorted(zip(selected["columns"], selected["weights"]), key=lambda item: abs(item[1]), reverse=True)
     top_features = [
         {
             "feature": name,
@@ -125,24 +246,44 @@ def train_model(games_path: Path):
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     payload = {
         "model": "from_scratch_logistic_regression",
-        "model_name_ko": "로지스틱 회귀 승패 예측 모델",
+        "model_name_ko": selected["candidate"]["name"],
         "updated_at": datetime.now().isoformat(timespec="seconds"),
-        "train_rows": int(len(x_train)),
-        "test_rows": int(len(x_test)),
-        "metrics": metrics,
+        "train_rows": int(split_index),
+        "test_rows": int(len(x) - split_index),
+        "decision_threshold": selected["threshold"],
+        "selected_features": [feature_label(col) for col in selected["columns"]],
+        "candidate_results": selected["all_results"],
+        "metrics": selected["metrics"],
         "top_features": top_features,
         "recent_predictions": recent_predictions[
             ["date", "opponent", "home_away", "actual_result", "predicted_win_probability", "predicted_result"]
         ].to_dict(orient="records"),
-        "feature_mean": mean.round(6).to_dict(),
-        "feature_std": std.round(6).to_dict(),
-        "bias": round(float(bias), 6),
+        "feature_mean": selected["mean"].round(6).to_dict(),
+        "feature_std": selected["std"].round(6).to_dict(),
+        "bias": round(float(selected["bias"]), 6),
     }
     (RESULTS_DIR / "win_predictor_model.json").write_text(
         json.dumps(payload, indent=2, ensure_ascii=False, default=str),
         encoding="utf-8",
     )
     features.to_csv(RESULTS_DIR / "features.csv", index=False, encoding="utf-8-sig")
+    history = []
+    if MODEL_HISTORY_PATH.exists():
+        history = json.loads(MODEL_HISTORY_PATH.read_text(encoding="utf-8"))
+    history.append(
+        {
+            "updated_at": payload["updated_at"],
+            "model_name_ko": payload["model_name_ko"],
+            "accuracy": payload["metrics"]["accuracy"],
+            "f1": payload["metrics"]["f1"],
+            "train_rows": payload["train_rows"],
+            "test_rows": payload["test_rows"],
+        }
+    )
+    MODEL_HISTORY_PATH.write_text(
+        json.dumps(history[-30:], indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
     return payload
 
 
@@ -260,7 +401,9 @@ def build_hitter_leaders(players: pd.DataFrame):
     hitters = players[players["plate_appearances"] > 0].copy()
     if hitters.empty:
         return hitters
-    leaders = hitters.groupby(["player_name", "team"], as_index=False).agg(
+    hitters["display_player_name"] = hitters.apply(lambda row: player_label(row["player_name"], row["team"]), axis=1)
+    hitters["display_team"] = hitters["team"].map(team_label)
+    leaders = hitters.groupby(["display_player_name", "display_team"], as_index=False).agg(
         경기=("game_id", "nunique"),
         타석=("plate_appearances", "sum"),
         타수=("at_bats", "sum"),
@@ -274,17 +417,20 @@ def build_hitter_leaders(players: pd.DataFrame):
     leaders["출루율"] = (leaders["안타"] + leaders["볼넷"]) / leaders["타석"].replace(0, np.nan)
     leaders["장타율_proxy"] = (leaders["안타"] + leaders["홈런"] * 3) / leaders["타수"].replace(0, np.nan)
     leaders["OPS_proxy"] = leaders["출루율"] + leaders["장타율_proxy"]
-    leaders = leaders.rename(columns={"player_name": "선수", "team": "팀"})
+    leaders = leaders.rename(columns={"display_player_name": "선수", "display_team": "팀"})
+    leaders = leaders.sort_values(["OPS_proxy", "안타"], ascending=False)
     for col in ["타율", "출루율", "장타율_proxy", "OPS_proxy"]:
         leaders[col] = leaders[col].map(lambda v: number(v, 3))
-    return leaders.sort_values(["OPS_proxy", "안타"], ascending=False)
+    return leaders
 
 
 def build_pitcher_leaders(players: pd.DataFrame):
     pitchers = players[players["innings_pitched"] > 0].copy()
     if pitchers.empty:
         return pitchers
-    leaders = pitchers.groupby(["player_name", "team"], as_index=False).agg(
+    pitchers["display_player_name"] = pitchers.apply(lambda row: player_label(row["player_name"], row["team"]), axis=1)
+    pitchers["display_team"] = pitchers["team"].map(team_label)
+    leaders = pitchers.groupby(["display_player_name", "display_team"], as_index=False).agg(
         경기=("game_id", "nunique"),
         이닝=("innings_pitched", "sum"),
         투구수=("pitches", "sum"),
@@ -296,10 +442,11 @@ def build_pitcher_leaders(players: pd.DataFrame):
     leaders["ERA"] = leaders["자책"] * 9 / leaders["이닝"].replace(0, np.nan)
     leaders["WHIP"] = (leaders["볼넷"] + leaders["피안타"]) / leaders["이닝"].replace(0, np.nan)
     leaders["K/9"] = leaders["탈삼진"] * 9 / leaders["이닝"].replace(0, np.nan)
-    leaders = leaders.rename(columns={"player_name": "선수", "team": "팀"})
+    leaders = leaders.rename(columns={"display_player_name": "선수", "display_team": "팀"})
+    leaders = leaders.sort_values(["ERA", "WHIP"], ascending=True)
     for col in ["이닝", "ERA", "WHIP", "K/9"]:
         leaders[col] = leaders[col].map(lambda v: number(v, 2))
-    return leaders.sort_values(["ERA", "WHIP"], ascending=True)
+    return leaders
 
 
 def build_model_tables(model_payload: dict):
@@ -323,7 +470,16 @@ def build_model_tables(model_payload: dict):
             }
         )
         predictions["승리확률"] = predictions["승리확률"].map(pct)
-    return top_features, predictions
+    candidates = pd.DataFrame(model_payload.get("candidate_results", []))
+    if not candidates.empty:
+        candidates["features"] = candidates["features"].map(lambda values: ", ".join(values[:4]) + (" ..." if len(values) > 4 else ""))
+        candidates["accuracy"] = candidates["metrics"].map(lambda metrics: pct(metrics["accuracy"]))
+        candidates["f1"] = candidates["metrics"].map(lambda metrics: number(metrics["f1"], 3))
+        candidates["threshold"] = candidates["threshold"].map(lambda value: number(value, 2))
+        candidates = candidates.rename(
+            columns={"name": "후보 모델", "features": "사용 변수", "accuracy": "정확도", "f1": "F1", "threshold": "판정 기준"}
+        )
+    return top_features, predictions, candidates
 
 
 def build_dashboard(games: pd.DataFrame, players: pd.DataFrame, model_payload: dict, start_date: str, end_date: str):
@@ -359,7 +515,7 @@ def build_dashboard(games: pd.DataFrame, players: pd.DataFrame, model_payload: d
     monthly_summary = build_monthly_summary(games)
     hitter_leaders = build_hitter_leaders(players)
     pitcher_leaders = build_pitcher_leaders(players)
-    top_features, recent_predictions = build_model_tables(model_payload)
+    top_features, recent_predictions, model_candidates_table = build_model_tables(model_payload)
     metrics = model_payload["metrics"]
 
     html = f"""<!doctype html>
@@ -436,7 +592,10 @@ def build_dashboard(games: pd.DataFrame, players: pd.DataFrame, model_payload: d
 
   <div class="section">
     <h2>승패 예측 모델</h2>
-    <p>로지스틱 회귀 모델로 경기 전 정보 기반 승리 확률을 추정했습니다. 정확도 {pct(metrics["accuracy"])}, 정밀도 {pct(metrics["precision"])}, 재현율 {pct(metrics["recall"])}, F1 {number(metrics["f1"], 3)}입니다.</p>
+    <p>{escape(model_payload["model_name_ko"])}로 경기 전 정보 기반 승리 확률을 추정했습니다. 여러 후보 모델을 비교해 검증 정확도가 가장 높은 설정을 자동 선택합니다. 정확도 {pct(metrics["accuracy"])}, 정밀도 {pct(metrics["precision"])}, 재현율 {pct(metrics["recall"])}, F1 {number(metrics["f1"], 3)}입니다.</p>
+    <h2>후보 모델 비교</h2>
+    {render_table(model_candidates_table, ["후보 모델", "정확도", "F1", "판정 기준", "사용 변수"], limit=8)}
+    <h2>선택 모델 주요 변수</h2>
     {render_table(top_features, ["변수", "계수", "해석"], limit=10)}
     <h2>최근 경기 예측 결과</h2>
     {render_table(recent_predictions, ["경기일", "상대", "구장", "실제", "승리확률", "예측"], limit=8)}

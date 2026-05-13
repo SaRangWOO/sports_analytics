@@ -25,6 +25,7 @@ weekly_update.py
         +-- dashboard/latest_summary.md
         +-- modeling/results/win_predictor_model.json
         +-- modeling/results/features.csv
+        +-- modeling/results/model_history.json
 ```
 
 ## 핵심 파일
@@ -58,12 +59,31 @@ API_BASE_URL=http://localhost:8000 DB_URL=postgresql://user:password@localhost:5
 DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekly_update.py --start-date 2026-03-30 --end-date 2026-04-05
 ```
 
+서버 IP, 계정, 비밀번호 같은 운영 접속 정보는 README와 Git에 기록하지 않습니다. 실행 환경에서만 환경변수로 지정합니다.
+
 ## 결과 확인
 
 - HTML 대시보드: `dashboard/latest.html`
 - 요약 리포트: `dashboard/latest_summary.md`
 - 예측 모델 결과: `modeling/results/win_predictor_model.json`
+- 예측 모델 성능 이력: `modeling/results/model_history.json`
 - Metabase: PostgreSQL의 `game_results`, `player_game_stats` 테이블 연결
+
+## 대시보드 구성
+
+- 경기 흐름: 최근 경기 결과, 스코어, 득실차
+- 팀 성과: 주간 전적, 승률, 평균 득점/실점, 상대팀별 성적, 홈/원정 성적, 월별 흐름
+- 타자 지표: 타율, 출루율, 장타율 proxy, OPS proxy
+- 투수 지표: ERA, WHIP, K/9, 투구수, 탈삼진, 볼넷, 피안타
+- 승패 예측: 후보 모델별 정확도, 선택 모델 주요 변수, 최근 경기별 예측 확률
+
+현재 mock API의 선수명은 실제 선수명이 아니므로 대시보드에서는 `한화 선발`, `롯데 불펜 2`, `KT 타자 1`처럼 팀/역할 기반 한국어 표시명으로 변환합니다. 실제 선수 데이터 소스가 연결되면 원본 선수명을 그대로 표시하도록 바꿀 수 있습니다.
+
+## 승패 예측 모델
+
+`weekly_update.py`는 실행할 때마다 여러 로지스틱 회귀 후보를 비교합니다. 전체 변수 모델, 공격/실점 흐름 중심 모델, 구장/일정 포함 모델을 검증 구간에서 비교하고 가장 좋은 정확도와 F1을 보인 모델을 선택합니다.
+
+선택된 모델과 성능은 `win_predictor_model.json`에 저장되고, 최근 실행 이력은 `model_history.json`에 누적됩니다. 매주 월요일 자동 실행 스크립트가 새 데이터 적재 후 대시보드와 모델 결과를 다시 만들고 GitHub에 push합니다.
 
 ## 현재 확인된 한계
 
