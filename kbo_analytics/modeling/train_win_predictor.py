@@ -20,7 +20,8 @@ def sigmoid(values: np.ndarray) -> np.ndarray:
 
 def prepare_matrix(features: pd.DataFrame):
     x = features.drop(columns=["date", "game_id", "target_win"])
-    x = pd.get_dummies(x, columns=["opponent"], drop_first=False, dtype=float)
+    dummy_columns = [column for column in ["team", "opponent"] if column in x.columns]
+    x = pd.get_dummies(x, columns=dummy_columns, drop_first=False, dtype=float)
     y = features["target_win"].to_numpy(dtype=float)
     return x, y
 

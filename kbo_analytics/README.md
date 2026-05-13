@@ -8,21 +8,14 @@
 ## 운영 구조
 
 ```text
-Mock KBO game/player API
+KBO official record/schedule pages
         |
         v
-collector.py
-        |
-        v
-PostgreSQL
-  - game_results
-  - player_game_stats
-        |
-        v
-weekly_update.py
+official_kbo_dashboard.py
         |
         +-- dashboard/latest.html
         +-- dashboard/latest_summary.md
+        +-- data/official/*.csv
         +-- modeling/results/win_predictor_model.json
         +-- modeling/results/features.csv
         +-- modeling/results/model_history.json
@@ -33,14 +26,16 @@ weekly_update.py
 ```text
 kbo_analytics/
 ├── collector.py                 # 시즌 누적 또는 지난주 경기/선수 기록 수집 후 PostgreSQL 적재
-├── weekly_update.py             # DB 기반 대시보드와 승패 예측 결과 생성
+├── official_kbo_dashboard.py    # KBO 공식 기록 기반 대시보드와 승패 예측 결과 생성
+├── weekly_update.py             # 기존 DB 기반 mock 분석 스크립트
 ├── docker-compose.yaml          # API, PostgreSQL, Metabase 실행
 ├── mock_api/                    # 실제 데이터 API 연결 전까지 쓰는 임시 데이터 API
 │   └── player_roster_mapping.csv # KBO 기록실 기준 선수명 매핑
 ├── scripts/
 │   ├── build_player_roster_mapping.py # KBO 기록실에서 선수명 매핑 생성
 │   └── weekly_kbo_update.sh     # 매주 월요일 증분 적재/대시보드/모델/GitHub push
-├── data/weekly/                 # DB 내용을 CSV로 내보낸 결과
+├── data/official/               # KBO 공식 순위/일정/선수 기록 스냅샷
+├── data/weekly/                 # 기존 mock DB 내용을 CSV로 내보낸 결과
 ├── dashboard/                   # 확인용 HTML/Markdown 대시보드
 ├── modeling/                    # 승패 예측 모델
 ├── pg_data/                     # PostgreSQL 실제 데이터 디렉터리
@@ -52,18 +47,19 @@ kbo_analytics/
 ```bash
 cd /home/tera/1.project/1.sports_analytics/kbo_analytics
 docker compose up -d
-API_BASE_URL=http://localhost:8000 DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python collector.py
-DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekly_update.py
+.venv/bin/python official_kbo_dashboard.py
 ```
 
-처음 운영을 시작하거나 데이터베이스를 다시 만들었을 때는 시즌 시작일부터 오늘까지 누적 적재합니다.
+현재 운영 대시보드는 KBO 공식 팀 순위, 일정/결과, 선수 기록 페이지를 직접 조회해 만듭니다. 기존 `mock_api`와 PostgreSQL은 파이프라인 테스트용으로만 남겨두며, 리그 현황 대시보드의 기준 데이터로 사용하지 않습니다.
+
+기존 mock 파이프라인을 다시 검증해야 할 때만 시즌 시작일부터 오늘까지 누적 적재합니다.
 
 ```bash
 API_BASE_URL=http://localhost:8000 DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python collector.py --season-to-date
 DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekly_update.py
 ```
 
-이후 `collector.py`는 실행일 기준 지난주 월요일부터 일요일까지의 데이터를 가져옵니다. 매주 월요일 cron은 이 방식으로 지난주 경기와 선수 기록만 교체 적재하고, 대시보드와 모델 결과를 다시 생성합니다. 특정 기간을 다시 적재하려면 아래처럼 실행합니다.
+매주 월요일 cron은 `official_kbo_dashboard.py`를 실행해 공식 기록 스냅샷, 대시보드, 모델 결과를 다시 생성하고 GitHub에 push합니다. 승패 예측 모델은 실행일 기준 지난주 일요일까지의 완료 경기만 학습/검증에 사용합니다. 특정 mock 기간을 다시 적재하려면 아래처럼 실행합니다.
 
 ```bash
 API_BASE_URL=http://localhost:8000 DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python collector.py --start-date 2026-03-30 --end-date 2026-04-05
@@ -76,6 +72,7 @@ DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekl
 
 - HTML 대시보드: `dashboard/latest.html`
 - 요약 리포트: `dashboard/latest_summary.md`
+- 공식 데이터 스냅샷: `data/official/`
 - 예측 모델 결과: `modeling/results/win_predictor_model.json`
 - 예측 모델 성능 이력: `modeling/results/model_history.json`
 - Metabase: PostgreSQL의 `game_results`, `player_game_stats` 테이블 연결
@@ -84,20 +81,18 @@ DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekl
 
 ## 대시보드 구성
 
-- 경기 흐름: 최근 경기 결과, 스코어, 득실차
-- 팀 성과: 주간 전적, 승률, 평균 득점/실점, 상대팀별 성적, 홈/원정 성적, 월별 흐름
-- 타자 지표: 타율, 출루율, 장타율 proxy, OPS proxy
-- 투수 지표: ERA, WHIP, K/9, 투구수, 탈삼진, 볼넷, 피안타
-- 승패 예측: 후보 모델별 정확도, 선택 모델 주요 변수, 최근 경기별 예측 확률
-
-타자/투수 표의 선수명은 `scripts/build_player_roster_mapping.py`가 KBO 기록실의 팀별 타자/투수 기록 페이지에서 가져온 `mock_api/player_roster_mapping.csv`를 기준으로 표시합니다. mock 경기 기록은 실제 경기 상세 box score가 아니므로, 선수별 수치는 분석 파이프라인 검증용 합성 기록입니다.
+- 첫 화면: KBO 리그 전체 순위
+- 구단 선택: 선택 구단 순위, 최근 10경기, 상대 전적
+- 타자 지표: KBO 공식 타자 기록의 경기, 타석, 타수, 안타, 홈런, 볼넷, 삼진, 타율, 출루율, 장타율, OPS
+- 투수 지표: KBO 공식 투수 기록의 경기, 승, 패, 세이브, 홀드, 이닝, 자책, 탈삼진, 볼넷, ERA, WHIP
+- 승패 예측: 지난주 일요일까지의 완료 경기만 사용한 검증 결과
 
 ## 승패 예측 모델
 
-`weekly_update.py`는 실행할 때마다 여러 로지스틱 회귀 후보를 비교합니다. 전체 변수 모델, 공격/실점 흐름 중심 모델, 구장/일정 포함 모델을 검증 구간에서 비교하고 가장 좋은 정확도와 F1을 보인 모델을 선택합니다.
+`official_kbo_dashboard.py`는 KBO 공식 일정/결과에서 각 경기를 양 팀 관점의 학습 행으로 변환합니다. 최근 5경기 승률, 최근 5경기 평균 득점/실점/득실차, 홈/원정, 상대팀을 사용해 로지스틱 회귀 모델을 학습합니다.
 
-선택된 모델과 성능은 `win_predictor_model.json`에 저장되고, 최근 실행 이력은 `model_history.json`에 누적됩니다. 매주 월요일 자동 실행 스크립트가 새 데이터 적재 후 대시보드와 모델 결과를 다시 만들고 GitHub에 push합니다.
+모델 학습 기준일은 실행일 기준 지난주 일요일입니다. 예를 들어 목요일에 수동 실행해도 현재 주 화/수 경기 결과를 적중률 계산에 섞지 않습니다.
 
 ## 현재 확인된 한계
 
-현재 서버에는 실제 KBO 공식/외부 API 연동 코드가 아니라 `mock_api/` 기반 임시 API가 있습니다. 실제 데이터 소스가 정해지면 `collector.py`의 API 호출 대상만 교체하고, 이후 DB 테이블과 대시보드/모델 구조는 그대로 유지합니다.
+KBO 공식 페이지 구조가 바뀌면 `official_kbo_dashboard.py`의 HTML/웹서비스 파싱 로직을 조정해야 합니다.

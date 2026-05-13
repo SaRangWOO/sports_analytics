@@ -21,13 +21,12 @@ if [ -f "$PROJECT_DIR/.env" ]; then
 fi
 
 docker compose up -d kbo-db kbo-api dashboard
-"$PYTHON_BIN" collector.py
-"$PYTHON_BIN" weekly_update.py
+"$PYTHON_BIN" official_kbo_dashboard.py
 
 curl -fsS "http://localhost:8501/latest.html" >/dev/null
 
-if ! git diff --quiet -- dashboard data/weekly modeling/results; then
-  git add dashboard data/weekly modeling/results
+if ! git diff --quiet -- dashboard data/official modeling/results; then
+  git add dashboard data/official modeling/results
   git commit -m "Update KBO weekly analytics outputs $(date +%F)"
   git push origin main
 fi
