@@ -1,6 +1,7 @@
 {
   "model": "from_scratch_logistic_regression",
-  "updated_at": "2026-05-13T16:50:59",
+  "model_name_ko": "로지스틱 회귀 승패 예측 모델",
+  "updated_at": "2026-05-13T17:09:30",
   "train_rows": 9,
   "test_rows": 3,
   "metrics": {
@@ -18,43 +19,129 @@
   "top_features": [
     {
       "feature": "recent_5_win_rate",
-      "coefficient": -5.373763
+      "label": "최근 5경기 승률",
+      "coefficient": -5.373763,
+      "direction": "승리 확률 하락"
     },
     {
       "feature": "avg_score_last_5",
-      "coefficient": -3.794714
+      "label": "최근 5경기 평균 득점",
+      "coefficient": -3.794714,
+      "direction": "승리 확률 하락"
     },
     {
       "feature": "avg_allowed_last_5",
-      "coefficient": -2.703829
+      "label": "최근 5경기 평균 실점",
+      "coefficient": -2.703829,
+      "direction": "승리 확률 하락"
     },
     {
       "feature": "opponent_Doosan",
-      "coefficient": 1.869774
+      "label": "상대팀: 두산",
+      "coefficient": 1.869774,
+      "direction": "승리 확률 상승"
     },
     {
       "feature": "is_home",
-      "coefficient": 1.360554
+      "label": "홈 경기 여부",
+      "coefficient": 1.360554,
+      "direction": "승리 확률 상승"
     },
     {
       "feature": "rest_days",
-      "coefficient": -1.184427
+      "label": "직전 경기 이후 휴식일",
+      "coefficient": -1.184427,
+      "direction": "승리 확률 하락"
     },
     {
       "feature": "avg_run_diff_last_5",
-      "coefficient": 0.89194
+      "label": "최근 5경기 평균 득실차",
+      "coefficient": 0.89194,
+      "direction": "승리 확률 상승"
     },
     {
       "feature": "opponent_SSG",
-      "coefficient": -0.885071
+      "label": "상대팀: SSG",
+      "coefficient": -0.885071,
+      "direction": "승리 확률 하락"
     },
     {
       "feature": "opponent_Lotte",
-      "coefficient": -0.754214
+      "label": "상대팀: 롯데",
+      "coefficient": -0.754214,
+      "direction": "승리 확률 하락"
     },
     {
       "feature": "series_game_no",
-      "coefficient": -0.650058
+      "label": "같은 상대 연전 내 경기 순서",
+      "coefficient": -0.650058,
+      "direction": "승리 확률 하락"
+    }
+  ],
+  "recent_predictions": [
+    {
+      "date": "2026-04-04",
+      "opponent": "두산",
+      "home_away": "원정",
+      "actual_result": "승",
+      "predicted_win_probability": 0.91,
+      "predicted_result": "승리 예측"
+    },
+    {
+      "date": "2026-04-05",
+      "opponent": "두산",
+      "home_away": "원정",
+      "actual_result": "패",
+      "predicted_win_probability": 0.088,
+      "predicted_result": "패배 예측"
+    },
+    {
+      "date": "2026-05-05",
+      "opponent": "롯데",
+      "home_away": "홈",
+      "actual_result": "패",
+      "predicted_win_probability": 0.006,
+      "predicted_result": "패배 예측"
+    },
+    {
+      "date": "2026-05-06",
+      "opponent": "롯데",
+      "home_away": "원정",
+      "actual_result": "패",
+      "predicted_win_probability": 0.013,
+      "predicted_result": "패배 예측"
+    },
+    {
+      "date": "2026-05-07",
+      "opponent": "롯데",
+      "home_away": "홈",
+      "actual_result": "승",
+      "predicted_win_probability": 0.995,
+      "predicted_result": "승리 예측"
+    },
+    {
+      "date": "2026-05-08",
+      "opponent": "KIA",
+      "home_away": "원정",
+      "actual_result": "패",
+      "predicted_win_probability": 0.001,
+      "predicted_result": "패배 예측"
+    },
+    {
+      "date": "2026-05-09",
+      "opponent": "KIA",
+      "home_away": "원정",
+      "actual_result": "패",
+      "predicted_win_probability": 0.0,
+      "predicted_result": "패배 예측"
+    },
+    {
+      "date": "2026-05-10",
+      "opponent": "KIA",
+      "home_away": "원정",
+      "actual_result": "승",
+      "predicted_win_probability": 0.0,
+      "predicted_result": "패배 예측"
     }
   ],
   "feature_mean": {

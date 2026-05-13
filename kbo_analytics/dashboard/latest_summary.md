@@ -1,7 +1,9 @@
-# KBO Performance Dashboard
-- Period: 2026-05-04 ~ 2026-05-10
-- Record: 2-4-0
-- Run differential: -10
-- Model accuracy: 0.667
-- Total games in DB: 12
-- Player game rows in DB: 288
+# KBO 팀 성과 대시보드
+- 기간: 2026-05-04 ~ 2026-05-10
+- 주간 전적: 2승 4패 0무
+- 주간 승률: 33.3%
+- 주간 득실차: -10
+- 평균 득점/실점: 6.00 / 7.67
+- 모델 정확도: 66.7%
+- DB 누적 경기: 12
+- DB 선수 경기 기록: 288

@@ -2,41 +2,81 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>KBO Performance Dashboard</title>
+  <title>KBO 팀 성과 대시보드</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 32px; color: #1f2933; }
-    h1, h2 { margin-bottom: 8px; }
-    .grid { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 12px; margin: 18px 0; }
-    .metric { border: 1px solid #d9e2ec; padding: 14px; border-radius: 6px; }
-    .metric strong { display: block; font-size: 24px; }
-    table { border-collapse: collapse; width: 100%; margin: 12px 0 26px; }
-    th, td { border: 1px solid #d9e2ec; padding: 8px; text-align: left; }
-    th { background: #f0f4f8; }
+    body { font-family: Arial, 'Noto Sans KR', sans-serif; margin: 0; color: #172026; background: #f6f8fa; }
+    main { max-width: 1180px; margin: 0 auto; padding: 30px 22px 44px; }
+    h1 { margin: 0 0 8px; font-size: 30px; }
+    h2 { margin: 30px 0 10px; font-size: 20px; }
+    p { line-height: 1.55; }
+    .subtitle { color: #52616b; margin-top: 0; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 12px; margin: 18px 0; }
+    .metric { background: white; border: 1px solid #d9e2ec; padding: 14px; border-radius: 6px; }
+    .metric span { color: #607080; font-size: 13px; }
+    .metric strong { display: block; font-size: 25px; margin-top: 6px; }
+    .section { background: white; border: 1px solid #d9e2ec; border-radius: 6px; padding: 16px; margin-top: 16px; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0 4px; font-size: 14px; }
+    th, td { border-bottom: 1px solid #e6edf3; padding: 9px 8px; text-align: left; white-space: nowrap; }
+    th { background: #eef3f7; color: #27343d; }
+    .empty { color: #607080; }
+    .note { color: #52616b; font-size: 13px; margin-top: 8px; }
+    @media (max-width: 840px) { .grid { grid-template-columns: repeat(2, 1fr); } table { font-size: 13px; } }
   </style>
 </head>
 <body>
-  <h1>KBO Performance Dashboard</h1>
-  <p>최근 업데이트 기간: 2026-05-04 ~ 2026-05-10</p>
+<main>
+  <h1>KBO 팀 성과 대시보드</h1>
+  <p class="subtitle">최근 업데이트 기간: 2026-05-04 ~ 2026-05-10 / DB 누적 경기: 12경기</p>
+
   <div class="grid">
-    <div class="metric"><span>Games</span><strong>6</strong></div>
-    <div class="metric"><span>Record</span><strong>2-4-0</strong></div>
-    <div class="metric"><span>Run Diff</span><strong>-10</strong></div>
-    <div class="metric"><span>Model Accuracy</span><strong>0.667</strong></div>
+    <div class="metric"><span>주간 전적</span><strong>2승 4패 0무</strong></div>
+    <div class="metric"><span>주간 승률</span><strong>33.3%</strong></div>
+    <div class="metric"><span>주간 득실차</span><strong>-10</strong></div>
+    <div class="metric"><span>최근 5경기</span><strong>2승 3패 0무</strong></div>
+    <div class="metric"><span>평균 득점</span><strong>6.00</strong></div>
+    <div class="metric"><span>평균 실점</span><strong>7.67</strong></div>
+    <div class="metric"><span>모델 정확도</span><strong>66.7%</strong></div>
+    <div class="metric"><span>모델 학습/검증</span><strong>9/3</strong></div>
   </div>
 
-  <h2>Recent Games</h2>
-  <table><thead><tr><th>date</th><th>opponent</th><th>home_away</th><th>result</th><th>score_team</th><th>score_opp</th></tr></thead><tbody><tr><td>2026-05-05 00:00:00</td><td>Lotte</td><td>H</td><td>Loss</td><td>1.0</td><td>10.0</td></tr><tr><td>2026-05-06 00:00:00</td><td>Lotte</td><td>A</td><td>Loss</td><td>4.0</td><td>10.0</td></tr><tr><td>2026-05-07 00:00:00</td><td>Lotte</td><td>H</td><td>Win</td><td>9.0</td><td>7.0</td></tr><tr><td>2026-05-08 00:00:00</td><td>KIA</td><td>A</td><td>Loss</td><td>11.0</td><td>12.0</td></tr><tr><td>2026-05-09 00:00:00</td><td>KIA</td><td>A</td><td>Loss</td><td>4.0</td><td>5.0</td></tr><tr><td>2026-05-10 00:00:00</td><td>KIA</td><td>A</td><td>Win</td><td>7.0</td><td>2.0</td></tr></tbody></table>
+  <div class="section">
+    <h2>최근 경기 흐름</h2>
+    <table><thead><tr><th>경기일</th><th>상대</th><th>구장</th><th>결과</th><th>스코어</th><th>득실차</th></tr></thead><tbody><tr><td>2026-05-10</td><td>KIA</td><td>원정</td><td>승</td><td>7 - 2</td><td>5</td></tr><tr><td>2026-05-09</td><td>KIA</td><td>원정</td><td>패</td><td>4 - 5</td><td>-1</td></tr><tr><td>2026-05-08</td><td>KIA</td><td>원정</td><td>패</td><td>11 - 12</td><td>-1</td></tr><tr><td>2026-05-07</td><td>롯데</td><td>홈</td><td>승</td><td>9 - 7</td><td>2</td></tr><tr><td>2026-05-06</td><td>롯데</td><td>원정</td><td>패</td><td>4 - 10</td><td>-6</td></tr><tr><td>2026-05-05</td><td>롯데</td><td>홈</td><td>패</td><td>1 - 10</td><td>-9</td></tr><tr><td>2026-04-05</td><td>두산</td><td>원정</td><td>패</td><td>1 - 6</td><td>-5</td></tr><tr><td>2026-04-04</td><td>두산</td><td>원정</td><td>승</td><td>4 - 3</td><td>1</td></tr><tr><td>2026-04-03</td><td>SSG</td><td>홈</td><td>패</td><td>1 - 3</td><td>-2</td></tr><tr><td>2026-04-02</td><td>SSG</td><td>원정</td><td>승</td><td>12 - 0</td><td>12</td></tr><tr><td>2026-04-01</td><td>SSG</td><td>원정</td><td>패</td><td>2 - 7</td><td>-5</td></tr><tr><td>2026-03-31</td><td>한화</td><td>홈</td><td>패</td><td>4 - 12</td><td>-8</td></tr></tbody></table>
+  </div>
 
-  <h2>Opponent Performance</h2>
-  <table><thead><tr><th>opponent</th><th>games</th><th>wins</th><th>win_rate</th></tr></thead><tbody><tr><td>Doosan</td><td>2</td><td>1</td><td>0.5</td></tr><tr><td>KIA</td><td>3</td><td>1</td><td>0.333</td></tr><tr><td>Lotte</td><td>3</td><td>1</td><td>0.333</td></tr><tr><td>SSG</td><td>3</td><td>1</td><td>0.333</td></tr><tr><td>Hanwha</td><td>1</td><td>0</td><td>0.0</td></tr></tbody></table>
+  <div class="section">
+    <h2>상대팀별 성적</h2>
+    <table><thead><tr><th>상대팀</th><th>경기</th><th>승</th><th>패</th><th>승률</th><th>평균득점</th><th>평균실점</th><th>평균득실차</th></tr></thead><tbody><tr><td>KIA</td><td>3</td><td>1</td><td>2</td><td>33.3%</td><td>7.33</td><td>6.33</td><td>1.00</td></tr><tr><td>롯데</td><td>3</td><td>1</td><td>2</td><td>33.3%</td><td>4.67</td><td>9.00</td><td>-4.33</td></tr><tr><td>SSG</td><td>3</td><td>1</td><td>2</td><td>33.3%</td><td>5.00</td><td>3.33</td><td>1.67</td></tr><tr><td>두산</td><td>2</td><td>1</td><td>1</td><td>50.0%</td><td>2.50</td><td>4.50</td><td>-2.00</td></tr><tr><td>한화</td><td>1</td><td>0</td><td>1</td><td>0.0%</td><td>4.00</td><td>12.00</td><td>-8.00</td></tr></tbody></table>
+  </div>
 
-  <h2>Home/Away Performance</h2>
-  <table><thead><tr><th>home_away</th><th>games</th><th>wins</th><th>win_rate</th></tr></thead><tbody><tr><td>A</td><td>8</td><td>3</td><td>0.375</td></tr><tr><td>H</td><td>4</td><td>1</td><td>0.25</td></tr></tbody></table>
+  <div class="section">
+    <h2>홈/원정 성적</h2>
+    <table><thead><tr><th>구분</th><th>경기</th><th>승</th><th>패</th><th>승률</th><th>평균득점</th><th>평균실점</th><th>평균득실차</th></tr></thead><tbody><tr><td>원정</td><td>8</td><td>3</td><td>5</td><td>37.5%</td><td>5.62</td><td>5.62</td><td>0.00</td></tr><tr><td>홈</td><td>4</td><td>1</td><td>3</td><td>25.0%</td><td>3.75</td><td>8.00</td><td>-4.25</td></tr></tbody></table>
+  </div>
 
-  <h2>Player Batting Leaders</h2>
-  <table><thead><tr><th>player_name</th><th>team</th><th>games</th><th>pa</th><th>hits</th><th>home_runs</th><th>walks</th><th>avg</th></tr></thead><tbody><tr><td>KT Batter 7</td><td>KT</td><td>12</td><td>51</td><td>16</td><td>3</td><td>4</td><td>0.34</td></tr><tr><td>KT Batter 3</td><td>KT</td><td>12</td><td>48</td><td>15</td><td>2</td><td>3</td><td>0.333</td></tr><tr><td>KT Batter 9</td><td>KT</td><td>12</td><td>54</td><td>14</td><td>1</td><td>1</td><td>0.264</td></tr><tr><td>KT Batter 6</td><td>KT</td><td>12</td><td>48</td><td>13</td><td>2</td><td>5</td><td>0.302</td></tr><tr><td>KT Batter 4</td><td>KT</td><td>12</td><td>48</td><td>13</td><td>0</td><td>6</td><td>0.31</td></tr><tr><td>KT Batter 5</td><td>KT</td><td>12</td><td>46</td><td>12</td><td>1</td><td>3</td><td>0.279</td></tr><tr><td>KT Batter 8</td><td>KT</td><td>12</td><td>45</td><td>12</td><td>1</td><td>3</td><td>0.286</td></tr><tr><td>KT Batter 1</td><td>KT</td><td>12</td><td>46</td><td>10</td><td>2</td><td>5</td><td>0.244</td></tr><tr><td>KT Batter 2</td><td>KT</td><td>12</td><td>49</td><td>9</td><td>0</td><td>4</td><td>0.2</td></tr><tr><td>Lotte Player 5</td><td>Lotte</td><td>3</td><td>13</td><td>7</td><td>0</td><td>0</td><td>0.538</td></tr><tr><td>Lotte Player 9</td><td>Lotte</td><td>3</td><td>12</td><td>5</td><td>1</td><td>2</td><td>0.5</td></tr><tr><td>SSG Player 5</td><td>SSG</td><td>3</td><td>11</td><td>5</td><td>1</td><td>1</td><td>0.5</td></tr></tbody></table>
+  <div class="section">
+    <h2>월별 흐름</h2>
+    <table><thead><tr><th>월</th><th>경기</th><th>승</th><th>패</th><th>승률</th><th>평균득실차</th></tr></thead><tbody><tr><td>2026-03</td><td>1</td><td>0</td><td>1</td><td>0.0%</td><td>-8.00</td></tr><tr><td>2026-04</td><td>5</td><td>2</td><td>3</td><td>40.0%</td><td>0.20</td></tr><tr><td>2026-05</td><td>6</td><td>2</td><td>4</td><td>33.3%</td><td>-1.67</td></tr></tbody></table>
+  </div>
 
-  <h2>Win Prediction Model</h2>
-  <p>Accuracy 0.667, Precision 0.0, Recall 0.0, F1 0.0</p>
+  <div class="section">
+    <h2>타자 주요 지표</h2>
+    <table><thead><tr><th>선수</th><th>팀</th><th>경기</th><th>타석</th><th>안타</th><th>홈런</th><th>볼넷</th><th>삼진</th><th>타율</th><th>출루율</th><th>장타율_proxy</th><th>OPS_proxy</th></tr></thead><tbody><tr><td>Lotte Player 9</td><td>Lotte</td><td>3</td><td>12</td><td>5</td><td>1</td><td>2</td><td>3</td><td>0.500</td><td>0.583</td><td>0.800</td><td>1.383</td></tr><tr><td>SSG Player 5</td><td>SSG</td><td>3</td><td>11</td><td>5</td><td>1</td><td>1</td><td>0</td><td>0.500</td><td>0.545</td><td>0.800</td><td>1.345</td></tr><tr><td>Hanwha Player 1</td><td>Hanwha</td><td>1</td><td>3</td><td>2</td><td>0</td><td>0</td><td>1</td><td>0.667</td><td>0.667</td><td>0.667</td><td>1.333</td></tr><tr><td>SSG Player 8</td><td>SSG</td><td>3</td><td>13</td><td>5</td><td>1</td><td>1</td><td>2</td><td>0.417</td><td>0.462</td><td>0.667</td><td>1.128</td></tr><tr><td>Lotte Player 5</td><td>Lotte</td><td>3</td><td>13</td><td>7</td><td>0</td><td>0</td><td>5</td><td>0.538</td><td>0.538</td><td>0.538</td><td>1.077</td></tr><tr><td>Doosan Player 1</td><td>Doosan</td><td>2</td><td>9</td><td>4</td><td>0</td><td>1</td><td>3</td><td>0.500</td><td>0.556</td><td>0.500</td><td>1.056</td></tr><tr><td>Hanwha Player 2</td><td>Hanwha</td><td>1</td><td>4</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0.500</td><td>0.500</td><td>0.500</td><td>1.000</td></tr><tr><td>Hanwha Player 4</td><td>Hanwha</td><td>1</td><td>4</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0.500</td><td>0.500</td><td>0.500</td><td>1.000</td></tr><tr><td>Lotte Player 4</td><td>Lotte</td><td>3</td><td>12</td><td>5</td><td>0</td><td>1</td><td>1</td><td>0.455</td><td>0.500</td><td>0.455</td><td>0.955</td></tr><tr><td>KIA Player 2</td><td>KIA</td><td>3</td><td>15</td><td>4</td><td>1</td><td>2</td><td>3</td><td>0.308</td><td>0.400</td><td>0.538</td><td>0.938</td></tr><tr><td>KT Batter 7</td><td>KT</td><td>12</td><td>51</td><td>16</td><td>3</td><td>4</td><td>3</td><td>0.340</td><td>0.392</td><td>0.532</td><td>0.924</td></tr><tr><td>Lotte Player 2</td><td>Lotte</td><td>3</td><td>12</td><td>4</td><td>0</td><td>2</td><td>1</td><td>0.400</td><td>0.500</td><td>0.400</td><td>0.900</td></tr><tr><td>KIA Player 9</td><td>KIA</td><td>3</td><td>15</td><td>5</td><td>0</td><td>2</td><td>4</td><td>0.385</td><td>0.467</td><td>0.385</td><td>0.851</td></tr><tr><td>KT Batter 3</td><td>KT</td><td>12</td><td>48</td><td>15</td><td>2</td><td>3</td><td>15</td><td>0.333</td><td>0.375</td><td>0.467</td><td>0.842</td></tr><tr><td>KT Batter 6</td><td>KT</td><td>12</td><td>48</td><td>13</td><td>2</td><td>5</td><td>11</td><td>0.302</td><td>0.375</td><td>0.442</td><td>0.817</td></tr></tbody></table>
+    <p class="note">장타율과 OPS는 현재 box score mock 스키마에서 계산 가능한 proxy 지표입니다.</p>
+  </div>
+
+  <div class="section">
+    <h2>투수 주요 지표</h2>
+    <table><thead><tr><th>선수</th><th>팀</th><th>경기</th><th>이닝</th><th>투구수</th><th>자책</th><th>탈삼진</th><th>볼넷</th><th>피안타</th><th>ERA</th><th>WHIP</th><th>K/9</th></tr></thead><tbody><tr><td>Hanwha Player 12</td><td>Hanwha</td><td>1</td><td>2.00</td><td>53</td><td>0</td><td>1</td><td>2</td><td>4</td><td>0.00</td><td>3.00</td><td>4.50</td></tr><tr><td>Lotte Player 10</td><td>Lotte</td><td>3</td><td>15.00</td><td>163</td><td>2</td><td>6</td><td>1</td><td>14</td><td>1.20</td><td>1.00</td><td>3.60</td></tr><tr><td>Lotte Player 12</td><td>Lotte</td><td>3</td><td>6.00</td><td>164</td><td>7</td><td>11</td><td>2</td><td>13</td><td>10.50</td><td>2.50</td><td>16.50</td></tr><tr><td>Doosan Player 11</td><td>Doosan</td><td>2</td><td>4.00</td><td>120</td><td>5</td><td>5</td><td>2</td><td>8</td><td>11.25</td><td>2.50</td><td>11.25</td></tr><tr><td>SSG Player 11</td><td>SSG</td><td>3</td><td>6.00</td><td>123</td><td>8</td><td>9</td><td>0</td><td>9</td><td>12.00</td><td>1.50</td><td>13.50</td></tr><tr><td>Doosan Player 12</td><td>Doosan</td><td>2</td><td>4.00</td><td>116</td><td>7</td><td>8</td><td>2</td><td>5</td><td>15.75</td><td>1.75</td><td>18.00</td></tr><tr><td>KT Starter</td><td>KT</td><td>12</td><td>60.00</td><td>621</td><td>19</td><td>40</td><td>14</td><td>47</td><td>2.85</td><td>1.02</td><td>6.00</td></tr><tr><td>Hanwha Player 10</td><td>Hanwha</td><td>1</td><td>5.00</td><td>51</td><td>2</td><td>5</td><td>2</td><td>1</td><td>3.60</td><td>0.60</td><td>9.00</td></tr><tr><td>KIA Player 10</td><td>KIA</td><td>3</td><td>15.00</td><td>160</td><td>6</td><td>9</td><td>3</td><td>12</td><td>3.60</td><td>1.00</td><td>5.40</td></tr><tr><td>Doosan Player 10</td><td>Doosan</td><td>2</td><td>10.00</td><td>128</td><td>5</td><td>0</td><td>4</td><td>2</td><td>4.50</td><td>0.60</td><td>0.00</td></tr><tr><td>SSG Player 10</td><td>SSG</td><td>3</td><td>15.00</td><td>108</td><td>10</td><td>12</td><td>3</td><td>6</td><td>6.00</td><td>0.60</td><td>7.20</td></tr><tr><td>KIA Player 12</td><td>KIA</td><td>3</td><td>6.00</td><td>158</td><td>4</td><td>11</td><td>8</td><td>6</td><td>6.00</td><td>2.33</td><td>16.50</td></tr><tr><td>SSG Player 12</td><td>SSG</td><td>3</td><td>6.00</td><td>127</td><td>4</td><td>4</td><td>6</td><td>9</td><td>6.00</td><td>2.50</td><td>6.00</td></tr><tr><td>Lotte Player 11</td><td>Lotte</td><td>3</td><td>6.00</td><td>114</td><td>4</td><td>11</td><td>7</td><td>9</td><td>6.00</td><td>2.67</td><td>16.50</td></tr><tr><td>KIA Player 11</td><td>KIA</td><td>3</td><td>6.00</td><td>154</td><td>4</td><td>17</td><td>6</td><td>11</td><td>6.00</td><td>2.83</td><td>25.50</td></tr></tbody></table>
+  </div>
+
+  <div class="section">
+    <h2>승패 예측 모델</h2>
+    <p>로지스틱 회귀 모델로 경기 전 정보 기반 승리 확률을 추정했습니다. 정확도 66.7%, 정밀도 0.0%, 재현율 0.0%, F1 0.000입니다.</p>
+    <table><thead><tr><th>변수</th><th>계수</th><th>해석</th></tr></thead><tbody><tr><td>최근 5경기 승률</td><td>-5.374</td><td>승리 확률 하락</td></tr><tr><td>최근 5경기 평균 득점</td><td>-3.795</td><td>승리 확률 하락</td></tr><tr><td>최근 5경기 평균 실점</td><td>-2.704</td><td>승리 확률 하락</td></tr><tr><td>상대팀: 두산</td><td>1.870</td><td>승리 확률 상승</td></tr><tr><td>홈 경기 여부</td><td>1.361</td><td>승리 확률 상승</td></tr><tr><td>직전 경기 이후 휴식일</td><td>-1.184</td><td>승리 확률 하락</td></tr><tr><td>최근 5경기 평균 득실차</td><td>0.892</td><td>승리 확률 상승</td></tr><tr><td>상대팀: SSG</td><td>-0.885</td><td>승리 확률 하락</td></tr><tr><td>상대팀: 롯데</td><td>-0.754</td><td>승리 확률 하락</td></tr><tr><td>같은 상대 연전 내 경기 순서</td><td>-0.650</td><td>승리 확률 하락</td></tr></tbody></table>
+    <h2>최근 경기 예측 결과</h2>
+    <table><thead><tr><th>경기일</th><th>상대</th><th>구장</th><th>실제</th><th>승리확률</th><th>예측</th></tr></thead><tbody><tr><td>2026-04-04</td><td>두산</td><td>원정</td><td>승</td><td>91.0%</td><td>승리 예측</td></tr><tr><td>2026-04-05</td><td>두산</td><td>원정</td><td>패</td><td>8.8%</td><td>패배 예측</td></tr><tr><td>2026-05-05</td><td>롯데</td><td>홈</td><td>패</td><td>0.6%</td><td>패배 예측</td></tr><tr><td>2026-05-06</td><td>롯데</td><td>원정</td><td>패</td><td>1.3%</td><td>패배 예측</td></tr><tr><td>2026-05-07</td><td>롯데</td><td>홈</td><td>승</td><td>99.5%</td><td>승리 예측</td></tr><tr><td>2026-05-08</td><td>KIA</td><td>원정</td><td>패</td><td>0.1%</td><td>패배 예측</td></tr><tr><td>2026-05-09</td><td>KIA</td><td>원정</td><td>패</td><td>0.0%</td><td>패배 예측</td></tr><tr><td>2026-05-10</td><td>KIA</td><td>원정</td><td>승</td><td>0.0%</td><td>패배 예측</td></tr></tbody></table>
+  </div>
+</main>
 </body>
 </html>
