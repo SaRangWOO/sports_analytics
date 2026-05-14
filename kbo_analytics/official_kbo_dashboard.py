@@ -317,6 +317,70 @@ def confidence_metrics(y_true: np.ndarray, probability: np.ndarray):
     return metrics
 
 
+def probability_scores(y_true: np.ndarray, probability: np.ndarray):
+    clipped = np.clip(probability, 1e-6, 1 - 1e-6)
+    return {
+        "Brier Score": round(float(np.mean((probability - y_true) ** 2)), 3),
+        "Log Loss": round(float(-np.mean(y_true * np.log(clipped) + (1 - y_true) * np.log(1 - clipped))), 3),
+    }
+
+
+def calibration_table(y_true: np.ndarray, probability: np.ndarray):
+    frame = pd.DataFrame({"actual": y_true, "probability": probability})
+    bins = [0.0, 0.45, 0.50, 0.55, 0.60, 1.0]
+    labels = ["45% 미만", "45~50%", "50~55%", "55~60%", "60% 이상"]
+    frame["구간"] = pd.cut(frame["probability"], bins=bins, labels=labels, include_lowest=True)
+    rows = []
+    for label in labels:
+        subset = frame[frame["구간"] == label]
+        rows.append(
+            {
+                "예측승률 구간": label,
+                "경기 수": int(len(subset)),
+                "평균 예측승률": f"{subset['probability'].mean():.1%}" if len(subset) else "-",
+                "실제 승률": f"{subset['actual'].mean():.1%}" if len(subset) else "-",
+            }
+        )
+    return rows
+
+
+def export_game_level_dataset(features: pd.DataFrame, output_path: Path):
+    rows = []
+    working = features.copy()
+    working["actual_game_id"] = working["game_id"].astype(str).str.rsplit("_", n=1).str[0]
+    for game_id, game_rows in working.groupby("actual_game_id", sort=False):
+        if len(game_rows) != 2:
+            continue
+        home_rows = game_rows[game_rows["is_home"] == 1]
+        away_rows = game_rows[game_rows["is_home"] == 0]
+        if home_rows.empty or away_rows.empty:
+            continue
+        home = home_rows.iloc[0]
+        away = away_rows.iloc[0]
+        rows.append(
+            {
+                "game_id": game_id,
+                "date": pd.to_datetime(home["date"]).strftime("%Y-%m-%d"),
+                "home_team": home["team"],
+                "away_team": away["team"],
+                "target_home_win": "" if pd.isna(home["target_win"]) else int(home["target_win"]),
+                "home_recent_10_win_rate": round(float(home["recent_10_win_rate"]), 4),
+                "away_recent_10_win_rate": round(float(away["recent_10_win_rate"]), 4),
+                "recent_10_win_rate_gap": round(float(home["recent_10_win_rate"] - away["recent_10_win_rate"]), 4),
+                "season_win_rate_gap": round(float(home["season_win_rate_prior"] - away["season_win_rate_prior"]), 4),
+                "season_avg_run_diff_gap": round(float(home["season_avg_run_diff_prior"] - away["season_avg_run_diff_prior"]), 4),
+                "recent_run_diff_10_gap": round(float(home["avg_run_diff_last_10"] - away["avg_run_diff_last_10"]), 4),
+                "home_venue_win_rate": round(float(home["venue_win_rate_prior"]), 4),
+                "away_venue_win_rate": round(float(away["venue_win_rate_prior"]), 4),
+                "venue_win_rate_gap": round(float(home["venue_win_rate_prior"] - away["venue_win_rate_prior"]), 4),
+                "home_games_last_7_days": int(home["games_last_7_days"]),
+                "away_games_last_7_days": int(away["games_last_7_days"]),
+            }
+        )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_csv(output_path, index=False, encoding="utf-8-sig")
+
+
 def prediction_reason(row: pd.Series, predicted_team: str | None = None):
     predicted_team = predicted_team or row.get("team")
     team_perspective = predicted_team == row.get("team")
@@ -376,6 +440,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     features = build_features(model_input)
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     features.to_csv(RESULTS_DIR / "features.csv", index=False, encoding="utf-8-sig")
+    export_game_level_dataset(features, RESULTS_DIR / "game_level_features.csv")
 
     if len(features) < 20:
         return {"available": False, "reason": "학습 가능한 완료 경기가 부족합니다.", "training_cutoff": cutoff.isoformat()}
@@ -431,6 +496,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         probability = normalize_game_probabilities(features.iloc[split_index:], raw_probability)
         pred = (probability >= 0.5).astype(int)
         accuracy = round(float((pred == y_test).mean()), 3)
+        score = probability_scores(y_test, probability)
         result = {
             "name": name,
             "columns": columns,
@@ -443,11 +509,12 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             "bias": bias,
             "model_type": "from_scratch_logistic_regression",
         }
-        candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns)})
+        candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
         if best is None or accuracy > best["accuracy"]:
             best = result
 
     try:
+        from sklearn.calibration import CalibratedClassifierCV
         from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
     except ImportError:
         sklearn_candidates = []
@@ -499,6 +566,36 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
                 ),
                 recency_weight,
             ),
+            (
+                "GradientBoosting 확률보정(sigmoid)",
+                CalibratedClassifierCV(
+                    estimator=HistGradientBoostingClassifier(
+                        max_iter=220,
+                        learning_rate=0.04,
+                        max_leaf_nodes=15,
+                        l2_regularization=0.08,
+                        random_state=42,
+                    ),
+                    method="sigmoid",
+                    cv=3,
+                ),
+                None,
+            ),
+            (
+                "GradientBoosting 확률보정(isotonic)",
+                CalibratedClassifierCV(
+                    estimator=HistGradientBoostingClassifier(
+                        max_iter=220,
+                        learning_rate=0.04,
+                        max_leaf_nodes=15,
+                        l2_regularization=0.08,
+                        random_state=42,
+                    ),
+                    method="isotonic",
+                    cv=3,
+                ),
+                None,
+            ),
         ]
 
     for name, model, sample_weight in sklearn_candidates:
@@ -511,6 +608,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         probability = normalize_game_probabilities(features.iloc[split_index:], raw_probability)
         pred = (probability >= 0.5).astype(int)
         accuracy = round(float((pred == y_test).mean()), 3)
+        score = probability_scores(y_test, probability)
         result = {
             "name": name,
             "columns": columns,
@@ -522,7 +620,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             "model": model,
             "model_type": model.__class__.__name__,
         }
-        candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns)})
+        candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
         if best is None or accuracy > best["accuracy"]:
             best = result
 
@@ -580,6 +678,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         "selected_model": best["name"],
         "candidate_results": candidate_results,
         "confidence_metrics": confidence_metrics(y_test, probability),
+        "calibration_table": calibration_table(y_test, probability),
         "recent_backtest": recent[["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"]].tail(12).to_dict(orient="records"),
         "today_predictions": today_predictions,
         "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
@@ -794,6 +893,8 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     payload = json.dumps(team_data, ensure_ascii=False)
     model_rows = model_payload.get("recent_backtest", []) if model_payload.get("available") else []
     confidence_rows = model_payload.get("confidence_metrics", []) if model_payload.get("available") else []
+    calibration_rows = model_payload.get("calibration_table", []) if model_payload.get("available") else []
+    candidate_rows = model_payload.get("candidate_results", []) if model_payload.get("available") else []
     team_buttons = "".join(
         f'<button type="button" class="team-button" data-team="{escape(team)}">{escape(team)}</button>'
         for team in standings["팀"]
@@ -899,10 +1000,18 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       {table_html(confidence_rows, ["구간", "경기 수", "적중률"]) if confidence_rows else "<p>확신 구간 결과를 생성할 수 없습니다.</p>"}
     </div>
     <div class="subsection">
+      <h3>확률 보정 검증</h3>
+      {table_html(calibration_rows, ["예측승률 구간", "경기 수", "평균 예측승률", "실제 승률"]) if calibration_rows else "<p>확률 보정 결과를 생성할 수 없습니다.</p>"}
+    </div>
+    <div class="subsection">
+      <h3>모델 후보 비교</h3>
+      {table_html(candidate_rows, ["모델", "검증 정확도", "Brier Score", "Log Loss", "피처 수"]) if candidate_rows else "<p>모델 후보 결과를 생성할 수 없습니다.</p>"}
+    </div>
+    <div class="subsection">
       <h3>최근 검증 경기</h3>
     {table_html(model_rows, ["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
     </div>
-    <p class="note">예측 모델은 월요일 갱신 기준 지난주까지의 완료 경기만 학습/검증에 사용합니다. 현재 주 경기 결과는 적중률 계산에 섞지 않습니다.</p>
+    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 선발투수, 불펜 소모, 라인업, 결장자 정보는 다음 단계 피처로 분리해 추가할 예정입니다.</p>
   </section>
 </main>
 <script>
