@@ -21,7 +21,7 @@ if [ -f "$PROJECT_DIR/.env" ]; then
 fi
 
 docker compose up -d kbo-db kbo-api dashboard
-"$PYTHON_BIN" official_kbo_dashboard.py
+"$PYTHON_BIN" official_kbo_dashboard.py --training-start-year 2016
 
 curl -fsS "http://localhost:8501/latest.html" >/dev/null
 

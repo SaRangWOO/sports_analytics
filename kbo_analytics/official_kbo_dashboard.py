@@ -280,32 +280,63 @@ def align_prediction_matrix(features: pd.DataFrame, feature_columns: list[str], 
     return (x - mean) / std.replace(0, 1)
 
 
-def prediction_reason(row: pd.Series):
+def normalize_game_probabilities(features: pd.DataFrame, probability: np.ndarray):
+    normalized = pd.Series(probability, index=features.index, dtype=float)
+    game_keys = features["game_id"].astype(str).str.rsplit("_", n=1).str[0]
+    for _, indexes in game_keys.groupby(game_keys).groups.items():
+        indexes = list(indexes)
+        if len(indexes) != 2:
+            continue
+        total = normalized.loc[indexes].sum()
+        if total > 0:
+            normalized.loc[indexes] = normalized.loc[indexes] / total
+    return normalized.to_numpy()
+
+
+def prediction_reason(row: pd.Series, predicted_team: str | None = None):
+    predicted_team = predicted_team or row.get("team")
+    team_perspective = predicted_team == row.get("team")
     reasons = []
-    if row.get("elo_diff", 0) > 20:
+    elo_diff = row.get("elo_diff", 0) if team_perspective else -row.get("elo_diff", 0)
+    season_gap = row.get("season_win_rate_gap", 0) if team_perspective else -row.get("season_win_rate_gap", 0)
+    recent_gap = row.get("recent_5_win_rate_gap", 0) if team_perspective else -row.get("recent_5_win_rate_gap", 0)
+    recent_10_gap = row.get("recent_10_win_rate_gap", 0) if team_perspective else -row.get("recent_10_win_rate_gap", 0)
+    h2h_gap = row.get("head_to_head_win_rate_gap", 0) if team_perspective else -row.get("head_to_head_win_rate_gap", 0)
+    venue_gap = row.get("venue_win_rate_gap", 0) if team_perspective else -row.get("venue_win_rate_gap", 0)
+    season_run_gap = row.get("season_avg_run_diff_gap", 0) if team_perspective else -row.get("season_avg_run_diff_gap", 0)
+    own_run_diff = row.get("avg_run_diff_last_5", 0) if team_perspective else row.get("opponent_avg_run_diff_last_5", 0)
+    opponent_run_diff = row.get("opponent_avg_run_diff_last_5", 0) if team_perspective else row.get("avg_run_diff_last_5", 0)
+    is_home_side = row.get("is_home", 0) == 1 if team_perspective else row.get("is_home", 0) == 0
+    games_last_7 = row.get("games_last_7_days", 0)
+
+    if elo_diff > 20:
         reasons.append("Elo 전력 우위")
-    elif row.get("elo_diff", 0) < -20:
-        reasons.append("상대 Elo 전력 우위")
 
-    if row.get("season_win_rate_gap", 0) > 0.03:
+    if season_gap > 0.03:
         reasons.append("시즌 누적 승률 우위")
-    elif row.get("season_win_rate_gap", 0) < -0.03:
-        reasons.append("상대 시즌 승률 우위")
 
-    if row.get("recent_5_win_rate_gap", 0) > 0.15:
+    if recent_gap > 0.15:
         reasons.append("최근 5경기 흐름 우위")
-    elif row.get("recent_5_win_rate_gap", 0) < -0.15:
-        reasons.append("상대 최근 흐름 우위")
 
-    if row.get("avg_run_diff_last_5", 0) > row.get("opponent_avg_run_diff_last_5", 0) + 0.8:
+    if recent_10_gap > 0.12:
+        reasons.append("최근 10경기 흐름 우위")
+
+    if h2h_gap > 0.2:
+        reasons.append("시즌 상대전적 우위")
+
+    if venue_gap > 0.15:
+        reasons.append("홈/원정 성향 우위")
+
+    if season_run_gap > 0.5:
+        reasons.append("시즌 득실차 우위")
+
+    if own_run_diff > opponent_run_diff + 0.8:
         reasons.append("최근 득실차 우위")
-    elif row.get("avg_run_diff_last_5", 0) + 0.8 < row.get("opponent_avg_run_diff_last_5", 0):
-        reasons.append("상대 득실차 우위")
 
-    if row.get("is_home", 0) == 1:
+    if is_home_side:
         reasons.append("홈 경기")
-    if row.get("games_last_7_days", 0) >= 6:
-        reasons.append("최근 7일 경기 수 많음")
+    if team_perspective and games_last_7 <= 4:
+        reasons.append("최근 일정 부담 낮음")
 
     return ", ".join(reasons[:2]) if reasons else "양 팀 지표가 비슷해 기본 전력과 최근 흐름을 종합"
 
@@ -345,12 +376,21 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
                 "is_home",
                 "rest_days",
                 "recent_5_win_rate",
+                "recent_10_win_rate",
                 "avg_run_diff_last_5",
+                "avg_run_diff_last_10",
                 "season_win_rate_prior",
                 "opponent_recent_5_win_rate",
+                "opponent_recent_10_win_rate",
                 "opponent_avg_run_diff_last_5",
+                "opponent_avg_run_diff_last_10",
                 "season_win_rate_gap",
                 "recent_5_win_rate_gap",
+                "recent_10_win_rate_gap",
+                "season_avg_run_diff_gap",
+                "recent_run_diff_10_gap",
+                "venue_win_rate_gap",
+                "head_to_head_win_rate_gap",
                 "elo_diff",
                 "games_last_7_days",
                 "back_to_back",
@@ -364,7 +404,8 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
         train_scaled, test_scaled, mean, std = standardize_train_test(x_train, x_test)
         weights, bias = train_logistic_regression(train_scaled.to_numpy(), y_train, lr=0.05, epochs=3500)
-        probability = sigmoid(test_scaled.to_numpy() @ weights + bias)
+        raw_probability = sigmoid(test_scaled.to_numpy() @ weights + bias)
+        probability = normalize_game_probabilities(features.iloc[split_index:], raw_probability)
         pred = (probability >= 0.5).astype(int)
         accuracy = round(float((pred == y_test).mean()), 3)
         result = {
@@ -377,6 +418,54 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             "std": std,
             "weights": weights,
             "bias": bias,
+            "model_type": "from_scratch_logistic_regression",
+        }
+        candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns)})
+        if best is None or accuracy > best["accuracy"]:
+            best = result
+
+    try:
+        from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+    except ImportError:
+        sklearn_candidates = {}
+    else:
+        sklearn_candidates = {
+            "RandomForest 비선형 모델": RandomForestClassifier(
+                n_estimators=500,
+                max_depth=7,
+                min_samples_leaf=8,
+                class_weight="balanced",
+                random_state=42,
+                n_jobs=-1,
+            ),
+            "GradientBoosting 비선형 모델": HistGradientBoostingClassifier(
+                max_iter=220,
+                learning_rate=0.04,
+                max_leaf_nodes=15,
+                l2_regularization=0.08,
+                random_state=42,
+            ),
+        }
+
+    for name, model in sklearn_candidates.items():
+        columns = list(x.columns)
+        x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
+        train_scaled, test_scaled, mean, std = standardize_train_test(x_train, x_test)
+        model.fit(train_scaled, y_train)
+        raw_probability = model.predict_proba(test_scaled)[:, 1]
+        probability = normalize_game_probabilities(features.iloc[split_index:], raw_probability)
+        pred = (probability >= 0.5).astype(int)
+        accuracy = round(float((pred == y_test).mean()), 3)
+        result = {
+            "name": name,
+            "columns": columns,
+            "accuracy": accuracy,
+            "probability": probability,
+            "pred": pred,
+            "mean": mean,
+            "std": std,
+            "model": model,
+            "model_type": model.__class__.__name__,
         }
         candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns)})
         if best is None or accuracy > best["accuracy"]:
@@ -388,15 +477,17 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     accuracy = best["accuracy"]
     mean = best["mean"]
     std = best["std"]
-    weights = best["weights"]
-    bias = best["bias"]
+    weights = best.get("weights")
+    bias = best.get("bias")
     recent = features.iloc[split_index:].copy()
+    recent["경기일"] = pd.to_datetime(recent["date"]).dt.strftime("%Y-%m-%d")
+    recent["기준팀"] = recent["team"]
+    recent["상대팀"] = recent["opponent"]
     recent["예측승률"] = [f"{p:.1%}" for p in probability]
     recent["예측"] = np.where(pred == 1, "승리 예측", "패배 예측")
     recent["예측 구단"] = np.where(pred == 1, recent["team"], recent["opponent"])
     recent["실제 승리 구단"] = np.where(y_test == 1, recent["team"], recent["opponent"])
-    recent["예측 근거"] = recent.apply(prediction_reason, axis=1)
-    recent["date"] = pd.to_datetime(recent["date"]).dt.strftime("%Y-%m-%d")
+    recent["예측 근거"] = recent.apply(lambda row: prediction_reason(row, row["예측 구단"]), axis=1)
 
     prediction_input = DATA_DIR / "prediction_games.csv"
     current_games.to_csv(prediction_input, index=False, encoding="utf-8-sig")
@@ -409,13 +500,19 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     today_predictions = []
     if not today_features.empty:
         prediction_scaled = align_prediction_matrix(today_features.drop(columns=["date_obj"]), columns, mean, std)
-        today_probability = sigmoid(prediction_scaled.to_numpy() @ weights + bias)
+        if best["model_type"] == "from_scratch_logistic_regression":
+            raw_today_probability = sigmoid(prediction_scaled.to_numpy() @ weights + bias)
+        else:
+            raw_today_probability = best["model"].predict_proba(prediction_scaled)[:, 1]
+        today_probability = normalize_game_probabilities(today_features, raw_today_probability)
+        today_features["경기일"] = pd.to_datetime(today_features["date"]).dt.strftime("%Y-%m-%d")
+        today_features["기준팀"] = today_features["team"]
+        today_features["상대팀"] = today_features["opponent"]
         today_features["예측승률"] = [f"{p:.1%}" for p in today_probability]
         today_features["예측"] = np.where(today_probability >= 0.5, "승리 예측", "패배 예측")
         today_features["예측 구단"] = np.where(today_probability >= 0.5, today_features["team"], today_features["opponent"])
-        today_features["예측 근거"] = today_features.apply(prediction_reason, axis=1)
-        today_features["date"] = pd.to_datetime(today_features["date"]).dt.strftime("%Y-%m-%d")
-        today_predictions = today_features[["date", "team", "opponent", "예측 구단", "예측승률", "예측", "예측 근거"]].to_dict(orient="records")
+        today_features["예측 근거"] = today_features.apply(lambda row: prediction_reason(row, row["예측 구단"]), axis=1)
+        today_predictions = today_features[["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "예측 근거"]].to_dict(orient="records")
 
     payload = {
         "available": True,
@@ -427,13 +524,24 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         "accuracy": accuracy,
         "selected_model": best["name"],
         "candidate_results": candidate_results,
-        "recent_backtest": recent[["date", "team", "opponent", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"]].tail(12).to_dict(orient="records"),
+        "recent_backtest": recent[["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"]].tail(12).to_dict(orient="records"),
         "today_predictions": today_predictions,
         "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
         "feature_columns": columns,
-        "bias": round(float(bias), 6),
-        "coefficients": {name: round(float(value), 6) for name, value in sorted(zip(x.columns, weights), key=lambda x: abs(x[1]), reverse=True)},
+        "model_type": best["model_type"],
     }
+    if best["model_type"] == "from_scratch_logistic_regression":
+        payload["bias"] = round(float(bias), 6)
+        payload["coefficients"] = {
+            name: round(float(value), 6)
+            for name, value in sorted(zip(columns, weights), key=lambda x: abs(x[1]), reverse=True)
+        }
+    elif hasattr(best.get("model"), "feature_importances_"):
+        importances = best["model"].feature_importances_
+        payload["feature_importance"] = {
+            name: round(float(value), 6)
+            for name, value in sorted(zip(columns, importances), key=lambda x: x[1], reverse=True)
+        }
     (RESULTS_DIR / "win_predictor_model.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     return payload
 
@@ -610,7 +718,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     league_leader = standings.iloc[0]
     today_predictions_by_team = {}
     for row in model_payload.get("today_predictions", []):
-        today_predictions_by_team.setdefault(row["team"], []).append(row)
+        today_predictions_by_team.setdefault(row["기준팀"], []).append(row)
     for team in standings["팀"]:
         team_games = completed[completed["team"] == team].sort_values("date", ascending=False).head(10).copy()
         team_games["경기일"] = team_games["date"].dt.strftime("%Y-%m-%d")
@@ -729,7 +837,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="metric">검증 행<strong>{model_payload.get("test_rows", "-")}</strong></div>
       <div class="metric">검증 정확도<strong>{model_payload.get("accuracy", "-")}</strong></div>
     </div>
-    {table_html(model_rows, ["date", "team", "opponent", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
+    {table_html(model_rows, ["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
     <p class="note">예측 모델은 월요일 갱신 기준 지난주까지의 완료 경기만 학습/검증에 사용합니다. 현재 주 경기 결과는 적중률 계산에 섞지 않습니다.</p>
   </section>
 </main>
@@ -751,7 +859,7 @@ function renderTeam(team) {{
     ['승률', s['승률']], ['최근10경기', s['최근10경기']]
   ].map(([k,v]) => `<div class="metric">${{k}}<strong>${{v}}</strong></div>`).join('');
   document.getElementById('ktDeepDiveLink').style.display = team === 'KT' ? 'inline-block' : 'none';
-  document.getElementById('todayPrediction').innerHTML = renderTable(data.today_predictions, ['date','team','opponent','예측 구단','예측승률','예측','예측 근거']);
+  document.getElementById('todayPrediction').innerHTML = renderTable(data.today_predictions, ['경기일','기준팀','상대팀','예측 구단','예측승률','예측','예측 근거']);
   document.getElementById('recentGames').innerHTML = renderTable(data.recent, ['경기일','상대','구분','결과','스코어']);
   document.getElementById('vsTable').innerHTML = renderTable(data.vs, ['상대','전적']);
   document.getElementById('hitterTable').innerHTML = renderTable(data.hitters, ['선수','경기','타석','타수','안타','홈런','볼넷','삼진','타율','출루율','장타율','OPS']);
