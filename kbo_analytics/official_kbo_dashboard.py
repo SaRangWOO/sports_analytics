@@ -344,7 +344,7 @@ def calibration_table(y_true: np.ndarray, probability: np.ndarray):
     return rows
 
 
-def export_game_level_dataset(features: pd.DataFrame, output_path: Path):
+def build_game_level_frame(features: pd.DataFrame):
     rows = []
     working = features.copy()
     working["actual_game_id"] = working["game_id"].astype(str).str.rsplit("_", n=1).str[0]
@@ -363,7 +363,7 @@ def export_game_level_dataset(features: pd.DataFrame, output_path: Path):
                 "date": pd.to_datetime(home["date"]).strftime("%Y-%m-%d"),
                 "home_team": home["team"],
                 "away_team": away["team"],
-                "target_home_win": "" if pd.isna(home["target_win"]) else int(home["target_win"]),
+                "target_home_win": np.nan if pd.isna(home["target_win"]) else int(home["target_win"]),
                 "home_recent_10_win_rate": round(float(home["recent_10_win_rate"]), 4),
                 "away_recent_10_win_rate": round(float(away["recent_10_win_rate"]), 4),
                 "recent_10_win_rate_gap": round(float(home["recent_10_win_rate"] - away["recent_10_win_rate"]), 4),
@@ -377,8 +377,35 @@ def export_game_level_dataset(features: pd.DataFrame, output_path: Path):
                 "away_games_last_7_days": int(away["games_last_7_days"]),
             }
         )
+    return pd.DataFrame(rows)
+
+
+def export_game_level_dataset(features: pd.DataFrame, output_path: Path):
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(rows).to_csv(output_path, index=False, encoding="utf-8-sig")
+    build_game_level_frame(features).to_csv(output_path, index=False, encoding="utf-8-sig")
+
+
+def prepare_game_level_matrix(frame: pd.DataFrame):
+    x = frame.drop(columns=["date", "game_id", "target_home_win"])
+    x = pd.get_dummies(x, columns=["home_team", "away_team"], drop_first=False, dtype=float)
+    y = frame["target_home_win"].to_numpy(dtype=float)
+    return x, y
+
+
+def align_game_level_matrix(frame: pd.DataFrame, feature_columns: list[str], mean: pd.Series, std: pd.Series):
+    x, _ = prepare_game_level_matrix(frame)
+    x = x.reindex(columns=feature_columns, fill_value=0)
+    return (x - mean) / std.replace(0, 1)
+
+
+def pick_better_model(current: dict | None, candidate: dict):
+    if current is None:
+        return candidate
+    if candidate["accuracy"] > current["accuracy"] + 0.005:
+        return candidate
+    if abs(candidate["accuracy"] - current["accuracy"]) <= 0.005 and candidate["score"]["Brier Score"] < current["score"]["Brier Score"]:
+        return candidate
+    return current
 
 
 def prediction_reason(row: pd.Series, predicted_team: str | None = None):
@@ -423,6 +450,92 @@ def prediction_reason(row: pd.Series, predicted_team: str | None = None):
         reasons.append(f"{predicted_team} 최근 일정 부담 낮음")
 
     return ", ".join(reasons[:2]) if reasons else "양 팀 지표가 비슷해 기본 전력과 최근 흐름을 종합"
+
+
+def game_prediction_reason(row: pd.Series, predicted_team: str):
+    home_perspective = predicted_team == row.get("home_team")
+    reasons = []
+    recent_gap = row.get("recent_10_win_rate_gap", 0) if home_perspective else -row.get("recent_10_win_rate_gap", 0)
+    season_gap = row.get("season_win_rate_gap", 0) if home_perspective else -row.get("season_win_rate_gap", 0)
+    run_gap = row.get("season_avg_run_diff_gap", 0) if home_perspective else -row.get("season_avg_run_diff_gap", 0)
+    recent_run_gap = row.get("recent_run_diff_10_gap", 0) if home_perspective else -row.get("recent_run_diff_10_gap", 0)
+    venue_gap = row.get("venue_win_rate_gap", 0) if home_perspective else -row.get("venue_win_rate_gap", 0)
+
+    if recent_run_gap > 0.8:
+        reasons.append(f"{predicted_team} 최근 득실차 우위")
+    if recent_gap > 0.12:
+        reasons.append(f"{predicted_team} 최근 10경기 흐름 우위")
+    if season_gap > 0.03:
+        reasons.append(f"{predicted_team} 시즌 승률 우위")
+    if run_gap > 0.5:
+        reasons.append(f"{predicted_team} 시즌 득실차 우위")
+    if venue_gap > 0.15:
+        reasons.append(f"{predicted_team} 홈/원정 성향 우위")
+    if home_perspective:
+        reasons.append(f"{predicted_team} 홈 경기")
+
+    return ", ".join(reasons[:2]) if reasons else "양 팀 지표가 비슷해 기본 전력과 최근 흐름을 종합"
+
+
+def prediction_tier(confidence: float):
+    if confidence < 0.53:
+        return {"우세": "박빙", "신뢰도": "낮음", "판단": "참고만"}
+    if confidence < 0.56:
+        return {"우세": "박빙 우세", "신뢰도": "낮음", "판단": "참고"}
+    if confidence < 0.60:
+        return {"우세": "약우세", "신뢰도": "보통", "판단": "예측 가능"}
+    return {"우세": "우세", "신뢰도": "주의", "판단": "과신 주의"}
+
+
+def build_prediction_cards(today_predictions: list[dict]):
+    cards = {}
+    for row in today_predictions:
+        try:
+            probability = float(str(row["예측승률"]).replace("%", "")) / 100
+        except (KeyError, ValueError):
+            continue
+        confidence = max(probability, 1 - probability)
+        key = "|".join(sorted([row["기준팀"], row["상대팀"]]))
+        if key in cards and confidence <= cards[key]["confidence_value"]:
+            continue
+        tier = prediction_tier(confidence)
+        matchup = f'{row["기준팀"]} vs {row["상대팀"]}'
+        cards[key] = {
+            "경기": matchup,
+            "추천": f'{row["예측 구단"]} {tier["우세"]}',
+            "예측승률": f"{confidence:.1%}",
+            "신뢰도": tier["신뢰도"],
+            "핵심 근거": row.get("예측 근거", ""),
+            "판단": tier["판단"],
+            "confidence_value": confidence,
+        }
+    return sorted(cards.values(), key=lambda row: row["confidence_value"], reverse=True)
+
+
+def today_summary(prediction_cards: list[dict]):
+    if not prediction_cards:
+        return {
+            "headline": "오늘 예정 경기가 없거나 예측 가능한 경기 정보가 없습니다.",
+            "possible_games": 0,
+            "close_games": 0,
+            "top_pick": "-",
+        }
+    top = prediction_cards[0]
+    possible_games = sum(1 for row in prediction_cards if row["판단"] == "예측 가능")
+    close_games = sum(1 for row in prediction_cards if row["판단"] in {"참고", "참고만"})
+    strong_games = sum(1 for row in prediction_cards if row["판단"] == "과신 주의")
+    if strong_games:
+        headline = f'{top["추천"]}가 가장 높은 예측이지만, 60% 이상 구간은 과신 경향이 있어 참고 지표로 봐야 합니다.'
+    elif possible_games:
+        headline = f'오늘은 강한 정배보다 약우세 경기 중심입니다. 가장 높은 예측은 {top["추천"]}({top["예측승률"]})입니다.'
+    else:
+        headline = f'오늘은 대부분 박빙입니다. 가장 높은 예측도 {top["추천"]}({top["예측승률"]}) 수준입니다.'
+    return {
+        "headline": headline,
+        "possible_games": possible_games,
+        "close_games": close_games,
+        "top_pick": f'{top["추천"]} · {top["예측승률"]}',
+    }
 
 
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date):
@@ -501,6 +614,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             "name": name,
             "columns": columns,
             "accuracy": accuracy,
+            "score": score,
             "probability": probability,
             "pred": pred,
             "mean": mean,
@@ -508,10 +622,10 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             "weights": weights,
             "bias": bias,
             "model_type": "from_scratch_logistic_regression",
+            "prediction_unit": "team",
         }
         candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
-        if best is None or accuracy > best["accuracy"]:
-            best = result
+        best = pick_better_model(best, result)
 
     try:
         from sklearn.calibration import CalibratedClassifierCV
@@ -613,16 +727,106 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             "name": name,
             "columns": columns,
             "accuracy": accuracy,
+            "score": score,
             "probability": probability,
             "pred": pred,
             "mean": mean,
             "std": std,
             "model": model,
             "model_type": model.__class__.__name__,
+            "prediction_unit": "team",
         }
         candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
-        if best is None or accuracy > best["accuracy"]:
-            best = result
+        best = pick_better_model(best, result)
+
+    game_frame = build_game_level_frame(features).dropna(subset=["target_home_win"]).copy()
+    if sklearn_candidates and len(game_frame) >= 20:
+        gx, gy = prepare_game_level_matrix(game_frame)
+        game_split = max(int(len(gx) * 0.8), 1)
+        game_split = min(game_split, len(gx) - 1)
+        gy_train, gy_test = gy[:game_split], gy[game_split:]
+        game_years = pd.to_datetime(game_frame.iloc[:game_split]["date"]).dt.year
+        max_game_year = int(game_years.max())
+        game_recency_weight = (0.85 ** (max_game_year - game_years)).clip(lower=0.35).to_numpy(dtype=float)
+        game_candidates = [
+            (
+                "경기 단위 RandomForest 모델",
+                RandomForestClassifier(
+                    n_estimators=500,
+                    max_depth=7,
+                    min_samples_leaf=8,
+                    class_weight="balanced",
+                    random_state=42,
+                    n_jobs=-1,
+                ),
+                None,
+            ),
+            (
+                "경기 단위 RandomForest 시간가중 모델",
+                RandomForestClassifier(
+                    n_estimators=500,
+                    max_depth=7,
+                    min_samples_leaf=8,
+                    class_weight="balanced",
+                    random_state=42,
+                    n_jobs=-1,
+                ),
+                game_recency_weight,
+            ),
+            (
+                "경기 단위 GradientBoosting 모델",
+                HistGradientBoostingClassifier(
+                    max_iter=220,
+                    learning_rate=0.04,
+                    max_leaf_nodes=15,
+                    l2_regularization=0.08,
+                    random_state=42,
+                ),
+                None,
+            ),
+            (
+                "경기 단위 GradientBoosting 확률보정(sigmoid)",
+                CalibratedClassifierCV(
+                    estimator=HistGradientBoostingClassifier(
+                        max_iter=220,
+                        learning_rate=0.04,
+                        max_leaf_nodes=15,
+                        l2_regularization=0.08,
+                        random_state=42,
+                    ),
+                    method="sigmoid",
+                    cv=3,
+                ),
+                None,
+            ),
+        ]
+        for name, model, sample_weight in game_candidates:
+            columns = list(gx.columns)
+            gx_train, gx_test = gx.iloc[:game_split][columns], gx.iloc[game_split:][columns]
+            train_scaled, test_scaled, mean, std = standardize_train_test(gx_train, gx_test)
+            fit_kwargs = {"sample_weight": sample_weight} if sample_weight is not None else {}
+            model.fit(train_scaled, gy_train, **fit_kwargs)
+            probability = model.predict_proba(test_scaled)[:, 1]
+            pred = (probability >= 0.5).astype(int)
+            accuracy = round(float((pred == gy_test).mean()), 3)
+            score = probability_scores(gy_test, probability)
+            result = {
+                "name": name,
+                "columns": columns,
+                "accuracy": accuracy,
+                "score": score,
+                "probability": probability,
+                "pred": pred,
+                "mean": mean,
+                "std": std,
+                "model": model,
+                "model_type": model.__class__.__name__,
+                "prediction_unit": "game",
+                "test_frame": game_frame.iloc[game_split:].copy(),
+                "y_test": gy_test,
+            }
+            candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
+            best = pick_better_model(best, result)
 
     columns = best["columns"]
     probability = best["probability"]
@@ -632,15 +836,33 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     std = best["std"]
     weights = best.get("weights")
     bias = best.get("bias")
-    recent = features.iloc[split_index:].copy()
-    recent["경기일"] = pd.to_datetime(recent["date"]).dt.strftime("%Y-%m-%d")
-    recent["기준팀"] = recent["team"]
-    recent["상대팀"] = recent["opponent"]
-    recent["예측승률"] = [f"{p:.1%}" for p in probability]
-    recent["예측"] = np.where(pred == 1, "승리 예측", "패배 예측")
-    recent["예측 구단"] = np.where(pred == 1, recent["team"], recent["opponent"])
-    recent["실제 승리 구단"] = np.where(y_test == 1, recent["team"], recent["opponent"])
-    recent["예측 근거"] = recent.apply(lambda row: prediction_reason(row, row["예측 구단"]), axis=1)
+    prediction_unit = best.get("prediction_unit", "team")
+    y_eval = best.get("y_test", y_test)
+
+    if prediction_unit == "game":
+        recent = best["test_frame"].copy()
+        recent["경기일"] = pd.to_datetime(recent["date"]).dt.strftime("%Y-%m-%d")
+        recent["기준팀"] = recent["home_team"]
+        recent["상대팀"] = recent["away_team"]
+        recent["예측승률"] = [f"{max(p, 1 - p):.1%}" for p in probability]
+        recent["예측 구단"] = np.where(probability >= 0.5, recent["home_team"], recent["away_team"])
+        recent["예측"] = np.where(probability >= 0.5, "승리 예측", "패배 예측")
+        recent["실제 승리 구단"] = np.where(y_eval == 1, recent["home_team"], recent["away_team"])
+        recent["예측 근거"] = recent.apply(lambda row: game_prediction_reason(row, row["예측 구단"]), axis=1)
+        train_rows = int(len(game_frame) - len(recent))
+        test_rows = int(len(recent))
+    else:
+        recent = features.iloc[split_index:].copy()
+        recent["경기일"] = pd.to_datetime(recent["date"]).dt.strftime("%Y-%m-%d")
+        recent["기준팀"] = recent["team"]
+        recent["상대팀"] = recent["opponent"]
+        recent["예측승률"] = [f"{p:.1%}" for p in probability]
+        recent["예측"] = np.where(pred == 1, "승리 예측", "패배 예측")
+        recent["예측 구단"] = np.where(pred == 1, recent["team"], recent["opponent"])
+        recent["실제 승리 구단"] = np.where(y_test == 1, recent["team"], recent["opponent"])
+        recent["예측 근거"] = recent.apply(lambda row: prediction_reason(row, row["예측 구단"]), axis=1)
+        train_rows = int(len(x_train))
+        test_rows = int(len(x_test))
 
     prediction_input = DATA_DIR / "prediction_games.csv"
     current_games.to_csv(prediction_input, index=False, encoding="utf-8-sig")
@@ -651,7 +873,45 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         & (prediction_features["target_win"].isna())
     ].copy()
     today_predictions = []
-    if not today_features.empty:
+    if not today_features.empty and prediction_unit == "game":
+        game_prediction_frame = build_game_level_frame(prediction_features)
+        game_prediction_frame["date_obj"] = pd.to_datetime(game_prediction_frame["date"]).dt.date
+        today_games = game_prediction_frame[
+            (game_prediction_frame["date_obj"] == prediction_date)
+            & (game_prediction_frame["target_home_win"].isna())
+        ].copy()
+        if not today_games.empty:
+            prediction_scaled = align_game_level_matrix(today_games.drop(columns=["date_obj"]), columns, mean, std)
+            game_probability = best["model"].predict_proba(prediction_scaled)[:, 1]
+            rows = []
+            for (_, row), home_prob in zip(today_games.iterrows(), game_probability):
+                home_pick = home_prob >= 0.5
+                predicted_team = row["home_team"] if home_pick else row["away_team"]
+                reason = game_prediction_reason(row, predicted_team)
+                rows.append(
+                    {
+                        "경기일": row["date"],
+                        "기준팀": row["home_team"],
+                        "상대팀": row["away_team"],
+                        "예측 구단": predicted_team,
+                        "예측승률": f"{home_prob:.1%}",
+                        "예측": "승리 예측" if home_pick else "패배 예측",
+                        "예측 근거": reason,
+                    }
+                )
+                rows.append(
+                    {
+                        "경기일": row["date"],
+                        "기준팀": row["away_team"],
+                        "상대팀": row["home_team"],
+                        "예측 구단": predicted_team,
+                        "예측승률": f"{1 - home_prob:.1%}",
+                        "예측": "승리 예측" if not home_pick else "패배 예측",
+                        "예측 근거": reason,
+                    }
+                )
+            today_predictions = rows
+    elif not today_features.empty:
         prediction_scaled = align_prediction_matrix(today_features.drop(columns=["date_obj"]), columns, mean, std)
         if best["model_type"] == "from_scratch_logistic_regression":
             raw_today_probability = sigmoid(prediction_scaled.to_numpy() @ weights + bias)
@@ -672,18 +932,19 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         "training_cutoff": cutoff.isoformat(),
         "training_start_year": int(completed["date"].dt.year.min()),
         "training_end_year": int(completed["date"].dt.year.max()),
-        "train_rows": int(len(x_train)),
-        "test_rows": int(len(x_test)),
+        "train_rows": train_rows,
+        "test_rows": test_rows,
         "accuracy": accuracy,
         "selected_model": best["name"],
         "candidate_results": candidate_results,
-        "confidence_metrics": confidence_metrics(y_test, probability),
-        "calibration_table": calibration_table(y_test, probability),
+        "confidence_metrics": confidence_metrics(y_eval, probability),
+        "calibration_table": calibration_table(y_eval, probability),
         "recent_backtest": recent[["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"]].tail(12).to_dict(orient="records"),
         "today_predictions": today_predictions,
         "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
         "feature_columns": columns,
         "model_type": best["model_type"],
+        "prediction_unit": prediction_unit,
     }
     if best["model_type"] == "from_scratch_logistic_regression":
         payload["bias"] = round(float(bias), 6)
@@ -895,6 +1156,19 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     confidence_rows = model_payload.get("confidence_metrics", []) if model_payload.get("available") else []
     calibration_rows = model_payload.get("calibration_table", []) if model_payload.get("available") else []
     candidate_rows = model_payload.get("candidate_results", []) if model_payload.get("available") else []
+    prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []))
+    summary = today_summary(prediction_cards)
+    prediction_cards_html = "".join(
+        f"""
+        <article class="prediction-card">
+          <div class="matchup">{escape(row["경기"])}</div>
+          <h3>{escape(row["추천"])} <span>{escape(row["예측승률"])}</span></h3>
+          <div class="badges"><span>신뢰도 {escape(row["신뢰도"])}</span><span>{escape(row["판단"])}</span></div>
+          <p>{escape(row["핵심 근거"])}</p>
+        </article>
+        """
+        for row in prediction_cards
+    ) or '<p class="note">오늘 표시할 예측 카드가 없습니다.</p>'
     team_buttons = "".join(
         f'<button type="button" class="team-button" data-team="{escape(team)}">{escape(team)}</button>'
         for team in standings["팀"]
@@ -931,7 +1205,18 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .tables {{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }}
     .wide-table {{ overflow-x: auto; }}
     .note {{ color: #637083; font-size: 13px; margin-top: 10px; }}
+    .insight-lead {{ font-size: 18px; line-height: 1.55; margin: 0 0 16px; }}
+    .prediction-cards {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }}
+    .prediction-card {{ border:1px solid #d9e1ec; border-radius:8px; padding:16px; background:#fbfcfe; }}
+    .prediction-card .matchup {{ color:#637083; font-size:13px; font-weight:700; margin-bottom:8px; }}
+    .prediction-card h3 {{ display:flex; justify-content:space-between; gap:10px; font-size:20px; }}
+    .prediction-card h3 span {{ color:#1d4ed8; white-space:nowrap; }}
+    .badges {{ display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }}
+    .badges span {{ border:1px solid #c8d2df; border-radius:999px; padding:4px 8px; font-size:12px; font-weight:700; background:white; }}
+    details {{ margin-top:16px; }}
+    summary {{ cursor:pointer; font-weight:700; }}
     @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons {{ grid-template-columns: 1fr; }} main {{ padding: 16px; }} }}
+    @media (max-width: 960px) {{ .prediction-cards {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>
@@ -940,6 +1225,19 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
   <div class="meta">KBO 공식 기록 기준 · 생성일 {generated_at.isoformat()} · 모델 학습 기준일 {escape(model_payload.get("training_cutoff", ""))}</div>
 </header>
 <main>
+  <section class="section">
+    <div class="eyebrow">TODAY · 오늘의 판단</div>
+    <h2>오늘의 KBO 예측 요약</h2>
+    <p class="insight-lead">{escape(summary["headline"])}</p>
+    <div class="grid">
+      <div class="metric">가장 높은 예측<strong>{escape(str(summary["top_pick"]))}</strong></div>
+      <div class="metric">예측 가능 경기<strong>{escape(str(summary["possible_games"]))}</strong></div>
+      <div class="metric">박빙/참고 경기<strong>{escape(str(summary["close_games"]))}</strong></div>
+      <div class="metric">모델 한계<strong>선발·불펜·라인업 미반영</strong></div>
+    </div>
+    <div class="prediction-cards">{prediction_cards_html}</div>
+  </section>
+
   <section class="section">
     <div class="section-title">
       <div>
@@ -995,22 +1293,26 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="metric">검증 행<strong>{model_payload.get("test_rows", "-")}</strong></div>
       <div class="metric">검증 정확도<strong>{model_payload.get("accuracy", "-")}</strong></div>
     </div>
-    <div class="subsection">
-      <h3>확신 구간별 검증</h3>
-      {table_html(confidence_rows, ["구간", "경기 수", "적중률"]) if confidence_rows else "<p>확신 구간 결과를 생성할 수 없습니다.</p>"}
-    </div>
-    <div class="subsection">
-      <h3>확률 보정 검증</h3>
-      {table_html(calibration_rows, ["예측승률 구간", "경기 수", "평균 예측승률", "실제 승률"]) if calibration_rows else "<p>확률 보정 결과를 생성할 수 없습니다.</p>"}
-    </div>
-    <div class="subsection">
-      <h3>모델 후보 비교</h3>
-      {table_html(candidate_rows, ["모델", "검증 정확도", "Brier Score", "Log Loss", "피처 수"]) if candidate_rows else "<p>모델 후보 결과를 생성할 수 없습니다.</p>"}
-    </div>
-    <div class="subsection">
-      <h3>최근 검증 경기</h3>
-    {table_html(model_rows, ["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
-    </div>
+    <p class="note">모델 상태: 전체 적중률 {model_payload.get("accuracy", "-")}, 55% 이상 예측 경기 적중률 {confidence_rows[1]["적중률"] if len(confidence_rows) > 1 else "-"}입니다. 60% 이상 구간은 과신 가능성이 있어 강한 정배가 아니라 참고 신호로 해석합니다.</p>
+    <details>
+      <summary>모델 검증 상세 보기</summary>
+      <div class="subsection">
+        <h3>확신 구간별 검증</h3>
+        {table_html(confidence_rows, ["구간", "경기 수", "적중률"]) if confidence_rows else "<p>확신 구간 결과를 생성할 수 없습니다.</p>"}
+      </div>
+      <div class="subsection">
+        <h3>확률 보정 검증</h3>
+        {table_html(calibration_rows, ["예측승률 구간", "경기 수", "평균 예측승률", "실제 승률"]) if calibration_rows else "<p>확률 보정 결과를 생성할 수 없습니다.</p>"}
+      </div>
+      <div class="subsection">
+        <h3>모델 후보 비교</h3>
+        {table_html(candidate_rows, ["모델", "검증 정확도", "Brier Score", "Log Loss", "피처 수"]) if candidate_rows else "<p>모델 후보 결과를 생성할 수 없습니다.</p>"}
+      </div>
+      <div class="subsection">
+        <h3>최근 검증 경기</h3>
+        {table_html(model_rows, ["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
+      </div>
+    </details>
     <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 선발투수, 불펜 소모, 라인업, 결장자 정보는 다음 단계 피처로 분리해 추가할 예정입니다.</p>
   </section>
 </main>

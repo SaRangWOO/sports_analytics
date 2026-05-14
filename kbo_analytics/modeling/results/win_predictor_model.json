@@ -70,6 +70,34 @@
       "피처 수": 64,
       "Brier Score": 0.251,
       "Log Loss": 0.694
+    },
+    {
+      "모델": "경기 단위 RandomForest 모델",
+      "검증 정확도": 0.51,
+      "피처 수": 35,
+      "Brier Score": 0.25,
+      "Log Loss": 0.694
+    },
+    {
+      "모델": "경기 단위 RandomForest 시간가중 모델",
+      "검증 정확도": 0.521,
+      "피처 수": 35,
+      "Brier Score": 0.251,
+      "Log Loss": 0.694
+    },
+    {
+      "모델": "경기 단위 GradientBoosting 모델",
+      "검증 정확도": 0.502,
+      "피처 수": 35,
+      "Brier Score": 0.26,
+      "Log Loss": 0.715
+    },
+    {
+      "모델": "경기 단위 GradientBoosting 확률보정(sigmoid)",
+      "검증 정확도": 0.506,
+      "피처 수": 35,
+      "Brier Score": 0.251,
+      "Log Loss": 0.695
     }
   ],
   "confidence_metrics": [
@@ -417,5 +445,6 @@
     "opponent_키움",
     "opponent_한화"
   ],
-  "model_type": "HistGradientBoostingClassifier"
+  "model_type": "HistGradientBoostingClassifier",
+  "prediction_unit": "team"
 }
