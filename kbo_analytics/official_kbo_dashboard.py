@@ -321,7 +321,6 @@ def prediction_reason(row: pd.Series, predicted_team: str | None = None):
     predicted_team = predicted_team or row.get("team")
     team_perspective = predicted_team == row.get("team")
     reasons = []
-    elo_diff = row.get("elo_diff", 0) if team_perspective else -row.get("elo_diff", 0)
     season_gap = row.get("season_win_rate_gap", 0) if team_perspective else -row.get("season_win_rate_gap", 0)
     recent_gap = row.get("recent_5_win_rate_gap", 0) if team_perspective else -row.get("recent_5_win_rate_gap", 0)
     recent_10_gap = row.get("recent_10_win_rate_gap", 0) if team_perspective else -row.get("recent_10_win_rate_gap", 0)
@@ -332,9 +331,6 @@ def prediction_reason(row: pd.Series, predicted_team: str | None = None):
     opponent_run_diff = row.get("opponent_avg_run_diff_last_5", 0) if team_perspective else row.get("avg_run_diff_last_5", 0)
     is_home_side = row.get("is_home", 0) == 1 if team_perspective else row.get("is_home", 0) == 0
     games_last_7 = row.get("games_last_7_days", 0)
-
-    if elo_diff > 20:
-        reasons.append(f"{predicted_team} Elo 전력 우위")
 
     if season_gap > 0.03:
         reasons.append(f"{predicted_team} 시즌 누적 승률 우위")
@@ -397,7 +393,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             col for col in x.columns
             if col not in {"team_elo_pre", "opponent_elo_pre", "elo_diff", "games_last_7_days", "back_to_back"}
         ],
-        "Elo/일정 피로도 포함 모델": list(x.columns),
+        "전력/일정 피로도 포함 모델": list(x.columns),
         "핵심 수치 모델": [
             col for col in [
                 "is_home",
