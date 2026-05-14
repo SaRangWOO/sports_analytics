@@ -280,6 +280,29 @@ def align_prediction_matrix(features: pd.DataFrame, feature_columns: list[str], 
     return (x - mean) / std.replace(0, 1)
 
 
+def prediction_reason(row: pd.Series):
+    reasons = []
+    if row.get("season_win_rate_gap", 0) > 0.03:
+        reasons.append("시즌 누적 승률 우위")
+    elif row.get("season_win_rate_gap", 0) < -0.03:
+        reasons.append("상대 시즌 승률 우위")
+
+    if row.get("recent_5_win_rate_gap", 0) > 0.15:
+        reasons.append("최근 5경기 흐름 우위")
+    elif row.get("recent_5_win_rate_gap", 0) < -0.15:
+        reasons.append("상대 최근 흐름 우위")
+
+    if row.get("avg_run_diff_last_5", 0) > row.get("opponent_avg_run_diff_last_5", 0) + 0.8:
+        reasons.append("최근 득실차 우위")
+    elif row.get("avg_run_diff_last_5", 0) + 0.8 < row.get("opponent_avg_run_diff_last_5", 0):
+        reasons.append("상대 득실차 우위")
+
+    if row.get("is_home", 0) == 1:
+        reasons.append("홈 경기")
+
+    return ", ".join(reasons[:2]) if reasons else "양 팀 지표가 비슷해 기본 전력과 최근 흐름을 종합"
+
+
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date):
     training_games = training_games.copy()
     training_games["date"] = pd.to_datetime(training_games["date"])
@@ -312,7 +335,9 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     recent = features.iloc[split_index:].copy()
     recent["예측승률"] = [f"{p:.1%}" for p in probability]
     recent["예측"] = np.where(pred == 1, "승리 예측", "패배 예측")
-    recent["실제"] = np.where(y_test == 1, "승", "패")
+    recent["예측 구단"] = np.where(pred == 1, recent["team"], recent["opponent"])
+    recent["실제 승리 구단"] = np.where(y_test == 1, recent["team"], recent["opponent"])
+    recent["예측 근거"] = recent.apply(prediction_reason, axis=1)
     recent["date"] = pd.to_datetime(recent["date"]).dt.strftime("%Y-%m-%d")
 
     prediction_input = DATA_DIR / "prediction_games.csv"
@@ -329,8 +354,10 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         today_probability = sigmoid(prediction_scaled.to_numpy() @ weights + bias)
         today_features["예측승률"] = [f"{p:.1%}" for p in today_probability]
         today_features["예측"] = np.where(today_probability >= 0.5, "승리 예측", "패배 예측")
+        today_features["예측 구단"] = np.where(today_probability >= 0.5, today_features["team"], today_features["opponent"])
+        today_features["예측 근거"] = today_features.apply(prediction_reason, axis=1)
         today_features["date"] = pd.to_datetime(today_features["date"]).dt.strftime("%Y-%m-%d")
-        today_predictions = today_features[["date", "team", "opponent", "예측승률", "예측"]].to_dict(orient="records")
+        today_predictions = today_features[["date", "team", "opponent", "예측 구단", "예측승률", "예측", "예측 근거"]].to_dict(orient="records")
 
     payload = {
         "available": True,
@@ -340,7 +367,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         "train_rows": int(len(x_train)),
         "test_rows": int(len(x_test)),
         "accuracy": accuracy,
-        "recent_backtest": recent[["date", "team", "opponent", "예측승률", "예측", "실제"]].tail(12).to_dict(orient="records"),
+        "recent_backtest": recent[["date", "team", "opponent", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"]].tail(12).to_dict(orient="records"),
         "today_predictions": today_predictions,
         "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
         "feature_columns": list(x.columns),
@@ -361,6 +388,154 @@ def table_html(rows, columns, limit=None):
     for row in data:
         body.append("<tr>" + "".join(f"<td>{escape(str(row.get(col, '')))}</td>" for col in columns) + "</tr>")
     return f"<table><thead><tr>{header}</tr></thead><tbody>{''.join(body)}</tbody></table>"
+
+
+def pct(value):
+    return f"{value:.3f}"
+
+
+def record_summary(frame: pd.DataFrame):
+    wins = int((frame["result"] == "Win").sum())
+    losses = int((frame["result"] == "Loss").sum())
+    draws = int((frame["result"] == "Draw").sum())
+    games = wins + losses + draws
+    win_rate = wins / max(wins + losses, 1)
+    return games, wins, losses, draws, win_rate
+
+
+def build_kt_deep_dive(standings, vs_table, games, hitters, pitchers, generated_at: date):
+    kt_standing = standings[standings["팀"] == "KT"].iloc[0]
+    completed = games[(games["team"] == "KT") & (games["status"] == "Final")].copy()
+    completed["date"] = pd.to_datetime(completed["date"])
+    completed["득실차"] = completed["score_team"] - completed["score_opp"]
+    games_count, wins, losses, draws, win_rate = record_summary(completed)
+    runs_for = int(completed["score_team"].sum())
+    runs_against = int(completed["score_opp"].sum())
+    run_diff = runs_for - runs_against
+    pythag = runs_for**2 / max(runs_for**2 + runs_against**2, 1)
+
+    home_away = completed.groupby("home_away").agg(
+        경기=("game_id", "count"),
+        승=("result", lambda s: int((s == "Win").sum())),
+        패=("result", lambda s: int((s == "Loss").sum())),
+        평균득점=("score_team", "mean"),
+        평균실점=("score_opp", "mean"),
+        평균득실차=("득실차", "mean"),
+    ).reset_index()
+    home_away["구분"] = home_away["home_away"].map({"H": "홈", "A": "원정"})
+    home_away["승률"] = home_away["승"] / (home_away["승"] + home_away["패"]).replace(0, pd.NA)
+    home_away = home_away[["구분", "경기", "승", "패", "승률", "평균득점", "평균실점", "평균득실차"]].round(3)
+
+    opponent = completed.groupby("opponent").agg(
+        경기=("game_id", "count"),
+        승=("result", lambda s: int((s == "Win").sum())),
+        패=("result", lambda s: int((s == "Loss").sum())),
+        평균득점=("score_team", "mean"),
+        평균실점=("score_opp", "mean"),
+        평균득실차=("득실차", "mean"),
+    ).reset_index().rename(columns={"opponent": "상대"})
+    opponent["승률"] = opponent["승"] / (opponent["승"] + opponent["패"]).replace(0, pd.NA)
+    opponent = opponent.sort_values(["승률", "평균득실차"], ascending=False).round(3)
+
+    monthly = completed.assign(월=completed["date"].dt.strftime("%Y-%m")).groupby("월").agg(
+        경기=("game_id", "count"),
+        승=("result", lambda s: int((s == "Win").sum())),
+        패=("result", lambda s: int((s == "Loss").sum())),
+        평균득점=("score_team", "mean"),
+        평균실점=("score_opp", "mean"),
+        평균득실차=("득실차", "mean"),
+    ).reset_index()
+    monthly["승률"] = monthly["승"] / (monthly["승"] + monthly["패"]).replace(0, pd.NA)
+    monthly = monthly.round(3)
+
+    recent = completed.sort_values("date", ascending=False).head(12).copy()
+    recent["경기일"] = recent["date"].dt.strftime("%Y-%m-%d")
+    recent["구분"] = recent["home_away"].map({"H": "홈", "A": "원정"})
+    recent["결과"] = recent["result"].map({"Win": "승", "Loss": "패", "Draw": "무"})
+    recent["스코어"] = recent["score_team"].astype("Int64").astype(str) + " - " + recent["score_opp"].astype("Int64").astype(str)
+
+    kt_hitters = hitters[hitters["팀"] == "KT"].copy().head(12)
+    kt_pitchers = pitchers[pitchers["팀"] == "KT"].copy().head(12)
+    top_hitter = kt_hitters.iloc[0]["선수"] if not kt_hitters.empty else "-"
+    top_pitcher = kt_pitchers.iloc[0]["선수"] if not kt_pitchers.empty else "-"
+
+    insight_rows = [
+        {"인사이트": "1위의 직접 근거", "내용": f"{wins}승 {losses}패 {draws}무, 승률 {pct(win_rate)}로 순위표 1위입니다."},
+        {"인사이트": "득실 균형", "내용": f"득점 {runs_for}, 실점 {runs_against}, 득실차 {run_diff:+d}. 피타고리안 기대 승률은 {pct(pythag)}입니다."},
+        {"인사이트": "홈/원정 분리", "내용": "홈과 원정 성과를 분리해 1위가 특정 구장 효과인지 전력 안정성인지 확인합니다."},
+        {"인사이트": "상대별 강약", "내용": "상대 전적과 평균 득실차를 함께 보면 어떤 매치업에서 승수를 벌었는지 보입니다."},
+        {"인사이트": "선수 기여", "내용": f"타자 기록 상위는 {top_hitter}, 투수 기록 상위는 {top_pitcher}가 현재 테이블 최상단입니다."},
+    ]
+
+    html = f"""<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KT 2026 시즌 심층 분석</title>
+  <style>
+    body {{ margin:0; font-family:Arial,sans-serif; color:#1b1f24; background:#f4f6f8; }}
+    header {{ background:#172033; color:white; padding:30px 32px; }}
+    main {{ padding:24px 32px 48px; max-width:1440px; margin:0 auto; }}
+    a {{ color:#1d4ed8; font-weight:700; text-decoration:none; }}
+    h1,h2,h3 {{ margin:0 0 14px; }}
+    .section {{ margin-top:22px; background:white; border:1px solid #dde3ea; border-radius:8px; padding:18px; }}
+    .grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }}
+    .metric {{ border:1px solid #e1e7ef; border-radius:8px; padding:14px; background:#fbfcfe; }}
+    .metric strong {{ display:block; font-size:24px; margin-top:6px; }}
+    .tables {{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }}
+    table {{ width:100%; border-collapse:collapse; font-size:14px; }}
+    th,td {{ padding:9px 10px; border-bottom:1px solid #e5e9f0; text-align:right; white-space:nowrap; }}
+    th:first-child,td:first-child,td:nth-child(2) {{ text-align:left; }}
+    th {{ background:#f0f3f7; }}
+    .note {{ color:#637083; font-size:13px; }}
+    @media (max-width:960px) {{ .grid,.tables {{ grid-template-columns:1fr; }} main {{ padding:16px; }} }}
+  </style>
+</head>
+<body>
+<header>
+  <h1>KT 2026 시즌 심층 분석</h1>
+  <div>생성일 {generated_at.isoformat()} · <a href="latest.html">KBO 리그 대시보드로 돌아가기</a></div>
+</header>
+<main>
+  <section class="section">
+    <h2>KT가 1위인 이유 요약</h2>
+    <div class="grid">
+      <div class="metric">순위<strong>{kt_standing["순위"]}위</strong></div>
+      <div class="metric">전적<strong>{wins}승 {losses}패 {draws}무</strong></div>
+      <div class="metric">득실차<strong>{run_diff:+d}</strong></div>
+      <div class="metric">기대 승률<strong>{pct(pythag)}</strong></div>
+    </div>
+    {table_html(insight_rows, ["인사이트", "내용"])}
+  </section>
+  <section class="section">
+    <h2>경기력 분해</h2>
+    <div class="tables">
+      <div><h3>홈/원정</h3>{table_html(home_away, ["구분", "경기", "승", "패", "승률", "평균득점", "평균실점", "평균득실차"])}</div>
+      <div><h3>월별 흐름</h3>{table_html(monthly, ["월", "경기", "승", "패", "승률", "평균득점", "평균실점", "평균득실차"])}</div>
+    </div>
+  </section>
+  <section class="section">
+    <h2>상대별 매치업</h2>
+    {table_html(opponent, ["상대", "경기", "승", "패", "승률", "평균득점", "평균실점", "평균득실차"])}
+  </section>
+  <section class="section">
+    <h2>최근 경기</h2>
+    {table_html(recent, ["경기일", "opponent", "구분", "결과", "스코어", "득실차"])}
+  </section>
+  <section class="section">
+    <h2>선수 지표</h2>
+    <div class="tables">
+      <div><h3>타자</h3>{table_html(kt_hitters, ["선수", "경기", "타석", "타수", "안타", "홈런", "볼넷", "삼진", "타율", "출루율", "장타율", "OPS"])}</div>
+      <div><h3>투수</h3>{table_html(kt_pitchers, ["선수", "경기", "승", "패", "세이브", "홀드", "이닝", "자책", "탈삼진", "볼넷", "ERA", "WHIP"])}</div>
+    </div>
+  </section>
+</main>
+</body>
+</html>"""
+    (DASHBOARD_DIR / "kt.html").write_text(html, encoding="utf-8")
+    PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
+    (PUBLIC_DIR / "kt.html").write_text(html, encoding="utf-8")
 
 
 def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, generated_at: date):
@@ -426,6 +601,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .team-button {{ border: 1px solid #c8d2df; background: #fff; border-radius: 6px; padding: 9px 6px; cursor: pointer; font-weight: 700; }}
     .team-button.active {{ background: #172033; border-color: #172033; color: white; }}
     .subsection {{ margin-top: 18px; }}
+    .action-link {{ display:inline-block; margin-top:10px; padding:9px 12px; border-radius:6px; background:#172033; color:white; font-weight:700; text-decoration:none; }}
     .tables {{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }}
     .wide-table {{ overflow-x: auto; }}
     .note {{ color: #637083; font-size: 13px; margin-top: 10px; }}
@@ -468,6 +644,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="team-buttons">{team_buttons}</div>
     </div>
     <div class="grid" id="teamMetrics"></div>
+    <a class="action-link" id="ktDeepDiveLink" href="kt.html">KT 1위 원인 심층 분석 보기</a>
     <div class="subsection">
       <h3>오늘 경기 승패 예측</h3>
       <div id="todayPrediction"></div>
@@ -492,7 +669,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="metric">검증 행<strong>{model_payload.get("test_rows", "-")}</strong></div>
       <div class="metric">검증 정확도<strong>{model_payload.get("accuracy", "-")}</strong></div>
     </div>
-    {table_html(model_rows, ["date", "team", "opponent", "예측승률", "예측", "실제"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
+    {table_html(model_rows, ["date", "team", "opponent", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
     <p class="note">예측 모델은 월요일 갱신 기준 지난주까지의 완료 경기만 학습/검증에 사용합니다. 현재 주 경기 결과는 적중률 계산에 섞지 않습니다.</p>
   </section>
 </main>
@@ -513,7 +690,8 @@ function renderTeam(team) {{
     ['순위', s['순위']], ['시즌 전적', `${{s['승']}}승 ${{s['패']}}패 ${{s['무']}}무`],
     ['승률', s['승률']], ['최근10경기', s['최근10경기']]
   ].map(([k,v]) => `<div class="metric">${{k}}<strong>${{v}}</strong></div>`).join('');
-  document.getElementById('todayPrediction').innerHTML = renderTable(data.today_predictions, ['date','team','opponent','예측승률','예측']);
+  document.getElementById('ktDeepDiveLink').style.display = team === 'KT' ? 'inline-block' : 'none';
+  document.getElementById('todayPrediction').innerHTML = renderTable(data.today_predictions, ['date','team','opponent','예측 구단','예측승률','예측','예측 근거']);
   document.getElementById('recentGames').innerHTML = renderTable(data.recent, ['경기일','상대','구분','결과','스코어']);
   document.getElementById('vsTable').innerHTML = renderTable(data.vs, ['상대','전적']);
   document.getElementById('hitterTable').innerHTML = renderTable(data.hitters, ['선수','경기','타석','타수','안타','홈런','볼넷','삼진','타율','출루율','장타율','OPS']);
@@ -557,6 +735,7 @@ def main():
     load_official_tables_to_db(standings, vs_table, games, hitters, pitchers)
     model_payload = evaluate_model(training_games, games, previous_sunday(ref_date), ref_date)
     build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, ref_date)
+    build_kt_deep_dive(standings, vs_table, games, hitters, pitchers, ref_date)
     print(
         f"[Success] official KBO dashboard generated: teams={len(standings)}, "
         f"current_game_rows={len(games)}, training_game_rows={len(training_games)}"
