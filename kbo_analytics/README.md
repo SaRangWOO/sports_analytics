@@ -13,6 +13,12 @@ KBO official record/schedule pages
         v
 official_kbo_dashboard.py
         |
+        +-- PostgreSQL
+        |     +-- game_results
+        |     +-- official_team_standings
+        |     +-- official_team_vs_team
+        |     +-- official_hitter_stats
+        |     +-- official_pitcher_stats
         +-- dashboard/latest.html
         +-- dashboard/latest_summary.md
         +-- data/official/*.csv
@@ -50,7 +56,7 @@ docker compose up -d
 .venv/bin/python official_kbo_dashboard.py
 ```
 
-현재 운영 대시보드는 KBO 공식 팀 순위, 일정/결과, 선수 기록 페이지를 직접 조회해 만듭니다. 기존 `mock_api`와 PostgreSQL은 파이프라인 테스트용으로만 남겨두며, 리그 현황 대시보드의 기준 데이터로 사용하지 않습니다.
+현재 운영 대시보드는 KBO 공식 팀 순위, 일정/결과, 선수 기록 페이지를 직접 조회해 만듭니다. `official_kbo_dashboard.py`는 공식 데이터를 CSV로 저장하고 PostgreSQL에도 다시 적재합니다. 기존 `mock_api`는 파이프라인 테스트용으로만 남겨두며, 리그 현황 대시보드의 기준 데이터로 사용하지 않습니다.
 
 기존 mock 파이프라인을 다시 검증해야 할 때만 시즌 시작일부터 오늘까지 누적 적재합니다.
 
@@ -73,6 +79,7 @@ DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekl
 - HTML 대시보드: `dashboard/latest.html`
 - 요약 리포트: `dashboard/latest_summary.md`
 - 공식 데이터 스냅샷: `data/official/`
+- PostgreSQL 공식 테이블: `game_results`, `official_team_standings`, `official_team_vs_team`, `official_hitter_stats`, `official_pitcher_stats`
 - 예측 모델 결과: `modeling/results/win_predictor_model.json`
 - 예측 모델 성능 이력: `modeling/results/model_history.json`
 - Metabase: PostgreSQL의 `game_results`, `player_game_stats` 테이블 연결

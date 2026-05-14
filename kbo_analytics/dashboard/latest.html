@@ -6,11 +6,13 @@
   <title>KBO 리그 분석 대시보드</title>
   <style>
     body { margin: 0; font-family: Arial, sans-serif; color: #1b1f24; background: #f4f6f8; }
-    header { background: #152238; color: white; padding: 28px 32px; }
+    header { background: #172033; color: white; padding: 30px 32px; }
     main { padding: 24px 32px 48px; max-width: 1440px; margin: 0 auto; }
     h1, h2, h3 { margin: 0 0 14px; }
     .meta { color: #d6e0ef; margin-top: 8px; }
     .section { margin-top: 22px; background: white; border: 1px solid #dde3ea; border-radius: 8px; padding: 18px; }
+    .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .eyebrow { color: #637083; font-size: 13px; font-weight: 700; }
     .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
     .metric { border: 1px solid #e1e7ef; border-radius: 8px; padding: 14px; background: #fbfcfe; }
     .metric strong { display: block; font-size: 24px; margin-top: 6px; }
@@ -19,9 +21,14 @@
     th:first-child, td:first-child, td:nth-child(2) { text-align: left; }
     th { background: #f0f3f7; font-weight: 700; }
     select { padding: 9px 12px; border: 1px solid #bcc7d4; border-radius: 6px; font-size: 15px; }
+    .team-picker { display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: start; margin-bottom: 18px; }
+    .team-buttons { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 8px; }
+    .team-button { border: 1px solid #c8d2df; background: #fff; border-radius: 6px; padding: 9px 6px; cursor: pointer; font-weight: 700; }
+    .team-button.active { background: #172033; border-color: #172033; color: white; }
     .tables { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .wide-table { overflow-x: auto; }
     .note { color: #637083; font-size: 13px; margin-top: 10px; }
-    @media (max-width: 960px) { .grid, .tables { grid-template-columns: 1fr; } main { padding: 16px; } }
+    @media (max-width: 960px) { .grid, .tables, .team-picker, .team-buttons { grid-template-columns: 1fr; } main { padding: 16px; } }
   </style>
 </head>
 <body>
@@ -31,13 +38,35 @@
 </header>
 <main>
   <section class="section">
-    <h2>리그 전체 순위</h2>
-    <table><thead><tr><th>순위</th><th>팀</th><th>경기</th><th>승</th><th>패</th><th>무</th><th>승률</th><th>게임차</th><th>최근10경기</th><th>연속</th><th>홈</th><th>방문</th></tr></thead><tbody><tr><td>1</td><td>KT</td><td>38</td><td>24</td><td>13</td><td>1</td><td>0.649</td><td>0</td><td>5승1무4패</td><td>1승</td><td>12-0-7</td><td>12-1-6</td></tr><tr><td>2</td><td>LG</td><td>38</td><td>23</td><td>15</td><td>0</td><td>0.605</td><td>1.5</td><td>5승0무5패</td><td>1승</td><td>14-0-8</td><td>9-0-7</td></tr><tr><td>3</td><td>삼성</td><td>38</td><td>22</td><td>15</td><td>1</td><td>0.595</td><td>2</td><td>8승0무2패</td><td>1패</td><td>11-1-7</td><td>11-0-8</td></tr><tr><td>4</td><td>SSG</td><td>38</td><td>20</td><td>17</td><td>1</td><td>0.541</td><td>4</td><td>3승1무6패</td><td>1패</td><td>9-1-9</td><td>11-0-8</td></tr><tr><td>5</td><td>KIA</td><td>39</td><td>18</td><td>20</td><td>1</td><td>0.474</td><td>6.5</td><td>5승0무5패</td><td>1승</td><td>10-1-8</td><td>8-0-12</td></tr><tr><td>5</td><td>두산</td><td>39</td><td>18</td><td>20</td><td>1</td><td>0.474</td><td>6.5</td><td>5승0무5패</td><td>1패</td><td>9-0-8</td><td>9-1-12</td></tr><tr><td>7</td><td>한화</td><td>38</td><td>17</td><td>21</td><td>0</td><td>0.447</td><td>7.5</td><td>6승0무4패</td><td>1패</td><td>6-0-14</td><td>11-0-7</td></tr><tr><td>8</td><td>NC</td><td>38</td><td>16</td><td>21</td><td>1</td><td>0.432</td><td>8</td><td>3승1무6패</td><td>1패</td><td>8-0-10</td><td>8-1-11</td></tr><tr><td>9</td><td>롯데</td><td>37</td><td>15</td><td>21</td><td>1</td><td>0.417</td><td>8.5</td><td>6승0무4패</td><td>1승</td><td>6-0-12</td><td>9-1-9</td></tr><tr><td>10</td><td>키움</td><td>39</td><td>14</td><td>24</td><td>1</td><td>0.368</td><td>10.5</td><td>3승1무6패</td><td>1승</td><td>10-1-9</td><td>4-0-15</td></tr></tbody></table>
+    <div class="section-title">
+      <div>
+        <div class="eyebrow">STEP 1 · 리그 전체 상황</div>
+        <h2>KBO 리그 전체 순위와 시즌 흐름</h2>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="metric">1위<strong>KT</strong></div>
+      <div class="metric">리그 완료 경기<strong>187</strong></div>
+      <div class="metric">순위표 기준 경기<strong>191</strong></div>
+      <div class="metric">생성일<strong>2026-05-14</strong></div>
+    </div>
+    <div class="wide-table">
+      <table><thead><tr><th>순위</th><th>팀</th><th>경기</th><th>승</th><th>패</th><th>무</th><th>승률</th><th>게임차</th><th>최근10경기</th><th>연속</th><th>홈</th><th>방문</th></tr></thead><tbody><tr><td>1</td><td>KT</td><td>38</td><td>24</td><td>13</td><td>1</td><td>0.649</td><td>0</td><td>5승1무4패</td><td>1승</td><td>12-0-7</td><td>12-1-6</td></tr><tr><td>2</td><td>LG</td><td>38</td><td>23</td><td>15</td><td>0</td><td>0.605</td><td>1.5</td><td>5승0무5패</td><td>1승</td><td>14-0-8</td><td>9-0-7</td></tr><tr><td>3</td><td>삼성</td><td>38</td><td>22</td><td>15</td><td>1</td><td>0.595</td><td>2</td><td>8승0무2패</td><td>1패</td><td>11-1-7</td><td>11-0-8</td></tr><tr><td>4</td><td>SSG</td><td>38</td><td>20</td><td>17</td><td>1</td><td>0.541</td><td>4</td><td>3승1무6패</td><td>1패</td><td>9-1-9</td><td>11-0-8</td></tr><tr><td>5</td><td>KIA</td><td>39</td><td>18</td><td>20</td><td>1</td><td>0.474</td><td>6.5</td><td>5승0무5패</td><td>1승</td><td>10-1-8</td><td>8-0-12</td></tr><tr><td>5</td><td>두산</td><td>39</td><td>18</td><td>20</td><td>1</td><td>0.474</td><td>6.5</td><td>5승0무5패</td><td>1패</td><td>9-0-8</td><td>9-1-12</td></tr><tr><td>7</td><td>한화</td><td>38</td><td>17</td><td>21</td><td>0</td><td>0.447</td><td>7.5</td><td>6승0무4패</td><td>1패</td><td>6-0-14</td><td>11-0-7</td></tr><tr><td>8</td><td>NC</td><td>38</td><td>16</td><td>21</td><td>1</td><td>0.432</td><td>8</td><td>3승1무6패</td><td>1패</td><td>8-0-10</td><td>8-1-11</td></tr><tr><td>9</td><td>롯데</td><td>37</td><td>15</td><td>21</td><td>1</td><td>0.417</td><td>8.5</td><td>6승0무4패</td><td>1승</td><td>6-0-12</td><td>9-1-9</td></tr><tr><td>10</td><td>키움</td><td>39</td><td>14</td><td>24</td><td>1</td><td>0.368</td><td>10.5</td><td>3승1무6패</td><td>1승</td><td>10-1-9</td><td>4-0-15</td></tr></tbody></table>
+    </div>
   </section>
 
   <section class="section">
-    <h2>구단별 상세 보기</h2>
-    <select id="teamSelect"><option value="KT">KT</option><option value="LG">LG</option><option value="삼성">삼성</option><option value="SSG">SSG</option><option value="KIA">KIA</option><option value="두산">두산</option><option value="한화">한화</option><option value="NC">NC</option><option value="롯데">롯데</option><option value="키움">키움</option></select>
+    <div class="section-title">
+      <div>
+        <div class="eyebrow">STEP 2 · 원하는 구단 선택</div>
+        <h2 id="teamTitle">구단 상세 분석</h2>
+      </div>
+      <select id="teamSelect" aria-label="구단 선택"><option value="KT">KT</option><option value="LG">LG</option><option value="삼성">삼성</option><option value="SSG">SSG</option><option value="KIA">KIA</option><option value="두산">두산</option><option value="한화">한화</option><option value="NC">NC</option><option value="롯데">롯데</option><option value="키움">키움</option></select>
+    </div>
+    <div class="team-picker">
+      <div class="note">버튼이나 선택 상자에서 구단을 바꾸면 아래 최근 경기, 상대 전적, 선수 기록이 해당 구단 기준으로 바뀝니다.</div>
+      <div class="team-buttons"><button type="button" class="team-button" data-team="KT">KT</button><button type="button" class="team-button" data-team="LG">LG</button><button type="button" class="team-button" data-team="삼성">삼성</button><button type="button" class="team-button" data-team="SSG">SSG</button><button type="button" class="team-button" data-team="KIA">KIA</button><button type="button" class="team-button" data-team="두산">두산</button><button type="button" class="team-button" data-team="한화">한화</button><button type="button" class="team-button" data-team="NC">NC</button><button type="button" class="team-button" data-team="롯데">롯데</button><button type="button" class="team-button" data-team="키움">키움</button></div>
+    </div>
     <div class="grid" id="teamMetrics"></div>
     <div class="tables">
       <div><h3>최근 10경기</h3><div id="recentGames"></div></div>
@@ -50,6 +79,7 @@
   </section>
 
   <section class="section">
+    <div class="eyebrow">STEP 3 · 모델링</div>
     <h2>경기 승패 예측 모델</h2>
     <div class="grid">
       <div class="metric">학습 행<strong>283</strong></div>
@@ -72,6 +102,9 @@ function renderTable(rows, cols) {
 function renderTeam(team) {
   const data = TEAM_DATA[team];
   const s = data.standings;
+  document.getElementById('teamTitle').textContent = `${team} 구단 상세 분석`;
+  document.querySelectorAll('.team-button').forEach(btn => btn.classList.toggle('active', btn.dataset.team === team));
+  document.getElementById('teamSelect').value = team;
   document.getElementById('teamMetrics').innerHTML = [
     ['순위', s['순위']], ['시즌 전적', `${s['승']}승 ${s['패']}패 ${s['무']}무`],
     ['승률', s['승률']], ['최근10경기', s['최근10경기']]
@@ -82,6 +115,7 @@ function renderTeam(team) {
   document.getElementById('pitcherTable').innerHTML = renderTable(data.pitchers, ['선수','경기','승','패','세이브','홀드','이닝','자책','탈삼진','볼넷','ERA','WHIP']);
 }
 document.getElementById('teamSelect').addEventListener('change', e => renderTeam(e.target.value));
+document.querySelectorAll('.team-button').forEach(btn => btn.addEventListener('click', () => renderTeam(btn.dataset.team)));
 renderTeam(document.getElementById('teamSelect').value);
 </script>
 </body>

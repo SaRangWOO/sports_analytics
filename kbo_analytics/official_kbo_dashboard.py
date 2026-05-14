@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from datetime import date, datetime, timedelta
 from html import escape, unescape
@@ -24,6 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data" / "official"
 DASHBOARD_DIR = BASE_DIR / "dashboard"
 RESULTS_DIR = BASE_DIR / "modeling" / "results"
+DB_URL = os.getenv("DB_URL", "postgresql://tera:tera@localhost:5432/baseball")
 KBO_BASE = "https://www.koreabaseball.com"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 TEAM_CODES = {
@@ -242,6 +244,22 @@ def export_sources(standings, vs_table, games, hitters, pitchers):
     pitchers.to_csv(DATA_DIR / "pitcher_stats.csv", index=False, encoding="utf-8-sig")
 
 
+def load_official_tables_to_db(standings, vs_table, games, hitters, pitchers):
+    from sqlalchemy import create_engine
+
+    engine = create_engine(DB_URL)
+    tables = {
+        "game_results": games,
+        "official_team_standings": standings,
+        "official_team_vs_team": vs_table,
+        "official_hitter_stats": hitters,
+        "official_pitcher_stats": pitchers,
+    }
+    with engine.begin() as connection:
+        for table_name, dataframe in tables.items():
+            dataframe.to_sql(table_name, connection, if_exists="replace", index=False)
+
+
 def evaluate_model(games: pd.DataFrame, cutoff: date):
     completed = games[(games["status"] == "Final") & (pd.to_datetime(games["date"]).dt.date <= cutoff)].copy()
     model_input = DATA_DIR / "model_training_games.csv"
@@ -301,6 +319,9 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     team_data = {}
     completed = games[games["status"] == "Final"].copy()
     completed["date"] = pd.to_datetime(completed["date"])
+    league_completed_games = completed["game_id"].str.rsplit("_", n=1).str[0].nunique()
+    league_games = standings["경기"].sum() // 2
+    league_leader = standings.iloc[0]
     for team in standings["팀"]:
         team_games = completed[completed["team"] == team].sort_values("date", ascending=False).head(10).copy()
         team_games["경기일"] = team_games["date"].dt.strftime("%Y-%m-%d")
@@ -318,6 +339,10 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
 
     payload = json.dumps(team_data, ensure_ascii=False)
     model_rows = model_payload.get("recent_backtest", []) if model_payload.get("available") else []
+    team_buttons = "".join(
+        f'<button type="button" class="team-button" data-team="{escape(team)}">{escape(team)}</button>'
+        for team in standings["팀"]
+    )
     html = f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -326,11 +351,13 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
   <title>KBO 리그 분석 대시보드</title>
   <style>
     body {{ margin: 0; font-family: Arial, sans-serif; color: #1b1f24; background: #f4f6f8; }}
-    header {{ background: #152238; color: white; padding: 28px 32px; }}
+    header {{ background: #172033; color: white; padding: 30px 32px; }}
     main {{ padding: 24px 32px 48px; max-width: 1440px; margin: 0 auto; }}
     h1, h2, h3 {{ margin: 0 0 14px; }}
     .meta {{ color: #d6e0ef; margin-top: 8px; }}
     .section {{ margin-top: 22px; background: white; border: 1px solid #dde3ea; border-radius: 8px; padding: 18px; }}
+    .section-title {{ display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }}
+    .eyebrow {{ color: #637083; font-size: 13px; font-weight: 700; }}
     .grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }}
     .metric {{ border: 1px solid #e1e7ef; border-radius: 8px; padding: 14px; background: #fbfcfe; }}
     .metric strong {{ display: block; font-size: 24px; margin-top: 6px; }}
@@ -339,9 +366,14 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     th:first-child, td:first-child, td:nth-child(2) {{ text-align: left; }}
     th {{ background: #f0f3f7; font-weight: 700; }}
     select {{ padding: 9px 12px; border: 1px solid #bcc7d4; border-radius: 6px; font-size: 15px; }}
+    .team-picker {{ display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: start; margin-bottom: 18px; }}
+    .team-buttons {{ display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 8px; }}
+    .team-button {{ border: 1px solid #c8d2df; background: #fff; border-radius: 6px; padding: 9px 6px; cursor: pointer; font-weight: 700; }}
+    .team-button.active {{ background: #172033; border-color: #172033; color: white; }}
     .tables {{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }}
+    .wide-table {{ overflow-x: auto; }}
     .note {{ color: #637083; font-size: 13px; margin-top: 10px; }}
-    @media (max-width: 960px) {{ .grid, .tables {{ grid-template-columns: 1fr; }} main {{ padding: 16px; }} }}
+    @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons {{ grid-template-columns: 1fr; }} main {{ padding: 16px; }} }}
   </style>
 </head>
 <body>
@@ -351,13 +383,35 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
 </header>
 <main>
   <section class="section">
-    <h2>리그 전체 순위</h2>
-    {table_html(standings, ["순위", "팀", "경기", "승", "패", "무", "승률", "게임차", "최근10경기", "연속", "홈", "방문"])}
+    <div class="section-title">
+      <div>
+        <div class="eyebrow">STEP 1 · 리그 전체 상황</div>
+        <h2>KBO 리그 전체 순위와 시즌 흐름</h2>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="metric">1위<strong>{escape(str(league_leader["팀"]))}</strong></div>
+      <div class="metric">리그 완료 경기<strong>{league_completed_games}</strong></div>
+      <div class="metric">순위표 기준 경기<strong>{league_games}</strong></div>
+      <div class="metric">생성일<strong>{generated_at.isoformat()}</strong></div>
+    </div>
+    <div class="wide-table">
+      {table_html(standings, ["순위", "팀", "경기", "승", "패", "무", "승률", "게임차", "최근10경기", "연속", "홈", "방문"])}
+    </div>
   </section>
 
   <section class="section">
-    <h2>구단별 상세 보기</h2>
-    <select id="teamSelect">{"".join(f'<option value="{escape(team)}">{escape(team)}</option>' for team in standings["팀"])}</select>
+    <div class="section-title">
+      <div>
+        <div class="eyebrow">STEP 2 · 원하는 구단 선택</div>
+        <h2 id="teamTitle">구단 상세 분석</h2>
+      </div>
+      <select id="teamSelect" aria-label="구단 선택">{"".join(f'<option value="{escape(team)}">{escape(team)}</option>' for team in standings["팀"])}</select>
+    </div>
+    <div class="team-picker">
+      <div class="note">버튼이나 선택 상자에서 구단을 바꾸면 아래 최근 경기, 상대 전적, 선수 기록이 해당 구단 기준으로 바뀝니다.</div>
+      <div class="team-buttons">{team_buttons}</div>
+    </div>
     <div class="grid" id="teamMetrics"></div>
     <div class="tables">
       <div><h3>최근 10경기</h3><div id="recentGames"></div></div>
@@ -370,6 +424,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
   </section>
 
   <section class="section">
+    <div class="eyebrow">STEP 3 · 모델링</div>
     <h2>경기 승패 예측 모델</h2>
     <div class="grid">
       <div class="metric">학습 행<strong>{model_payload.get("train_rows", "-")}</strong></div>
@@ -392,6 +447,9 @@ function renderTable(rows, cols) {{
 function renderTeam(team) {{
   const data = TEAM_DATA[team];
   const s = data.standings;
+  document.getElementById('teamTitle').textContent = `${{team}} 구단 상세 분석`;
+  document.querySelectorAll('.team-button').forEach(btn => btn.classList.toggle('active', btn.dataset.team === team));
+  document.getElementById('teamSelect').value = team;
   document.getElementById('teamMetrics').innerHTML = [
     ['순위', s['순위']], ['시즌 전적', `${{s['승']}}승 ${{s['패']}}패 ${{s['무']}}무`],
     ['승률', s['승률']], ['최근10경기', s['최근10경기']]
@@ -402,6 +460,7 @@ function renderTeam(team) {{
   document.getElementById('pitcherTable').innerHTML = renderTable(data.pitchers, ['선수','경기','승','패','세이브','홀드','이닝','자책','탈삼진','볼넷','ERA','WHIP']);
 }}
 document.getElementById('teamSelect').addEventListener('change', e => renderTeam(e.target.value));
+document.querySelectorAll('.team-button').forEach(btn => btn.addEventListener('click', () => renderTeam(btn.dataset.team)));
 renderTeam(document.getElementById('teamSelect').value);
 </script>
 </body>
@@ -431,6 +490,7 @@ def main():
     games = fetch_schedule(ref_date.year, ref_date.month)
     hitters, pitchers = fetch_player_stats()
     export_sources(standings, vs_table, games, hitters, pitchers)
+    load_official_tables_to_db(standings, vs_table, games, hitters, pitchers)
     model_payload = evaluate_model(games, previous_sunday(ref_date))
     build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, ref_date)
     print(f"[Success] official KBO dashboard generated: teams={len(standings)}, game_rows={len(games)}")
