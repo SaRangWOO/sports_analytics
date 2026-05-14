@@ -369,8 +369,9 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     standings_display = standings.rename(columns={"방문": "원정"})
     completed = games[games["status"] == "Final"].copy()
     completed["date"] = pd.to_datetime(completed["date"])
-    league_completed_games = completed["game_id"].str.rsplit("_", n=1).str[0].nunique()
-    league_games = standings["경기"].sum() // 2
+    team_game_min = int(standings["경기"].min())
+    team_game_max = int(standings["경기"].max())
+    team_game_avg = round(float(standings["경기"].mean()), 1)
     league_leader = standings.iloc[0]
     today_predictions_by_team = {}
     for row in model_payload.get("today_predictions", []):
@@ -446,8 +447,8 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     </div>
     <div class="grid">
       <div class="metric">1위<strong>{escape(str(league_leader["팀"]))}</strong></div>
-      <div class="metric">2026 시즌 완료 경기<strong>{league_completed_games}</strong></div>
-      <div class="metric">2026 순위표 기준 경기<strong>{league_games}</strong></div>
+      <div class="metric">팀별 경기 수 범위<strong>{team_game_min}~{team_game_max}</strong></div>
+      <div class="metric">팀 평균 경기 수<strong>{team_game_avg}</strong></div>
       <div class="metric">업데이트일<strong>{generated_at.isoformat()}</strong></div>
     </div>
     <div class="wide-table">
