@@ -446,9 +446,9 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     </div>
     <div class="grid">
       <div class="metric">1위<strong>{escape(str(league_leader["팀"]))}</strong></div>
-      <div class="metric">리그 완료 경기<strong>{league_completed_games}</strong></div>
-      <div class="metric">순위표 기준 경기<strong>{league_games}</strong></div>
-      <div class="metric">생성일<strong>{generated_at.isoformat()}</strong></div>
+      <div class="metric">2026 시즌 완료 경기<strong>{league_completed_games}</strong></div>
+      <div class="metric">2026 순위표 기준 경기<strong>{league_games}</strong></div>
+      <div class="metric">업데이트일<strong>{generated_at.isoformat()}</strong></div>
     </div>
     <div class="wide-table">
       {table_html(standings_display, ["순위", "팀", "경기", "승", "패", "무", "승률", "게임차", "홈", "원정"])}
@@ -533,7 +533,7 @@ renderTeam(document.querySelector('.team-button').dataset.team);
                 "# KBO 리그 분석 대시보드",
                 f"- 생성일: {generated_at.isoformat()}",
                 f"- KBO 공식 순위 팀 수: {len(standings)}",
-                f"- 공식 일정 팀별 행 수: {len(games)}",
+                f"- 2026 공식 일정 팀별 행 수: {len(games)}",
                 f"- 모델 학습 기준일: {model_payload.get('training_cutoff', '')}",
                 f"- 모델 검증 정확도: {model_payload.get('accuracy', '-')}",
             ]
