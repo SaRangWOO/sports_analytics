@@ -25,8 +25,8 @@ docker compose up -d kbo-db kbo-api dashboard
 
 curl -fsS "http://localhost:8501/latest.html" >/dev/null
 
-if ! git diff --quiet -- dashboard data/official modeling/results; then
-  git add dashboard data/official modeling/results
+if ! git diff --quiet -- dashboard data/official modeling/results ../docs; then
+  git add dashboard data/official modeling/results ../docs
   git commit -m "Update KBO weekly analytics outputs $(date +%F)"
   git push origin main
 fi

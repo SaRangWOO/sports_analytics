@@ -25,6 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data" / "official"
 DASHBOARD_DIR = BASE_DIR / "dashboard"
 RESULTS_DIR = BASE_DIR / "modeling" / "results"
+PUBLIC_DIR = BASE_DIR.parent / "docs"
 DB_URL = os.getenv("DB_URL", "postgresql://tera:tera@localhost:5432/baseball")
 KBO_BASE = "https://www.koreabaseball.com"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
@@ -170,11 +171,21 @@ def fetch_schedule_month(year: int, month: int):
     return parsed
 
 
-def fetch_schedule(year: int, through_month: int):
+def fetch_schedule(year: int, through_month: int, start_month: int = 3):
     rows = []
-    for month in range(3, through_month + 1):
+    for month in range(start_month, through_month + 1):
         rows.extend(fetch_schedule_month(year, month))
     return pd.DataFrame(rows)
+
+
+def fetch_training_schedule(start_year: int, reference_date: date):
+    seasons = []
+    for year in range(start_year, reference_date.year + 1):
+        through_month = reference_date.month if year == reference_date.year else 11
+        season_games = fetch_schedule(year, through_month)
+        if not season_games.empty:
+            seasons.append(season_games)
+    return pd.concat(seasons, ignore_index=True) if seasons else pd.DataFrame()
 
 
 def hidden_fields(html: str):
@@ -255,13 +266,30 @@ def load_official_tables_to_db(standings, vs_table, games, hitters, pitchers):
         "official_hitter_stats": hitters,
         "official_pitcher_stats": pitchers,
     }
-    with engine.begin() as connection:
-        for table_name, dataframe in tables.items():
-            dataframe.to_sql(table_name, connection, if_exists="replace", index=False)
+    try:
+        with engine.begin() as connection:
+            for table_name, dataframe in tables.items():
+                dataframe.to_sql(table_name, connection, if_exists="replace", index=False)
+    except Exception as exc:
+        print(f"[Warn] PostgreSQL 적재를 건너뜁니다: {exc}")
 
 
-def evaluate_model(games: pd.DataFrame, cutoff: date):
-    completed = games[(games["status"] == "Final") & (pd.to_datetime(games["date"]).dt.date <= cutoff)].copy()
+def align_prediction_matrix(features: pd.DataFrame, feature_columns: list[str], mean: pd.Series, std: pd.Series):
+    x, _ = prepare_matrix(features)
+    x = x.reindex(columns=feature_columns, fill_value=0)
+    return (x - mean) / std.replace(0, 1)
+
+
+def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date):
+    training_games = training_games.copy()
+    training_games["date"] = pd.to_datetime(training_games["date"])
+    completed = training_games[
+        (training_games["status"] == "Final")
+        & (
+            (training_games["date"].dt.year < cutoff.year)
+            | (training_games["date"].dt.date <= cutoff)
+        )
+    ].copy()
     model_input = DATA_DIR / "model_training_games.csv"
     completed.to_csv(model_input, index=False, encoding="utf-8-sig")
     features = build_features(model_input)
@@ -286,13 +314,34 @@ def evaluate_model(games: pd.DataFrame, cutoff: date):
     recent["예측"] = np.where(pred == 1, "승리 예측", "패배 예측")
     recent["실제"] = np.where(y_test == 1, "승", "패")
     recent["date"] = pd.to_datetime(recent["date"]).dt.strftime("%Y-%m-%d")
+
+    prediction_input = DATA_DIR / "prediction_games.csv"
+    current_games.to_csv(prediction_input, index=False, encoding="utf-8-sig")
+    prediction_features = build_features(prediction_input, include_unlabeled=True)
+    prediction_features["date_obj"] = pd.to_datetime(prediction_features["date"]).dt.date
+    today_features = prediction_features[
+        (prediction_features["date_obj"] == prediction_date)
+        & (prediction_features["target_win"].isna())
+    ].copy()
+    today_predictions = []
+    if not today_features.empty:
+        prediction_scaled = align_prediction_matrix(today_features.drop(columns=["date_obj"]), list(x.columns), mean, std)
+        today_probability = sigmoid(prediction_scaled.to_numpy() @ weights + bias)
+        today_features["예측승률"] = [f"{p:.1%}" for p in today_probability]
+        today_features["예측"] = np.where(today_probability >= 0.5, "승리 예측", "패배 예측")
+        today_features["date"] = pd.to_datetime(today_features["date"]).dt.strftime("%Y-%m-%d")
+        today_predictions = today_features[["date", "team", "opponent", "예측승률", "예측"]].to_dict(orient="records")
+
     payload = {
         "available": True,
         "training_cutoff": cutoff.isoformat(),
+        "training_start_year": int(completed["date"].dt.year.min()),
+        "training_end_year": int(completed["date"].dt.year.max()),
         "train_rows": int(len(x_train)),
         "test_rows": int(len(x_test)),
         "accuracy": accuracy,
         "recent_backtest": recent[["date", "team", "opponent", "예측승률", "예측", "실제"]].tail(12).to_dict(orient="records"),
+        "today_predictions": today_predictions,
         "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
         "feature_columns": list(x.columns),
         "bias": round(float(bias), 6),
@@ -317,11 +366,15 @@ def table_html(rows, columns, limit=None):
 def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, generated_at: date):
     DASHBOARD_DIR.mkdir(parents=True, exist_ok=True)
     team_data = {}
+    standings_display = standings.rename(columns={"방문": "원정"})
     completed = games[games["status"] == "Final"].copy()
     completed["date"] = pd.to_datetime(completed["date"])
     league_completed_games = completed["game_id"].str.rsplit("_", n=1).str[0].nunique()
     league_games = standings["경기"].sum() // 2
     league_leader = standings.iloc[0]
+    today_predictions_by_team = {}
+    for row in model_payload.get("today_predictions", []):
+        today_predictions_by_team.setdefault(row["team"], []).append(row)
     for team in standings["팀"]:
         team_games = completed[completed["team"] == team].sort_values("date", ascending=False).head(10).copy()
         team_games["경기일"] = team_games["date"].dt.strftime("%Y-%m-%d")
@@ -335,6 +388,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             "recent": team_games[["경기일", "상대", "구분", "결과", "스코어"]].to_dict(orient="records"),
             "hitters": hitters[hitters["팀"] == team].head(15).to_dict(orient="records"),
             "pitchers": pitchers[pitchers["팀"] == team].head(15).to_dict(orient="records"),
+            "today_predictions": today_predictions_by_team.get(team, []),
         }
 
     payload = json.dumps(team_data, ensure_ascii=False)
@@ -370,6 +424,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .team-buttons {{ display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 8px; }}
     .team-button {{ border: 1px solid #c8d2df; background: #fff; border-radius: 6px; padding: 9px 6px; cursor: pointer; font-weight: 700; }}
     .team-button.active {{ background: #172033; border-color: #172033; color: white; }}
+    .subsection {{ margin-top: 18px; }}
     .tables {{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }}
     .wide-table {{ overflow-x: auto; }}
     .note {{ color: #637083; font-size: 13px; margin-top: 10px; }}
@@ -396,7 +451,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="metric">생성일<strong>{generated_at.isoformat()}</strong></div>
     </div>
     <div class="wide-table">
-      {table_html(standings, ["순위", "팀", "경기", "승", "패", "무", "승률", "게임차", "최근10경기", "연속", "홈", "방문"])}
+      {table_html(standings_display, ["순위", "팀", "경기", "승", "패", "무", "승률", "게임차", "홈", "원정"])}
     </div>
   </section>
 
@@ -406,13 +461,17 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         <div class="eyebrow">STEP 2 · 원하는 구단 선택</div>
         <h2 id="teamTitle">구단 상세 분석</h2>
       </div>
-      <select id="teamSelect" aria-label="구단 선택">{"".join(f'<option value="{escape(team)}">{escape(team)}</option>' for team in standings["팀"])}</select>
     </div>
     <div class="team-picker">
-      <div class="note">버튼이나 선택 상자에서 구단을 바꾸면 아래 최근 경기, 상대 전적, 선수 기록이 해당 구단 기준으로 바뀝니다.</div>
+      <div class="note">구단 버튼을 선택하면 오늘 경기 예측, 최근 경기, 상대 전적, 선수 기록이 해당 구단 기준으로 바뀝니다.</div>
       <div class="team-buttons">{team_buttons}</div>
     </div>
     <div class="grid" id="teamMetrics"></div>
+    <div class="subsection">
+      <h3>오늘 경기 승패 예측</h3>
+      <div id="todayPrediction"></div>
+      <p class="note">예측은 경기 전 사용할 수 있는 팀 흐름, 상대 흐름, 홈/원정, 휴식일 기반 확률입니다.</p>
+    </div>
     <div class="tables">
       <div><h3>최근 10경기</h3><div id="recentGames"></div></div>
       <div><h3>상대 전적</h3><div id="vsTable"></div></div>
@@ -424,13 +483,13 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
   </section>
 
   <section class="section">
-    <div class="eyebrow">STEP 3 · 모델링</div>
-    <h2>경기 승패 예측 모델</h2>
+    <div class="eyebrow">ETC · 모델링 성능 참고</div>
+    <h2>경기 승패 예측 모델 검증</h2>
     <div class="grid">
+      <div class="metric">학습 시즌<strong>{model_payload.get("training_start_year", "-")}~{model_payload.get("training_end_year", "-")}</strong></div>
       <div class="metric">학습 행<strong>{model_payload.get("train_rows", "-")}</strong></div>
       <div class="metric">검증 행<strong>{model_payload.get("test_rows", "-")}</strong></div>
       <div class="metric">검증 정확도<strong>{model_payload.get("accuracy", "-")}</strong></div>
-      <div class="metric">학습 기준<strong>{escape(model_payload.get("training_cutoff", ""))}</strong></div>
     </div>
     {table_html(model_rows, ["date", "team", "opponent", "예측승률", "예측", "실제"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
     <p class="note">예측 모델은 월요일 갱신 기준 지난주까지의 완료 경기만 학습/검증에 사용합니다. 현재 주 경기 결과는 적중률 계산에 섞지 않습니다.</p>
@@ -449,23 +508,25 @@ function renderTeam(team) {{
   const s = data.standings;
   document.getElementById('teamTitle').textContent = `${{team}} 구단 상세 분석`;
   document.querySelectorAll('.team-button').forEach(btn => btn.classList.toggle('active', btn.dataset.team === team));
-  document.getElementById('teamSelect').value = team;
   document.getElementById('teamMetrics').innerHTML = [
     ['순위', s['순위']], ['시즌 전적', `${{s['승']}}승 ${{s['패']}}패 ${{s['무']}}무`],
     ['승률', s['승률']], ['최근10경기', s['최근10경기']]
   ].map(([k,v]) => `<div class="metric">${{k}}<strong>${{v}}</strong></div>`).join('');
+  document.getElementById('todayPrediction').innerHTML = renderTable(data.today_predictions, ['date','team','opponent','예측승률','예측']);
   document.getElementById('recentGames').innerHTML = renderTable(data.recent, ['경기일','상대','구분','결과','스코어']);
   document.getElementById('vsTable').innerHTML = renderTable(data.vs, ['상대','전적']);
   document.getElementById('hitterTable').innerHTML = renderTable(data.hitters, ['선수','경기','타석','타수','안타','홈런','볼넷','삼진','타율','출루율','장타율','OPS']);
   document.getElementById('pitcherTable').innerHTML = renderTable(data.pitchers, ['선수','경기','승','패','세이브','홀드','이닝','자책','탈삼진','볼넷','ERA','WHIP']);
 }}
-document.getElementById('teamSelect').addEventListener('change', e => renderTeam(e.target.value));
 document.querySelectorAll('.team-button').forEach(btn => btn.addEventListener('click', () => renderTeam(btn.dataset.team)));
-renderTeam(document.getElementById('teamSelect').value);
+renderTeam(document.querySelector('.team-button').dataset.team);
 </script>
 </body>
 </html>"""
     (DASHBOARD_DIR / "latest.html").write_text(html, encoding="utf-8")
+    PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
+    (PUBLIC_DIR / "index.html").write_text(html, encoding="utf-8")
+    (PUBLIC_DIR / "latest.html").write_text(html, encoding="utf-8")
     (DASHBOARD_DIR / "latest_summary.md").write_text(
         "\n".join(
             [
@@ -484,16 +545,21 @@ renderTeam(document.getElementById('teamSelect').value);
 def main():
     parser = argparse.ArgumentParser(description="Build KBO dashboard from official KBO records.")
     parser.add_argument("--reference-date", default=date.today().isoformat())
+    parser.add_argument("--training-start-year", type=int, default=2021)
     args = parser.parse_args()
     ref_date = datetime.strptime(args.reference_date, "%Y-%m-%d").date()
     standings, vs_table = fetch_team_standings()
     games = fetch_schedule(ref_date.year, ref_date.month)
+    training_games = fetch_training_schedule(args.training_start_year, ref_date)
     hitters, pitchers = fetch_player_stats()
     export_sources(standings, vs_table, games, hitters, pitchers)
     load_official_tables_to_db(standings, vs_table, games, hitters, pitchers)
-    model_payload = evaluate_model(games, previous_sunday(ref_date))
+    model_payload = evaluate_model(training_games, games, previous_sunday(ref_date), ref_date)
     build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, ref_date)
-    print(f"[Success] official KBO dashboard generated: teams={len(standings)}, game_rows={len(games)}")
+    print(
+        f"[Success] official KBO dashboard generated: teams={len(standings)}, "
+        f"current_game_rows={len(games)}, training_game_rows={len(training_games)}"
+    )
 
 
 if __name__ == "__main__":

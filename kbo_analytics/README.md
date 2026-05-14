@@ -20,6 +20,7 @@ official_kbo_dashboard.py
         |     +-- official_hitter_stats
         |     +-- official_pitcher_stats
         +-- dashboard/latest.html
+        +-- docs/index.html
         +-- dashboard/latest_summary.md
         +-- data/official/*.csv
         +-- modeling/results/win_predictor_model.json
@@ -77,6 +78,7 @@ DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekl
 ## 결과 확인
 
 - HTML 대시보드: `dashboard/latest.html`
+- GitHub Pages 배포용 정적 대시보드: `docs/index.html`
 - 요약 리포트: `dashboard/latest_summary.md`
 - 공식 데이터 스냅샷: `data/official/`
 - PostgreSQL 공식 테이블: `game_results`, `official_team_standings`, `official_team_vs_team`, `official_hitter_stats`, `official_pitcher_stats`
@@ -89,16 +91,20 @@ DB_URL=postgresql://user:password@localhost:5432/baseball .venv/bin/python weekl
 ## 대시보드 구성
 
 - 첫 화면: KBO 리그 전체 순위
-- 구단 선택: 선택 구단 순위, 최근 10경기, 상대 전적
+- 구단 선택: 선택 구단 순위, 오늘 경기 승패 예측, 최근 10경기, 상대 전적
 - 타자 지표: KBO 공식 타자 기록의 경기, 타석, 타수, 안타, 홈런, 볼넷, 삼진, 타율, 출루율, 장타율, OPS
 - 투수 지표: KBO 공식 투수 기록의 경기, 승, 패, 세이브, 홀드, 이닝, 자책, 탈삼진, 볼넷, ERA, WHIP
 - 승패 예측: 지난주 일요일까지의 완료 경기만 사용한 검증 결과
 
 ## 승패 예측 모델
 
-`official_kbo_dashboard.py`는 KBO 공식 일정/결과에서 각 경기를 양 팀 관점의 학습 행으로 변환합니다. 최근 5경기 승률, 최근 5경기 평균 득점/실점/득실차, 홈/원정, 상대팀을 사용해 로지스틱 회귀 모델을 학습합니다.
+`official_kbo_dashboard.py`는 KBO 공식 일정/결과에서 2021년 이후 각 경기를 양 팀 관점의 학습 행으로 변환합니다. 최근 5경기 승률, 최근 5경기 평균 득점/실점/득실차, 시즌 누적 승률, 상대팀 최근 흐름, 홈/원정, 상대팀을 사용해 로지스틱 회귀 모델을 학습합니다.
 
 모델 학습 기준일은 실행일 기준 지난주 일요일입니다. 예를 들어 목요일에 수동 실행해도 현재 주 화/수 경기 결과를 적중률 계산에 섞지 않습니다.
+
+## 외부 접근
+
+`docs/index.html`은 GitHub Pages 배포용 정적 파일입니다. `main` 브랜치에 push되면 `.github/workflows/deploy-dashboard.yml`이 `docs/`를 GitHub Pages로 배포합니다. 서버가 열려 있지 않아도 GitHub Pages 주소로 같은 대시보드를 볼 수 있습니다.
 
 ## 현재 확인된 한계
 

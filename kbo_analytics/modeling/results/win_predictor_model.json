@@ -1,15 +1,17 @@
 {
   "available": true,
   "training_cutoff": "2026-05-10",
-  "train_rows": 283,
-  "test_rows": 71,
-  "accuracy": 0.479,
+  "training_start_year": 2021,
+  "training_end_year": 2026,
+  "train_rows": 6043,
+  "test_rows": 1511,
+  "accuracy": 0.543,
   "recent_backtest": [
     {
       "date": "2026-05-09",
       "team": "삼성",
       "opponent": "NC",
-      "예측승률": "59.7%",
+      "예측승률": "53.1%",
       "예측": "승리 예측",
       "실제": "승"
     },
@@ -17,7 +19,7 @@
       "date": "2026-05-09",
       "team": "한화",
       "opponent": "LG",
-      "예측승률": "33.8%",
+      "예측승률": "35.6%",
       "예측": "패배 예측",
       "실제": "승"
     },
@@ -25,7 +27,7 @@
       "date": "2026-05-10",
       "team": "KIA",
       "opponent": "롯데",
-      "예측승률": "68.9%",
+      "예측승률": "51.3%",
       "예측": "승리 예측",
       "실제": "패"
     },
@@ -33,7 +35,7 @@
       "date": "2026-05-10",
       "team": "KT",
       "opponent": "키움",
-      "예측승률": "79.7%",
+      "예측승률": "60.0%",
       "예측": "승리 예측",
       "실제": "패"
     },
@@ -41,7 +43,7 @@
       "date": "2026-05-10",
       "team": "LG",
       "opponent": "한화",
-      "예측승률": "76.9%",
+      "예측승률": "59.4%",
       "예측": "승리 예측",
       "실제": "패"
     },
@@ -49,7 +51,7 @@
       "date": "2026-05-10",
       "team": "NC",
       "opponent": "삼성",
-      "예측승률": "44.5%",
+      "예측승률": "46.2%",
       "예측": "패배 예측",
       "실제": "패"
     },
@@ -57,7 +59,7 @@
       "date": "2026-05-10",
       "team": "SSG",
       "opponent": "두산",
-      "예측승률": "66.5%",
+      "예측승률": "52.0%",
       "예측": "승리 예측",
       "실제": "패"
     },
@@ -65,7 +67,7 @@
       "date": "2026-05-10",
       "team": "두산",
       "opponent": "SSG",
-      "예측승률": "36.0%",
+      "예측승률": "48.5%",
       "예측": "패배 예측",
       "실제": "승"
     },
@@ -73,7 +75,7 @@
       "date": "2026-05-10",
       "team": "롯데",
       "opponent": "KIA",
-      "예측승률": "36.1%",
+      "예측승률": "48.3%",
       "예측": "패배 예측",
       "실제": "승"
     },
@@ -81,7 +83,7 @@
       "date": "2026-05-10",
       "team": "삼성",
       "opponent": "NC",
-      "예측승률": "58.8%",
+      "예측승률": "52.3%",
       "예측": "승리 예측",
       "실제": "승"
     },
@@ -89,7 +91,7 @@
       "date": "2026-05-10",
       "team": "키움",
       "opponent": "KT",
-      "예측승률": "38.1%",
+      "예측승률": "42.0%",
       "예측": "패배 예측",
       "실제": "승"
     },
@@ -97,9 +99,81 @@
       "date": "2026-05-10",
       "team": "한화",
       "opponent": "LG",
-      "예측승률": "33.4%",
+      "예측승률": "39.9%",
       "예측": "패배 예측",
       "실제": "승"
+    }
+  ],
+  "today_predictions": [
+    {
+      "date": "2026-05-14",
+      "team": "KIA",
+      "opponent": "두산",
+      "예측승률": "52.1%",
+      "예측": "승리 예측"
+    },
+    {
+      "date": "2026-05-14",
+      "team": "KT",
+      "opponent": "SSG",
+      "예측승률": "53.6%",
+      "예측": "승리 예측"
+    },
+    {
+      "date": "2026-05-14",
+      "team": "LG",
+      "opponent": "삼성",
+      "예측승률": "56.1%",
+      "예측": "승리 예측"
+    },
+    {
+      "date": "2026-05-14",
+      "team": "NC",
+      "opponent": "롯데",
+      "예측승률": "48.9%",
+      "예측": "패배 예측"
+    },
+    {
+      "date": "2026-05-14",
+      "team": "SSG",
+      "opponent": "KT",
+      "예측승률": "46.3%",
+      "예측": "패배 예측"
+    },
+    {
+      "date": "2026-05-14",
+      "team": "두산",
+      "opponent": "KIA",
+      "예측승률": "47.6%",
+      "예측": "패배 예측"
+    },
+    {
+      "date": "2026-05-14",
+      "team": "롯데",
+      "opponent": "NC",
+      "예측승률": "51.6%",
+      "예측": "승리 예측"
+    },
+    {
+      "date": "2026-05-14",
+      "team": "삼성",
+      "opponent": "LG",
+      "예측승률": "44.0%",
+      "예측": "패배 예측"
+    },
+    {
+      "date": "2026-05-14",
+      "team": "키움",
+      "opponent": "한화",
+      "예측승률": "55.0%",
+      "예측": "승리 예측"
+    },
+    {
+      "date": "2026-05-14",
+      "team": "한화",
+      "opponent": "키움",
+      "예측승률": "44.2%",
+      "예측": "패배 예측"
     }
   ],
   "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
@@ -112,6 +186,12 @@
     "avg_score_last_5",
     "avg_allowed_last_5",
     "avg_run_diff_last_5",
+    "season_win_rate_prior",
+    "opponent_recent_5_win_rate",
+    "opponent_avg_run_diff_last_5",
+    "opponent_season_win_rate_prior",
+    "season_win_rate_gap",
+    "recent_5_win_rate_gap",
     "team_KIA",
     "team_KT",
     "team_LG",
@@ -133,35 +213,41 @@
     "opponent_키움",
     "opponent_한화"
   ],
-  "bias": 0.007863,
+  "bias": 0.000344,
   "coefficients": {
-    "recent_5_win_rate": 0.416407,
-    "avg_allowed_last_5": 0.240344,
-    "avg_run_diff_last_5": -0.226804,
-    "opponent_KT": -0.221201,
-    "team_KT": 0.207655,
-    "team_LG": 0.1932,
-    "opponent_롯데": 0.182669,
-    "team_키움": -0.161139,
-    "team_롯데": -0.160577,
-    "opponent_LG": -0.160529,
-    "team_한화": -0.14669,
-    "opponent_키움": 0.144691,
-    "opponent_SSG": -0.128174,
-    "opponent_한화": 0.088835,
-    "team_SSG": 0.077899,
-    "is_home": 0.075729,
-    "opponent_NC": 0.069901,
-    "month": 0.050053,
-    "team_두산": -0.04995,
-    "avg_score_last_5": -0.047786,
-    "team_삼성": 0.037049,
-    "opponent_두산": 0.036568,
-    "opponent_삼성": -0.016122,
-    "opponent_KIA": 0.00939,
-    "team_NC": -0.005149,
-    "series_game_no": 0.003917,
-    "team_KIA": -0.001215,
-    "rest_days": 0.001087
+    "team_한화": -0.103531,
+    "opponent_한화": 0.100748,
+    "team_LG": 0.082332,
+    "opponent_LG": -0.079303,
+    "is_home": 0.07652,
+    "team_KT": 0.045769,
+    "opponent_KT": -0.044661,
+    "season_win_rate_gap": -0.044255,
+    "team_SSG": 0.044254,
+    "opponent_SSG": -0.043726,
+    "team_키움": -0.042525,
+    "opponent_키움": 0.041138,
+    "opponent_avg_run_diff_last_5": -0.031527,
+    "season_win_rate_prior": -0.030893,
+    "opponent_season_win_rate_prior": 0.029115,
+    "team_롯데": -0.025128,
+    "opponent_롯데": 0.023727,
+    "rest_days": 0.019021,
+    "recent_5_win_rate_gap": 0.011469,
+    "opponent_NC": 0.010552,
+    "team_NC": -0.010482,
+    "opponent_recent_5_win_rate": -0.010195,
+    "month": -0.008626,
+    "opponent_두산": -0.008511,
+    "team_두산": 0.00827,
+    "series_game_no": 0.007685,
+    "recent_5_win_rate": 0.007495,
+    "avg_run_diff_last_5": 0.006329,
+    "avg_allowed_last_5": -0.006013,
+    "avg_score_last_5": 0.002766,
+    "opponent_KIA": 0.001048,
+    "opponent_삼성": -0.00079,
+    "team_삼성": 0.000711,
+    "team_KIA": 0.000156
   }
 }
