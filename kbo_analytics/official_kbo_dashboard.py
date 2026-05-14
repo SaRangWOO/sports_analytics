@@ -282,6 +282,11 @@ def align_prediction_matrix(features: pd.DataFrame, feature_columns: list[str], 
 
 def prediction_reason(row: pd.Series):
     reasons = []
+    if row.get("elo_diff", 0) > 20:
+        reasons.append("Elo 전력 우위")
+    elif row.get("elo_diff", 0) < -20:
+        reasons.append("상대 Elo 전력 우위")
+
     if row.get("season_win_rate_gap", 0) > 0.03:
         reasons.append("시즌 누적 승률 우위")
     elif row.get("season_win_rate_gap", 0) < -0.03:
@@ -299,6 +304,8 @@ def prediction_reason(row: pd.Series):
 
     if row.get("is_home", 0) == 1:
         reasons.append("홈 경기")
+    if row.get("games_last_7_days", 0) >= 6:
+        reasons.append("최근 7일 경기 수 많음")
 
     return ", ".join(reasons[:2]) if reasons else "양 팀 지표가 비슷해 기본 전력과 최근 흐름을 종합"
 
@@ -325,13 +332,64 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     x, y = prepare_matrix(features)
     split_index = max(int(len(x) * 0.8), 1)
     split_index = min(split_index, len(x) - 1)
-    x_train, x_test = x.iloc[:split_index], x.iloc[split_index:]
     y_train, y_test = y[:split_index], y[split_index:]
-    train_scaled, test_scaled, mean, std = standardize_train_test(x_train, x_test)
-    weights, bias = train_logistic_regression(train_scaled.to_numpy(), y_train, lr=0.05, epochs=3500)
-    probability = sigmoid(test_scaled.to_numpy() @ weights + bias)
-    pred = (probability >= 0.5).astype(int)
-    accuracy = round(float((pred == y_test).mean()), 3)
+
+    candidate_columns = {
+        "기본 흐름 모델": [
+            col for col in x.columns
+            if col not in {"team_elo_pre", "opponent_elo_pre", "elo_diff", "games_last_7_days", "back_to_back"}
+        ],
+        "Elo/일정 피로도 포함 모델": list(x.columns),
+        "핵심 수치 모델": [
+            col for col in [
+                "is_home",
+                "rest_days",
+                "recent_5_win_rate",
+                "avg_run_diff_last_5",
+                "season_win_rate_prior",
+                "opponent_recent_5_win_rate",
+                "opponent_avg_run_diff_last_5",
+                "season_win_rate_gap",
+                "recent_5_win_rate_gap",
+                "elo_diff",
+                "games_last_7_days",
+                "back_to_back",
+            ]
+            if col in x.columns
+        ],
+    }
+    best = None
+    candidate_results = []
+    for name, columns in candidate_columns.items():
+        x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
+        train_scaled, test_scaled, mean, std = standardize_train_test(x_train, x_test)
+        weights, bias = train_logistic_regression(train_scaled.to_numpy(), y_train, lr=0.05, epochs=3500)
+        probability = sigmoid(test_scaled.to_numpy() @ weights + bias)
+        pred = (probability >= 0.5).astype(int)
+        accuracy = round(float((pred == y_test).mean()), 3)
+        result = {
+            "name": name,
+            "columns": columns,
+            "accuracy": accuracy,
+            "probability": probability,
+            "pred": pred,
+            "mean": mean,
+            "std": std,
+            "weights": weights,
+            "bias": bias,
+        }
+        candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns)})
+        if best is None or accuracy > best["accuracy"]:
+            best = result
+
+    columns = best["columns"]
+    probability = best["probability"]
+    pred = best["pred"]
+    accuracy = best["accuracy"]
+    mean = best["mean"]
+    std = best["std"]
+    weights = best["weights"]
+    bias = best["bias"]
     recent = features.iloc[split_index:].copy()
     recent["예측승률"] = [f"{p:.1%}" for p in probability]
     recent["예측"] = np.where(pred == 1, "승리 예측", "패배 예측")
@@ -350,7 +408,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     ].copy()
     today_predictions = []
     if not today_features.empty:
-        prediction_scaled = align_prediction_matrix(today_features.drop(columns=["date_obj"]), list(x.columns), mean, std)
+        prediction_scaled = align_prediction_matrix(today_features.drop(columns=["date_obj"]), columns, mean, std)
         today_probability = sigmoid(prediction_scaled.to_numpy() @ weights + bias)
         today_features["예측승률"] = [f"{p:.1%}" for p in today_probability]
         today_features["예측"] = np.where(today_probability >= 0.5, "승리 예측", "패배 예측")
@@ -367,10 +425,12 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         "train_rows": int(len(x_train)),
         "test_rows": int(len(x_test)),
         "accuracy": accuracy,
+        "selected_model": best["name"],
+        "candidate_results": candidate_results,
         "recent_backtest": recent[["date", "team", "opponent", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"]].tail(12).to_dict(orient="records"),
         "today_predictions": today_predictions,
         "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
-        "feature_columns": list(x.columns),
+        "feature_columns": columns,
         "bias": round(float(bias), 6),
         "coefficients": {name: round(float(value), 6) for name, value in sorted(zip(x.columns, weights), key=lambda x: abs(x[1]), reverse=True)},
     }

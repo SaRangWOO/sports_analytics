@@ -6,6 +6,40 @@ from pathlib import Path
 import pandas as pd
 
 
+def add_elo_features(df: pd.DataFrame, k_factor: float = 20.0) -> pd.DataFrame:
+    df = df.copy()
+    df["actual_game_id"] = df["game_id"].astype(str).str.rsplit("_", n=1).str[0]
+    df["team_elo_pre"] = 1500.0
+    df["opponent_elo_pre"] = 1500.0
+    df["elo_diff"] = 0.0
+    ratings: dict[str, float] = {}
+
+    for _, game_rows in df.groupby("actual_game_id", sort=False):
+        if len(game_rows) < 2:
+            continue
+        first = game_rows.iloc[0]
+        second = game_rows.iloc[1]
+        team_a = first["team"]
+        team_b = second["team"]
+        rating_a = ratings.get(team_a, 1500.0)
+        rating_b = ratings.get(team_b, 1500.0)
+
+        a_mask = game_rows.index[game_rows["team"] == team_a]
+        b_mask = game_rows.index[game_rows["team"] == team_b]
+        df.loc[a_mask, ["team_elo_pre", "opponent_elo_pre", "elo_diff"]] = [rating_a, rating_b, rating_a - rating_b]
+        df.loc[b_mask, ["team_elo_pre", "opponent_elo_pre", "elo_diff"]] = [rating_b, rating_a, rating_b - rating_a]
+
+        if first.get("result") not in {"Win", "Loss"}:
+            continue
+        score_a = 1.0 if first["result"] == "Win" else 0.0
+        expected_a = 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
+        delta = k_factor * (score_a - expected_a)
+        ratings[team_a] = rating_a + delta
+        ratings[team_b] = rating_b - delta
+
+    return df
+
+
 def build_features(input_path: str | Path, include_unlabeled: bool = False) -> pd.DataFrame:
     df = pd.read_csv(input_path)
     if include_unlabeled:
@@ -33,6 +67,7 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["series_game_no"] = df.groupby(["opponent", "home_away"]).cumcount() + 1
 
     if "team" in df.columns:
+        df = add_elo_features(df)
         group_keys = ["season", "team"]
         grouped = df.groupby(group_keys, group_keys=False)
         df["rest_days"] = grouped["date"].diff().dt.days.fillna(1).clip(lower=1)
@@ -72,6 +107,15 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["opponent_season_win_rate_prior"] = df["opponent_season_win_rate_prior"].fillna(0.5)
         df["season_win_rate_gap"] = df["season_win_rate_prior"] - df["opponent_season_win_rate_prior"]
         df["recent_5_win_rate_gap"] = df["recent_5_win_rate"] - df["opponent_recent_5_win_rate"]
+        games_last_7 = pd.Series(0, index=df.index, dtype=float)
+        for _, team_dates in df.groupby(group_keys)["date"]:
+            for row_index, current_date in team_dates.items():
+                games_last_7.loc[row_index] = (
+                    (team_dates < current_date)
+                    & (team_dates >= current_date - pd.Timedelta(days=7))
+                ).sum()
+        df["games_last_7_days"] = games_last_7
+        df["back_to_back"] = (df["rest_days"] <= 1).astype(int)
     else:
         df["rest_days"] = df["date"].diff().dt.days.fillna(1).clip(lower=1)
         shifted_win = df["target_win"].shift(1)
@@ -89,6 +133,11 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["opponent_season_win_rate_prior"] = 0.5
         df["season_win_rate_gap"] = 0
         df["recent_5_win_rate_gap"] = 0
+        df["team_elo_pre"] = 1500.0
+        df["opponent_elo_pre"] = 1500.0
+        df["elo_diff"] = 0.0
+        df["games_last_7_days"] = 0
+        df["back_to_back"] = 0
 
     if include_unlabeled:
         df = df[df["result"].isin(["Win", "Loss", ""]) | df["result"].isna()].copy()
@@ -118,6 +167,11 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         "opponent_season_win_rate_prior",
         "season_win_rate_gap",
         "recent_5_win_rate_gap",
+        "team_elo_pre",
+        "opponent_elo_pre",
+        "elo_diff",
+        "games_last_7_days",
+        "back_to_back",
         "target_win",
     ])
     return df[feature_columns]
