@@ -293,6 +293,30 @@ def normalize_game_probabilities(features: pd.DataFrame, probability: np.ndarray
     return normalized.to_numpy()
 
 
+def confidence_metrics(y_true: np.ndarray, probability: np.ndarray):
+    pred = (probability >= 0.5).astype(int)
+    correct = pred == y_true
+    confidence = np.maximum(probability, 1 - probability)
+    metrics = [
+        {"구간": "전체 경기", "경기 수": int(len(y_true)), "적중률": round(float(correct.mean()), 3)}
+    ]
+    for threshold in [0.55, 0.58, 0.60]:
+        mask = confidence >= threshold
+        metrics.append(
+            {
+                "구간": f"{round(threshold * 100)}% 이상 확신 경기",
+                "경기 수": int(mask.sum()),
+                "적중률": round(float(correct[mask].mean()), 3) if mask.any() else "-",
+            }
+        )
+    clipped = np.clip(probability, 1e-6, 1 - 1e-6)
+    brier = np.mean((probability - y_true) ** 2)
+    log_loss = -np.mean(y_true * np.log(clipped) + (1 - y_true) * np.log(1 - clipped))
+    metrics.append({"구간": "Brier Score", "경기 수": "-", "적중률": round(float(brier), 3)})
+    metrics.append({"구간": "Log Loss", "경기 수": "-", "적중률": round(float(log_loss), 3)})
+    return metrics
+
+
 def prediction_reason(row: pd.Series, predicted_team: str | None = None):
     predicted_team = predicted_team or row.get("team")
     team_perspective = predicted_team == row.get("team")
@@ -310,33 +334,33 @@ def prediction_reason(row: pd.Series, predicted_team: str | None = None):
     games_last_7 = row.get("games_last_7_days", 0)
 
     if elo_diff > 20:
-        reasons.append("Elo 전력 우위")
+        reasons.append(f"{predicted_team} Elo 전력 우위")
 
     if season_gap > 0.03:
-        reasons.append("시즌 누적 승률 우위")
+        reasons.append(f"{predicted_team} 시즌 누적 승률 우위")
 
     if recent_gap > 0.15:
-        reasons.append("최근 5경기 흐름 우위")
+        reasons.append(f"{predicted_team} 최근 5경기 흐름 우위")
 
     if recent_10_gap > 0.12:
-        reasons.append("최근 10경기 흐름 우위")
+        reasons.append(f"{predicted_team} 최근 10경기 흐름 우위")
 
     if h2h_gap > 0.2:
-        reasons.append("시즌 상대전적 우위")
+        reasons.append(f"{predicted_team} 시즌 상대전적 우위")
 
     if venue_gap > 0.15:
-        reasons.append("홈/원정 성향 우위")
+        reasons.append(f"{predicted_team} 홈/원정 성향 우위")
 
     if season_run_gap > 0.5:
-        reasons.append("시즌 득실차 우위")
+        reasons.append(f"{predicted_team} 시즌 득실차 우위")
 
     if own_run_diff > opponent_run_diff + 0.8:
-        reasons.append("최근 득실차 우위")
+        reasons.append(f"{predicted_team} 최근 득실차 우위")
 
     if is_home_side:
-        reasons.append("홈 경기")
+        reasons.append(f"{predicted_team} 홈 경기")
     if team_perspective and games_last_7 <= 4:
-        reasons.append("최근 일정 부담 낮음")
+        reasons.append(f"{predicted_team} 최근 일정 부담 낮음")
 
     return ", ".join(reasons[:2]) if reasons else "양 팀 지표가 비슷해 기본 전력과 최근 흐름을 종합"
 
@@ -364,6 +388,9 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     split_index = max(int(len(x) * 0.8), 1)
     split_index = min(split_index, len(x) - 1)
     y_train, y_test = y[:split_index], y[split_index:]
+    train_years = pd.to_datetime(features.iloc[:split_index]["date"]).dt.year
+    max_train_year = int(train_years.max())
+    recency_weight = (0.85 ** (max_train_year - train_years)).clip(lower=0.35).to_numpy(dtype=float)
 
     candidate_columns = {
         "기본 흐름 모델": [
@@ -427,31 +454,63 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     try:
         from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
     except ImportError:
-        sklearn_candidates = {}
+        sklearn_candidates = []
     else:
-        sklearn_candidates = {
-            "RandomForest 비선형 모델": RandomForestClassifier(
-                n_estimators=500,
-                max_depth=7,
-                min_samples_leaf=8,
-                class_weight="balanced",
-                random_state=42,
-                n_jobs=-1,
+        sklearn_candidates = [
+            (
+                "RandomForest 비선형 모델",
+                RandomForestClassifier(
+                    n_estimators=500,
+                    max_depth=7,
+                    min_samples_leaf=8,
+                    class_weight="balanced",
+                    random_state=42,
+                    n_jobs=-1,
+                ),
+                None,
             ),
-            "GradientBoosting 비선형 모델": HistGradientBoostingClassifier(
-                max_iter=220,
-                learning_rate=0.04,
-                max_leaf_nodes=15,
-                l2_regularization=0.08,
-                random_state=42,
+            (
+                "RandomForest 시간가중 모델",
+                RandomForestClassifier(
+                    n_estimators=500,
+                    max_depth=7,
+                    min_samples_leaf=8,
+                    class_weight="balanced",
+                    random_state=42,
+                    n_jobs=-1,
+                ),
+                recency_weight,
             ),
-        }
+            (
+                "GradientBoosting 비선형 모델",
+                HistGradientBoostingClassifier(
+                    max_iter=220,
+                    learning_rate=0.04,
+                    max_leaf_nodes=15,
+                    l2_regularization=0.08,
+                    random_state=42,
+                ),
+                None,
+            ),
+            (
+                "GradientBoosting 시간가중 모델",
+                HistGradientBoostingClassifier(
+                    max_iter=220,
+                    learning_rate=0.04,
+                    max_leaf_nodes=15,
+                    l2_regularization=0.08,
+                    random_state=42,
+                ),
+                recency_weight,
+            ),
+        ]
 
-    for name, model in sklearn_candidates.items():
+    for name, model, sample_weight in sklearn_candidates:
         columns = list(x.columns)
         x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
         train_scaled, test_scaled, mean, std = standardize_train_test(x_train, x_test)
-        model.fit(train_scaled, y_train)
+        fit_kwargs = {"sample_weight": sample_weight} if sample_weight is not None else {}
+        model.fit(train_scaled, y_train, **fit_kwargs)
         raw_probability = model.predict_proba(test_scaled)[:, 1]
         probability = normalize_game_probabilities(features.iloc[split_index:], raw_probability)
         pred = (probability >= 0.5).astype(int)
@@ -524,6 +583,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         "accuracy": accuracy,
         "selected_model": best["name"],
         "candidate_results": candidate_results,
+        "confidence_metrics": confidence_metrics(y_test, probability),
         "recent_backtest": recent[["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"]].tail(12).to_dict(orient="records"),
         "today_predictions": today_predictions,
         "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
@@ -737,6 +797,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
 
     payload = json.dumps(team_data, ensure_ascii=False)
     model_rows = model_payload.get("recent_backtest", []) if model_payload.get("available") else []
+    confidence_rows = model_payload.get("confidence_metrics", []) if model_payload.get("available") else []
     team_buttons = "".join(
         f'<button type="button" class="team-button" data-team="{escape(team)}">{escape(team)}</button>'
         for team in standings["팀"]
@@ -837,7 +898,14 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="metric">검증 행<strong>{model_payload.get("test_rows", "-")}</strong></div>
       <div class="metric">검증 정확도<strong>{model_payload.get("accuracy", "-")}</strong></div>
     </div>
+    <div class="subsection">
+      <h3>확신 구간별 검증</h3>
+      {table_html(confidence_rows, ["구간", "경기 수", "적중률"]) if confidence_rows else "<p>확신 구간 결과를 생성할 수 없습니다.</p>"}
+    </div>
+    <div class="subsection">
+      <h3>최근 검증 경기</h3>
     {table_html(model_rows, ["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
+    </div>
     <p class="note">예측 모델은 월요일 갱신 기준 지난주까지의 완료 경기만 학습/검증에 사용합니다. 현재 주 경기 결과는 적중률 계산에 섞지 않습니다.</p>
   </section>
 </main>
