@@ -487,7 +487,81 @@ def prediction_tier(confidence: float):
     return {"우세": "우세", "신뢰도": "주의", "판단": "과신 주의"}
 
 
-def build_prediction_cards(today_predictions: list[dict]):
+def parse_innings(value):
+    if pd.isna(value):
+        return 0.0
+    text = str(value).strip()
+    if not text or text == "-":
+        return 0.0
+    total = 0.0
+    for part in text.split():
+        if "/" in part:
+            numerator, denominator = part.split("/", 1)
+            total += float(numerator) / float(denominator)
+        else:
+            total += float(part)
+    return total
+
+
+def to_float(value, default=0.0):
+    try:
+        text = str(value).replace(",", "").strip()
+        if text in {"", "-"}:
+            return default
+        return float(text)
+    except (TypeError, ValueError):
+        return default
+
+
+def build_pitching_context(games: pd.DataFrame, pitchers: pd.DataFrame, prediction_date: date):
+    completed = games[games["status"] == "Final"].copy()
+    completed["date"] = pd.to_datetime(completed["date"]).dt.date
+    context = {}
+    for team, team_pitchers in pitchers.groupby("팀"):
+        records = team_pitchers.copy()
+        records["이닝_float"] = records["이닝"].apply(parse_innings)
+        records["경기_float"] = records["경기"].apply(to_float).replace(0, np.nan)
+        records["ERA_float"] = records["ERA"].apply(lambda value: to_float(value, 99.0))
+        records["WHIP_float"] = records["WHIP"].apply(lambda value: to_float(value, 9.99))
+        records["이닝_per_game"] = (records["이닝_float"] / records["경기_float"]).fillna(0)
+        starters = records[
+            (records["이닝_float"] >= 20) | (records["이닝_per_game"] >= 3.0)
+        ].sort_values(["이닝_float", "이닝_per_game"], ascending=False).head(5)
+        if starters.empty:
+            starters = records.sort_values("이닝_float", ascending=False).head(5)
+
+        team_completed = completed[completed["team"] == team].sort_values("date")
+        rotation_index = int(len(team_completed) % max(len(starters), 1))
+        starter = starters.iloc[rotation_index] if not starters.empty else None
+
+        recent = team_completed[
+            (team_completed["date"] < prediction_date)
+            & (team_completed["date"] >= prediction_date - timedelta(days=3))
+        ]
+        played_yesterday = not team_completed[team_completed["date"] == prediction_date - timedelta(days=1)].empty
+        recent_games = len(recent)
+        if recent_games >= 3 or (recent_games >= 2 and played_yesterday):
+            fatigue = "높음"
+        elif recent_games >= 2 or played_yesterday:
+            fatigue = "보통"
+        else:
+            fatigue = "낮음"
+
+        if starter is not None:
+            starter_text = f"{starter['선수']} · ERA {starter['ERA']} · WHIP {starter['WHIP']}"
+        else:
+            starter_text = "추정 불가"
+        context[team] = {
+            "추정 선발": starter_text,
+            "불펜 피로": fatigue,
+            "최근3일 경기": int(recent_games),
+            "주의": "공식 선발 발표 전 누적 기록과 로테이션 순서로 추정",
+        }
+    return context
+
+
+def build_prediction_cards(today_predictions: list[dict], pitching_context: dict | None = None):
+    pitching_context = pitching_context or {}
     cards = {}
     for row in today_predictions:
         try:
@@ -499,6 +573,7 @@ def build_prediction_cards(today_predictions: list[dict]):
         if key in cards and confidence <= cards[key]["confidence_value"]:
             continue
         tier = prediction_tier(confidence)
+        pick_context = pitching_context.get(row["예측 구단"], {})
         matchup = f'{row["기준팀"]} vs {row["상대팀"]}'
         cards[key] = {
             "경기": matchup,
@@ -506,6 +581,7 @@ def build_prediction_cards(today_predictions: list[dict]):
             "예측승률": f"{confidence:.1%}",
             "신뢰도": tier["신뢰도"],
             "핵심 근거": row.get("예측 근거", ""),
+            "투수 신호": f'{pick_context.get("추정 선발", "추정 불가")} · 불펜 피로 {pick_context.get("불펜 피로", "-")}',
             "판단": tier["판단"],
             "confidence_value": confidence,
         }
@@ -1156,7 +1232,8 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     confidence_rows = model_payload.get("confidence_metrics", []) if model_payload.get("available") else []
     calibration_rows = model_payload.get("calibration_table", []) if model_payload.get("available") else []
     candidate_rows = model_payload.get("candidate_results", []) if model_payload.get("available") else []
-    prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []))
+    pitching_context = build_pitching_context(games, pitchers, generated_at)
+    prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context)
     summary = today_summary(prediction_cards)
     prediction_cards_html = "".join(
         f"""
@@ -1165,6 +1242,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
           <h3>{escape(row["추천"])} <span>{escape(row["예측승률"])}</span></h3>
           <div class="badges"><span>신뢰도 {escape(row["신뢰도"])}</span><span>{escape(row["판단"])}</span></div>
           <p>{escape(row["핵심 근거"])}</p>
+          <p class="pitching-signal">{escape(row["투수 신호"])}</p>
         </article>
         """
         for row in prediction_cards
@@ -1211,6 +1289,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .prediction-card .matchup {{ color:#637083; font-size:13px; font-weight:700; margin-bottom:8px; }}
     .prediction-card h3 {{ display:flex; justify-content:space-between; gap:10px; font-size:20px; }}
     .prediction-card h3 span {{ color:#1d4ed8; white-space:nowrap; }}
+    .pitching-signal {{ color:#374151; font-size:13px; margin-top:8px; }}
     .badges {{ display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }}
     .badges span {{ border:1px solid #c8d2df; border-radius:999px; padding:4px 8px; font-size:12px; font-weight:700; background:white; }}
     details {{ margin-top:16px; }}
@@ -1233,7 +1312,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="metric">가장 높은 예측<strong>{escape(str(summary["top_pick"]))}</strong></div>
       <div class="metric">예측 가능 경기<strong>{escape(str(summary["possible_games"]))}</strong></div>
       <div class="metric">박빙/참고 경기<strong>{escape(str(summary["close_games"]))}</strong></div>
-      <div class="metric">모델 한계<strong>선발·불펜·라인업 미반영</strong></div>
+      <div class="metric">모델 한계<strong>선발·불펜 추정, 라인업 미반영</strong></div>
     </div>
     <div class="prediction-cards">{prediction_cards_html}</div>
   </section>
@@ -1313,7 +1392,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         {table_html(model_rows, ["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
       </div>
     </details>
-    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 선발투수, 불펜 소모, 라인업, 결장자 정보는 다음 단계 피처로 분리해 추가할 예정입니다.</p>
+    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 선발투수와 불펜은 공식 발표 전 누적 기록과 최근 일정으로 추정해 카드에 보조 신호로 표시하며, 확정 라인업과 엔트리 변동은 아직 직접 반영하지 않습니다.</p>
   </section>
 </main>
 <script>

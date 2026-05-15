@@ -36,6 +36,7 @@
     .prediction-card .matchup { color:#637083; font-size:13px; font-weight:700; margin-bottom:8px; }
     .prediction-card h3 { display:flex; justify-content:space-between; gap:10px; font-size:20px; }
     .prediction-card h3 span { color:#1d4ed8; white-space:nowrap; }
+    .pitching-signal { color:#374151; font-size:13px; margin-top:8px; }
     .badges { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
     .badges span { border:1px solid #c8d2df; border-radius:999px; padding:4px 8px; font-size:12px; font-weight:700; background:white; }
     details { margin-top:16px; }
@@ -58,7 +59,7 @@
       <div class="metric">가장 높은 예측<strong>NC 약우세 · 59.0%</strong></div>
       <div class="metric">예측 가능 경기<strong>4</strong></div>
       <div class="metric">박빙/참고 경기<strong>1</strong></div>
-      <div class="metric">모델 한계<strong>선발·불펜·라인업 미반영</strong></div>
+      <div class="metric">모델 한계<strong>선발·불펜 추정, 라인업 미반영</strong></div>
     </div>
     <div class="prediction-cards">
         <article class="prediction-card">
@@ -66,6 +67,7 @@
           <h3>NC 약우세 <span>59.0%</span></h3>
           <div class="badges"><span>신뢰도 보통</span><span>예측 가능</span></div>
           <p>NC 최근 10경기 흐름 우위, NC 최근 득실차 우위</p>
+          <p class="pitching-signal">토다 · ERA 5.29 · WHIP 1.44 · 불펜 피로 높음</p>
         </article>
         
         <article class="prediction-card">
@@ -73,6 +75,7 @@
           <h3>KT 약우세 <span>58.8%</span></h3>
           <div class="badges"><span>신뢰도 보통</span><span>예측 가능</span></div>
           <p>KT 홈 경기</p>
+          <p class="pitching-signal">소형준 · ERA 3.69 · WHIP 1.33 · 불펜 피로 높음</p>
         </article>
         
         <article class="prediction-card">
@@ -80,6 +83,7 @@
           <h3>두산 약우세 <span>56.7%</span></h3>
           <div class="badges"><span>신뢰도 보통</span><span>예측 가능</span></div>
           <p>두산 최근 5경기 흐름 우위, 두산 홈 경기</p>
+          <p class="pitching-signal">벤자민 · ERA 4.10 · WHIP 1.75 · 불펜 피로 높음</p>
         </article>
         
         <article class="prediction-card">
@@ -87,6 +91,7 @@
           <h3>삼성 약우세 <span>56.2%</span></h3>
           <div class="badges"><span>신뢰도 보통</span><span>예측 가능</span></div>
           <p>삼성 시즌 누적 승률 우위, 삼성 최근 5경기 흐름 우위</p>
+          <p class="pitching-signal">원태인 · ERA 3.78 · WHIP 1.20 · 불펜 피로 높음</p>
         </article>
         
         <article class="prediction-card">
@@ -94,6 +99,7 @@
           <h3>SSG 박빙 <span>50.1%</span></h3>
           <div class="badges"><span>신뢰도 낮음</span><span>참고만</span></div>
           <p>SSG 최근 5경기 흐름 우위, SSG 최근 득실차 우위</p>
+          <p class="pitching-signal">최민준 · ERA 3.23 · WHIP 1.43 · 불펜 피로 높음</p>
         </article>
         </div>
   </section>
@@ -173,7 +179,7 @@
         <table><thead><tr><th>경기일</th><th>기준팀</th><th>상대팀</th><th>예측 구단</th><th>예측승률</th><th>예측</th><th>실제 승리 구단</th><th>예측 근거</th></tr></thead><tbody><tr><td>2026-05-09</td><td>삼성</td><td>NC</td><td>삼성</td><td>53.8%</td><td>승리 예측</td><td>삼성</td><td>삼성 최근 5경기 흐름 우위, 삼성 최근 10경기 흐름 우위</td></tr><tr><td>2026-05-09</td><td>한화</td><td>LG</td><td>LG</td><td>45.2%</td><td>패배 예측</td><td>한화</td><td>LG 최근 5경기 흐름 우위, LG 최근 10경기 흐름 우위</td></tr><tr><td>2026-05-10</td><td>KIA</td><td>롯데</td><td>KIA</td><td>51.4%</td><td>승리 예측</td><td>롯데</td><td>KIA 최근 5경기 흐름 우위</td></tr><tr><td>2026-05-10</td><td>KT</td><td>키움</td><td>KT</td><td>57.9%</td><td>승리 예측</td><td>키움</td><td>KT 최근 5경기 흐름 우위, KT 최근 10경기 흐름 우위</td></tr><tr><td>2026-05-10</td><td>LG</td><td>한화</td><td>LG</td><td>55.1%</td><td>승리 예측</td><td>한화</td><td>LG 시즌 누적 승률 우위, LG 최근 10경기 흐름 우위</td></tr><tr><td>2026-05-10</td><td>NC</td><td>삼성</td><td>삼성</td><td>47.8%</td><td>패배 예측</td><td>삼성</td><td>삼성 최근 5경기 흐름 우위, 삼성 최근 10경기 흐름 우위</td></tr><tr><td>2026-05-10</td><td>SSG</td><td>두산</td><td>SSG</td><td>53.3%</td><td>승리 예측</td><td>두산</td><td>양 팀 지표가 비슷해 기본 전력과 최근 흐름을 종합</td></tr><tr><td>2026-05-10</td><td>두산</td><td>SSG</td><td>SSG</td><td>46.7%</td><td>패배 예측</td><td>두산</td><td>양 팀 지표가 비슷해 기본 전력과 최근 흐름을 종합</td></tr><tr><td>2026-05-10</td><td>롯데</td><td>KIA</td><td>KIA</td><td>48.6%</td><td>패배 예측</td><td>롯데</td><td>KIA 최근 5경기 흐름 우위</td></tr><tr><td>2026-05-10</td><td>삼성</td><td>NC</td><td>삼성</td><td>52.2%</td><td>승리 예측</td><td>삼성</td><td>삼성 최근 5경기 흐름 우위, 삼성 최근 10경기 흐름 우위</td></tr><tr><td>2026-05-10</td><td>키움</td><td>KT</td><td>KT</td><td>42.1%</td><td>패배 예측</td><td>키움</td><td>KT 최근 5경기 흐름 우위, KT 최근 10경기 흐름 우위</td></tr><tr><td>2026-05-10</td><td>한화</td><td>LG</td><td>LG</td><td>44.9%</td><td>패배 예측</td><td>한화</td><td>LG 시즌 누적 승률 우위, LG 최근 10경기 흐름 우위</td></tr></tbody></table>
       </div>
     </details>
-    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 선발투수, 불펜 소모, 라인업, 결장자 정보는 다음 단계 피처로 분리해 추가할 예정입니다.</p>
+    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 선발투수와 불펜은 공식 발표 전 누적 기록과 최근 일정으로 추정해 카드에 보조 신호로 표시하며, 확정 라인업과 엔트리 변동은 아직 직접 반영하지 않습니다.</p>
   </section>
 </main>
 <script>
