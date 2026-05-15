@@ -13,6 +13,7 @@ import pandas as pd
 import requests
 
 from modeling.feature_engineering import build_features
+from modeling.model_training import evaluate_model as run_model_evaluation
 from modeling.train_win_predictor import (
     prepare_matrix,
     sigmoid,
@@ -1455,7 +1456,7 @@ def main():
     hitters, pitchers = fetch_player_stats()
     export_sources(standings, vs_table, games, hitters, pitchers)
     load_official_tables_to_db(standings, vs_table, games, hitters, pitchers)
-    model_payload = evaluate_model(training_games, games, previous_sunday(ref_date), ref_date)
+    model_payload = run_model_evaluation(training_games, games, previous_sunday(ref_date), ref_date, DATA_DIR, RESULTS_DIR)
     build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, ref_date)
     build_kt_deep_dive(standings, vs_table, games, hitters, pitchers, ref_date)
     print(
