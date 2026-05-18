@@ -37,6 +37,13 @@ def build_game_level_frame(features: pd.DataFrame) -> pd.DataFrame:
                 "venue_win_rate_gap": round(float(home["venue_win_rate_prior"] - away["venue_win_rate_prior"]), 4),
                 "home_games_last_7_days": int(home["games_last_7_days"]),
                 "away_games_last_7_days": int(away["games_last_7_days"]),
+                "games_last_7_days_gap": int(away["games_last_7_days"] - home["games_last_7_days"]),
+                "home_rest_days": round(float(home["rest_days"]), 2),
+                "away_rest_days": round(float(away["rest_days"]), 2),
+                "rest_days_gap": round(float(home["rest_days"] - away["rest_days"]), 2),
+                "home_bullpen_fatigue_proxy": round(float(home["games_last_7_days"] + home["back_to_back"] * 1.5), 2),
+                "away_bullpen_fatigue_proxy": round(float(away["games_last_7_days"] + away["back_to_back"] * 1.5), 2),
+                "bullpen_fatigue_gap": round(float((away["games_last_7_days"] + away["back_to_back"] * 1.5) - (home["games_last_7_days"] + home["back_to_back"] * 1.5)), 2),
             }
         )
     return pd.DataFrame(rows)

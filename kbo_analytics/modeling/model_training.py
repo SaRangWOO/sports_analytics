@@ -72,7 +72,13 @@ def game_prediction_reason(row: pd.Series, predicted_team: str):
     run_gap = row.get("season_avg_run_diff_gap", 0) if home_perspective else -row.get("season_avg_run_diff_gap", 0)
     recent_run_gap = row.get("recent_run_diff_10_gap", 0) if home_perspective else -row.get("recent_run_diff_10_gap", 0)
     venue_gap = row.get("venue_win_rate_gap", 0) if home_perspective else -row.get("venue_win_rate_gap", 0)
+    bullpen_gap = row.get("bullpen_fatigue_gap", 0) if home_perspective else -row.get("bullpen_fatigue_gap", 0)
+    rest_gap = row.get("rest_days_gap", 0) if home_perspective else -row.get("rest_days_gap", 0)
 
+    if bullpen_gap > 1.0:
+        reasons.append(f"{predicted_team} 불펜 피로 부담 낮음")
+    if rest_gap > 0:
+        reasons.append(f"{predicted_team} 휴식일 우위")
     if recent_run_gap > 0.8:
         reasons.append(f"{predicted_team} 최근 득실차 우위")
     if recent_gap > 0.12:

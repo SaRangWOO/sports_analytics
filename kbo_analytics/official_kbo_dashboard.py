@@ -550,15 +550,43 @@ def build_pitching_context(games: pd.DataFrame, pitchers: pd.DataFrame, predicti
 
         if starter is not None:
             starter_text = f"{starter['선수']} · ERA {starter['ERA']} · WHIP {starter['WHIP']}"
+            starter_name = starter["선수"]
+            starter_era = starter["ERA"]
+            starter_whip = starter["WHIP"]
         else:
             starter_text = "추정 불가"
+            starter_name = "-"
+            starter_era = "-"
+            starter_whip = "-"
         context[team] = {
             "추정 선발": starter_text,
+            "추정 선발명": starter_name,
+            "ERA": starter_era,
+            "WHIP": starter_whip,
             "불펜 피로": fatigue,
             "최근3일 경기": int(recent_games),
             "주의": "공식 선발 발표 전 누적 기록과 로테이션 순서로 추정",
         }
     return context
+
+
+def export_pitching_context(context: dict, output_path: Path, prediction_date: date):
+    rows = []
+    for team, values in sorted(context.items()):
+        rows.append(
+            {
+                "date": prediction_date.isoformat(),
+                "team": team,
+                "estimated_starter": values.get("추정 선발명", "-"),
+                "starter_era": values.get("ERA", "-"),
+                "starter_whip": values.get("WHIP", "-"),
+                "bullpen_fatigue": values.get("불펜 피로", "-"),
+                "recent_3day_games": values.get("최근3일 경기", 0),
+                "note": values.get("주의", ""),
+            }
+        )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_csv(output_path, index=False, encoding="utf-8-sig")
 
 
 def build_prediction_cards(today_predictions: list[dict], pitching_context: dict | None = None):
@@ -1234,6 +1262,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     calibration_rows = model_payload.get("calibration_table", []) if model_payload.get("available") else []
     candidate_rows = model_payload.get("candidate_results", []) if model_payload.get("available") else []
     pitching_context = build_pitching_context(games, pitchers, generated_at)
+    export_pitching_context(pitching_context, DATA_DIR / "pitching_context.csv", generated_at)
     prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context)
     summary = today_summary(prediction_cards)
     prediction_cards_html = "".join(
@@ -1393,7 +1422,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         {table_html(model_rows, ["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
       </div>
     </details>
-    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 선발투수와 불펜은 공식 발표 전 누적 기록과 최근 일정으로 추정해 카드에 보조 신호로 표시하며, 확정 라인업과 엔트리 변동은 아직 직접 반영하지 않습니다.</p>
+    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 불펜 피로와 휴식일은 경기 단위 모델 피처로 반영했고, 선발투수는 공식 발표 전 누적 기록과 로테이션 순서로 추정해 카드에 보조 신호로 표시합니다. 확정 라인업과 엔트리 변동은 아직 직접 반영하지 않습니다.</p>
   </section>
 </main>
 <script>
