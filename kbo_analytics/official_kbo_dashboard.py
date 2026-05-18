@@ -1237,6 +1237,14 @@ def rank_text(rank):
     return "-" if pd.isna(rank) else f"{int(rank)}위"
 
 
+def is_top_three(rank):
+    return not pd.isna(rank) and int(rank) <= 3
+
+
+def is_bottom_three(rank):
+    return not pd.isna(rank) and int(rank) >= 8
+
+
 def topic_particle(text: str):
     if not text:
         return "는"
@@ -1343,7 +1351,7 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
         tags.append("반등 여지")
     elif pythag_gap <= -0.03:
         tags.append("하락 위험")
-    if rank_score(ops_rank) >= 80:
+    if is_top_three(ops_rank):
         tags.append("공격 생산형")
     if operation_score >= 75:
         tags.append("작전형")
@@ -1355,18 +1363,22 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
         tags.append("마운드 안정형")
     if run_diff <= -20:
         tags.append("득실 열세")
-    if plate_score <= 40:
+    if is_bottom_three(bb_k_rank):
         tags.append("타석 불안정")
-    if pitching_score <= 40:
+    if is_bottom_three(era_rank) or is_bottom_three(whip_rank):
         tags.append("마운드 불안")
-    if rank_score(ops_rank) <= 40:
+    if is_bottom_three(ops_rank) or is_bottom_three(context.get("팀타율순위", pd.NA)):
         tags.append("공격 침체")
     if not tags:
         tags.append("균형 점검형")
     strengths = []
     risks = []
-    if run_diff > 0:
-        strengths.append(f"득실차 {run_diff:+d}로 경기 내용이 승률을 뒷받침합니다.")
+    if run_diff >= 20:
+        strengths.append(f"득실차가 {run_diff:+d}로 경기 내용이 확실히 승률을 뒷받침합니다.")
+    elif run_diff > 0:
+        strengths.append(f"득실차가 {run_diff:+d}으로 경기 내용도 소폭 우위입니다.")
+    elif run_diff == 0:
+        risks.append("득실차가 0으로 경기 내용은 거의 균형입니다.")
     elif run_diff < 0:
         risks.append(f"득실차 {run_diff:+d}라 현재 승률 유지에는 실점 억제가 필요합니다.")
     if operation_score >= 70:
@@ -1395,7 +1407,11 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
         risks.append("현재 공개 지표 기준 뚜렷한 하위권 리스크는 제한적입니다.")
     strengths = strengths[:3]
     risks = risks[:3]
-    if operation_score >= 70 and plate_score <= 50:
+    if int(team_standing["순위"]) <= 3 and chance_score >= 70 and plate_score >= 70 and pitching_score >= 70:
+        conclusion = "찬스 수행, 타석 안정성, 마운드 안정성이 모두 상위권인 균형형 선두권 팀입니다."
+    elif int(team_standing["순위"]) <= 3 and plate_score >= 70 and pitching_score >= 70:
+        conclusion = "타석 운영과 마운드 안정성이 함께 받쳐주는 균형형 상위권 팀입니다."
+    elif operation_score >= 70 and plate_score <= 50:
         conclusion = "작전 수행 결과는 좋지만 타석 안정성은 낮아 빅이닝 생산에는 보완이 필요합니다."
     elif chance_score >= 70 and run_diff < 0:
         conclusion = "찬스 수행력은 좋지만 득실차가 낮아 실점 억제와 기본 출루 생산을 함께 점검해야 합니다."
@@ -1505,6 +1521,7 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
     {table_html(context_rows, ["지표", "값", "해석"])}
     <p class="note">작전 지시 수와 사인 성공률은 KBO 공식 공개 데이터에 없어 직접 확인할 수 없습니다. 대신 희생번트, 희생플라이, 득점권타율, BB/K를 작전·상황 수행 proxy로 사용합니다.</p>
     <p class="note">지수는 리그 내 순위를 100점으로 환산한 값이며 100점에 가까울수록 리그 상위권입니다. 작전 수행 지수는 희생번트와 희생플라이, 찬스 수행 지수는 득점권타율, 타석 안정성은 BB/K, 마운드 안정성은 ERA와 WHIP 순위를 기반으로 산출합니다.</p>
+    <p class="note">태그 기준: OPS 또는 팀 타율 하위 3팀은 공격 침체, BB/K 하위 3팀은 타석 불안정, 득점권타율 상위 3팀은 찬스 강점, ERA 또는 WHIP 하위 3팀은 마운드 불안으로 표시합니다.</p>
   </section>
   <section class="section">
     <h2>경기력 분해</h2>
