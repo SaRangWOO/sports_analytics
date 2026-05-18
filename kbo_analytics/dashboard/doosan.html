@@ -21,6 +21,10 @@
     th { background:#f0f3f7; }
     .wrap-table td { white-space:normal; line-height:1.55; vertical-align:top; }
     .wrap-table td:nth-child(2) { min-width:260px; }
+    .lead { font-size:18px; line-height:1.6; margin:0 0 16px; }
+    .tags { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 18px; }
+    .tags span { border:1px solid #c8d2df; border-radius:999px; padding:6px 10px; background:#fff; font-weight:700; font-size:13px; }
+    .insight-list { margin:0; padding-left:20px; line-height:1.7; }
     .note { color:#637083; font-size:13px; }
     @media (max-width:960px) { .grid,.tables { grid-template-columns:1fr; } main { padding:16px; } }
   </style>
@@ -33,6 +37,8 @@
 <main>
   <section class="section">
     <h2>팀 분석 요약</h2>
+    <p class="lead">두산는 6위, 승률 0.476의 팀입니다. 핵심 태그는 반등 여지, 작전형이며, 작전 수행 지수 95/100, 찬스 수행 지수 50/100, 타석 안정성 40/100으로 요약됩니다.</p>
+    <div class="tags"><span>반등 여지</span><span>작전형</span></div>
     <div class="grid">
       <div class="metric">순위<strong>6위</strong></div>
       <div class="metric">전적<strong>20승 22패 0무</strong></div>
@@ -40,6 +46,13 @@
       <div class="metric">팀 타율<strong>0.252</strong></div>
     </div>
     <table><thead><tr><th>인사이트</th><th>내용</th></tr></thead><tbody><tr><td>시즌 위치</td><td>6위, 20승 22패 0무, 승률 0.476입니다.</td></tr><tr><td>득실 균형</td><td>득점 204, 실점 201, 득실차 +3. 피타고리안 기대 승률은 0.507입니다.</td></tr><tr><td>팀 타격</td><td>등록 타자 기준 팀 타율 0.252, 평균 출루율 0.248, 평균 OPS 0.524입니다.</td></tr><tr><td>작전/상황 수행</td><td>희생번트 25개, 희생플라이 21개, 득점권타율 0.275, BB/K 0.53입니다.</td></tr><tr><td>투수 운영</td><td>등록 투수 기준 산출 ERA 4.21. 선발/불펜 후보군은 등록 투수 명단과 최근 이닝을 함께 봅니다.</td></tr><tr><td>벤치 구성</td><td>감독 김원형(70). 코치진은 손시헌(73), 조인성(74), 이진영(75), 정재훈(76), 홍원기(78), 손지환(79), 조중근(86), 고토(88), 임재현(89), 가득염(90)입니다.</td></tr><tr><td>선수 기여</td><td>타자 기록 상위는 김기연, 투수 기록 상위는 최원준가 현재 테이블 최상단입니다.</td></tr></tbody></table>
+  </section>
+  <section class="section">
+    <h2>강점과 주의점</h2>
+    <div class="tables">
+      <div><h3>강점</h3><ol class="insight-list"><li>득실차 +3로 경기 내용이 승률을 뒷받침합니다.</li><li>희생번트 2위, 희생플라이 1위로 작전/진루 생산이 강점입니다.</li></ol></div>
+      <div><h3>주의</h3><ol class="insight-list"><li>BB/K 7위라 볼넷 대비 삼진 관리가 필요합니다.</li></ol></div>
+    </div>
   </section>
   <section class="section">
     <h2>감독·코치·등록 선수 구성</h2>
@@ -54,7 +67,7 @@
   </section>
   <section class="section">
     <h2>작전·상황 수행 지표</h2>
-    <table><thead><tr><th>지표</th><th>값</th><th>해석</th></tr></thead><tbody><tr><td>작전 빈도 proxy</td><td>희생번트 25개 · 리그 2위</td><td>번트 시도/성공 구분은 공식 집계에 없어 희생번트 완료 수로 작전 개입 빈도를 봅니다.</td></tr><tr><td>상황 타격 proxy</td><td>득점권타율 0.275 · 리그 6위</td><td>주자가 득점권에 있을 때 타선이 찬스를 점수로 연결하는지를 봅니다.</td></tr><tr><td>타석 운영</td><td>BB/K 0.53 · 리그 7위</td><td>볼넷 대비 삼진 비율로 타선의 선구안과 공격 안정성을 함께 봅니다.</td></tr><tr><td>진루타 proxy</td><td>희생플라이 21개 · 리그 1위</td><td>3루 주자를 홈으로 부르는 상황 수행력을 간접적으로 봅니다.</td></tr></tbody></table>
+    <table><thead><tr><th>지표</th><th>값</th><th>해석</th></tr></thead><tbody><tr><td>작전 수행 지수</td><td>95/100</td><td>희생번트 25개(2위)와 희생플라이 21개(1위)를 함께 본 proxy입니다.</td></tr><tr><td>찬스 수행 지수</td><td>50/100</td><td>득점권타율 0.275, 리그 6위입니다.</td></tr><tr><td>타석 안정성</td><td>40/100</td><td>BB/K 0.53, 리그 7위입니다.</td></tr><tr><td>마운드 안정성</td><td>60/100</td><td>산출 ERA 4.21(3위), 산출 WHIP 1.50(7위)입니다.</td></tr></tbody></table>
     <p class="note">작전 지시 수와 사인 성공률은 KBO 공식 공개 데이터에 없어 직접 확인할 수 없습니다. 대신 희생번트, 희생플라이, 득점권타율, BB/K를 작전·상황 수행 proxy로 사용합니다.</p>
   </section>
   <section class="section">

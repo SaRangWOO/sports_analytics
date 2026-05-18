@@ -1193,6 +1193,8 @@ def team_context_metrics(hitters: pd.DataFrame):
             {
                 "팀": team,
                 "팀타율": hits / max(at_bats, 1),
+                "출루율": frame["출루율"].apply(to_float).replace(0, np.nan).mean(),
+                "OPS": frame["OPS"].apply(to_float).replace(0, np.nan).mean(),
                 "희생번트": int(frame["희생번트"].apply(to_float).sum()),
                 "희생플라이": int(frame["희생플라이"].apply(to_float).sum()),
                 "볼넷삼진비": walks / max(strikeouts, 1),
@@ -1200,9 +1202,39 @@ def team_context_metrics(hitters: pd.DataFrame):
             }
         )
     metrics = pd.DataFrame(rows)
-    for column in ["팀타율", "희생번트", "희생플라이", "볼넷삼진비", "득점권타율"]:
+    for column in ["팀타율", "출루율", "OPS", "희생번트", "희생플라이", "볼넷삼진비", "득점권타율"]:
         metrics[f"{column}순위"] = metrics[column].rank(ascending=False, method="min").astype("Int64")
     return metrics
+
+
+def team_pitching_metrics(pitchers: pd.DataFrame):
+    rows = []
+    for team, frame in pitchers.groupby("팀"):
+        innings = frame["이닝"].apply(parse_innings).sum()
+        earned_runs = frame["자책"].apply(to_float).sum()
+        hits_allowed = frame["피안타"].apply(to_float).sum()
+        walks = frame["볼넷"].apply(to_float).sum()
+        rows.append(
+            {
+                "팀": team,
+                "산출ERA": earned_runs * 9 / max(innings, 1),
+                "산출WHIP": (hits_allowed + walks) / max(innings, 1),
+            }
+        )
+    metrics = pd.DataFrame(rows)
+    for column in ["산출ERA", "산출WHIP"]:
+        metrics[f"{column}순위"] = metrics[column].rank(ascending=True, method="min").astype("Int64")
+    return metrics
+
+
+def rank_score(rank, total=10):
+    if pd.isna(rank):
+        return 50
+    return int(round(100 - (int(rank) - 1) * (90 / max(total - 1, 1))))
+
+
+def rank_text(rank):
+    return "-" if pd.isna(rank) else f"{int(rank)}위"
 
 
 def build_team_analysis_pages(standings, vs_table, games, hitters, pitchers, rosters, generated_at: date):
@@ -1276,15 +1308,78 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
     team_era = to_float(team_pitcher_pool["자책"].apply(to_float).sum() * 9 / max(team_pitcher_pool["이닝"].apply(parse_innings).sum(), 1), 0)
     context_metrics = team_context_metrics(hitters)
     context = context_metrics[context_metrics["팀"] == team].iloc[0].to_dict() if not context_metrics.empty else {}
+    pitcher_metrics = team_pitching_metrics(pitchers)
+    pitcher_context = pitcher_metrics[pitcher_metrics["팀"] == team].iloc[0].to_dict() if not pitcher_metrics.empty else {}
     sac_bunts = int(context.get("희생번트", 0))
     sac_flies = int(context.get("희생플라이", 0))
     bb_k = to_float(context.get("볼넷삼진비", 0))
     risp_avg = to_float(context.get("득점권타율", 0))
+    ops_rank = context.get("OPS순위", pd.NA)
+    bunt_rank = context.get("희생번트순위", pd.NA)
+    sac_fly_rank = context.get("희생플라이순위", pd.NA)
+    risp_rank = context.get("득점권타율순위", pd.NA)
+    bb_k_rank = context.get("볼넷삼진비순위", pd.NA)
+    era_rank = pitcher_context.get("산출ERA순위", pd.NA)
+    whip_rank = pitcher_context.get("산출WHIP순위", pd.NA)
+    operation_score = int(round((rank_score(bunt_rank) + rank_score(sac_fly_rank)) / 2))
+    chance_score = rank_score(risp_rank)
+    plate_score = rank_score(bb_k_rank)
+    pitching_score = int(round((rank_score(era_rank) + rank_score(whip_rank)) / 2))
+    tags = []
+    if int(team_standing["순위"]) <= 3:
+        tags.append("상위권")
+    if run_diff > 0 and pythag >= win_rate + 0.03:
+        tags.append("반등 여지")
+    if rank_score(ops_rank) >= 80:
+        tags.append("공격 생산형")
+    if operation_score >= 75:
+        tags.append("작전형")
+    if chance_score >= 75:
+        tags.append("찬스 강점")
+    if plate_score >= 75:
+        tags.append("타석 안정형")
+    if pitching_score >= 75:
+        tags.append("마운드 안정형")
+    if not tags:
+        tags.append("균형 점검형")
+    strengths = []
+    risks = []
+    if run_diff > 0:
+        strengths.append(f"득실차 {run_diff:+d}로 경기 내용이 승률을 뒷받침합니다.")
+    elif run_diff < 0:
+        risks.append(f"득실차 {run_diff:+d}라 현재 승률 유지에는 실점 억제가 필요합니다.")
+    if operation_score >= 70:
+        strengths.append(f"희생번트 {rank_text(bunt_rank)}, 희생플라이 {rank_text(sac_fly_rank)}로 작전/진루 생산이 강점입니다.")
+    elif operation_score <= 40:
+        risks.append(f"희생번트·희생플라이 지표가 하위권이라 작전 수행 결과가 뚜렷하지 않습니다.")
+    if chance_score >= 70:
+        strengths.append(f"득점권타율 {rank_text(risp_rank)}로 찬스 연결력이 좋습니다.")
+    elif chance_score <= 40:
+        risks.append(f"득점권타율 {rank_text(risp_rank)}라 찬스 대비 득점 전환을 점검해야 합니다.")
+    if plate_score >= 70:
+        strengths.append(f"BB/K {rank_text(bb_k_rank)}로 타석 운영 안정성이 좋습니다.")
+    elif plate_score <= 40:
+        risks.append(f"BB/K {rank_text(bb_k_rank)}라 볼넷 대비 삼진 관리가 필요합니다.")
+    if pitching_score >= 70:
+        strengths.append(f"산출 ERA {rank_text(era_rank)}, WHIP {rank_text(whip_rank)}로 마운드 지표가 안정적입니다.")
+    elif pitching_score <= 40:
+        risks.append(f"산출 ERA {rank_text(era_rank)}, WHIP {rank_text(whip_rank)}라 리드 유지 리스크가 있습니다.")
+    if not strengths:
+        strengths.append("리그 중간권 지표가 많아 특정 강점보다 균형 유지가 핵심입니다.")
+    if not risks:
+        risks.append("현재 공개 지표 기준 뚜렷한 하위권 리스크는 제한적입니다.")
+    strengths = strengths[:3]
+    risks = risks[:3]
+    summary_sentence = (
+        f"{team}는 {rank_text(team_standing['순위'])}, 승률 {pct(win_rate)}의 팀입니다. "
+        f"핵심 태그는 {', '.join(tags[:4])}이며, 작전 수행 지수 {operation_score}/100, "
+        f"찬스 수행 지수 {chance_score}/100, 타석 안정성 {plate_score}/100으로 요약됩니다."
+    )
     context_rows = [
-        {"지표": "작전 빈도 proxy", "값": f"희생번트 {sac_bunts}개 · 리그 {context.get('희생번트순위', '-')}위", "해석": "번트 시도/성공 구분은 공식 집계에 없어 희생번트 완료 수로 작전 개입 빈도를 봅니다."},
-        {"지표": "상황 타격 proxy", "값": f"득점권타율 {risp_avg:.3f} · 리그 {context.get('득점권타율순위', '-')}위", "해석": "주자가 득점권에 있을 때 타선이 찬스를 점수로 연결하는지를 봅니다."},
-        {"지표": "타석 운영", "값": f"BB/K {bb_k:.2f} · 리그 {context.get('볼넷삼진비순위', '-')}위", "해석": "볼넷 대비 삼진 비율로 타선의 선구안과 공격 안정성을 함께 봅니다."},
-        {"지표": "진루타 proxy", "값": f"희생플라이 {sac_flies}개 · 리그 {context.get('희생플라이순위', '-')}위", "해석": "3루 주자를 홈으로 부르는 상황 수행력을 간접적으로 봅니다."},
+        {"지표": "작전 수행 지수", "값": f"{operation_score}/100", "해석": f"희생번트 {sac_bunts}개({rank_text(bunt_rank)})와 희생플라이 {sac_flies}개({rank_text(sac_fly_rank)})를 함께 본 proxy입니다."},
+        {"지표": "찬스 수행 지수", "값": f"{chance_score}/100", "해석": f"득점권타율 {risp_avg:.3f}, 리그 {rank_text(risp_rank)}입니다."},
+        {"지표": "타석 안정성", "값": f"{plate_score}/100", "해석": f"BB/K {bb_k:.2f}, 리그 {rank_text(bb_k_rank)}입니다."},
+        {"지표": "마운드 안정성", "값": f"{pitching_score}/100", "해석": f"산출 ERA {team_era:.2f}({rank_text(era_rank)}), 산출 WHIP {to_float(pitcher_context.get('산출WHIP', 0)):.2f}({rank_text(whip_rank)})입니다."},
     ]
 
     insight_rows = [
@@ -1320,6 +1415,10 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
     th {{ background:#f0f3f7; }}
     .wrap-table td {{ white-space:normal; line-height:1.55; vertical-align:top; }}
     .wrap-table td:nth-child(2) {{ min-width:260px; }}
+    .lead {{ font-size:18px; line-height:1.6; margin:0 0 16px; }}
+    .tags {{ display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 18px; }}
+    .tags span {{ border:1px solid #c8d2df; border-radius:999px; padding:6px 10px; background:#fff; font-weight:700; font-size:13px; }}
+    .insight-list {{ margin:0; padding-left:20px; line-height:1.7; }}
     .note {{ color:#637083; font-size:13px; }}
     @media (max-width:960px) {{ .grid,.tables {{ grid-template-columns:1fr; }} main {{ padding:16px; }} }}
   </style>
@@ -1332,6 +1431,8 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
 <main>
   <section class="section">
     <h2>팀 분석 요약</h2>
+    <p class="lead">{escape(summary_sentence)}</p>
+    <div class="tags">{"".join(f"<span>{escape(tag)}</span>" for tag in tags[:4])}</div>
     <div class="grid">
       <div class="metric">순위<strong>{team_standing["순위"]}위</strong></div>
       <div class="metric">전적<strong>{wins}승 {losses}패 {draws}무</strong></div>
@@ -1339,6 +1440,13 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
       <div class="metric">팀 타율<strong>{team_avg:.3f}</strong></div>
     </div>
     {table_html(insight_rows, ["인사이트", "내용"])}
+  </section>
+  <section class="section">
+    <h2>강점과 주의점</h2>
+    <div class="tables">
+      <div><h3>강점</h3><ol class="insight-list">{"".join(f"<li>{escape(item)}</li>" for item in strengths)}</ol></div>
+      <div><h3>주의</h3><ol class="insight-list">{"".join(f"<li>{escape(item)}</li>" for item in risks)}</ol></div>
+    </div>
   </section>
   <section class="section">
     <h2>감독·코치·등록 선수 구성</h2>
