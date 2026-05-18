@@ -6,6 +6,7 @@ import os
 import re
 from datetime import date, datetime, timedelta
 from html import escape, unescape
+from io import StringIO
 from pathlib import Path
 
 import numpy as np
@@ -48,6 +49,18 @@ TEAM_ALIASES = {
     "Doosan": "두산",
     "Hanwha": "한화",
     "Kiwoom": "키움",
+}
+TEAM_PAGE_SLUGS = {
+    "KT": "kt",
+    "삼성": "samsung",
+    "LG": "lg",
+    "SSG": "ssg",
+    "두산": "doosan",
+    "한화": "hanwha",
+    "KIA": "kia",
+    "NC": "nc",
+    "롯데": "lotte",
+    "키움": "kiwoom",
 }
 
 
@@ -247,16 +260,45 @@ def fetch_player_stats():
     return pd.concat(hitters, ignore_index=True), pd.concat(pitchers, ignore_index=True)
 
 
-def export_sources(standings, vs_table, games, hitters, pitchers):
+def split_registered_people(value):
+    text = str(value or "").replace("\n", "").strip()
+    if not text or text == "nan":
+        return ""
+    people = re.findall(r"[^()]+?\(\d+\)", text)
+    if people:
+        return ", ".join(person.strip() for person in people)
+    return text
+
+
+def fetch_registered_rosters():
+    html = requests.get(f"{KBO_BASE}/Player/RegisterAll.aspx", headers=HEADERS, timeout=30).text
+    roster_rows = []
+    for table in pd.read_html(StringIO(html)):
+        if "구단" not in table.columns or table.empty:
+            continue
+        row = table.iloc[0]
+        team = str(row.get("구단", "")).split()[0]
+        if team not in TEAM_CODES:
+            continue
+        output = {"팀": team}
+        for label in ["감독", "코치", "투수", "포수", "내야수", "외야수"]:
+            matching = [column for column in table.columns if str(column).startswith(label)]
+            output[label] = split_registered_people(row.get(matching[0], "")) if matching else ""
+        roster_rows.append(output)
+    return pd.DataFrame(roster_rows)
+
+
+def export_sources(standings, vs_table, games, hitters, pitchers, rosters):
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     standings.to_csv(DATA_DIR / "team_standings.csv", index=False, encoding="utf-8-sig")
     vs_table.to_csv(DATA_DIR / "team_vs_team.csv", index=False, encoding="utf-8-sig")
     games.to_csv(DATA_DIR / "game_results.csv", index=False, encoding="utf-8-sig")
     hitters.to_csv(DATA_DIR / "hitter_stats.csv", index=False, encoding="utf-8-sig")
     pitchers.to_csv(DATA_DIR / "pitcher_stats.csv", index=False, encoding="utf-8-sig")
+    rosters.to_csv(DATA_DIR / "registered_rosters.csv", index=False, encoding="utf-8-sig")
 
 
-def load_official_tables_to_db(standings, vs_table, games, hitters, pitchers):
+def load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, rosters):
     from sqlalchemy import create_engine
 
     engine = create_engine(DB_URL)
@@ -266,6 +308,7 @@ def load_official_tables_to_db(standings, vs_table, games, hitters, pitchers):
         "official_team_vs_team": vs_table,
         "official_hitter_stats": hitters,
         "official_pitcher_stats": pitchers,
+        "official_registered_rosters": rosters,
     }
     try:
         with engine.begin() as connection:
@@ -514,7 +557,46 @@ def to_float(value, default=0.0):
         return default
 
 
-def build_pitching_context(games: pd.DataFrame, pitchers: pd.DataFrame, prediction_date: date):
+def fetch_confirmed_pitcher_ids(game_date: date, game_id: str):
+    url = f"{KBO_BASE}/Schedule/GameCenter/Main.aspx"
+    params = {
+        "gameDate": game_date.strftime("%Y%m%d"),
+        "gameId": game_id,
+        "section": "START_PIT",
+    }
+    try:
+        html = requests.get(url, params=params, headers=HEADERS, timeout=20).text
+    except requests.RequestException:
+        return {}
+    attrs = {}
+    for key in ["away_p_id", "home_p_id"]:
+        match = re.search(rf'{key}=["\']([^"\']+)["\']', html)
+        if match and match.group(1).strip():
+            attrs[key] = match.group(1).strip()
+    return attrs
+
+
+def starter_source_for_game(games: pd.DataFrame, team: str, prediction_date: date, reference_datetime: datetime, update_stage: str):
+    if update_stage != "pregame":
+        return "estimated", "", 0.5
+    scheduled = games[
+        (games["team"] == team)
+        & (pd.to_datetime(games["date"]).dt.date == prediction_date)
+        & (games["status"] == "Scheduled")
+    ]
+    if scheduled.empty:
+        return "estimated", "", 0.5
+    row = scheduled.iloc[0]
+    game_base_id = str(row["game_id"]).rsplit("_", 1)[0]
+    confirmed = fetch_confirmed_pitcher_ids(prediction_date, game_base_id)
+    side_key = "home_p_id" if row["home_away"] == "H" else "away_p_id"
+    if confirmed.get(side_key):
+        return "confirmed", reference_datetime.strftime("%Y-%m-%d %H:%M"), 1.0
+    return "estimated", "", 0.5
+
+
+def build_pitching_context(games: pd.DataFrame, pitchers: pd.DataFrame, prediction_date: date, reference_datetime: datetime | None = None, update_stage: str = "morning"):
+    reference_datetime = reference_datetime or datetime.combine(prediction_date, datetime.min.time())
     completed = games[games["status"] == "Final"].copy()
     completed["date"] = pd.to_datetime(completed["date"]).dt.date
     context = {}
@@ -558,14 +640,19 @@ def build_pitching_context(games: pd.DataFrame, pitchers: pd.DataFrame, predicti
             starter_name = "-"
             starter_era = "-"
             starter_whip = "-"
+        source, confirmed_at, quality = starter_source_for_game(games, team, prediction_date, reference_datetime, update_stage)
+        source_label = "확정 선발" if source == "confirmed" else "예상 선발"
         context[team] = {
-            "추정 선발": starter_text,
-            "추정 선발명": starter_name,
+            "투수 표시": f"{source_label}: {starter_text}",
+            "선발명": starter_name,
+            "starter_source": source,
+            "starter_confirmed_at": confirmed_at,
+            "starter_info_quality": quality,
             "ERA": starter_era,
             "WHIP": starter_whip,
             "불펜 피로": fatigue,
             "최근3일 경기": int(recent_games),
-            "주의": "공식 선발 발표 전 누적 기록과 로테이션 순서로 추정",
+            "주의": "확정 선발은 GameCenter 기준, 미확인 시 누적 기록과 로테이션 순서로 추정",
         }
     return context
 
@@ -577,7 +664,10 @@ def export_pitching_context(context: dict, output_path: Path, prediction_date: d
             {
                 "date": prediction_date.isoformat(),
                 "team": team,
-                "estimated_starter": values.get("추정 선발명", "-"),
+                "starter_name": values.get("선발명", "-"),
+                "starter_source": values.get("starter_source", "estimated"),
+                "starter_confirmed_at": values.get("starter_confirmed_at", ""),
+                "starter_info_quality": values.get("starter_info_quality", 0.5),
                 "starter_era": values.get("ERA", "-"),
                 "starter_whip": values.get("WHIP", "-"),
                 "bullpen_fatigue": values.get("불펜 피로", "-"),
@@ -610,7 +700,7 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             "예측승률": f"{confidence:.1%}",
             "신뢰도": tier["신뢰도"],
             "핵심 근거": row.get("예측 근거", ""),
-            "투수 신호": f'{pick_context.get("추정 선발", "추정 불가")} · 불펜 피로 {pick_context.get("불펜 피로", "-")}',
+            "투수 신호": f'{pick_context.get("투수 표시", "예상 선발: 추정 불가")} · 불펜 피로 {pick_context.get("불펜 피로", "-")}',
             "판단": tier["판단"],
             "confidence_value": confidence,
         }
@@ -1092,9 +1182,16 @@ def record_summary(frame: pd.DataFrame):
     return games, wins, losses, draws, win_rate
 
 
-def build_kt_deep_dive(standings, vs_table, games, hitters, pitchers, generated_at: date):
-    kt_standing = standings[standings["팀"] == "KT"].iloc[0]
-    completed = games[(games["team"] == "KT") & (games["status"] == "Final")].copy()
+def build_team_analysis_pages(standings, vs_table, games, hitters, pitchers, rosters, generated_at: date):
+    generated_pages = {}
+    for team in standings["팀"]:
+        generated_pages[team] = build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rosters, team, generated_at)
+    return generated_pages
+
+
+def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rosters, team: str, generated_at: date):
+    team_standing = standings[standings["팀"] == team].iloc[0]
+    completed = games[(games["team"] == team) & (games["status"] == "Final")].copy()
     completed["date"] = pd.to_datetime(completed["date"])
     completed["득실차"] = completed["score_team"] - completed["score_opp"]
     games_count, wins, losses, draws, win_rate = record_summary(completed)
@@ -1143,16 +1240,24 @@ def build_kt_deep_dive(standings, vs_table, games, hitters, pitchers, generated_
     recent["결과"] = recent["result"].map({"Win": "승", "Loss": "패", "Draw": "무"})
     recent["스코어"] = recent["score_team"].astype("Int64").astype(str) + " - " + recent["score_opp"].astype("Int64").astype(str)
 
-    kt_hitters = hitters[hitters["팀"] == "KT"].copy().head(12)
-    kt_pitchers = pitchers[pitchers["팀"] == "KT"].copy().head(12)
-    top_hitter = kt_hitters.iloc[0]["선수"] if not kt_hitters.empty else "-"
-    top_pitcher = kt_pitchers.iloc[0]["선수"] if not kt_pitchers.empty else "-"
+    team_hitters = hitters[hitters["팀"] == team].copy().head(12)
+    team_pitchers = pitchers[pitchers["팀"] == team].copy().head(12)
+    roster = rosters[rosters["팀"] == team].iloc[0].to_dict() if not rosters[rosters["팀"] == team].empty else {}
+    top_hitter = team_hitters.iloc[0]["선수"] if not team_hitters.empty else "-"
+    top_pitcher = team_pitchers.iloc[0]["선수"] if not team_pitchers.empty else "-"
+    team_hitter_pool = hitters[hitters["팀"] == team].copy()
+    team_pitcher_pool = pitchers[pitchers["팀"] == team].copy()
+    team_avg = to_float(team_hitter_pool["안타"].apply(to_float).sum() / max(team_hitter_pool["타수"].apply(to_float).sum(), 1), 0)
+    team_obp = to_float(team_hitter_pool["출루율"].apply(to_float).mean(), 0)
+    team_ops = to_float(team_hitter_pool["OPS"].apply(to_float).mean(), 0)
+    team_era = to_float(team_pitcher_pool["자책"].apply(to_float).sum() * 9 / max(team_pitcher_pool["이닝"].apply(parse_innings).sum(), 1), 0)
 
     insight_rows = [
-        {"인사이트": "1위의 직접 근거", "내용": f"{wins}승 {losses}패 {draws}무, 승률 {pct(win_rate)}로 순위표 1위입니다."},
+        {"인사이트": "시즌 위치", "내용": f"{team_standing['순위']}위, {wins}승 {losses}패 {draws}무, 승률 {pct(win_rate)}입니다."},
         {"인사이트": "득실 균형", "내용": f"득점 {runs_for}, 실점 {runs_against}, 득실차 {run_diff:+d}. 피타고리안 기대 승률은 {pct(pythag)}입니다."},
-        {"인사이트": "홈/원정 분리", "내용": "홈과 원정 성과를 분리해 1위가 특정 구장 효과인지 전력 안정성인지 확인합니다."},
-        {"인사이트": "상대별 강약", "내용": "상대 전적과 평균 득실차를 함께 보면 어떤 매치업에서 승수를 벌었는지 보입니다."},
+        {"인사이트": "팀 타격", "내용": f"등록 타자 기준 팀 타율 {team_avg:.3f}, 평균 출루율 {team_obp:.3f}, 평균 OPS {team_ops:.3f}입니다."},
+        {"인사이트": "투수 운영", "내용": f"등록 투수 기준 산출 ERA {team_era:.2f}. 선발/불펜 후보군은 등록 투수 명단과 최근 이닝을 함께 봅니다."},
+        {"인사이트": "벤치 구성", "내용": f"감독 {roster.get('감독', '-')}. 코치진은 {roster.get('코치', '-') or '-'}입니다."},
         {"인사이트": "선수 기여", "내용": f"타자 기록 상위는 {top_hitter}, 투수 기록 상위는 {top_pitcher}가 현재 테이블 최상단입니다."},
     ]
 
@@ -1161,7 +1266,7 @@ def build_kt_deep_dive(standings, vs_table, games, hitters, pitchers, generated_
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KT 2026 시즌 심층 분석</title>
+  <title>{escape(team)} 2026 팀 분석</title>
   <style>
     body {{ margin:0; font-family:Arial,sans-serif; color:#1b1f24; background:#f4f6f8; }}
     header {{ background:#172033; color:white; padding:30px 32px; }}
@@ -1183,19 +1288,30 @@ def build_kt_deep_dive(standings, vs_table, games, hitters, pitchers, generated_
 </head>
 <body>
 <header>
-  <h1>KT 2026 시즌 심층 분석</h1>
+  <h1>{escape(team)} 2026 팀 분석</h1>
   <div>생성일 {generated_at.isoformat()} · <a href="latest.html">KBO 리그 대시보드로 돌아가기</a></div>
 </header>
 <main>
   <section class="section">
-    <h2>KT가 1위인 이유 요약</h2>
+    <h2>팀 분석 요약</h2>
     <div class="grid">
-      <div class="metric">순위<strong>{kt_standing["순위"]}위</strong></div>
+      <div class="metric">순위<strong>{team_standing["순위"]}위</strong></div>
       <div class="metric">전적<strong>{wins}승 {losses}패 {draws}무</strong></div>
       <div class="metric">득실차<strong>{run_diff:+d}</strong></div>
-      <div class="metric">기대 승률<strong>{pct(pythag)}</strong></div>
+      <div class="metric">팀 타율<strong>{team_avg:.3f}</strong></div>
     </div>
     {table_html(insight_rows, ["인사이트", "내용"])}
+  </section>
+  <section class="section">
+    <h2>감독·코치·등록 선수 구성</h2>
+    <div class="grid">
+      <div class="metric">감독<strong>{escape(str(roster.get("감독", "-")))}</strong></div>
+      <div class="metric">투수 등록<strong>{len([p for p in str(roster.get("투수", "")).split(",") if p.strip()])}명</strong></div>
+      <div class="metric">야수 등록<strong>{len([p for p in (str(roster.get("포수", "")) + "," + str(roster.get("내야수", "")) + "," + str(roster.get("외야수", ""))).split(",") if p.strip()])}명</strong></div>
+      <div class="metric">산출 ERA<strong>{team_era:.2f}</strong></div>
+    </div>
+    {table_html([{"구분": "코치", "명단": roster.get("코치", "-")}, {"구분": "투수", "명단": roster.get("투수", "-")}, {"구분": "포수", "명단": roster.get("포수", "-")}, {"구분": "내야수", "명단": roster.get("내야수", "-")}, {"구분": "외야수", "명단": roster.get("외야수", "-")}], ["구분", "명단"])}
+    <p class="note">감독·코치·등록 선수 구성은 KBO 공식 전체 등록 현황 기준입니다.</p>
   </section>
   <section class="section">
     <h2>경기력 분해</h2>
@@ -1215,21 +1331,24 @@ def build_kt_deep_dive(standings, vs_table, games, hitters, pitchers, generated_
   <section class="section">
     <h2>선수 지표</h2>
     <div class="tables">
-      <div><h3>타자</h3>{table_html(kt_hitters, ["선수", "경기", "타석", "타수", "안타", "홈런", "볼넷", "삼진", "타율", "출루율", "장타율", "OPS"])}</div>
-      <div><h3>투수</h3>{table_html(kt_pitchers, ["선수", "경기", "승", "패", "세이브", "홀드", "이닝", "자책", "탈삼진", "볼넷", "ERA", "WHIP"])}</div>
+      <div><h3>타자</h3>{table_html(team_hitters, ["선수", "경기", "타석", "타수", "안타", "홈런", "볼넷", "삼진", "타율", "출루율", "장타율", "OPS"])}</div>
+      <div><h3>투수</h3>{table_html(team_pitchers, ["선수", "경기", "승", "패", "세이브", "홀드", "이닝", "자책", "탈삼진", "볼넷", "ERA", "WHIP"])}</div>
     </div>
   </section>
 </main>
 </body>
 </html>"""
-    (DASHBOARD_DIR / "kt.html").write_text(html, encoding="utf-8")
+    slug = TEAM_PAGE_SLUGS.get(team, team)
+    (DASHBOARD_DIR / f"{slug}.html").write_text(html, encoding="utf-8")
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
-    (PUBLIC_DIR / "kt.html").write_text(html, encoding="utf-8")
+    (PUBLIC_DIR / f"{slug}.html").write_text(html, encoding="utf-8")
+    return f"{slug}.html"
 
 
-def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, generated_at: date):
+def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, generated_at: date, team_pages: dict[str, str] | None = None, reference_datetime: datetime | None = None, update_stage: str = "morning"):
     DASHBOARD_DIR.mkdir(parents=True, exist_ok=True)
     team_data = {}
+    team_pages = team_pages or {}
     standings_display = standings.rename(columns={"방문": "원정"})
     completed = games[games["status"] == "Final"].copy()
     completed["date"] = pd.to_datetime(completed["date"])
@@ -1254,6 +1373,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             "hitters": hitters[hitters["팀"] == team].head(15).to_dict(orient="records"),
             "pitchers": pitchers[pitchers["팀"] == team].head(15).to_dict(orient="records"),
             "today_predictions": today_predictions_by_team.get(team, []),
+            "analysis_url": team_pages.get(team, f"{TEAM_PAGE_SLUGS.get(team, team)}.html"),
         }
 
     payload = json.dumps(team_data, ensure_ascii=False)
@@ -1261,7 +1381,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     confidence_rows = model_payload.get("confidence_metrics", []) if model_payload.get("available") else []
     calibration_rows = model_payload.get("calibration_table", []) if model_payload.get("available") else []
     candidate_rows = model_payload.get("candidate_results", []) if model_payload.get("available") else []
-    pitching_context = build_pitching_context(games, pitchers, generated_at)
+    pitching_context = build_pitching_context(games, pitchers, generated_at, reference_datetime, update_stage)
     export_pitching_context(pitching_context, DATA_DIR / "pitching_context.csv", generated_at)
     prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context)
     summary = today_summary(prediction_cards)
@@ -1377,7 +1497,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="team-buttons">{team_buttons}</div>
     </div>
     <div class="grid" id="teamMetrics"></div>
-    <a class="action-link" id="ktDeepDiveLink" href="kt.html">KT 1위 원인 심층 분석 보기</a>
+    <a class="action-link" id="teamAnalysisLink" href="kt.html">팀 분석 보기</a>
     <div class="subsection">
       <h3>오늘 경기 승패 예측</h3>
       <div id="todayPrediction"></div>
@@ -1422,7 +1542,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         {table_html(model_rows, ["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
       </div>
     </details>
-    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 불펜 피로와 휴식일은 경기 단위 모델 피처로 반영했고, 선발투수는 공식 발표 전 누적 기록과 로테이션 순서로 추정해 카드에 보조 신호로 표시합니다. 확정 라인업과 엔트리 변동은 아직 직접 반영하지 않습니다.</p>
+    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 불펜 피로와 휴식일은 경기 단위 모델 피처로 반영했고, 선발투수는 경기 전 업데이트에서 GameCenter 확정 선발을 확인합니다. 미확인 시 누적 기록과 로테이션 순서 기반 예상 선발로 표시합니다. 확정 라인업과 엔트리 변동은 아직 직접 반영하지 않습니다.</p>
   </section>
 </main>
 <script>
@@ -1442,7 +1562,9 @@ function renderTeam(team) {{
     ['순위', s['순위']], ['시즌 전적', `${{s['승']}}승 ${{s['패']}}패 ${{s['무']}}무`],
     ['승률', s['승률']], ['최근10경기', s['최근10경기']]
   ].map(([k,v]) => `<div class="metric">${{k}}<strong>${{v}}</strong></div>`).join('');
-  document.getElementById('ktDeepDiveLink').style.display = team === 'KT' ? 'inline-block' : 'none';
+  const analysisLink = document.getElementById('teamAnalysisLink');
+  analysisLink.href = data.analysis_url || 'kt.html';
+  analysisLink.textContent = `${team} 팀 분석 보기`;
   document.getElementById('todayPrediction').innerHTML = renderTable(data.today_predictions, ['경기일','기준팀','상대팀','예측 구단','예측승률','예측','예측 근거']);
   document.getElementById('recentGames').innerHTML = renderTable(data.recent, ['경기일','상대','구분','결과','스코어']);
   document.getElementById('vsTable').innerHTML = renderTable(data.vs, ['상대','전적']);
@@ -1476,18 +1598,22 @@ renderTeam(document.querySelector('.team-button').dataset.team);
 def main():
     parser = argparse.ArgumentParser(description="Build KBO dashboard from official KBO records.")
     parser.add_argument("--reference-date", default=date.today().isoformat())
+    parser.add_argument("--reference-datetime", default="")
+    parser.add_argument("--update-stage", choices=["morning", "pregame"], default="morning")
     parser.add_argument("--training-start-year", type=int, default=2021)
     args = parser.parse_args()
+    reference_datetime = datetime.strptime(args.reference_datetime, "%Y-%m-%d %H:%M") if args.reference_datetime else datetime.now()
     ref_date = datetime.strptime(args.reference_date, "%Y-%m-%d").date()
     standings, vs_table = fetch_team_standings()
     games = fetch_schedule(ref_date.year, ref_date.month)
     training_games = fetch_training_schedule(args.training_start_year, ref_date)
     hitters, pitchers = fetch_player_stats()
-    export_sources(standings, vs_table, games, hitters, pitchers)
-    load_official_tables_to_db(standings, vs_table, games, hitters, pitchers)
+    rosters = fetch_registered_rosters()
+    export_sources(standings, vs_table, games, hitters, pitchers, rosters)
+    load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, rosters)
     model_payload = run_model_evaluation(training_games, games, previous_sunday(ref_date), ref_date, DATA_DIR, RESULTS_DIR)
-    build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, ref_date)
-    build_kt_deep_dive(standings, vs_table, games, hitters, pitchers, ref_date)
+    team_pages = build_team_analysis_pages(standings, vs_table, games, hitters, pitchers, rosters, ref_date)
+    build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, ref_date, team_pages, reference_datetime, args.update_stage)
     print(
         f"[Success] official KBO dashboard generated: teams={len(standings)}, "
         f"current_game_rows={len(games)}, training_game_rows={len(training_games)}"
