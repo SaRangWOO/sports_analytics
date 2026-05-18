@@ -252,7 +252,7 @@ def fetch_player_stats():
         basic = pd.DataFrame(parse_player_table(fetch_team_player_page(session, "HitterBasic/Basic1.aspx", code), hitter_basic_cols))
         advanced = pd.DataFrame(parse_player_table(fetch_team_player_page(session, "HitterBasic/Basic2.aspx", code), hitter_adv_cols))
         if not basic.empty and not advanced.empty:
-            merged = basic.merge(advanced[["선수", "팀", "볼넷", "삼진", "장타율", "출루율", "OPS"]], on=["선수", "팀"], how="left")
+            merged = basic.merge(advanced[["선수", "팀", "볼넷", "삼진", "장타율", "출루율", "OPS", "득점권타율"]], on=["선수", "팀"], how="left")
             hitters.append(merged)
         pitcher = pd.DataFrame(parse_player_table(fetch_team_player_page(session, "PitcherBasic/Basic1.aspx", code), pitcher_cols))
         if not pitcher.empty:
@@ -1182,6 +1182,29 @@ def record_summary(frame: pd.DataFrame):
     return games, wins, losses, draws, win_rate
 
 
+def team_context_metrics(hitters: pd.DataFrame):
+    rows = []
+    for team, frame in hitters.groupby("팀"):
+        at_bats = frame["타수"].apply(to_float).sum()
+        hits = frame["안타"].apply(to_float).sum()
+        walks = frame["볼넷"].apply(to_float).sum()
+        strikeouts = frame["삼진"].apply(to_float).sum()
+        rows.append(
+            {
+                "팀": team,
+                "팀타율": hits / max(at_bats, 1),
+                "희생번트": int(frame["희생번트"].apply(to_float).sum()),
+                "희생플라이": int(frame["희생플라이"].apply(to_float).sum()),
+                "볼넷삼진비": walks / max(strikeouts, 1),
+                "득점권타율": frame["득점권타율"].apply(to_float).replace(0, np.nan).mean(),
+            }
+        )
+    metrics = pd.DataFrame(rows)
+    for column in ["팀타율", "희생번트", "희생플라이", "볼넷삼진비", "득점권타율"]:
+        metrics[f"{column}순위"] = metrics[column].rank(ascending=False, method="min").astype("Int64")
+    return metrics
+
+
 def build_team_analysis_pages(standings, vs_table, games, hitters, pitchers, rosters, generated_at: date):
     generated_pages = {}
     for team in standings["팀"]:
@@ -1251,11 +1274,24 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
     team_obp = to_float(team_hitter_pool["출루율"].apply(to_float).mean(), 0)
     team_ops = to_float(team_hitter_pool["OPS"].apply(to_float).mean(), 0)
     team_era = to_float(team_pitcher_pool["자책"].apply(to_float).sum() * 9 / max(team_pitcher_pool["이닝"].apply(parse_innings).sum(), 1), 0)
+    context_metrics = team_context_metrics(hitters)
+    context = context_metrics[context_metrics["팀"] == team].iloc[0].to_dict() if not context_metrics.empty else {}
+    sac_bunts = int(context.get("희생번트", 0))
+    sac_flies = int(context.get("희생플라이", 0))
+    bb_k = to_float(context.get("볼넷삼진비", 0))
+    risp_avg = to_float(context.get("득점권타율", 0))
+    context_rows = [
+        {"지표": "작전 빈도 proxy", "값": f"희생번트 {sac_bunts}개 · 리그 {context.get('희생번트순위', '-')}위", "해석": "번트 시도/성공 구분은 공식 집계에 없어 희생번트 완료 수로 작전 개입 빈도를 봅니다."},
+        {"지표": "상황 타격 proxy", "값": f"득점권타율 {risp_avg:.3f} · 리그 {context.get('득점권타율순위', '-')}위", "해석": "주자가 득점권에 있을 때 타선이 찬스를 점수로 연결하는지를 봅니다."},
+        {"지표": "타석 운영", "값": f"BB/K {bb_k:.2f} · 리그 {context.get('볼넷삼진비순위', '-')}위", "해석": "볼넷 대비 삼진 비율로 타선의 선구안과 공격 안정성을 함께 봅니다."},
+        {"지표": "진루타 proxy", "값": f"희생플라이 {sac_flies}개 · 리그 {context.get('희생플라이순위', '-')}위", "해석": "3루 주자를 홈으로 부르는 상황 수행력을 간접적으로 봅니다."},
+    ]
 
     insight_rows = [
         {"인사이트": "시즌 위치", "내용": f"{team_standing['순위']}위, {wins}승 {losses}패 {draws}무, 승률 {pct(win_rate)}입니다."},
         {"인사이트": "득실 균형", "내용": f"득점 {runs_for}, 실점 {runs_against}, 득실차 {run_diff:+d}. 피타고리안 기대 승률은 {pct(pythag)}입니다."},
         {"인사이트": "팀 타격", "내용": f"등록 타자 기준 팀 타율 {team_avg:.3f}, 평균 출루율 {team_obp:.3f}, 평균 OPS {team_ops:.3f}입니다."},
+        {"인사이트": "작전/상황 수행", "내용": f"희생번트 {sac_bunts}개, 희생플라이 {sac_flies}개, 득점권타율 {risp_avg:.3f}, BB/K {bb_k:.2f}입니다."},
         {"인사이트": "투수 운영", "내용": f"등록 투수 기준 산출 ERA {team_era:.2f}. 선발/불펜 후보군은 등록 투수 명단과 최근 이닝을 함께 봅니다."},
         {"인사이트": "벤치 구성", "내용": f"감독 {roster.get('감독', '-')}. 코치진은 {roster.get('코치', '-') or '-'}입니다."},
         {"인사이트": "선수 기여", "내용": f"타자 기록 상위는 {top_hitter}, 투수 기록 상위는 {top_pitcher}가 현재 테이블 최상단입니다."},
@@ -1282,6 +1318,8 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
     th,td {{ padding:9px 10px; border-bottom:1px solid #e5e9f0; text-align:right; white-space:nowrap; }}
     th:first-child,td:first-child,td:nth-child(2) {{ text-align:left; }}
     th {{ background:#f0f3f7; }}
+    .wrap-table td {{ white-space:normal; line-height:1.55; vertical-align:top; }}
+    .wrap-table td:nth-child(2) {{ min-width:260px; }}
     .note {{ color:#637083; font-size:13px; }}
     @media (max-width:960px) {{ .grid,.tables {{ grid-template-columns:1fr; }} main {{ padding:16px; }} }}
   </style>
@@ -1310,8 +1348,13 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
       <div class="metric">야수 등록<strong>{len([p for p in (str(roster.get("포수", "")) + "," + str(roster.get("내야수", "")) + "," + str(roster.get("외야수", ""))).split(",") if p.strip()])}명</strong></div>
       <div class="metric">산출 ERA<strong>{team_era:.2f}</strong></div>
     </div>
-    {table_html([{"구분": "코치", "명단": roster.get("코치", "-")}, {"구분": "투수", "명단": roster.get("투수", "-")}, {"구분": "포수", "명단": roster.get("포수", "-")}, {"구분": "내야수", "명단": roster.get("내야수", "-")}, {"구분": "외야수", "명단": roster.get("외야수", "-")}], ["구분", "명단"])}
+    <div class="wrap-table">{table_html([{"구분": "코치", "명단": roster.get("코치", "-")}, {"구분": "투수", "명단": roster.get("투수", "-")}, {"구분": "포수", "명단": roster.get("포수", "-")}, {"구분": "내야수", "명단": roster.get("내야수", "-")}, {"구분": "외야수", "명단": roster.get("외야수", "-")}], ["구분", "명단"])}</div>
     <p class="note">감독·코치·등록 선수 구성은 KBO 공식 전체 등록 현황 기준입니다.</p>
+  </section>
+  <section class="section">
+    <h2>작전·상황 수행 지표</h2>
+    {table_html(context_rows, ["지표", "값", "해석"])}
+    <p class="note">작전 지시 수와 사인 성공률은 KBO 공식 공개 데이터에 없어 직접 확인할 수 없습니다. 대신 희생번트, 희생플라이, 득점권타율, BB/K를 작전·상황 수행 proxy로 사용합니다.</p>
   </section>
   <section class="section">
     <h2>경기력 분해</h2>
@@ -1564,7 +1607,7 @@ function renderTeam(team) {{
   ].map(([k,v]) => `<div class="metric">${{k}}<strong>${{v}}</strong></div>`).join('');
   const analysisLink = document.getElementById('teamAnalysisLink');
   analysisLink.href = data.analysis_url || 'kt.html';
-  analysisLink.textContent = `${team} 팀 분석 보기`;
+  analysisLink.textContent = `${{team}} 팀 분석 보기`;
   document.getElementById('todayPrediction').innerHTML = renderTable(data.today_predictions, ['경기일','기준팀','상대팀','예측 구단','예측승률','예측','예측 근거']);
   document.getElementById('recentGames').innerHTML = renderTable(data.recent, ['경기일','상대','구분','결과','스코어']);
   document.getElementById('vsTable').innerHTML = renderTable(data.vs, ['상대','전적']);

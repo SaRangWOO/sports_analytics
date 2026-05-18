@@ -19,6 +19,8 @@
     th,td { padding:9px 10px; border-bottom:1px solid #e5e9f0; text-align:right; white-space:nowrap; }
     th:first-child,td:first-child,td:nth-child(2) { text-align:left; }
     th { background:#f0f3f7; }
+    .wrap-table td { white-space:normal; line-height:1.55; vertical-align:top; }
+    .wrap-table td:nth-child(2) { min-width:260px; }
     .note { color:#637083; font-size:13px; }
     @media (max-width:960px) { .grid,.tables { grid-template-columns:1fr; } main { padding:16px; } }
   </style>
@@ -37,7 +39,7 @@
       <div class="metric">득실차<strong>+6</strong></div>
       <div class="metric">팀 타율<strong>0.268</strong></div>
     </div>
-    <table><thead><tr><th>인사이트</th><th>내용</th></tr></thead><tbody><tr><td>시즌 위치</td><td>4위, 22승 19패 0무, 승률 0.537입니다.</td></tr><tr><td>득실 균형</td><td>득점 230, 실점 224, 득실차 +6. 피타고리안 기대 승률은 0.513입니다.</td></tr><tr><td>팀 타격</td><td>등록 타자 기준 팀 타율 0.268, 평균 출루율 0.275, 평균 OPS 0.600입니다.</td></tr><tr><td>투수 운영</td><td>등록 투수 기준 산출 ERA 5.03. 선발/불펜 후보군은 등록 투수 명단과 최근 이닝을 함께 봅니다.</td></tr><tr><td>벤치 구성</td><td>감독 이숭용(71). 코치진은 조동화(70), 조동찬(72), 오준혁(73), 경헌호(74), 세리자와(82), 임훈(83), 윤재국(86), 송신영(88), 이승호(91), 김성현(6)입니다.</td></tr><tr><td>선수 기여</td><td>타자 기록 상위는 이정범, 투수 기록 상위는 조병현가 현재 테이블 최상단입니다.</td></tr></tbody></table>
+    <table><thead><tr><th>인사이트</th><th>내용</th></tr></thead><tbody><tr><td>시즌 위치</td><td>4위, 22승 19패 0무, 승률 0.537입니다.</td></tr><tr><td>득실 균형</td><td>득점 230, 실점 224, 득실차 +6. 피타고리안 기대 승률은 0.513입니다.</td></tr><tr><td>팀 타격</td><td>등록 타자 기준 팀 타율 0.268, 평균 출루율 0.275, 평균 OPS 0.600입니다.</td></tr><tr><td>작전/상황 수행</td><td>희생번트 10개, 희생플라이 21개, 득점권타율 0.297, BB/K 0.62입니다.</td></tr><tr><td>투수 운영</td><td>등록 투수 기준 산출 ERA 5.03. 선발/불펜 후보군은 등록 투수 명단과 최근 이닝을 함께 봅니다.</td></tr><tr><td>벤치 구성</td><td>감독 이숭용(71). 코치진은 조동화(70), 조동찬(72), 오준혁(73), 경헌호(74), 세리자와(82), 임훈(83), 윤재국(86), 송신영(88), 이승호(91), 김성현(6)입니다.</td></tr><tr><td>선수 기여</td><td>타자 기록 상위는 이정범, 투수 기록 상위는 조병현가 현재 테이블 최상단입니다.</td></tr></tbody></table>
   </section>
   <section class="section">
     <h2>감독·코치·등록 선수 구성</h2>
@@ -47,8 +49,13 @@
       <div class="metric">야수 등록<strong>15명</strong></div>
       <div class="metric">산출 ERA<strong>5.03</strong></div>
     </div>
-    <table><thead><tr><th>구분</th><th>명단</th></tr></thead><tbody><tr><td>코치</td><td>조동화(70), 조동찬(72), 오준혁(73), 경헌호(74), 세리자와(82), 임훈(83), 윤재국(86), 송신영(88), 이승호(91), 김성현(6)</td></tr><tr><td>투수</td><td>긴지로(00), 김민(1), 이건욱(16), 조병현(19), 장지훈(21), 타케다(23), 최민준(30), 한두솔(34), 노경은(38), 김건우(39), 베니지아노(41), 문승원(42), 정동윤(51), 이로운(92)</td></tr><tr><td>포수</td><td>조형우(20), 이지영(56)</td></tr><tr><td>내야수</td><td>안상현(10), 최정(14), 박성한(2), 정준재(3), 홍대인(97)</td></tr><tr><td>외야수</td><td>채현우(15), 에레디아(27), 김재환(32), 이정범(33), 오태곤(37), 김정민(48), 최지훈(54), 김창평(64)</td></tr></tbody></table>
+    <div class="wrap-table"><table><thead><tr><th>구분</th><th>명단</th></tr></thead><tbody><tr><td>코치</td><td>조동화(70), 조동찬(72), 오준혁(73), 경헌호(74), 세리자와(82), 임훈(83), 윤재국(86), 송신영(88), 이승호(91), 김성현(6)</td></tr><tr><td>투수</td><td>긴지로(00), 김민(1), 이건욱(16), 조병현(19), 장지훈(21), 타케다(23), 최민준(30), 한두솔(34), 노경은(38), 김건우(39), 베니지아노(41), 문승원(42), 정동윤(51), 이로운(92)</td></tr><tr><td>포수</td><td>조형우(20), 이지영(56)</td></tr><tr><td>내야수</td><td>안상현(10), 최정(14), 박성한(2), 정준재(3), 홍대인(97)</td></tr><tr><td>외야수</td><td>채현우(15), 에레디아(27), 김재환(32), 이정범(33), 오태곤(37), 김정민(48), 최지훈(54), 김창평(64)</td></tr></tbody></table></div>
     <p class="note">감독·코치·등록 선수 구성은 KBO 공식 전체 등록 현황 기준입니다.</p>
+  </section>
+  <section class="section">
+    <h2>작전·상황 수행 지표</h2>
+    <table><thead><tr><th>지표</th><th>값</th><th>해석</th></tr></thead><tbody><tr><td>작전 빈도 proxy</td><td>희생번트 10개 · 리그 8위</td><td>번트 시도/성공 구분은 공식 집계에 없어 희생번트 완료 수로 작전 개입 빈도를 봅니다.</td></tr><tr><td>상황 타격 proxy</td><td>득점권타율 0.297 · 리그 5위</td><td>주자가 득점권에 있을 때 타선이 찬스를 점수로 연결하는지를 봅니다.</td></tr><tr><td>타석 운영</td><td>BB/K 0.62 · 리그 4위</td><td>볼넷 대비 삼진 비율로 타선의 선구안과 공격 안정성을 함께 봅니다.</td></tr><tr><td>진루타 proxy</td><td>희생플라이 21개 · 리그 1위</td><td>3루 주자를 홈으로 부르는 상황 수행력을 간접적으로 봅니다.</td></tr></tbody></table>
+    <p class="note">작전 지시 수와 사인 성공률은 KBO 공식 공개 데이터에 없어 직접 확인할 수 없습니다. 대신 희생번트, 희생플라이, 득점권타율, BB/K를 작전·상황 수행 proxy로 사용합니다.</p>
   </section>
   <section class="section">
     <h2>경기력 분해</h2>
