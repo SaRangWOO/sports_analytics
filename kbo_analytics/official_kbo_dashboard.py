@@ -679,6 +679,130 @@ def export_pitching_context(context: dict, output_path: Path, prediction_date: d
     pd.DataFrame(rows).to_csv(output_path, index=False, encoding="utf-8-sig")
 
 
+def _lineup_grid_rows(raw_grid) -> list[dict]:
+    if isinstance(raw_grid, str):
+        try:
+            raw_grid = json.loads(raw_grid)
+        except json.JSONDecodeError:
+            return []
+    rows = []
+    for item in raw_grid.get("rows", []) if isinstance(raw_grid, dict) else []:
+        cells = [cell.get("Text", "") for cell in item.get("row", [])]
+        if len(cells) < 4:
+            continue
+        rows.append(
+            {
+                "타순": cells[0],
+                "포지션": cells[1],
+                "선수": cells[2],
+                "WAR": cells[3],
+            }
+        )
+    return rows
+
+
+def fetch_lineup_analysis(game_id: str, season_id: int):
+    url = f"{KBO_BASE}/ws/Schedule.asmx/GetLineUpAnalysis"
+    try:
+        response = requests.post(
+            url,
+            headers={**HEADERS, "Referer": f"{KBO_BASE}/Schedule/GameCenter/Main.aspx", "X-Requested-With": "XMLHttpRequest"},
+            data={"leId": 1, "srId": 0, "seasonId": season_id, "gameId": game_id},
+            timeout=20,
+        )
+        response.raise_for_status()
+        data = response.json()
+    except (requests.RequestException, ValueError, IndexError, KeyError):
+        return None
+
+    lineup_confirmed = bool(data[0][0].get("LINEUP_CK")) if data and data[0] else False
+    home_meta = data[1][0] if len(data) > 1 and data[1] else {}
+    away_meta = data[2][0] if len(data) > 2 and data[2] else {}
+    home_lineup = _lineup_grid_rows(data[3][0]) if len(data) > 3 and data[3] else []
+    away_lineup = _lineup_grid_rows(data[4][0]) if len(data) > 4 and data[4] else []
+    return {
+        "lineup_source": "confirmed" if lineup_confirmed else "recent",
+        "status_label": "금일 라인업 기준" if lineup_confirmed else "최근 라인업 기준",
+        "home_team": home_meta.get("T_NM", ""),
+        "away_team": away_meta.get("T_NM", ""),
+        "home_lineup": home_lineup,
+        "away_lineup": away_lineup,
+    }
+
+
+def _lineup_war_sum(rows: list[dict]) -> float:
+    total = 0.0
+    for row in rows:
+        total += to_float(row.get("WAR"), 0.0)
+    return round(total, 2)
+
+
+def _lineup_preview(rows: list[dict], limit: int = 5) -> str:
+    if not rows:
+        return "-"
+    return ", ".join(f'{row["타순"]}. {row["선수"]}({row["포지션"]})' for row in rows[:limit])
+
+
+def build_lineup_context(games: pd.DataFrame, prediction_date: date):
+    scheduled = games[
+        (pd.to_datetime(games["date"]).dt.date == prediction_date)
+        & (games["status"] == "Scheduled")
+    ].copy()
+    if scheduled.empty:
+        return {}
+
+    scheduled["actual_game_id"] = scheduled["game_id"].astype(str).str.rsplit("_", n=1).str[0]
+    context = {}
+    for game_id, game_rows in scheduled.groupby("actual_game_id", sort=False):
+        analysis = fetch_lineup_analysis(str(game_id), prediction_date.year)
+        if not analysis:
+            continue
+        home_rows = game_rows[game_rows["home_away"] == "H"]
+        away_rows = game_rows[game_rows["home_away"] == "A"]
+        if home_rows.empty or away_rows.empty:
+            continue
+        home_team = home_rows.iloc[0]["team"]
+        away_team = away_rows.iloc[0]["team"]
+        for team, side, rows in [
+            (home_team, "home", analysis["home_lineup"]),
+            (away_team, "away", analysis["away_lineup"]),
+        ]:
+            context[team] = {
+                "game_id": str(game_id),
+                "team": team,
+                "side": side,
+                "lineup_source": analysis["lineup_source"],
+                "status_label": analysis["status_label"],
+                "lineup": rows,
+                "lineup_war": _lineup_war_sum(rows),
+                "lineup_preview": _lineup_preview(rows),
+                "lineup_count": len(rows),
+            }
+    return context
+
+
+def export_lineup_context(context: dict, output_path: Path, prediction_date: date):
+    rows = []
+    for team, values in sorted(context.items()):
+        for player in values.get("lineup", []):
+            rows.append(
+                {
+                    "date": prediction_date.isoformat(),
+                    "game_id": values.get("game_id", ""),
+                    "team": team,
+                    "home_away": "H" if values.get("side") == "home" else "A",
+                    "lineup_source": values.get("lineup_source", "unknown"),
+                    "status_label": values.get("status_label", "라인업 정보 미확인"),
+                    "batting_order": player.get("타순", ""),
+                    "position": player.get("포지션", ""),
+                    "player": player.get("선수", ""),
+                    "war": player.get("WAR", ""),
+                }
+            )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_csv(output_path, index=False, encoding="utf-8-sig")
+
+
 def starter_status_label(status: str):
     return {
         "both_confirmed": "확정 선발 반영 완료",
@@ -802,8 +926,9 @@ def status_lookup_by_matchup(status_payload: dict):
     return lookup
 
 
-def build_prediction_cards(today_predictions: list[dict], pitching_context: dict | None = None, status_payload: dict | None = None):
+def build_prediction_cards(today_predictions: list[dict], pitching_context: dict | None = None, status_payload: dict | None = None, lineup_context: dict | None = None):
     pitching_context = pitching_context or {}
+    lineup_context = lineup_context or {}
     status_lookup = status_lookup_by_matchup(status_payload or {})
     cards = {}
     for row in today_predictions:
@@ -817,6 +942,7 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             continue
         tier = prediction_tier(confidence)
         pick_context = pitching_context.get(row["예측 구단"], {})
+        pick_lineup = lineup_context.get(row["예측 구단"], {})
         game_status = status_lookup.get(key, {})
         status_label = game_status.get("status_label", "선발 정보 미확인")
         matchup = f'{row["기준팀"]} vs {row["상대팀"]}'
@@ -828,6 +954,7 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             "핵심 근거": row.get("예측 근거", ""),
             "투수 신호": f'{pick_context.get("투수 표시", "예상 선발: 추정 불가")} · 불펜 피로 {pick_context.get("불펜 피로", "-")}',
             "선발 상태": status_label,
+            "라인업 신호": f'{pick_lineup.get("status_label", "라인업 정보 미확인")} · 선발 WAR 합 {pick_lineup.get("lineup_war", "-")} · {pick_lineup.get("lineup_preview", "-")}',
             "판단": tier["판단"],
             "confidence_value": confidence,
         }
@@ -1811,6 +1938,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     standings_display = standings.rename(columns={"방문": "원정"})
     completed = games[games["status"] == "Final"].copy()
     completed["date"] = pd.to_datetime(completed["date"])
+    lineup_context = build_lineup_context(games, generated_at)
     team_game_min = int(standings["경기"].min())
     team_game_max = int(standings["경기"].max())
     team_game_avg = round(float(standings["경기"].mean()), 1)
@@ -1832,6 +1960,12 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             "hitters": hitters[hitters["팀"] == team].head(15).to_dict(orient="records"),
             "pitchers": pitchers[pitchers["팀"] == team].head(15).to_dict(orient="records"),
             "today_predictions": today_predictions_by_team.get(team, []),
+            "lineup": {
+                "상태": lineup_context.get(team, {}).get("status_label", "라인업 정보 미확인"),
+                "선발 WAR 합": lineup_context.get(team, {}).get("lineup_war", "-"),
+                "라인업 요약": lineup_context.get(team, {}).get("lineup_preview", "-"),
+                "players": lineup_context.get(team, {}).get("lineup", []),
+            },
             "analysis_url": team_pages.get(team, f"{TEAM_PAGE_SLUGS.get(team, team)}.html"),
         }
 
@@ -1842,9 +1976,13 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     candidate_rows = model_payload.get("candidate_results", []) if model_payload.get("available") else []
     pitching_context = build_pitching_context(games, pitchers, generated_at, reference_datetime, update_stage)
     export_pitching_context(pitching_context, DATA_DIR / "pitching_context.csv", generated_at)
+    export_lineup_context(lineup_context, DATA_DIR / "lineup_context.csv", generated_at)
+    lineup_confirmed_count = sum(1 for values in lineup_context.values() if values.get("lineup_source") == "confirmed")
+    lineup_recent_count = sum(1 for values in lineup_context.values() if values.get("lineup_source") == "recent")
     status_payload = build_pregame_update_status(games, pitching_context, generated_at, reference_datetime or datetime.now(), update_stage)
     export_pregame_update_status(status_payload)
     status_summary = status_payload["starter_status_summary"]
+    lineup_unknown_count = max(status_payload["teams_checked"] - lineup_confirmed_count - lineup_recent_count, 0)
     update_stage_label = "경기 전 업데이트" if update_stage == "pregame" else "오전 정식 업데이트"
     changes = status_payload.get("changes", [])
     change_text = (
@@ -1852,7 +1990,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         if changes
         else "최근 선발 상태 변경 없음"
     )
-    prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context, status_payload)
+    prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context, status_payload, lineup_context)
     summary = today_summary(prediction_cards)
     prediction_cards_html = "".join(
         f"""
@@ -1863,6 +2001,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
           <p class="starter-status">선발 상태: {escape(row["선발 상태"])}</p>
           <p>{escape(row["핵심 근거"])}</p>
           <p class="pitching-signal">{escape(row["투수 신호"])}</p>
+          <p class="pitching-signal">{escape(row["라인업 신호"])}</p>
         </article>
         """
         for row in prediction_cards
@@ -1933,7 +2072,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="metric">가장 높은 예측<strong>{escape(str(summary["top_pick"]))}</strong></div>
       <div class="metric">예측 가능 경기<strong>{escape(str(summary["possible_games"]))}</strong></div>
       <div class="metric">박빙/참고 경기<strong>{escape(str(summary["close_games"]))}</strong></div>
-      <div class="metric">모델 한계<strong>선발·불펜 추정, 라인업 미반영</strong></div>
+      <div class="metric">모델 한계<strong>라인업 표시, 모델 미반영</strong></div>
     </div>
     <div class="subsection">
       <h3>업데이트 상태</h3>
@@ -1941,7 +2080,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         <div class="metric">마지막 갱신<strong>{escape(status_payload["run_time"])}</strong></div>
         <div class="metric">업데이트 단계<strong>{escape(update_stage_label)}</strong></div>
         <div class="metric">선발 상태<strong>확정 {status_summary["confirmed"]} · 추정 {status_summary["estimated"]} · 미확인 {status_summary["unknown"]}</strong></div>
-        <div class="metric">확인 경기<strong>{status_payload["games_checked"]}</strong></div>
+        <div class="metric">라인업 상태<strong>금일 {lineup_confirmed_count} · 최근 {lineup_recent_count} · 미확인 {lineup_unknown_count}</strong></div>
       </div>
       <p class="note">{escape(change_text)}</p>
     </div>
@@ -1984,6 +2123,12 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div id="todayPrediction"></div>
       <p class="note">예측은 경기 전 사용할 수 있는 팀 흐름, 상대 흐름, 홈/원정, 휴식일 기반 확률입니다.</p>
     </div>
+    <div class="subsection">
+      <h3>오늘 라인업</h3>
+      <div id="lineupSummary"></div>
+      <div id="lineupTable"></div>
+      <p class="note">라인업은 KBO GameCenter 라인업 분석 기준입니다. KBO 응답이 금일 라인업을 확정하지 않은 경우 최근 라인업 기준으로 표시합니다.</p>
+    </div>
     <div class="tables">
       <div><h3>최근 10경기</h3><div id="recentGames"></div></div>
       <div><h3>상대 전적</h3><div id="vsTable"></div></div>
@@ -2023,7 +2168,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         {table_html(model_rows, ["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
       </div>
     </details>
-    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 불펜 피로와 휴식일은 경기 단위 모델 피처로 반영했고, 선발투수는 경기 전 업데이트에서 GameCenter 확정 선발을 확인합니다. 미확인 시 누적 기록과 로테이션 순서 기반 예상 선발로 표시합니다. 확정 라인업과 엔트리 변동은 아직 직접 반영하지 않습니다.</p>
+    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 불펜 피로와 휴식일은 경기 단위 모델 피처로 반영했고, 선발투수는 경기 전 업데이트에서 GameCenter 확정 선발을 확인합니다. 라인업은 대시보드 판단 정보로 표시하지만, 과거 시점별 라인업 스냅샷이 쌓이기 전까지 최종 승패 모델 피처에는 직접 반영하지 않습니다.</p>
   </section>
 </main>
 <script>
@@ -2047,6 +2192,14 @@ function renderTeam(team) {{
   analysisLink.href = data.analysis_url || 'kt.html';
   analysisLink.textContent = `${{team}} 팀 분석 보기`;
   document.getElementById('todayPrediction').innerHTML = renderTable(data.today_predictions, ['경기일','기준팀','상대팀','예측 구단','예측승률','예측','예측 근거']);
+  const lineup = data.lineup || {{}};
+  document.getElementById('lineupSummary').innerHTML = '<div class="grid">' + [
+    ['상태', lineup['상태'] || '라인업 정보 미확인'],
+    ['선발 WAR 합', lineup['선발 WAR 합'] ?? '-'],
+    ['상위 타순', lineup['라인업 요약'] || '-'],
+    ['선수 수', (lineup.players || []).length]
+  ].map(([k,v]) => `<div class="metric">${{k}}<strong>${{v}}</strong></div>`).join('') + '</div>';
+  document.getElementById('lineupTable').innerHTML = renderTable(lineup.players, ['타순','포지션','선수','WAR']);
   document.getElementById('recentGames').innerHTML = renderTable(data.recent, ['경기일','상대','구분','결과','스코어']);
   document.getElementById('vsTable').innerHTML = renderTable(data.vs, ['상대','전적']);
   document.getElementById('hitterTable').innerHTML = renderTable(data.hitters, ['선수','경기','타석','타수','안타','홈런','볼넷','삼진','타율','출루율','장타율','OPS']);
