@@ -407,7 +407,7 @@ python -m http.server 8501 -d dashboard
 
 ## 5. 자동 운영
 
-운영 서버에서는 cron으로 자동 갱신합니다.
+운영 서버에서는 cron으로 자동 갱신합니다. 아래 스케줄은 저장소 코드만 보고 추측한 내용이 아니라, 운영 서버의 `crontab`과 실행 로그를 기준으로 확인한 운영 정보입니다.
 
 현재 의도한 운영 방식:
 
@@ -424,6 +424,33 @@ python -m http.server 8501 -d dashboard
   - 대시보드 재생성
   - 변경 시 GitHub push
 ```
+
+현재 서버 crontab:
+
+```cron
+0 8 * * * /usr/bin/flock -n /tmp/kbo_daily_update.lock /home/tera/1.project/1.sports_analytics/kbo_analytics/scripts/daily_kbo_update.sh
+0,30 11-18 * * * /usr/bin/flock -n /tmp/kbo_pregame_update.lock /home/tera/1.project/1.sports_analytics/kbo_analytics/scripts/pregame_kbo_update.sh
+```
+
+운영 의도는 다음과 같습니다.
+
+| 시간 | 역할 |
+| --- | --- |
+| 매일 08:00 | 하루 기준 정식 데이터 수집, 모델 학습/검증, 대시보드 생성 |
+| 매일 11:00~18:30 | 30분 간격 경기 전 업데이트 |
+| 경기 시작 약 2시간 전 | 확정 선발 반영 가능 구간 |
+| 변경 발생 시 | 대시보드 재생성 후 GitHub push |
+
+현재 구조는 운영상 충분히 동작하지만, 향후에는 `11:00~18:30` 전체 반복을 더 세분화할 수 있습니다.
+
+```text
+08:00  정식 학습/검증
+11:00  1차 예측
+16:00~18:30  확정 선발 집중 업데이트
+경기 종료 후 결과 반영은 다음날 08:00
+```
+
+다음 개선점은 pregame 업데이트에서 선발 정보가 `estimated`에서 `confirmed`로 바뀌었는지 로그와 대시보드에 더 명확히 표시하는 것입니다.
 
 실행 스크립트:
 
