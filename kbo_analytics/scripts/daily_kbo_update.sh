@@ -26,6 +26,22 @@ docker compose up -d kbo-db kbo-api dashboard
 curl -fsS "http://localhost:8501/latest.html" >/dev/null
 curl -fsS "http://localhost:8501/kt.html" >/dev/null
 
+"$PYTHON_BIN" - <<'PY'
+import json
+from pathlib import Path
+
+for path in [
+    Path("dashboard/pregame_update_status.json"),
+    Path("../docs/pregame_update_status.json"),
+    Path("logs/pregame_update_status.json"),
+]:
+    if not path.exists():
+        continue
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["github_pushed"] = True
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+PY
+
 if ! git diff --quiet -- dashboard data/official modeling/results ../docs; then
   git add dashboard data/official modeling/results ../docs
   git commit -m "Update KBO daily analytics outputs $(date +%F)"

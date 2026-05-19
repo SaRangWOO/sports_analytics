@@ -679,8 +679,132 @@ def export_pitching_context(context: dict, output_path: Path, prediction_date: d
     pd.DataFrame(rows).to_csv(output_path, index=False, encoding="utf-8-sig")
 
 
-def build_prediction_cards(today_predictions: list[dict], pitching_context: dict | None = None):
+def starter_status_label(status: str):
+    return {
+        "both_confirmed": "확정 선발 반영 완료",
+        "partial_confirmed": "일부 확정 선발 반영",
+        "estimated_only": "추정 선발 기준",
+        "unknown": "선발 정보 미확인",
+    }.get(status, "선발 정보 미확인")
+
+
+def game_starter_status(home_source: str, away_source: str):
+    sources = {home_source or "unknown", away_source or "unknown"}
+    if sources == {"confirmed"}:
+        return "both_confirmed"
+    if "confirmed" in sources:
+        return "partial_confirmed"
+    if sources == {"estimated"}:
+        return "estimated_only"
+    return "unknown"
+
+
+def build_pregame_update_status(games: pd.DataFrame, pitching_context: dict, prediction_date: date, reference_datetime: datetime, update_stage: str):
+    status_path = DASHBOARD_DIR / "pregame_update_status.json"
+    previous = {}
+    if status_path.exists():
+        try:
+            previous = json.loads(status_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            previous = {}
+    previous_games = {row.get("game_id"): row for row in previous.get("games", [])}
+
+    scheduled = games[
+        (pd.to_datetime(games["date"]).dt.date == prediction_date)
+        & (games["status"] == "Scheduled")
+    ].copy()
+    if scheduled.empty:
+        games_payload = []
+    else:
+        scheduled["actual_game_id"] = scheduled["game_id"].astype(str).str.rsplit("_", n=1).str[0]
+        games_payload = []
+        for game_id, game_rows in scheduled.groupby("actual_game_id", sort=False):
+            home_rows = game_rows[game_rows["home_away"] == "H"]
+            away_rows = game_rows[game_rows["home_away"] == "A"]
+            if home_rows.empty or away_rows.empty:
+                continue
+            home_team = home_rows.iloc[0]["team"]
+            away_team = away_rows.iloc[0]["team"]
+            home_context = pitching_context.get(home_team, {})
+            away_context = pitching_context.get(away_team, {})
+            home_source = home_context.get("starter_source", "unknown")
+            away_source = away_context.get("starter_source", "unknown")
+            status = game_starter_status(home_source, away_source)
+            games_payload.append(
+                {
+                    "game_id": str(game_id),
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "home_starter": home_context.get("선발명", "-"),
+                    "away_starter": away_context.get("선발명", "-"),
+                    "home_starter_source": home_source,
+                    "away_starter_source": away_source,
+                    "game_starter_status": status,
+                    "status_label": starter_status_label(status),
+                }
+            )
+
+    source_counts = {"confirmed": 0, "estimated": 0, "unknown": 0}
+    for game in games_payload:
+        for key in ["home_starter_source", "away_starter_source"]:
+            source = game.get(key, "unknown")
+            source_counts[source if source in source_counts else "unknown"] += 1
+
+    changes = []
+    for game in games_payload:
+        before = previous_games.get(game["game_id"])
+        if not before:
+            continue
+        for field in ["home_starter_source", "away_starter_source", "home_starter", "away_starter"]:
+            if before.get(field) != game.get(field):
+                starter_key = "home_starter" if field.startswith("home") else "away_starter"
+                changes.append(
+                    {
+                        "game_id": game["game_id"],
+                        "game": f'{game["away_team"]} vs {game["home_team"]}',
+                        "field": field,
+                        "before": before.get(field, ""),
+                        "after": game.get(field, ""),
+                        "starter": game.get(starter_key, "-"),
+                    }
+                )
+
+    payload = {
+        "run_time": reference_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        "reference_date": prediction_date.isoformat(),
+        "update_stage": update_stage,
+        "games_checked": len(games_payload),
+        "teams_checked": sum(source_counts.values()),
+        "starter_status_summary": source_counts,
+        "dashboard_updated": True,
+        "github_pushed": False,
+        "games": games_payload,
+        "changes": changes,
+    }
+    return payload
+
+
+def export_pregame_update_status(status_payload: dict):
+    for path in [
+        DASHBOARD_DIR / "pregame_update_status.json",
+        PUBLIC_DIR / "pregame_update_status.json",
+        BASE_DIR / "logs" / "pregame_update_status.json",
+    ]:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(status_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def status_lookup_by_matchup(status_payload: dict):
+    lookup = {}
+    for game in status_payload.get("games", []):
+        key = "|".join(sorted([game["home_team"], game["away_team"]]))
+        lookup[key] = game
+    return lookup
+
+
+def build_prediction_cards(today_predictions: list[dict], pitching_context: dict | None = None, status_payload: dict | None = None):
     pitching_context = pitching_context or {}
+    status_lookup = status_lookup_by_matchup(status_payload or {})
     cards = {}
     for row in today_predictions:
         try:
@@ -693,6 +817,8 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             continue
         tier = prediction_tier(confidence)
         pick_context = pitching_context.get(row["예측 구단"], {})
+        game_status = status_lookup.get(key, {})
+        status_label = game_status.get("status_label", "선발 정보 미확인")
         matchup = f'{row["기준팀"]} vs {row["상대팀"]}'
         cards[key] = {
             "경기": matchup,
@@ -701,6 +827,7 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             "신뢰도": tier["신뢰도"],
             "핵심 근거": row.get("예측 근거", ""),
             "투수 신호": f'{pick_context.get("투수 표시", "예상 선발: 추정 불가")} · 불펜 피로 {pick_context.get("불펜 피로", "-")}',
+            "선발 상태": status_label,
             "판단": tier["판단"],
             "confidence_value": confidence,
         }
@@ -1715,7 +1842,17 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     candidate_rows = model_payload.get("candidate_results", []) if model_payload.get("available") else []
     pitching_context = build_pitching_context(games, pitchers, generated_at, reference_datetime, update_stage)
     export_pitching_context(pitching_context, DATA_DIR / "pitching_context.csv", generated_at)
-    prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context)
+    status_payload = build_pregame_update_status(games, pitching_context, generated_at, reference_datetime or datetime.now(), update_stage)
+    export_pregame_update_status(status_payload)
+    status_summary = status_payload["starter_status_summary"]
+    update_stage_label = "경기 전 업데이트" if update_stage == "pregame" else "오전 정식 업데이트"
+    changes = status_payload.get("changes", [])
+    change_text = (
+        f'최근 변경: {changes[0]["game"]} {changes[0]["field"]} {changes[0]["before"]} → {changes[0]["after"]}'
+        if changes
+        else "최근 선발 상태 변경 없음"
+    )
+    prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context, status_payload)
     summary = today_summary(prediction_cards)
     prediction_cards_html = "".join(
         f"""
@@ -1723,6 +1860,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
           <div class="matchup">{escape(row["경기"])}</div>
           <h3>{escape(row["추천"])} <span>{escape(row["예측승률"])}</span></h3>
           <div class="badges"><span>신뢰도 {escape(row["신뢰도"])}</span><span>{escape(row["판단"])}</span></div>
+          <p class="starter-status">선발 상태: {escape(row["선발 상태"])}</p>
           <p>{escape(row["핵심 근거"])}</p>
           <p class="pitching-signal">{escape(row["투수 신호"])}</p>
         </article>
@@ -1771,6 +1909,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .prediction-card .matchup {{ color:#637083; font-size:13px; font-weight:700; margin-bottom:8px; }}
     .prediction-card h3 {{ display:flex; justify-content:space-between; gap:10px; font-size:20px; }}
     .prediction-card h3 span {{ color:#1d4ed8; white-space:nowrap; }}
+    .starter-status {{ color:#111827; font-size:13px; font-weight:700; margin:8px 0 0; }}
     .pitching-signal {{ color:#374151; font-size:13px; margin-top:8px; }}
     .badges {{ display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }}
     .badges span {{ border:1px solid #c8d2df; border-radius:999px; padding:4px 8px; font-size:12px; font-weight:700; background:white; }}
@@ -1795,6 +1934,16 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="metric">예측 가능 경기<strong>{escape(str(summary["possible_games"]))}</strong></div>
       <div class="metric">박빙/참고 경기<strong>{escape(str(summary["close_games"]))}</strong></div>
       <div class="metric">모델 한계<strong>선발·불펜 추정, 라인업 미반영</strong></div>
+    </div>
+    <div class="subsection">
+      <h3>업데이트 상태</h3>
+      <div class="grid">
+        <div class="metric">마지막 갱신<strong>{escape(status_payload["run_time"])}</strong></div>
+        <div class="metric">업데이트 단계<strong>{escape(update_stage_label)}</strong></div>
+        <div class="metric">선발 상태<strong>확정 {status_summary["confirmed"]} · 추정 {status_summary["estimated"]} · 미확인 {status_summary["unknown"]}</strong></div>
+        <div class="metric">확인 경기<strong>{status_payload["games_checked"]}</strong></div>
+      </div>
+      <p class="note">{escape(change_text)}</p>
     </div>
     <div class="prediction-cards">{prediction_cards_html}</div>
   </section>
