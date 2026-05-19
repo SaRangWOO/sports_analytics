@@ -39,6 +39,8 @@ KBO 공식 기록을 수집해 구단별 분석 리포트와 경기 승패 예�
 | `data/official/registered_rosters.csv` | 감독/코치/등록 선수 명단 |
 | `data/official/pitching_context.csv` | 추정/확정 선발과 불펜 피로 proxy |
 | `data/official/lineup_context.csv` | KBO GameCenter 라인업 분석 기준 타순/포지션/선수/WAR |
+| `logs/starter_raw_source_YYYY-MM-DD.json` | KBO 선발 원천 응답 파싱 결과 |
+| `data/manual/confirmed_starters.csv` | 공식 파싱 실패 시 사용할 수 있는 수동 확정 선발 override |
 
 ### 1.2 리그 전체 대시보드
 
@@ -230,7 +232,42 @@ KBO 응답의 `LINEUP_CK`가 `true`이면 금일 라인업으로 표시하고, `
 | --- | --- |
 | `data/official/lineup_context.csv` | 경기일, 경기 ID, 팀, 홈/원정, 라인업 기준, 타순, 포지션, 선수, WAR |
 
-### 1.7 득점 예측용 데이터셋
+### 1.7 확정 선발 수집과 override
+
+경기 전 업데이트에서는 KBO `GetKboGameList` 응답에서 확정 선발을 확인합니다.
+
+사용하는 원천 필드:
+
+- `START_PIT_CK`: 선발 등록 여부
+- `T_PIT_P_NM`: 원정 선발명
+- `B_PIT_P_NM`: 홈 선발명
+
+확정 선발명 확인과 투수 기록 매칭은 분리합니다. 공식 선발명이 확인되면 `starter_source`는 `confirmed`로 저장하고, `pitcher_stats.csv`에서 ERA/WHIP 매칭이 실패하더라도 확정 상태는 유지합니다.
+
+파싱 상태는 아래 파일에 저장합니다.
+
+| 파일 | 내용 |
+| --- | --- |
+| `logs/starter_raw_source_YYYY-MM-DD.json` | 경기별 원천 선발명, `START_PIT_CK`, 파싱 상태 |
+| `logs/starter_raw_source_latest.json` | 가장 최근 선발 원천 파싱 결과 |
+
+KBO 페이지 구조 변경이나 일시 장애로 파싱이 실패할 때는 `data/manual/confirmed_starters.csv`에 수동 override를 넣을 수 있습니다.
+
+```csv
+date,team,starter_name,source,confirmed_at
+2026-05-19,두산,최승용,manual,2026-05-19 17:10
+```
+
+적용 우선순위:
+
+```text
+manual confirmed
+→ KBO GetKboGameList confirmed
+→ 로테이션 기반 estimated
+→ unknown
+```
+
+### 1.8 득점 예측용 데이터셋
 
 승패 모델은 `이긴다/진다`를 바로 예측합니다. 하지만 야구 분석에서는 예상 득점과 예상 득실차가 함께 있어야 예측 이유를 더 잘 설명할 수 있습니다.
 

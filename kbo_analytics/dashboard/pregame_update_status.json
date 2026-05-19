@@ -1,5 +1,5 @@
 {
-  "run_time": "2026-05-19 17:30:02",
+  "run_time": "2026-05-19 17:50:00",
   "reference_date": "2026-05-19",
   "update_stage": "pregame",
   "games_checked": 5,
@@ -57,7 +57,7 @@
       "status_label": "확정 선발 반영 완료"
     },
     {
-      "game_id": "20260519KTSS0",
+      "game_id": "2026-05-19_KT_삼성",
       "home_team": "삼성",
       "away_team": "KT",
       "home_starter": "원태인",
@@ -68,38 +68,5 @@
       "status_label": "확정 선발 반영 완료"
     }
   ],
-  "changes": [
-    {
-      "game_id": "2026-05-19_LG_KIA",
-      "game": "LG vs KIA",
-      "field": "home_starter_source",
-      "before": "estimated",
-      "after": "confirmed",
-      "starter": "올러"
-    },
-    {
-      "game_id": "2026-05-19_LG_KIA",
-      "game": "LG vs KIA",
-      "field": "away_starter_source",
-      "before": "estimated",
-      "after": "confirmed",
-      "starter": "톨허스트"
-    },
-    {
-      "game_id": "2026-05-19_LG_KIA",
-      "game": "LG vs KIA",
-      "field": "home_starter",
-      "before": "양현종",
-      "after": "올러",
-      "starter": "올러"
-    },
-    {
-      "game_id": "2026-05-19_LG_KIA",
-      "game": "LG vs KIA",
-      "field": "away_starter",
-      "before": "웰스",
-      "after": "톨허스트",
-      "starter": "톨허스트"
-    }
-  ]
+  "changes": []
 }

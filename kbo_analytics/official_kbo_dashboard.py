@@ -576,6 +576,117 @@ def fetch_confirmed_pitcher_ids(game_date: date, game_id: str):
     return attrs
 
 
+def fetch_kbo_game_list(game_date: date):
+    url = f"{KBO_BASE}/ws/Main.asmx/GetKboGameList"
+    try:
+        response = requests.post(
+            url,
+            headers={**HEADERS, "Referer": f"{KBO_BASE}/Schedule/GameCenter/Main.aspx", "X-Requested-With": "XMLHttpRequest"},
+            data={"leId": 1, "srId": 0, "date": game_date.strftime("%Y%m%d")},
+            timeout=20,
+        )
+        response.raise_for_status()
+        return response.json().get("game", [])
+    except (requests.RequestException, ValueError):
+        return []
+
+
+def load_manual_confirmed_starters(prediction_date: date):
+    path = DATA_DIR.parent / "manual" / "confirmed_starters.csv"
+    if not path.exists():
+        return {}
+    manual = pd.read_csv(path)
+    if manual.empty or not {"date", "team", "starter_name"}.issubset(manual.columns):
+        return {}
+    manual["date_obj"] = pd.to_datetime(manual["date"]).dt.date
+    rows = manual[manual["date_obj"] == prediction_date]
+    return {
+        str(row["team"]): {
+            "starter_name": str(row["starter_name"]).strip(),
+            "source": str(row.get("source", "manual")).strip() or "manual",
+            "confirmed_at": str(row.get("confirmed_at", "")).strip(),
+        }
+        for _, row in rows.iterrows()
+        if str(row.get("starter_name", "")).strip()
+    }
+
+
+def build_confirmed_starter_source(games: pd.DataFrame, prediction_date: date, reference_datetime: datetime):
+    source_games = fetch_kbo_game_list(prediction_date)
+    manual = load_manual_confirmed_starters(prediction_date)
+    raw_games = []
+    confirmed = {}
+
+    for game in source_games:
+        game_id = str(game.get("G_ID", ""))
+        away_team = str(game.get("AWAY_NM", "")).strip()
+        home_team = str(game.get("HOME_NM", "")).strip()
+        away_starter = str(game.get("T_PIT_P_NM", "") or "").strip()
+        home_starter = str(game.get("B_PIT_P_NM", "") or "").strip()
+        start_pit_ck = str(game.get("START_PIT_CK", "")).strip()
+        parse_status = "success" if start_pit_ck == "1" and (away_starter or home_starter) else "missing_starter"
+        raw_games.append(
+            {
+                "game": f"{away_team} vs {home_team}",
+                "game_id": game_id,
+                "source": "KBO GetKboGameList",
+                "raw_away_starter": away_starter,
+                "raw_home_starter": home_starter,
+                "start_pit_ck": start_pit_ck,
+                "parse_status": parse_status,
+            }
+        )
+        if parse_status == "success":
+            if away_team and away_starter:
+                confirmed[away_team] = {
+                    "starter_name": away_starter,
+                    "source": "confirmed",
+                    "confirmed_at": reference_datetime.strftime("%Y-%m-%d %H:%M"),
+                    "game_id": game_id,
+                }
+            if home_team and home_starter:
+                confirmed[home_team] = {
+                    "starter_name": home_starter,
+                    "source": "confirmed",
+                    "confirmed_at": reference_datetime.strftime("%Y-%m-%d %H:%M"),
+                    "game_id": game_id,
+                }
+
+    for team, values in manual.items():
+        confirmed[team] = {
+            "starter_name": values["starter_name"],
+            "source": "manual",
+            "confirmed_at": values.get("confirmed_at") or reference_datetime.strftime("%Y-%m-%d %H:%M"),
+            "game_id": "",
+        }
+
+    payload = {
+        "reference_date": prediction_date.isoformat(),
+        "fetched_at": reference_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        "source": "KBO GetKboGameList",
+        "manual_override_count": len(manual),
+        "games": raw_games,
+    }
+    for path in [
+        BASE_DIR / "logs" / f"starter_raw_source_{prediction_date.isoformat()}.json",
+        BASE_DIR / "logs" / "starter_raw_source_latest.json",
+    ]:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return confirmed
+
+
+def pitcher_record_for_starter(team_pitchers: pd.DataFrame, starter_name: str):
+    if not starter_name:
+        return None
+    normalized = team_pitchers.copy()
+    normalized["선수_norm"] = normalized["선수"].astype(str).str.strip()
+    matched = normalized[normalized["선수_norm"] == starter_name.strip()]
+    if matched.empty:
+        matched = normalized[normalized["선수_norm"].str.replace(" ", "", regex=False) == starter_name.strip().replace(" ", "")]
+    return None if matched.empty else matched.iloc[0]
+
+
 def starter_source_for_game(games: pd.DataFrame, team: str, prediction_date: date, reference_datetime: datetime, update_stage: str):
     if update_stage != "pregame":
         return "estimated", "", 0.5
@@ -599,6 +710,7 @@ def build_pitching_context(games: pd.DataFrame, pitchers: pd.DataFrame, predicti
     reference_datetime = reference_datetime or datetime.combine(prediction_date, datetime.min.time())
     completed = games[games["status"] == "Final"].copy()
     completed["date"] = pd.to_datetime(completed["date"]).dt.date
+    confirmed_starters = build_confirmed_starter_source(games, prediction_date, reference_datetime) if update_stage == "pregame" else {}
     context = {}
     for team, team_pitchers in pitchers.groupby("팀"):
         records = team_pitchers.copy()
@@ -630,18 +742,34 @@ def build_pitching_context(games: pd.DataFrame, pitchers: pd.DataFrame, predicti
         else:
             fatigue = "낮음"
 
-        if starter is not None:
+        confirmed_starter = confirmed_starters.get(team)
+        if confirmed_starter:
+            starter_name = confirmed_starter["starter_name"]
+            official_record = pitcher_record_for_starter(records, starter_name)
+            if official_record is not None:
+                starter_era = official_record["ERA"]
+                starter_whip = official_record["WHIP"]
+                starter_text = f"{starter_name} · ERA {starter_era} · WHIP {starter_whip}"
+            else:
+                starter_era = ""
+                starter_whip = ""
+                starter_text = f"{starter_name} · 기록 매칭 대기"
+            source = confirmed_starter["source"]
+            confirmed_at = confirmed_starter["confirmed_at"]
+            quality = 1.0
+        elif starter is not None:
             starter_text = f"{starter['선수']} · ERA {starter['ERA']} · WHIP {starter['WHIP']}"
             starter_name = starter["선수"]
             starter_era = starter["ERA"]
             starter_whip = starter["WHIP"]
+            source, confirmed_at, quality = "estimated", "", 0.5
         else:
             starter_text = "추정 불가"
             starter_name = "-"
             starter_era = "-"
             starter_whip = "-"
-        source, confirmed_at, quality = starter_source_for_game(games, team, prediction_date, reference_datetime, update_stage)
-        source_label = "확정 선발" if source == "confirmed" else "예상 선발"
+            source, confirmed_at, quality = "unknown", "", 0.0
+        source_label = "확정 선발" if source in {"confirmed", "manual"} else "예상 선발"
         context[team] = {
             "투수 표시": f"{source_label}: {starter_text}",
             "선발명": starter_name,
@@ -813,7 +941,7 @@ def starter_status_label(status: str):
 
 
 def game_starter_status(home_source: str, away_source: str):
-    sources = {home_source or "unknown", away_source or "unknown"}
+    sources = {"confirmed" if source == "manual" else (source or "unknown") for source in [home_source, away_source]}
     if sources == {"confirmed"}:
         return "both_confirmed"
     if "confirmed" in sources:
@@ -872,6 +1000,8 @@ def build_pregame_update_status(games: pd.DataFrame, pitching_context: dict, pre
     for game in games_payload:
         for key in ["home_starter_source", "away_starter_source"]:
             source = game.get(key, "unknown")
+            if source == "manual":
+                source = "confirmed"
             source_counts[source if source in source_counts else "unknown"] += 1
 
     changes = []
@@ -945,6 +1075,19 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
         pick_lineup = lineup_context.get(row["예측 구단"], {})
         game_status = status_lookup.get(key, {})
         status_label = game_status.get("status_label", "선발 정보 미확인")
+        home_team = game_status.get("home_team", row["기준팀"])
+        away_team = game_status.get("away_team", row["상대팀"])
+
+        def starter_line(team):
+            context = pitching_context.get(team, {})
+            source = context.get("starter_source", "unknown")
+            source_label = "확정" if source in {"confirmed", "manual"} else ("추정" if source == "estimated" else "미확인")
+            era = context.get("ERA", "")
+            whip = context.get("WHIP", "")
+            era_text = f" · ERA {era}" if str(era).strip() not in {"", "-"} else ""
+            whip_text = f" · WHIP {whip}" if str(whip).strip() not in {"", "-"} else ""
+            return f'{team}: {context.get("선발명", "-")} · {source_label}{era_text}{whip_text}'
+
         matchup = f'{row["기준팀"]} vs {row["상대팀"]}'
         cards[key] = {
             "경기": matchup,
@@ -953,6 +1096,7 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             "신뢰도": tier["신뢰도"],
             "핵심 근거": row.get("예측 근거", ""),
             "투수 신호": f'{pick_context.get("투수 표시", "예상 선발: 추정 불가")} · 불펜 피로 {pick_context.get("불펜 피로", "-")}',
+            "선발 매치업": f"선발 매치업: {starter_line(away_team)} / {starter_line(home_team)}",
             "선발 상태": status_label,
             "라인업 신호": f'{pick_lineup.get("status_label", "라인업 정보 미확인")} · 선발 WAR 합 {pick_lineup.get("lineup_war", "-")} · {pick_lineup.get("lineup_preview", "-")}',
             "판단": tier["판단"],
@@ -2000,6 +2144,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
           <div class="badges"><span>신뢰도 {escape(row["신뢰도"])}</span><span>{escape(row["판단"])}</span></div>
           <p class="starter-status">선발 상태: {escape(row["선발 상태"])}</p>
           <p>{escape(row["핵심 근거"])}</p>
+          <p class="pitching-signal">{escape(row["선발 매치업"])}</p>
           <p class="pitching-signal">{escape(row["투수 신호"])}</p>
           <p class="pitching-signal">{escape(row["라인업 신호"])}</p>
         </article>
