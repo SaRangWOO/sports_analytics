@@ -10,7 +10,9 @@ import pandas as pd
 from .feature_engineering import build_features
 from .game_level_features import (
     align_game_level_matrix,
+    attach_player_context,
     build_game_level_frame,
+    build_player_team_context,
     export_game_level_dataset,
     prepare_game_level_matrix,
 )
@@ -151,6 +153,21 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     results_dir.mkdir(parents=True, exist_ok=True)
     features.to_csv(results_dir / "features.csv", index=False, encoding="utf-8-sig")
     export_game_level_dataset(features, results_dir / "game_level_features.csv")
+    player_feature_note = ""
+    player_game_frame = pd.DataFrame()
+    hitter_stats_path = data_dir / "hitter_stats.csv"
+    pitcher_stats_path = data_dir / "pitcher_stats.csv"
+    if hitter_stats_path.exists() and pitcher_stats_path.exists():
+        hitters = pd.read_csv(hitter_stats_path)
+        pitchers = pd.read_csv(pitcher_stats_path)
+        player_context = build_player_team_context(hitters, pitchers)
+        player_context.to_csv(results_dir / "player_team_context.csv", index=False, encoding="utf-8-sig")
+        player_game_frame = attach_player_context(build_game_level_frame(features), player_context)
+        player_game_frame.to_csv(results_dir / "game_level_player_features.csv", index=False, encoding="utf-8-sig")
+        player_feature_note = (
+            "선수 영향도 피처는 현재 공식 기록 스냅샷 기반 참고 피처입니다. "
+            "과거 시점별 선수 스냅샷이 쌓이면 최종 모델 선택 후보로 승격할 수 있습니다."
+        )
 
     if len(features) < 20:
         return {"available": False, "reason": "학습 가능한 완료 경기가 부족합니다.", "training_cutoff": cutoff.isoformat()}
@@ -224,7 +241,34 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
             best = pick_better_model(best, result)
 
+    if sklearn_candidates and not player_game_frame.empty:
+        player_frame = player_game_frame.dropna(subset=["target_home_win"]).copy()
+        if len(player_frame) >= 20:
+            px, py = prepare_game_level_matrix(player_frame)
+            player_split = chronological_split_index(player_frame["date"])
+            py_train, py_test = py[:player_split], py[player_split:]
+            player_candidates = [
+                ("경기 단위 선수영향도 참고 RandomForest", sklearn_candidates[0][1].__class__(n_estimators=500, max_depth=7, min_samples_leaf=8, class_weight="balanced", random_state=42, n_jobs=-1)),
+                ("경기 단위 선수영향도 참고 GradientBoosting", sklearn_candidates[2][1].__class__(max_iter=220, learning_rate=0.04, max_leaf_nodes=15, l2_regularization=0.08, random_state=42)),
+            ]
+            for name, model in player_candidates:
+                columns = list(px.columns)
+                px_train, px_test = px.iloc[:player_split][columns], px.iloc[player_split:][columns]
+                train_scaled, test_scaled, _, _ = standardize_train_test(px_train, px_test)
+                model.fit(train_scaled, py_train)
+                probability = model.predict_proba(test_scaled)[:, 1]
+                pred = (probability >= 0.5).astype(int)
+                accuracy = round(float((pred == py_test).mean()), 3)
+                score = probability_scores(py_test, probability)
+                candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
+
     payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, completed)
+    if player_feature_note:
+        payload["player_feature_note"] = player_feature_note
+        payload["player_feature_files"] = [
+            "modeling/results/player_team_context.csv",
+            "modeling/results/game_level_player_features.csv",
+        ]
     (results_dir / "win_predictor_model.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     return payload
 

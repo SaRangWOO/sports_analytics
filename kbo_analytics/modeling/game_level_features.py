@@ -49,6 +49,115 @@ def build_game_level_frame(features: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _to_float(value, default=0.0):
+    try:
+        text = str(value).replace(",", "").strip()
+        if text in {"", "-", "nan"}:
+            return default
+        return float(text)
+    except (TypeError, ValueError):
+        return default
+
+
+def _parse_innings(value):
+    if pd.isna(value):
+        return 0.0
+    text = str(value).strip()
+    if not text or text == "-":
+        return 0.0
+    total = 0.0
+    for part in text.split():
+        if "/" in part:
+            numerator, denominator = part.split("/", 1)
+            total += float(numerator) / float(denominator)
+        else:
+            total += float(part)
+    return total
+
+
+def build_player_team_context(hitters: pd.DataFrame, pitchers: pd.DataFrame) -> pd.DataFrame:
+    rows = []
+    teams = sorted(set(hitters.get("팀", pd.Series(dtype=str))).union(set(pitchers.get("팀", pd.Series(dtype=str)))))
+    for team in teams:
+        team_hitters = hitters[hitters["팀"] == team].copy() if "팀" in hitters else pd.DataFrame()
+        team_pitchers = pitchers[pitchers["팀"] == team].copy() if "팀" in pitchers else pd.DataFrame()
+
+        if not team_hitters.empty:
+            for column in ["OPS", "출루율", "장타율", "득점권타율", "타석"]:
+                team_hitters[f"{column}_num"] = team_hitters[column].apply(_to_float) if column in team_hitters else 0.0
+            eligible_hitters = team_hitters[team_hitters["타석_num"] >= 30].copy()
+            if eligible_hitters.empty:
+                eligible_hitters = team_hitters.copy()
+            eligible_hitters["hitter_impact_score"] = (
+                eligible_hitters["OPS_num"] * 55
+                + eligible_hitters["출루율_num"] * 25
+                + eligible_hitters["장타율_num"] * 20
+                + eligible_hitters["득점권타율_num"] * 10
+                + eligible_hitters["타석_num"].clip(upper=150) / 150 * 10
+            )
+            top_hitters = eligible_hitters.sort_values("hitter_impact_score", ascending=False).head(3)
+            team_ops = team_hitters["OPS_num"].replace(0, np.nan).mean()
+            top3_ops = top_hitters["OPS_num"].mean() if not top_hitters.empty else 0.0
+            hitter_dependency = max(float(top3_ops - (team_ops or 0.0)), 0.0)
+            top3_hitter_score = top_hitters["hitter_impact_score"].mean() if not top_hitters.empty else 0.0
+        else:
+            team_ops = top3_ops = hitter_dependency = top3_hitter_score = 0.0
+
+        if not team_pitchers.empty:
+            for column in ["ERA", "WHIP", "이닝", "탈삼진", "볼넷", "세이브", "홀드"]:
+                if column == "이닝":
+                    team_pitchers[f"{column}_num"] = team_pitchers[column].apply(_parse_innings) if column in team_pitchers else 0.0
+                else:
+                    team_pitchers[f"{column}_num"] = team_pitchers[column].apply(_to_float) if column in team_pitchers else 0.0
+            eligible_pitchers = team_pitchers[team_pitchers["이닝_num"] >= 5].copy()
+            if eligible_pitchers.empty:
+                eligible_pitchers = team_pitchers.copy()
+            kbb = eligible_pitchers["탈삼진_num"] / eligible_pitchers["볼넷_num"].replace(0, 1)
+            eligible_pitchers["pitcher_impact_score"] = (
+                (6 - eligible_pitchers["ERA_num"]).clip(lower=0) / 6 * 35
+                + (2 - eligible_pitchers["WHIP_num"]).clip(lower=0) / 2 * 25
+                + eligible_pitchers["이닝_num"].clip(upper=50) / 50 * 25
+                + kbb.clip(upper=4) / 4 * 10
+                + (eligible_pitchers["세이브_num"] + eligible_pitchers["홀드_num"]).clip(upper=15) / 15 * 5
+            )
+            top_pitchers = eligible_pitchers.sort_values("pitcher_impact_score", ascending=False).head(3)
+            total_innings = team_pitchers["이닝_num"].sum()
+            top3_innings_share = top_pitchers["이닝_num"].sum() / max(total_innings, 1)
+            pitcher_core_score = top_pitchers["pitcher_impact_score"].mean() if not top_pitchers.empty else 0.0
+        else:
+            top3_innings_share = pitcher_core_score = 0.0
+
+        rows.append(
+            {
+                "team": team,
+                "top3_hitter_ops_avg": round(float(top3_ops), 4),
+                "team_ops_avg": round(float(team_ops if not pd.isna(team_ops) else 0.0), 4),
+                "hitter_dependency": round(float(hitter_dependency), 4),
+                "top3_hitter_impact_score": round(float(top3_hitter_score), 4),
+                "pitcher_core_score": round(float(pitcher_core_score), 4),
+                "pitcher_dependency": round(float(top3_innings_share), 4),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def attach_player_context(frame: pd.DataFrame, player_context: pd.DataFrame) -> pd.DataFrame:
+    if frame.empty or player_context.empty:
+        return frame.copy()
+    home_context = player_context.add_prefix("home_").rename(columns={"home_team": "home_team"})
+    away_context = player_context.add_prefix("away_").rename(columns={"away_team": "away_team"})
+    enriched = frame.merge(home_context, on="home_team", how="left").merge(away_context, on="away_team", how="left")
+    for column in [
+        "top3_hitter_ops_avg",
+        "top3_hitter_impact_score",
+        "hitter_dependency",
+        "pitcher_core_score",
+        "pitcher_dependency",
+    ]:
+        enriched[f"{column}_gap"] = enriched[f"home_{column}"].fillna(0) - enriched[f"away_{column}"].fillna(0)
+    return enriched.fillna(0)
+
+
 def export_game_level_dataset(features: pd.DataFrame, output_path: str | Path):
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
