@@ -524,5 +524,10 @@
   "player_feature_files": [
     "modeling/results/player_team_context.csv",
     "modeling/results/game_level_player_features.csv"
-  ]
+  ],
+  "run_expectancy_note": "득점 예측용 데이터셋은 완료 경기의 홈/원정 득점 목표값과 경기 전 팀 흐름 피처를 한 경기 1행으로 저장합니다. 현재 단계에서는 모델 학습 전 데이터셋 준비용입니다.",
+  "run_expectancy_files": [
+    "modeling/results/run_expectancy_features.csv"
+  ],
+  "run_expectancy_rows": 7115
 }

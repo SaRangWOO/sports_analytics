@@ -23,6 +23,7 @@ from .model_evaluation import (
     pick_better_model,
     probability_scores,
 )
+from .run_expectancy import export_run_expectancy_dataset
 from .train_win_predictor import prepare_matrix, sigmoid, standardize_train_test, train_logistic_regression
 
 
@@ -153,6 +154,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     results_dir.mkdir(parents=True, exist_ok=True)
     features.to_csv(results_dir / "features.csv", index=False, encoding="utf-8-sig")
     export_game_level_dataset(features, results_dir / "game_level_features.csv")
+    run_expectancy_frame = export_run_expectancy_dataset(features, completed, results_dir / "run_expectancy_features.csv")
     player_feature_note = ""
     player_game_frame = pd.DataFrame()
     hitter_stats_path = data_dir / "hitter_stats.csv"
@@ -269,6 +271,12 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             "modeling/results/player_team_context.csv",
             "modeling/results/game_level_player_features.csv",
         ]
+    payload["run_expectancy_note"] = (
+        "득점 예측용 데이터셋은 완료 경기의 홈/원정 득점 목표값과 경기 전 팀 흐름 피처를 한 경기 1행으로 저장합니다. "
+        "현재 단계에서는 모델 학습 전 데이터셋 준비용입니다."
+    )
+    payload["run_expectancy_files"] = ["modeling/results/run_expectancy_features.csv"]
+    payload["run_expectancy_rows"] = int(len(run_expectancy_frame))
     (results_dir / "win_predictor_model.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     return payload
 
