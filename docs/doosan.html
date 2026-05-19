@@ -21,6 +21,7 @@
     th { background:#f0f3f7; }
     .wrap-table td { white-space:normal; line-height:1.55; vertical-align:top; }
     .wrap-table td:nth-child(2) { min-width:260px; }
+    .subsection { margin-top:18px; }
     .lead { font-size:18px; line-height:1.6; margin:0 0 16px; }
     .conclusion { margin:0 0 10px; font-size:20px; font-weight:700; line-height:1.5; }
     .tags { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 18px; }
@@ -55,6 +56,18 @@
       <div><h3>강점</h3><ol class="insight-list"><li>득실차가 +3으로 경기 내용도 소폭 우위입니다.</li><li>희생번트 2위, 희생플라이 1위로 작전/진루 생산이 강점입니다.</li><li>실제 승률 0.476보다 피타고리안 기대 승률 0.507이 높아 경기 내용상 반등 여지가 있습니다.</li></ol></div>
       <div><h3>주의</h3><ol class="insight-list"><li>BB/K 7위라 볼넷 대비 삼진 관리가 필요합니다.</li></ol></div>
     </div>
+  </section>
+  <section class="section">
+    <h2>핵심 선수 영향도</h2>
+    <div class="tables">
+      <div class="wrap-table"><h3>타선 핵심 TOP 3</h3><table><thead><tr><th>선수</th><th>핵심 지표</th><th>역할 해석</th></tr></thead><tbody><tr><td>카메론</td><td>OPS 0.934 · 출루율 0.390 · 장타율 0.544</td><td>출루와 장타를 동시에 만드는 중심 생산원</td></tr><tr><td>박준순</td><td>OPS 0.881 · 출루율 0.365 · 장타율 0.516</td><td>득점권 상황에서 점수 전환에 기여</td></tr><tr><td>김민석</td><td>OPS 0.761 · 출루율 0.353 · 장타율 0.408</td><td>득점권 상황에서 점수 전환에 기여</td></tr></tbody></table></div>
+      <div class="wrap-table"><h3>마운드 핵심 TOP 3</h3><table><thead><tr><th>선수</th><th>핵심 지표</th><th>역할 해석</th></tr></thead><tbody><tr><td>잭로그</td><td>ERA 3.83 · WHIP 1.31 · 이닝 54.0</td><td>긴 이닝을 소화해 불펜 부담을 줄이는 선발 자원</td></tr><tr><td>곽빈</td><td>ERA 3.62 · WHIP 1.41 · 이닝 49.7</td><td>긴 이닝을 소화해 불펜 부담을 줄이는 선발 자원</td></tr><tr><td>김택연</td><td>ERA 0.87 · WHIP 1.06 · 이닝 10.3</td><td>주자 허용을 억제하는 안정형 투수</td></tr></tbody></table></div>
+    </div>
+    <div class="subsection wrap-table">
+      <h3>전력 의존도</h3>
+      <table><thead><tr><th>구분</th><th>해석</th></tr></thead><tbody><tr><td>타선 의존도</td><td>타선 의존도 높음: 핵심 타자 3명의 평균 OPS가 팀 평균보다 0.335 높아 중심타선 이탈 시 공격 하락 위험이 큽니다.</td></tr><tr><td>마운드 의존도</td><td>마운드 의존도 보통: 이닝 상위 3명 비중이 38.4%로 주요 투수 비중을 관리할 필요가 있습니다.</td></tr></tbody></table>
+    </div>
+    <p class="note">선수 영향도는 개별 선수명을 모델 피처로 직접 쓰지 않고, OPS·출루율·장타율·득점권타율·이닝·ERA·WHIP·K/BB·세이브/홀드 같은 공식 기록을 팀 내 역할 판단용으로 압축한 값입니다.</p>
   </section>
   <section class="section">
     <h2>감독·코치·등록 선수 구성</h2>

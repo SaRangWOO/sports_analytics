@@ -1255,6 +1255,114 @@ def topic_particle(text: str):
     return "는"
 
 
+def hitter_role(row: pd.Series):
+    ops = to_float(row.get("OPS", 0))
+    obp = to_float(row.get("출루율", 0))
+    slg = to_float(row.get("장타율", 0))
+    risp = to_float(row.get("득점권타율", 0))
+    bb = to_float(row.get("볼넷", 0))
+    strikeouts = to_float(row.get("삼진", 0))
+    bb_k = bb / max(strikeouts, 1)
+    if ops >= 0.850 and obp >= 0.380:
+        return "출루와 장타를 동시에 만드는 중심 생산원"
+    if risp >= 0.330:
+        return "득점권 상황에서 점수 전환에 기여"
+    if bb_k >= 0.75:
+        return "볼넷 대비 삼진 관리가 좋은 타석 안정형"
+    if slg >= 0.450:
+        return "장타로 득점 기대값을 높이는 유형"
+    return "팀 내 공격 생산을 보조하는 자원"
+
+
+def pitcher_role(row: pd.Series):
+    innings = parse_innings(row.get("이닝", 0))
+    whip = to_float(row.get("WHIP", 0))
+    saves_holds = to_float(row.get("세이브", 0)) + to_float(row.get("홀드", 0))
+    if innings >= 35:
+        return "긴 이닝을 소화해 불펜 부담을 줄이는 선발 자원"
+    if saves_holds >= 5:
+        return "승부처 등판 비중이 높은 핵심 불펜"
+    if whip and whip <= 1.25:
+        return "주자 허용을 억제하는 안정형 투수"
+    return "마운드 운영 폭을 넓히는 투수 자원"
+
+
+def key_player_summaries(team_hitters: pd.DataFrame, team_pitchers: pd.DataFrame, team_ops: float):
+    hitters_frame = team_hitters.copy()
+    pitchers_frame = team_pitchers.copy()
+    for column in ["OPS", "출루율", "장타율", "득점권타율", "타석", "볼넷", "삼진"]:
+        hitters_frame[f"{column}_num"] = hitters_frame[column].apply(to_float) if column in hitters_frame else 0
+    hitters_eligible = hitters_frame[hitters_frame["타석_num"] >= 30].copy()
+    if hitters_eligible.empty:
+        hitters_eligible = hitters_frame.copy()
+    hitters_eligible["impact_score"] = (
+        hitters_eligible["OPS_num"] * 55
+        + hitters_eligible["출루율_num"] * 25
+        + hitters_eligible["장타율_num"] * 20
+        + hitters_eligible["득점권타율_num"] * 10
+        + hitters_eligible["타석_num"].clip(upper=150) / 150 * 10
+    )
+    hitters_top = hitters_eligible.sort_values("impact_score", ascending=False).head(3).copy()
+    hitter_rows = []
+    for _, row in hitters_top.iterrows():
+        hitter_rows.append(
+            {
+                "선수": row.get("선수", "-"),
+                "핵심 지표": f"OPS {to_float(row.get('OPS', 0)):.3f} · 출루율 {to_float(row.get('출루율', 0)):.3f} · 장타율 {to_float(row.get('장타율', 0)):.3f}",
+                "역할 해석": hitter_role(row),
+            }
+        )
+
+    for column in ["ERA", "WHIP", "이닝", "탈삼진", "볼넷", "세이브", "홀드"]:
+        if column == "이닝":
+            pitchers_frame[f"{column}_num"] = pitchers_frame[column].apply(parse_innings) if column in pitchers_frame else 0
+        else:
+            pitchers_frame[f"{column}_num"] = pitchers_frame[column].apply(to_float) if column in pitchers_frame else 0
+    pitchers_eligible = pitchers_frame[pitchers_frame["이닝_num"] >= 5].copy()
+    if pitchers_eligible.empty:
+        pitchers_eligible = pitchers_frame.copy()
+    kbb = pitchers_eligible["탈삼진_num"] / pitchers_eligible["볼넷_num"].replace(0, 1)
+    pitchers_eligible["impact_score"] = (
+        (6 - pitchers_eligible["ERA_num"]).clip(lower=0) / 6 * 35
+        + (2 - pitchers_eligible["WHIP_num"]).clip(lower=0) / 2 * 25
+        + pitchers_eligible["이닝_num"].clip(upper=50) / 50 * 25
+        + kbb.clip(upper=4) / 4 * 10
+        + (pitchers_eligible["세이브_num"] + pitchers_eligible["홀드_num"]).clip(upper=15) / 15 * 5
+    )
+    pitchers_top = pitchers_eligible.sort_values("impact_score", ascending=False).head(3).copy()
+    pitcher_rows = []
+    for _, row in pitchers_top.iterrows():
+        pitcher_rows.append(
+            {
+                "선수": row.get("선수", "-"),
+                "핵심 지표": f"ERA {to_float(row.get('ERA', 0)):.2f} · WHIP {to_float(row.get('WHIP', 0)):.2f} · 이닝 {parse_innings(row.get('이닝', 0)):.1f}",
+                "역할 해석": pitcher_role(row),
+            }
+        )
+
+    top3_ops = hitters_top["OPS_num"].mean() if not hitters_top.empty else 0
+    ops_gap = top3_ops - team_ops
+    total_innings = pitchers_frame["이닝_num"].sum()
+    top3_innings_share = pitchers_frame.sort_values("이닝_num", ascending=False).head(3)["이닝_num"].sum() / max(total_innings, 1)
+    if ops_gap >= 0.200:
+        lineup_dependence = f"타선 의존도 높음: 핵심 타자 3명의 평균 OPS가 팀 평균보다 {ops_gap:.3f} 높아 중심타선 이탈 시 공격 하락 위험이 큽니다."
+    elif ops_gap >= 0.100:
+        lineup_dependence = f"타선 의존도 보통: 핵심 타자 3명의 평균 OPS가 팀 평균보다 {ops_gap:.3f} 높아 상위 생산원의 비중이 있습니다."
+    else:
+        lineup_dependence = "타선 의존도 낮음: 핵심 타자와 팀 평균 OPS 차이가 크지 않아 생산이 비교적 분산돼 있습니다."
+    if top3_innings_share >= 0.45:
+        pitching_dependence = f"마운드 의존도 높음: 이닝 상위 3명이 전체 이닝의 {top3_innings_share:.1%}를 맡아 선발/핵심 투수 의존도가 큽니다."
+    elif top3_innings_share >= 0.35:
+        pitching_dependence = f"마운드 의존도 보통: 이닝 상위 3명 비중이 {top3_innings_share:.1%}로 주요 투수 비중을 관리할 필요가 있습니다."
+    else:
+        pitching_dependence = f"마운드 의존도 낮음: 이닝 상위 3명 비중이 {top3_innings_share:.1%}로 투수 운영이 비교적 분산돼 있습니다."
+    dependence_rows = [
+        {"구분": "타선 의존도", "해석": lineup_dependence},
+        {"구분": "마운드 의존도", "해석": pitching_dependence},
+    ]
+    return hitter_rows, pitcher_rows, dependence_rows
+
+
 def build_team_analysis_pages(standings, vs_table, games, hitters, pitchers, rosters, generated_at: date):
     generated_pages = {}
     for team in standings["팀"]:
@@ -1436,6 +1544,7 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
         {"지표": "타석 안정성", "값": f"{plate_score}/100", "해석": f"BB/K {bb_k:.2f}, 리그 {rank_text(bb_k_rank)}입니다."},
         {"지표": "마운드 안정성", "값": f"{pitching_score}/100", "해석": f"산출 ERA {team_era:.2f}({rank_text(era_rank)}), 산출 WHIP {to_float(pitcher_context.get('산출WHIP', 0)):.2f}({rank_text(whip_rank)})입니다."},
     ]
+    key_hitters, key_pitchers, dependence_rows = key_player_summaries(team_hitter_pool, team_pitcher_pool, team_ops)
 
     insight_rows = [
         {"인사이트": "시즌 위치", "내용": f"{team_standing['순위']}위, {wins}승 {losses}패 {draws}무, 승률 {pct(win_rate)}입니다."},
@@ -1470,6 +1579,7 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
     th {{ background:#f0f3f7; }}
     .wrap-table td {{ white-space:normal; line-height:1.55; vertical-align:top; }}
     .wrap-table td:nth-child(2) {{ min-width:260px; }}
+    .subsection {{ margin-top:18px; }}
     .lead {{ font-size:18px; line-height:1.6; margin:0 0 16px; }}
     .conclusion {{ margin:0 0 10px; font-size:20px; font-weight:700; line-height:1.5; }}
     .tags {{ display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 18px; }}
@@ -1504,6 +1614,18 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
       <div><h3>강점</h3><ol class="insight-list">{"".join(f"<li>{escape(item)}</li>" for item in strengths)}</ol></div>
       <div><h3>주의</h3><ol class="insight-list">{"".join(f"<li>{escape(item)}</li>" for item in risks)}</ol></div>
     </div>
+  </section>
+  <section class="section">
+    <h2>핵심 선수 영향도</h2>
+    <div class="tables">
+      <div class="wrap-table"><h3>타선 핵심 TOP 3</h3>{table_html(key_hitters, ["선수", "핵심 지표", "역할 해석"])}</div>
+      <div class="wrap-table"><h3>마운드 핵심 TOP 3</h3>{table_html(key_pitchers, ["선수", "핵심 지표", "역할 해석"])}</div>
+    </div>
+    <div class="subsection wrap-table">
+      <h3>전력 의존도</h3>
+      {table_html(dependence_rows, ["구분", "해석"])}
+    </div>
+    <p class="note">선수 영향도는 개별 선수명을 모델 피처로 직접 쓰지 않고, OPS·출루율·장타율·득점권타율·이닝·ERA·WHIP·K/BB·세이브/홀드 같은 공식 기록을 팀 내 역할 판단용으로 압축한 값입니다.</p>
   </section>
   <section class="section">
     <h2>감독·코치·등록 선수 구성</h2>
