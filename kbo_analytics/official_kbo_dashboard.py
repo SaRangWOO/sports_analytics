@@ -1090,7 +1090,11 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
 
         matchup = f'{row["기준팀"]} vs {row["상대팀"]}'
         cards[key] = {
+            "game_id": game_status.get("game_id", key),
+            "home_team": home_team,
+            "away_team": away_team,
             "경기": matchup,
+            "예측 구단": row["예측 구단"],
             "추천": f'{row["예측 구단"]} {tier["우세"]}',
             "예측승률": f"{confidence:.1%}",
             "신뢰도": tier["신뢰도"],
@@ -1103,6 +1107,77 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             "confidence_value": confidence,
         }
     return sorted(cards.values(), key=lambda row: row["confidence_value"], reverse=True)
+
+
+def prediction_change_summary(current_probability: float, previous_probability, current_team: str, previous_team) -> str:
+    if previous_probability is None or pd.isna(previous_probability):
+        return "이전 예측 없음"
+    if previous_team and current_team != previous_team:
+        return f"예측 구단 변경: {previous_team} → {current_team}"
+    delta = (current_probability - float(previous_probability)) * 100
+    if abs(delta) < 1.0:
+        return "직전 예측 대비 변화 거의 없음"
+    if delta >= 3.0:
+        return f"직전 예측 대비 우세 강화 +{delta:.1f}%p"
+    if delta <= -3.0:
+        return f"직전 예측 대비 우세 약화 {delta:.1f}%p"
+    sign = "+" if delta > 0 else ""
+    return f"직전 예측 대비 {sign}{delta:.1f}%p"
+
+
+def append_pregame_prediction_history(prediction_cards: list[dict], status_payload: dict, lineup_context: dict, reference_datetime: datetime, update_stage: str):
+    history_path = RESULTS_DIR / "pregame_prediction_history.csv"
+    existing = pd.DataFrame()
+    if history_path.exists():
+        existing = pd.read_csv(history_path)
+
+    previous_lookup = {}
+    if not existing.empty and {"reference_date", "game_id", "run_time"}.issubset(existing.columns):
+        same_day = existing[existing["reference_date"].astype(str) == str(status_payload.get("reference_date", ""))].copy()
+        if not same_day.empty:
+            same_day["run_time_sort"] = pd.to_datetime(same_day["run_time"], errors="coerce")
+            for game_id, group in same_day.sort_values("run_time_sort").groupby("game_id"):
+                previous_lookup[game_id] = group.iloc[-1].to_dict()
+
+    rows = []
+    for card in prediction_cards:
+        game_id = card.get("game_id", "")
+        previous = previous_lookup.get(game_id, {})
+        lineup_sources = []
+        for team in [card.get("away_team"), card.get("home_team")]:
+            if team:
+                lineup_sources.append(lineup_context.get(team, {}).get("lineup_source", "unknown"))
+        lineup_status = "confirmed" if lineup_sources and set(lineup_sources) == {"confirmed"} else ("recent" if "recent" in lineup_sources else "unknown")
+        current_probability = float(card.get("confidence_value", 0.0))
+        previous_probability = previous.get("win_probability") if previous else None
+        previous_team = previous.get("predicted_team") if previous else None
+        change_summary = prediction_change_summary(current_probability, previous_probability, card.get("예측 구단", ""), previous_team)
+        card["예측 변화"] = change_summary
+        rows.append(
+            {
+                "run_time": reference_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                "reference_date": status_payload.get("reference_date", ""),
+                "update_stage": update_stage,
+                "game_id": game_id,
+                "away_team": card.get("away_team", ""),
+                "home_team": card.get("home_team", ""),
+                "predicted_team": card.get("예측 구단", ""),
+                "win_probability": round(current_probability, 4),
+                "starter_status": next((game.get("game_starter_status") for game in status_payload.get("games", []) if game.get("game_id") == game_id), ""),
+                "lineup_status": lineup_status,
+                "previous_predicted_team": previous_team or "",
+                "previous_win_probability": "" if previous_probability is None or pd.isna(previous_probability) else round(float(previous_probability), 4),
+                "change_summary": change_summary,
+            }
+        )
+
+    if rows:
+        history_path.parent.mkdir(parents=True, exist_ok=True)
+        current = pd.DataFrame(rows)
+        combined = pd.concat([existing, current], ignore_index=True) if not existing.empty else current
+        combined = combined.drop_duplicates(subset=["run_time", "game_id"], keep="last")
+        combined.to_csv(history_path, index=False, encoding="utf-8-sig")
+    return prediction_cards
 
 
 def today_summary(prediction_cards: list[dict]):
@@ -2135,6 +2210,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         else "최근 선발 상태 변경 없음"
     )
     prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context, status_payload, lineup_context)
+    prediction_cards = append_pregame_prediction_history(prediction_cards, status_payload, lineup_context, reference_datetime or datetime.now(), update_stage)
     summary = today_summary(prediction_cards)
     prediction_cards_html = "".join(
         f"""
@@ -2143,6 +2219,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
           <h3>{escape(row["추천"])} <span>{escape(row["예측승률"])}</span></h3>
           <div class="badges"><span>신뢰도 {escape(row["신뢰도"])}</span><span>{escape(row["판단"])}</span></div>
           <p class="starter-status">선발 상태: {escape(row["선발 상태"])}</p>
+          <p class="starter-status">예측 변화: {escape(row.get("예측 변화", "이전 예측 없음"))}</p>
           <p>{escape(row["핵심 근거"])}</p>
           <p class="pitching-signal">{escape(row["선발 매치업"])}</p>
           <p class="pitching-signal">{escape(row["투수 신호"])}</p>
