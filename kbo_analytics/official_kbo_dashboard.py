@@ -2193,6 +2193,10 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     confidence_rows = model_payload.get("confidence_metrics", []) if model_payload.get("available") else []
     calibration_rows = model_payload.get("calibration_table", []) if model_payload.get("available") else []
     candidate_rows = model_payload.get("candidate_results", []) if model_payload.get("available") else []
+    feature_rows = [
+        {"피처": feature, "중요도": importance}
+        for feature, importance in list((model_payload.get("feature_importance") or {}).items())[:10]
+    ] if model_payload.get("available") else []
     pitching_context = build_pitching_context(games, pitchers, generated_at, reference_datetime, update_stage)
     export_pitching_context(pitching_context, DATA_DIR / "pitching_context.csv", generated_at)
     export_lineup_context(lineup_context, DATA_DIR / "lineup_context.csv", generated_at)
@@ -2370,7 +2374,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="metric">검증 행<strong>{model_payload.get("test_rows", "-")}</strong></div>
       <div class="metric">검증 정확도<strong>{model_payload.get("accuracy", "-")}</strong></div>
     </div>
-    <p class="note">모델 상태: 전체 적중률 {model_payload.get("accuracy", "-")}, 55% 이상 예측 경기 적중률 {confidence_rows[1]["적중률"] if len(confidence_rows) > 1 else "-"}입니다. 60% 이상 구간은 과신 가능성이 있어 강한 정배가 아니라 참고 신호로 해석합니다.</p>
+    <p class="note">모델 상태: 전체 적중률 {model_payload.get("accuracy", "-")}, 55% 이상 예측 경기 적중률 {confidence_rows[1]["적중률"] if len(confidence_rows) > 1 else "-"}입니다. 현재 선택 모델은 단순 정확도 최고 모델이 아니라, Brier Score와 Log Loss를 함께 고려해 확률 품질이 상대적으로 안정적인 모델을 선택합니다. 60% 이상 구간은 평균 예측승률과 실제 승률이 비슷하더라도 표본 수가 작아 강한 정배보다는 참고 신호로 해석합니다.</p>
     <details>
       <summary>모델 검증 상세 보기</summary>
       <div class="subsection">
@@ -2386,11 +2390,15 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         {table_html(candidate_rows, ["모델", "검증 정확도", "Brier Score", "Log Loss", "피처 수"]) if candidate_rows else "<p>모델 후보 결과를 생성할 수 없습니다.</p>"}
       </div>
       <div class="subsection">
+        <h3>모델 중요 피처 TOP 10</h3>
+        {table_html(feature_rows, ["피처", "중요도"]) if feature_rows else "<p>선택 모델에서 중요 피처를 추출할 수 없습니다.</p>"}
+      </div>
+      <div class="subsection">
         <h3>최근 검증 경기</h3>
-        {table_html(model_rows, ["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
+        {table_html(model_rows, ["경기일", "경기", "예측 구단", "예측승률", "실제 승리 구단", "결과", "예측 근거"], limit=12) if model_rows else "<p>모델 결과를 생성할 수 없습니다.</p>"}
       </div>
     </details>
-    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 55% 이상 구간은 전체보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 아직 안정적인 개선이 확인되지 않았습니다. 불펜 피로와 휴식일은 경기 단위 모델 피처로 반영했고, 선발투수는 경기 전 업데이트에서 GameCenter 확정 선발을 확인합니다. 라인업은 대시보드 판단 정보로 표시하지만, 과거 시점별 라인업 스냅샷이 쌓이기 전까지 최종 승패 모델 피처에는 직접 반영하지 않습니다.</p>
+    <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 확신 구간으로 갈수록 전체 경기보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 표본 수가 줄어들기 때문에 장기 검증이 더 필요합니다. 불펜 피로와 휴식일은 경기 단위 모델 피처로 반영했고, 선발투수는 경기 전 업데이트에서 GameCenter 확정 선발을 확인합니다. 라인업은 대시보드 판단 정보로 표시하지만, 과거 시점별 라인업 스냅샷이 쌓이기 전까지 최종 승패 모델 피처에는 직접 반영하지 않습니다.</p>
   </section>
 </main>
 <script>

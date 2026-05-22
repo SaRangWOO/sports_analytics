@@ -118,8 +118,12 @@ def sklearn_candidate_specs(recency_weight):
     return [
         ("RandomForest 비선형 모델", RandomForestClassifier(n_estimators=500, max_depth=7, min_samples_leaf=8, class_weight="balanced", random_state=42, n_jobs=-1), None),
         ("RandomForest 시간가중 모델", RandomForestClassifier(n_estimators=500, max_depth=7, min_samples_leaf=8, class_weight="balanced", random_state=42, n_jobs=-1), recency_weight),
+        ("RandomForest 보수 모델", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), None),
+        ("RandomForest 보수 시간가중 모델", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), recency_weight),
         ("GradientBoosting 비선형 모델", HistGradientBoostingClassifier(max_iter=220, learning_rate=0.04, max_leaf_nodes=15, l2_regularization=0.08, random_state=42), None),
         ("GradientBoosting 시간가중 모델", HistGradientBoostingClassifier(max_iter=220, learning_rate=0.04, max_leaf_nodes=15, l2_regularization=0.08, random_state=42), recency_weight),
+        ("GradientBoosting 보수 모델", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), None),
+        ("GradientBoosting 보수 시간가중 모델", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), recency_weight),
         (
             "GradientBoosting 확률보정(sigmoid)",
             CalibratedClassifierCV(
@@ -197,7 +201,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         pred = (probability >= 0.5).astype(int)
         accuracy = round(float((pred == y_test).mean()), 3)
         score = probability_scores(y_test, probability)
-        result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "weights": weights, "bias": bias, "model_type": "from_scratch_logistic_regression", "prediction_unit": "team"}
+        result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "weights": weights, "bias": bias, "model_type": "from_scratch_logistic_regression", "prediction_unit": "team", "test_scaled": test_scaled, "test_frame": features.iloc[split_index:].copy(), "y_test": y_test}
         candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
         best = pick_better_model(best, result)
 
@@ -212,12 +216,14 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         pred = (probability >= 0.5).astype(int)
         accuracy = round(float((pred == y_test).mean()), 3)
         score = probability_scores(y_test, probability)
-        result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "model": model, "model_type": model.__class__.__name__, "prediction_unit": "team"}
+        result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "model": model, "model_type": model.__class__.__name__, "prediction_unit": "team", "test_scaled": test_scaled, "test_frame": features.iloc[split_index:].copy(), "y_test": y_test}
         candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
         best = pick_better_model(best, result)
 
     game_frame = build_game_level_frame(features).dropna(subset=["target_home_win"]).copy()
     if sklearn_candidates and len(game_frame) >= 20:
+        from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+
         gx, gy = prepare_game_level_matrix(game_frame)
         game_split = chronological_split_index(game_frame["date"])
         gy_train, gy_test = gy[:game_split], gy[game_split:]
@@ -225,9 +231,9 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         max_game_year = int(game_years.max())
         game_recency_weight = (0.85 ** (max_game_year - game_years)).clip(lower=0.35).to_numpy(dtype=float)
         game_candidates = [
-            ("경기 단위 RandomForest 모델", sklearn_candidates[0][1].__class__(n_estimators=500, max_depth=7, min_samples_leaf=8, class_weight="balanced", random_state=42, n_jobs=-1), None),
-            ("경기 단위 RandomForest 시간가중 모델", sklearn_candidates[0][1].__class__(n_estimators=500, max_depth=7, min_samples_leaf=8, class_weight="balanced", random_state=42, n_jobs=-1), game_recency_weight),
-            ("경기 단위 GradientBoosting 모델", sklearn_candidates[2][1].__class__(max_iter=220, learning_rate=0.04, max_leaf_nodes=15, l2_regularization=0.08, random_state=42), None),
+            ("경기 단위 RandomForest 모델", RandomForestClassifier(n_estimators=500, max_depth=7, min_samples_leaf=8, class_weight="balanced", random_state=42, n_jobs=-1), None),
+            ("경기 단위 RandomForest 시간가중 모델", RandomForestClassifier(n_estimators=500, max_depth=7, min_samples_leaf=8, class_weight="balanced", random_state=42, n_jobs=-1), game_recency_weight),
+            ("경기 단위 GradientBoosting 모델", HistGradientBoostingClassifier(max_iter=220, learning_rate=0.04, max_leaf_nodes=15, l2_regularization=0.08, random_state=42), None),
         ]
         for name, model, sample_weight in game_candidates:
             columns = list(gx.columns)
@@ -239,19 +245,21 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             pred = (probability >= 0.5).astype(int)
             accuracy = round(float((pred == gy_test).mean()), 3)
             score = probability_scores(gy_test, probability)
-            result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "model": model, "model_type": model.__class__.__name__, "prediction_unit": "game", "test_frame": game_frame.iloc[game_split:].copy(), "y_test": gy_test}
+            result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "model": model, "model_type": model.__class__.__name__, "prediction_unit": "game", "test_scaled": test_scaled, "test_frame": game_frame.iloc[game_split:].copy(), "y_test": gy_test}
             candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
             best = pick_better_model(best, result)
 
     if sklearn_candidates and not player_game_frame.empty:
+        from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+
         player_frame = player_game_frame.dropna(subset=["target_home_win"]).copy()
         if len(player_frame) >= 20:
             px, py = prepare_game_level_matrix(player_frame)
             player_split = chronological_split_index(player_frame["date"])
             py_train, py_test = py[:player_split], py[player_split:]
             player_candidates = [
-                ("경기 단위 선수영향도 참고 RandomForest", sklearn_candidates[0][1].__class__(n_estimators=500, max_depth=7, min_samples_leaf=8, class_weight="balanced", random_state=42, n_jobs=-1)),
-                ("경기 단위 선수영향도 참고 GradientBoosting", sklearn_candidates[2][1].__class__(max_iter=220, learning_rate=0.04, max_leaf_nodes=15, l2_regularization=0.08, random_state=42)),
+                ("경기 단위 선수영향도 참고 RandomForest", RandomForestClassifier(n_estimators=500, max_depth=7, min_samples_leaf=8, class_weight="balanced", random_state=42, n_jobs=-1)),
+                ("경기 단위 선수영향도 참고 GradientBoosting", HistGradientBoostingClassifier(max_iter=220, learning_rate=0.04, max_leaf_nodes=15, l2_regularization=0.08, random_state=42)),
             ]
             for name, model in player_candidates:
                 columns = list(px.columns)
@@ -265,6 +273,10 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
                 candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
 
     payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, completed)
+    if payload.get("feature_importance"):
+        pd.DataFrame(
+            [{"feature": feature, "importance": importance} for feature, importance in payload["feature_importance"].items()]
+        ).to_csv(results_dir / "feature_importance.csv", index=False, encoding="utf-8-sig")
     if player_feature_note:
         payload["player_feature_note"] = player_feature_note
         payload["player_feature_files"] = [
@@ -279,6 +291,71 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload["run_expectancy_rows"] = int(len(run_expectancy_frame))
     (results_dir / "win_predictor_model.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     return payload
+
+
+def summarize_team_backtest_by_game(recent: pd.DataFrame):
+    rows = []
+    if recent.empty:
+        return rows
+
+    recent = recent.copy()
+    if "game_id" in recent.columns:
+        recent["_game_key"] = recent["game_id"].astype(str).str.replace(r"_[^_]+$", "", regex=True)
+        group_key = "_game_key"
+    else:
+        recent["_game_key"] = recent.apply(lambda row: f'{row["경기일"]}_{"_".join(sorted([str(row["team"]), str(row["opponent"])]))}', axis=1)
+        group_key = "_game_key"
+    for _, game in recent.groupby(group_key, sort=False):
+        game = game.copy()
+        home_rows = game[game.get("is_home", 0) == 1] if "is_home" in game.columns else pd.DataFrame()
+        home_team = home_rows.iloc[0]["team"] if not home_rows.empty else game.iloc[0]["team"]
+        away_rows = game[game.get("is_home", 0) == 0] if "is_home" in game.columns else pd.DataFrame()
+        away_team = away_rows.iloc[0]["team"] if not away_rows.empty else game.iloc[0]["opponent"]
+        pick_row = game.sort_values("_prediction_probability", ascending=False).iloc[0]
+        actual_rows = game[game["target_win"] == 1]
+        actual_team = actual_rows.iloc[0]["team"] if not actual_rows.empty else "무승부"
+        predicted_team = pick_row["예측 구단"]
+        rows.append(
+            {
+                "경기일": pick_row["경기일"],
+                "경기": f"{away_team} vs {home_team}",
+                "예측 구단": predicted_team,
+                "예측승률": f'{float(pick_row["_prediction_probability"]):.1%}',
+                "실제 승리 구단": actual_team,
+                "결과": "적중" if predicted_team == actual_team else "오답",
+                "예측 근거": pick_row["예측 근거"],
+            }
+        )
+    return rows
+
+
+def selected_model_probability(best: dict, matrix: pd.DataFrame):
+    if best["model_type"] == "from_scratch_logistic_regression":
+        raw_probability = sigmoid(matrix.to_numpy() @ best["weights"] + best["bias"])
+    else:
+        raw_probability = best["model"].predict_proba(matrix)[:, 1]
+    if best.get("prediction_unit", "team") == "team":
+        return normalize_game_probabilities(best["test_frame"], raw_probability)
+    return raw_probability
+
+
+def permutation_importance(best: dict, y_eval: np.ndarray):
+    matrix = best.get("test_scaled")
+    if matrix is None or len(matrix) == 0:
+        return {}
+    baseline_probability = best["probability"]
+    baseline_brier = probability_scores(y_eval, baseline_probability)["Brier Score"]
+    rng = np.random.default_rng(42)
+    importances = []
+    for feature in best["columns"]:
+        if feature not in matrix.columns:
+            continue
+        shuffled = matrix.copy()
+        shuffled[feature] = rng.permutation(shuffled[feature].to_numpy())
+        permuted_probability = selected_model_probability(best, shuffled)
+        permuted_brier = probability_scores(y_eval, permuted_probability)["Brier Score"]
+        importances.append((feature, max(0.0, float(permuted_brier - baseline_brier))))
+    return {name: round(value, 6) for name, value in sorted(importances, key=lambda x: x[1], reverse=True)}
 
 
 def build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, completed):
@@ -302,10 +379,14 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         recent["예측"] = np.where(probability >= 0.5, "승리 예측", "패배 예측")
         recent["실제 승리 구단"] = np.where(y_eval == 1, recent["home_team"], recent["away_team"])
         recent["예측 근거"] = recent.apply(lambda row: game_prediction_reason(row, row["예측 구단"]), axis=1)
+        recent["경기"] = recent["away_team"] + " vs " + recent["home_team"]
+        recent["결과"] = np.where(recent["예측 구단"] == recent["실제 승리 구단"], "적중", "오답")
+        recent_backtest = recent[["경기일", "경기", "예측 구단", "예측승률", "실제 승리 구단", "결과", "예측 근거"]].tail(12).to_dict(orient="records")
         train_rows = int(len(build_game_level_frame(features).dropna(subset=["target_home_win"])) - len(recent))
         test_rows = int(len(recent))
     else:
         recent = features.iloc[split_index:].copy()
+        recent["_prediction_probability"] = probability
         recent["경기일"] = pd.to_datetime(recent["date"]).dt.strftime("%Y-%m-%d")
         recent["기준팀"] = recent["team"]
         recent["상대팀"] = recent["opponent"]
@@ -314,6 +395,7 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         recent["예측 구단"] = np.where(pred == 1, recent["team"], recent["opponent"])
         recent["실제 승리 구단"] = np.where(y_test == 1, recent["team"], recent["opponent"])
         recent["예측 근거"] = recent.apply(lambda row: prediction_reason(row, row["예측 구단"]), axis=1)
+        recent_backtest = summarize_team_backtest_by_game(recent)[-12:]
         train_rows = int(split_index)
         test_rows = int(len(features) - split_index)
 
@@ -366,7 +448,7 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         "candidate_results": candidate_results,
         "confidence_metrics": confidence_metrics(y_eval, probability),
         "calibration_table": calibration_table(y_eval, probability),
-        "recent_backtest": recent[["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "실제 승리 구단", "예측 근거"]].tail(12).to_dict(orient="records"),
+        "recent_backtest": recent_backtest,
         "today_predictions": today_predictions,
         "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
         "feature_columns": columns,
@@ -379,4 +461,6 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
     elif hasattr(best.get("model"), "feature_importances_"):
         importances = best["model"].feature_importances_
         payload["feature_importance"] = {name: round(float(value), 6) for name, value in sorted(zip(columns, importances), key=lambda x: x[1], reverse=True)}
+    else:
+        payload["feature_importance"] = permutation_importance(best, y_eval)
     return payload
