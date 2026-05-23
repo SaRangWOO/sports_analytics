@@ -122,17 +122,17 @@
     },
     {
       "모델": "경기 단위 선수영향도 참고 RandomForest",
-      "검증 정확도": 0.498,
+      "검증 정확도": 0.49,
       "피처 수": 59,
       "Brier Score": 0.253,
-      "Log Loss": 0.698
+      "Log Loss": 0.699
     },
     {
       "모델": "경기 단위 선수영향도 참고 GradientBoosting",
-      "검증 정확도": 0.504,
+      "검증 정확도": 0.5,
       "피처 수": 59,
       "Brier Score": 0.259,
-      "Log Loss": 0.712
+      "Log Loss": 0.713
     }
   ],
   "confidence_metrics": [
