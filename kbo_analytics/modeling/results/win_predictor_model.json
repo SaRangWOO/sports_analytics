@@ -1,26 +1,26 @@
 {
   "available": true,
-  "training_cutoff": "2026-05-17",
+  "training_cutoff": "2026-05-24",
   "training_start_year": 2016,
   "training_end_year": 2026,
-  "train_rows": 11878,
-  "test_rows": 2920,
-  "accuracy": 0.534,
-  "selected_model": "GradientBoosting 보수 모델",
+  "train_rows": 11924,
+  "test_rows": 2926,
+  "accuracy": 0.529,
+  "selected_model": "RandomForest 비선형 모델",
   "candidate_results": [
     {
       "모델": "기본 흐름 모델",
-      "검증 정확도": 0.512,
+      "검증 정확도": 0.51,
       "피처 수": 59,
-      "Brier Score": 0.255,
-      "Log Loss": 0.704
+      "Brier Score": 0.256,
+      "Log Loss": 0.705
     },
     {
       "모델": "전력/일정 피로도 포함 모델",
-      "검증 정확도": 0.521,
+      "검증 정확도": 0.515,
       "피처 수": 64,
-      "Brier Score": 0.252,
-      "Log Loss": 0.698
+      "Brier Score": 0.253,
+      "Log Loss": 0.699
     },
     {
       "모델": "핵심 수치 모델",
@@ -31,56 +31,56 @@
     },
     {
       "모델": "RandomForest 비선형 모델",
-      "검증 정확도": 0.525,
+      "검증 정확도": 0.529,
       "피처 수": 64,
       "Brier Score": 0.248,
-      "Log Loss": 0.689
+      "Log Loss": 0.69
     },
     {
       "모델": "RandomForest 시간가중 모델",
-      "검증 정확도": 0.524,
+      "검증 정확도": 0.523,
       "피처 수": 64,
       "Brier Score": 0.248,
-      "Log Loss": 0.689
+      "Log Loss": 0.69
     },
     {
       "모델": "RandomForest 보수 모델",
-      "검증 정확도": 0.527,
+      "검증 정확도": 0.53,
       "피처 수": 64,
       "Brier Score": 0.248,
       "Log Loss": 0.69
     },
     {
       "모델": "RandomForest 보수 시간가중 모델",
-      "검증 정확도": 0.529,
+      "검증 정확도": 0.527,
       "피처 수": 64,
       "Brier Score": 0.248,
       "Log Loss": 0.689
     },
     {
       "모델": "GradientBoosting 비선형 모델",
-      "검증 정확도": 0.53,
-      "피처 수": 64,
-      "Brier Score": 0.249,
-      "Log Loss": 0.691
-    },
-    {
-      "모델": "GradientBoosting 시간가중 모델",
-      "검증 정확도": 0.519,
+      "검증 정확도": 0.527,
       "피처 수": 64,
       "Brier Score": 0.25,
       "Log Loss": 0.694
     },
     {
+      "모델": "GradientBoosting 시간가중 모델",
+      "검증 정확도": 0.524,
+      "피처 수": 64,
+      "Brier Score": 0.249,
+      "Log Loss": 0.692
+    },
+    {
       "모델": "GradientBoosting 보수 모델",
-      "검증 정확도": 0.534,
+      "검증 정확도": 0.528,
       "피처 수": 64,
       "Brier Score": 0.248,
       "Log Loss": 0.69
     },
     {
       "모델": "GradientBoosting 보수 시간가중 모델",
-      "검증 정확도": 0.525,
+      "검증 정확도": 0.527,
       "피처 수": 64,
       "Brier Score": 0.249,
       "Log Loss": 0.692
@@ -90,71 +90,71 @@
       "검증 정확도": 0.504,
       "피처 수": 64,
       "Brier Score": 0.251,
-      "Log Loss": 0.694
-    },
-    {
-      "모델": "GradientBoosting 확률보정(isotonic)",
-      "검증 정확도": 0.517,
-      "피처 수": 64,
-      "Brier Score": 0.251,
       "Log Loss": 0.695
     },
     {
+      "모델": "GradientBoosting 확률보정(isotonic)",
+      "검증 정확도": 0.509,
+      "피처 수": 64,
+      "Brier Score": 0.251,
+      "Log Loss": 0.696
+    },
+    {
       "모델": "경기 단위 RandomForest 모델",
-      "검증 정확도": 0.507,
+      "검증 정확도": 0.508,
       "피처 수": 42,
       "Brier Score": 0.251,
       "Log Loss": 0.695
     },
     {
       "모델": "경기 단위 RandomForest 시간가중 모델",
-      "검증 정확도": 0.52,
+      "검증 정확도": 0.514,
       "피처 수": 42,
       "Brier Score": 0.251,
       "Log Loss": 0.695
     },
     {
       "모델": "경기 단위 GradientBoosting 모델",
-      "검증 정확도": 0.49,
+      "검증 정확도": 0.498,
       "피처 수": 42,
-      "Brier Score": 0.26,
-      "Log Loss": 0.715
+      "Brier Score": 0.259,
+      "Log Loss": 0.712
     },
     {
       "모델": "경기 단위 선수영향도 참고 RandomForest",
-      "검증 정확도": 0.502,
+      "검증 정확도": 0.504,
       "피처 수": 59,
       "Brier Score": 0.253,
       "Log Loss": 0.699
     },
     {
       "모델": "경기 단위 선수영향도 참고 GradientBoosting",
-      "검증 정확도": 0.492,
+      "검증 정확도": 0.48,
       "피처 수": 59,
-      "Brier Score": 0.262,
-      "Log Loss": 0.718
+      "Brier Score": 0.263,
+      "Log Loss": 0.72
     }
   ],
   "confidence_metrics": [
     {
       "구간": "전체 경기",
-      "경기 수": 2920,
-      "적중률": 0.534
+      "경기 수": 2926,
+      "적중률": 0.529
     },
     {
       "구간": "55% 이상 확신 경기",
-      "경기 수": 1195,
-      "적중률": 0.558
+      "경기 수": 1100,
+      "적중률": 0.566
     },
     {
       "구간": "58% 이상 확신 경기",
-      "경기 수": 291,
-      "적중률": 0.588
+      "경기 수": 334,
+      "적중률": 0.608
     },
     {
       "구간": "60% 이상 확신 경기",
-      "경기 수": 76,
-      "적중률": 0.632
+      "경기 수": 96,
+      "적중률": 0.635
     },
     {
       "구간": "Brier Score",
@@ -170,143 +170,143 @@
   "calibration_table": [
     {
       "예측승률 구간": "45% 미만",
-      "경기 수": 595,
-      "평균 예측승률": "43.0%",
-      "실제 승률": "44.2%"
+      "경기 수": 551,
+      "평균 예측승률": "42.6%",
+      "실제 승률": "43.4%"
     },
     {
       "예측승률 구간": "45~50%",
-      "경기 수": 869,
+      "경기 수": 911,
       "평균 예측승률": "47.5%",
-      "실제 승률": "48.2%"
+      "실제 승률": "49.4%"
     },
     {
       "예측승률 구간": "50~55%",
-      "경기 수": 856,
+      "경기 수": 915,
       "평균 예측승률": "52.5%",
-      "실제 승률": "51.8%"
+      "실제 승률": "50.6%"
     },
     {
       "예측승률 구간": "55~60%",
-      "경기 수": 562,
-      "평균 예측승률": "56.8%",
-      "실제 승률": "55.3%"
+      "경기 수": 501,
+      "평균 예측승률": "57.0%",
+      "실제 승률": "55.9%"
     },
     {
       "예측승률 구간": "60% 이상",
-      "경기 수": 38,
-      "평균 예측승률": "60.6%",
-      "실제 승률": "63.2%"
+      "경기 수": 48,
+      "평균 예측승률": "61.3%",
+      "실제 승률": "64.6%"
     }
   ],
   "recent_backtest": [
     {
-      "경기일": "2026-05-15",
-      "경기": "키움 vs NC",
-      "예측 구단": "NC",
-      "예측승률": "57.3%",
-      "실제 승리 구단": "키움",
-      "결과": "오답",
-      "예측 근거": "NC 시즌 누적 승률 우위, NC 시즌 상대전적 우위"
-    },
-    {
-      "경기일": "2026-05-15",
-      "경기": "롯데 vs 두산",
+      "경기일": "2026-05-22",
+      "경기": "두산 vs 한화",
       "예측 구단": "두산",
-      "예측승률": "56.5%",
-      "실제 승리 구단": "롯데",
+      "예측승률": "50.8%",
+      "실제 승리 구단": "한화",
       "결과": "오답",
       "예측 근거": "두산 시즌 누적 승률 우위, 두산 최근 5경기 흐름 우위"
     },
     {
-      "경기일": "2026-05-16",
-      "경기": "KIA vs 삼성",
+      "경기일": "2026-05-22",
+      "경기": "삼성 vs 롯데",
       "예측 구단": "삼성",
-      "예측승률": "55.8%",
+      "예측승률": "52.5%",
       "실제 승리 구단": "삼성",
       "결과": "적중",
       "예측 근거": "삼성 최근 10경기 흐름 우위, 삼성 시즌 상대전적 우위"
     },
     {
-      "경기일": "2026-05-16",
-      "경기": "한화 vs KT",
-      "예측 구단": "KT",
-      "예측승률": "56.1%",
-      "실제 승리 구단": "한화",
-      "결과": "오답",
-      "예측 근거": "KT 시즌 누적 승률 우위, KT 홈/원정 성향 우위"
-    },
-    {
-      "경기일": "2026-05-16",
-      "경기": "LG vs SSG",
-      "예측 구단": "LG",
-      "예측승률": "51.5%",
-      "실제 승리 구단": "SSG",
-      "결과": "오답",
-      "예측 근거": "LG 시즌 누적 승률 우위, LG 시즌 상대전적 우위"
-    },
-    {
-      "경기일": "2026-05-16",
-      "경기": "키움 vs NC",
-      "예측 구단": "NC",
-      "예측승률": "55.0%",
-      "실제 승리 구단": "NC",
-      "결과": "적중",
-      "예측 근거": "NC 시즌 상대전적 우위, NC 홈 경기"
-    },
-    {
-      "경기일": "2026-05-16",
-      "경기": "롯데 vs 두산",
-      "예측 구단": "두산",
-      "예측승률": "55.8%",
-      "실제 승리 구단": "두산",
-      "결과": "적중",
-      "예측 근거": "두산 시즌 누적 승률 우위, 두산 홈 경기"
-    },
-    {
-      "경기일": "2026-05-17",
-      "경기": "KIA vs 삼성",
-      "예측 구단": "삼성",
-      "예측승률": "56.1%",
+      "경기일": "2026-05-23",
+      "경기": "SSG vs KIA",
+      "예측 구단": "KIA",
+      "예측승률": "51.3%",
       "실제 승리 구단": "KIA",
-      "결과": "오답",
-      "예측 근거": "삼성 최근 10경기 흐름 우위, 삼성 최근 득실차 우위"
+      "결과": "적중",
+      "예측 근거": "KIA 시즌 누적 승률 우위, KIA 최근 5경기 흐름 우위"
     },
     {
-      "경기일": "2026-05-17",
-      "경기": "한화 vs KT",
+      "경기일": "2026-05-23",
+      "경기": "NC vs KT",
       "예측 구단": "KT",
-      "예측승률": "53.3%",
+      "예측승률": "57.2%",
       "실제 승리 구단": "KT",
       "결과": "적중",
-      "예측 근거": "KT 시즌 누적 승률 우위, KT 홈/원정 성향 우위"
+      "예측 근거": "KT 최근 5경기 흐름 우위, KT 시즌 득실차 우위"
     },
     {
-      "경기일": "2026-05-17",
-      "경기": "LG vs SSG",
-      "예측 구단": "SSG",
-      "예측승률": "50.4%",
+      "경기일": "2026-05-23",
+      "경기": "키움 vs LG",
+      "예측 구단": "LG",
+      "예측승률": "53.3%",
       "실제 승리 구단": "LG",
-      "결과": "오답",
-      "예측 근거": "SSG 최근 5경기 흐름 우위, SSG 최근 득실차 우위"
-    },
-    {
-      "경기일": "2026-05-17",
-      "경기": "키움 vs NC",
-      "예측 구단": "NC",
-      "예측승률": "57.4%",
-      "실제 승리 구단": "키움",
-      "결과": "오답",
-      "예측 근거": "NC 시즌 누적 승률 우위, NC 최근 5경기 흐름 우위"
-    },
-    {
-      "경기일": "2026-05-17",
-      "경기": "롯데 vs 두산",
-      "예측 구단": "두산",
-      "예측승률": "56.5%",
-      "실제 승리 구단": "두산",
       "결과": "적중",
-      "예측 근거": "두산 홈 경기"
+      "예측 근거": "LG 시즌 상대전적 우위, LG 홈 경기"
+    },
+    {
+      "경기일": "2026-05-23",
+      "경기": "두산 vs 한화",
+      "예측 구단": "한화",
+      "예측승률": "51.4%",
+      "실제 승리 구단": "한화",
+      "결과": "적중",
+      "예측 근거": "한화 홈 경기"
+    },
+    {
+      "경기일": "2026-05-23",
+      "경기": "삼성 vs 롯데",
+      "예측 구단": "삼성",
+      "예측승률": "52.2%",
+      "실제 승리 구단": "롯데",
+      "결과": "오답",
+      "예측 근거": "삼성 최근 5경기 흐름 우위, 삼성 최근 10경기 흐름 우위"
+    },
+    {
+      "경기일": "2026-05-24",
+      "경기": "SSG vs KIA",
+      "예측 구단": "KIA",
+      "예측승률": "53.7%",
+      "실제 승리 구단": "KIA",
+      "결과": "적중",
+      "예측 근거": "KIA 시즌 누적 승률 우위, KIA 최근 5경기 흐름 우위"
+    },
+    {
+      "경기일": "2026-05-24",
+      "경기": "NC vs KT",
+      "예측 구단": "KT",
+      "예측승률": "57.8%",
+      "실제 승리 구단": "NC",
+      "결과": "오답",
+      "예측 근거": "KT 최근 5경기 흐름 우위, KT 시즌 득실차 우위"
+    },
+    {
+      "경기일": "2026-05-24",
+      "경기": "키움 vs LG",
+      "예측 구단": "LG",
+      "예측승률": "53.6%",
+      "실제 승리 구단": "LG",
+      "결과": "적중",
+      "예측 근거": "LG 시즌 상대전적 우위, LG 홈 경기"
+    },
+    {
+      "경기일": "2026-05-24",
+      "경기": "두산 vs 한화",
+      "예측 구단": "한화",
+      "예측승률": "52.5%",
+      "실제 승리 구단": "한화",
+      "결과": "적중",
+      "예측 근거": "한화 홈 경기"
+    },
+    {
+      "경기일": "2026-05-24",
+      "경기": "삼성 vs 롯데",
+      "예측 구단": "삼성",
+      "예측승률": "52.1%",
+      "실제 승리 구단": "삼성",
+      "결과": "적중",
+      "예측 근거": "삼성 시즌 상대전적 우위"
     }
   ],
   "today_predictions": [],
@@ -377,73 +377,73 @@
     "opponent_키움",
     "opponent_한화"
   ],
-  "model_type": "HistGradientBoostingClassifier",
+  "model_type": "RandomForestClassifier",
   "prediction_unit": "team",
   "feature_importance": {
-    "elo_diff": 0.005,
-    "season_avg_run_diff_prior": 0.001,
-    "recent_10_win_rate_gap": 0.001,
-    "head_to_head_win_rate_prior": 0.001,
-    "head_to_head_win_rate_gap": 0.001,
-    "team_elo_pre": 0.001,
-    "opponent_elo_pre": 0.001,
-    "is_home": 0.0,
-    "month": 0.0,
-    "series_game_no": 0.0,
-    "rest_days": 0.0,
-    "recent_5_win_rate": 0.0,
-    "recent_10_win_rate": 0.0,
-    "avg_score_last_5": 0.0,
-    "avg_allowed_last_5": 0.0,
-    "avg_run_diff_last_5": 0.0,
-    "avg_run_diff_last_10": 0.0,
-    "season_win_rate_prior": 0.0,
-    "season_avg_score_prior": 0.0,
-    "season_avg_allowed_prior": 0.0,
-    "opponent_recent_5_win_rate": 0.0,
-    "opponent_recent_10_win_rate": 0.0,
-    "opponent_avg_run_diff_last_5": 0.0,
-    "opponent_avg_run_diff_last_10": 0.0,
-    "opponent_season_win_rate_prior": 0.0,
-    "opponent_season_avg_score_prior": 0.0,
-    "opponent_season_avg_allowed_prior": 0.0,
-    "opponent_season_avg_run_diff_prior": 0.0,
-    "season_win_rate_gap": 0.0,
-    "recent_5_win_rate_gap": 0.0,
-    "season_avg_score_gap": 0.0,
-    "season_avg_allowed_gap": 0.0,
-    "season_avg_run_diff_gap": 0.0,
-    "recent_run_diff_10_gap": 0.0,
-    "venue_win_rate_prior": 0.0,
-    "opponent_venue_win_rate_prior": 0.0,
-    "venue_win_rate_gap": 0.0,
-    "opponent_head_to_head_win_rate_prior": 0.0,
-    "games_last_7_days": 0.0,
-    "back_to_back": 0.0,
-    "team_KIA": 0.0,
-    "team_KT": 0.0,
-    "team_LG": 0.0,
-    "team_NC": 0.0,
-    "team_SK": 0.0,
-    "team_SSG": 0.0,
-    "team_넥센": 0.0,
-    "team_두산": 0.0,
-    "team_롯데": 0.0,
-    "team_삼성": 0.0,
-    "team_키움": 0.0,
-    "team_한화": 0.0,
-    "opponent_KIA": 0.0,
-    "opponent_KT": 0.0,
-    "opponent_LG": 0.0,
-    "opponent_NC": 0.0,
-    "opponent_SK": 0.0,
-    "opponent_SSG": 0.0,
-    "opponent_넥센": 0.0,
-    "opponent_두산": 0.0,
-    "opponent_롯데": 0.0,
-    "opponent_삼성": 0.0,
-    "opponent_키움": 0.0,
-    "opponent_한화": 0.0
+    "elo_diff": 0.10108,
+    "opponent_elo_pre": 0.05889,
+    "team_elo_pre": 0.057649,
+    "season_avg_score_gap": 0.03245,
+    "recent_run_diff_10_gap": 0.030432,
+    "opponent_season_avg_run_diff_prior": 0.02899,
+    "season_avg_run_diff_prior": 0.027788,
+    "opponent_season_avg_allowed_prior": 0.027638,
+    "season_win_rate_gap": 0.027383,
+    "season_avg_allowed_prior": 0.027028,
+    "season_avg_score_prior": 0.026955,
+    "opponent_season_avg_score_prior": 0.026431,
+    "season_win_rate_prior": 0.026315,
+    "avg_run_diff_last_10": 0.026147,
+    "venue_win_rate_gap": 0.024865,
+    "opponent_season_win_rate_prior": 0.0244,
+    "season_avg_allowed_gap": 0.024277,
+    "venue_win_rate_prior": 0.024031,
+    "head_to_head_win_rate_gap": 0.023741,
+    "season_avg_run_diff_gap": 0.02344,
+    "opponent_avg_run_diff_last_10": 0.02303,
+    "opponent_avg_run_diff_last_5": 0.022724,
+    "head_to_head_win_rate_prior": 0.022267,
+    "is_home": 0.022015,
+    "opponent_venue_win_rate_prior": 0.021963,
+    "avg_run_diff_last_5": 0.021314,
+    "avg_allowed_last_5": 0.01936,
+    "opponent_head_to_head_win_rate_prior": 0.019341,
+    "avg_score_last_5": 0.017783,
+    "recent_10_win_rate_gap": 0.016544,
+    "opponent_recent_10_win_rate": 0.011689,
+    "month": 0.010618,
+    "recent_10_win_rate": 0.010269,
+    "opponent_한화": 0.009653,
+    "recent_5_win_rate_gap": 0.009509,
+    "team_한화": 0.008771,
+    "series_game_no": 0.007829,
+    "opponent_recent_5_win_rate": 0.007101,
+    "recent_5_win_rate": 0.006228,
+    "games_last_7_days": 0.005929,
+    "team_두산": 0.004771,
+    "opponent_두산": 0.004167,
+    "rest_days": 0.003225,
+    "back_to_back": 0.001945,
+    "team_롯데": 0.001812,
+    "opponent_삼성": 0.001688,
+    "opponent_KT": 0.001549,
+    "opponent_LG": 0.001534,
+    "opponent_롯데": 0.001492,
+    "team_삼성": 0.001458,
+    "team_LG": 0.001271,
+    "team_KIA": 0.001237,
+    "opponent_NC": 0.001209,
+    "opponent_KIA": 0.001176,
+    "team_KT": 0.00114,
+    "opponent_SSG": 0.001071,
+    "team_NC": 0.001042,
+    "team_SK": 0.000785,
+    "team_넥센": 0.000753,
+    "opponent_넥센": 0.000634,
+    "team_SSG": 0.000633,
+    "opponent_키움": 0.000526,
+    "opponent_SK": 0.000506,
+    "team_키움": 0.000505
   },
   "player_feature_note": "선수 영향도 피처는 현재 공식 기록 스냅샷 기반 참고 피처입니다. 과거 시점별 선수 스냅샷이 쌓이면 최종 모델 선택 후보로 승격할 수 있습니다.",
   "player_feature_files": [
@@ -454,5 +454,5 @@
   "run_expectancy_files": [
     "modeling/results/run_expectancy_features.csv"
   ],
-  "run_expectancy_rows": 7115
+  "run_expectancy_rows": 7141
 }
