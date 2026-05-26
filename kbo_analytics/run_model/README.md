@@ -33,6 +33,7 @@ run_model/
 │   ├── run_model_features.csv
 │   ├── expected_runs_predictions.csv
 │   └── expected_runs_model.json
+├── dashboard.html
 └── README.md
 ```
 
@@ -43,6 +44,12 @@ run_model/
 ```bash
 cd /home/tera/1.project/1.sports_analytics/kbo_analytics
 .venv/bin/python run_model/run_prediction_model.py
+```
+
+모델 결과를 HTML 대시보드로 확인하려면:
+
+```bash
+.venv/bin/python run_model/run_model_dashboard.py
 ```
 
 옵션을 직접 지정할 수도 있습니다.
@@ -61,6 +68,7 @@ cd /home/tera/1.project/1.sports_analytics/kbo_analytics
 | `results/run_model_features.csv` | 팀 기준 2행 구조의 득점 예측 피처 |
 | `results/expected_runs_predictions.csv` | 검증 구간 경기별 예상 득점, 예상 득실차, 홈팀 승률 |
 | `results/expected_runs_model.json` | 후보 모델 성능, 선택 모델, 사용 피처, 실행 메타데이터 |
+| `dashboard.html` | 모델링 전용 HTML 대시보드 |
 
 ## 모델 후보
 

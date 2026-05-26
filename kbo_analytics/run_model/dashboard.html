@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KBO 득점 기반 예측 모델</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #64748b;
+      --line: #dbe3ea;
+      --accent: #0f766e;
+      --accent2: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); }
+    header { padding: 28px 32px 18px; background: #10202f; color: #fff; }
+    header p { color: #cbd5e1; max-width: 980px; line-height: 1.6; }
+    main { max-width: 1180px; margin: 0 auto; padding: 24px; }
+    section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 20px; margin-bottom: 18px; }
+    h1, h2, h3 { margin: 0 0 10px; letter-spacing: 0; }
+    .eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: #fbfcfd; min-height: 92px; }
+    .metric p { margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+    .metric strong { display: block; font-size: 22px; }
+    .metric span { display: block; margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .note { color: var(--muted); line-height: 1.6; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: #334155; background: #f1f5f9; }
+    .split { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr); gap: 16px; }
+    ul.features { columns: 2; margin: 8px 0 0; padding-left: 20px; color: #334155; }
+    .empty { color: var(--muted); }
+    @media (max-width: 760px) { main { padding: 12px; } header { padding: 22px 16px; } .split { grid-template-columns: 1fr; } ul.features { columns: 1; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Independent Run Model</div>
+    <h1>KBO 득점 기반 예측 모델</h1>
+    <p>이 화면은 기존 대시보드와 기존 승패 모델에서 분리된 모델링 전용 대시보드입니다. 팀별 예상 득점을 먼저 예측하고, 예상 득실차를 홈팀 승률로 변환하는 별도 실험 결과만 보여줍니다.</p>
+  </header>
+  <main>
+    <section>
+      <div class="eyebrow">Selected Model</div>
+      <h2>선택 모델 요약</h2>
+      <div class="grid"><div class="metric"><p>선택 모델</p><strong>HistGradientBoosting</strong><span>득점 MAE 기준 우선 선택</span></div><div class="metric"><p>득점 MAE</p><strong>2.7457</strong><span>낮을수록 좋음</span></div><div class="metric"><p>득점 RMSE</p><strong>3.4961</strong><span>큰 오차 반영</span></div><div class="metric"><p>승패 정확도</p><strong>52.3%</strong><span>예상 득실차 기반</span></div><div class="metric"><p>Brier Score</p><strong>0.2537</strong><span>확률 품질</span></div><div class="metric"><p>검증 경기</p><strong>1435</strong><span>cutoff 2024-05-15</span></div></div>
+      <p class="note">생성 시각: 2026-05-26T16:22:15 · 학습 행 11696 · 검증 행 2870 · 원천: /home/tera/1.project/1.sports_analytics/kbo_analytics/data/official/model_training_games.csv</p>
+    </section>
+
+    <section>
+      <div class="eyebrow">Model Candidates</div>
+      <h2>후보 모델 비교</h2>
+      <table><thead><tr><th>모델</th><th>MAE</th><th>RMSE</th><th>승패 정확도</th><th>Brier</th><th>LogLoss</th><th>득실차 방향</th></tr></thead><tbody><tr><td>Poisson</td><td>2.7493</td><td>3.4986</td><td>51.9%</td><td>0.2501</td><td>0.6937</td><td>53.1%</td></tr><tr><td>Ridge</td><td>2.7519</td><td>3.4990</td><td>51.1%</td><td>0.2504</td><td>0.6942</td><td>52.2%</td></tr><tr><td>RandomForest</td><td>2.7677</td><td>3.5127</td><td>51.6%</td><td>0.2740</td><td>0.7504</td><td>50.9%</td></tr><tr><td>HistGradientBoosting</td><td>2.7457</td><td>3.4961</td><td>52.3%</td><td>0.2537</td><td>0.7013</td><td>52.0%</td></tr></tbody></table>
+    </section>
+
+    <section>
+      <div class="eyebrow">Expected Runs</div>
+      <h2>예상 득점 기반 검증 요약</h2>
+      <div class="grid"><div class="metric"><p>평균 홈 예상 득점</p><strong>5.02</strong></div><div class="metric"><p>평균 원정 예상 득점</p><strong>5.00</strong></div><div class="metric"><p>평균 절대 예상 득실차</p><strong>0.39</strong></div><div class="metric"><p>1점 이상 우세 경기</p><strong>79</strong><span>적중률 63.3%</span></div></div>
+      <h3>예상 득실차 구간별 적중률</h3>
+      <table><thead><tr><th>예상 득실차 구간</th><th>경기 수</th><th>적중률</th><th>평균 홈승률</th></tr></thead><tbody><tr><td>0.0~0.5점</td><td>987</td><td>51.6%</td><td>53.4%</td></tr><tr><td>0.5~1.0점</td><td>369</td><td>52.0%</td><td>53.5%</td></tr><tr><td>1.0~1.5점</td><td>75</td><td>64.0%</td><td>55.7%</td></tr><tr><td>1.5점 이상</td><td>4</td><td>50.0%</td><td>66.1%</td></tr></tbody></table>
+    </section>
+
+    <section>
+      <div class="eyebrow">Predictions</div>
+      <h2>최근 검증 경기 예측</h2>
+      <table><thead><tr><th>경기일</th><th>경기</th><th>예상 득점</th><th>예상 득실차</th><th>홈승률</th><th>예측</th><th>실제</th><th>결과</th></tr></thead><tbody><tr><td>2026-05-21</td><td>KT @ 삼성</td><td>5.1 - 5.4</td><td>0.37</td><td>60.4%</td><td>삼성</td><td>삼성</td><td>적중</td></tr><tr><td>2026-05-21</td><td>LG @ KIA</td><td>4.7 - 5.6</td><td>0.87</td><td>69.2%</td><td>KIA</td><td>LG</td><td>오답</td></tr><tr><td>2026-05-21</td><td>롯데 @ 한화</td><td>5.1 - 5.1</td><td>0.05</td><td>54.3%</td><td>한화</td><td>롯데</td><td>오답</td></tr><tr><td>2026-05-21</td><td>NC @ 두산</td><td>4.6 - 5.1</td><td>0.46</td><td>62.0%</td><td>두산</td><td>두산</td><td>적중</td></tr><tr><td>2026-05-21</td><td>SSG @ 키움</td><td>5.3 - 4.7</td><td>-0.58</td><td>42.2%</td><td>SSG</td><td>키움</td><td>오답</td></tr><tr><td>2026-05-22</td><td>NC @ KT</td><td>4.7 - 5.3</td><td>0.66</td><td>65.6%</td><td>KT</td><td>KT</td><td>적중</td></tr><tr><td>2026-05-22</td><td>두산 @ 한화</td><td>5.0 - 5.3</td><td>0.26</td><td>58.3%</td><td>한화</td><td>한화</td><td>적중</td></tr><tr><td>2026-05-22</td><td>SSG @ KIA</td><td>5.3 - 5.4</td><td>0.10</td><td>55.2%</td><td>KIA</td><td>KIA</td><td>적중</td></tr><tr><td>2026-05-22</td><td>삼성 @ 롯데</td><td>5.2 - 4.5</td><td>-0.71</td><td>39.7%</td><td>삼성</td><td>삼성</td><td>적중</td></tr><tr><td>2026-05-22</td><td>키움 @ LG</td><td>4.7 - 5.6</td><td>0.91</td><td>69.9%</td><td>LG</td><td>키움</td><td>오답</td></tr><tr><td>2026-05-23</td><td>NC @ KT</td><td>4.7 - 5.4</td><td>0.73</td><td>66.8%</td><td>KT</td><td>KT</td><td>적중</td></tr><tr><td>2026-05-23</td><td>두산 @ 한화</td><td>5.1 - 5.2</td><td>0.14</td><td>56.1%</td><td>한화</td><td>한화</td><td>적중</td></tr><tr><td>2026-05-23</td><td>SSG @ KIA</td><td>5.2 - 5.3</td><td>0.06</td><td>54.6%</td><td>KIA</td><td>KIA</td><td>적중</td></tr><tr><td>2026-05-23</td><td>삼성 @ 롯데</td><td>5.3 - 4.6</td><td>-0.76</td><td>38.9%</td><td>삼성</td><td>롯데</td><td>오답</td></tr><tr><td>2026-05-23</td><td>키움 @ LG</td><td>4.5 - 5.7</td><td>1.16</td><td>73.7%</td><td>LG</td><td>LG</td><td>적중</td></tr><tr><td>2026-05-24</td><td>NC @ KT</td><td>4.7 - 5.4</td><td>0.72</td><td>66.6%</td><td>KT</td><td>NC</td><td>오답</td></tr><tr><td>2026-05-24</td><td>두산 @ 한화</td><td>4.8 - 5.2</td><td>0.38</td><td>60.6%</td><td>한화</td><td>한화</td><td>적중</td></tr><tr><td>2026-05-24</td><td>SSG @ KIA</td><td>5.2 - 5.5</td><td>0.28</td><td>58.6%</td><td>KIA</td><td>KIA</td><td>적중</td></tr><tr><td>2026-05-24</td><td>삼성 @ 롯데</td><td>5.5 - 4.5</td><td>-1.00</td><td>34.4%</td><td>삼성</td><td>삼성</td><td>적중</td></tr><tr><td>2026-05-24</td><td>키움 @ LG</td><td>4.5 - 5.1</td><td>0.63</td><td>65.1%</td><td>LG</td><td>LG</td><td>적중</td></tr></tbody></table>
+    </section>
+
+    <section class="split">
+      <div>
+        <div class="eyebrow">Features</div>
+        <h2>사용 피처</h2>
+        <p class="note">모든 피처는 완료 경기 원천 데이터에서 현재 경기 이전 정보만 사용하도록 rolling/expanding 방식으로 생성합니다.</p>
+        <ul class="features"><li>is_home</li><li>month</li><li>rest_days</li><li>back_to_back</li><li>team_recent_3g_runs</li><li>team_recent_5g_runs</li><li>team_recent_10g_runs</li><li>team_season_runs</li><li>team_recent_5g_allowed</li><li>team_recent_10g_allowed</li><li>team_season_allowed</li><li>team_recent_5g_win_rate</li><li>team_recent_10g_win_rate</li><li>team_season_win_rate</li><li>team_recent_5g_run_diff</li><li>team_recent_10g_run_diff</li><li>opponent_recent_5g_runs</li><li>opponent_recent_10g_runs</li><li>opponent_season_runs</li><li>opponent_recent_5g_allowed</li><li>opponent_recent_10g_allowed</li><li>opponent_season_allowed</li><li>opponent_recent_5g_win_rate</li><li>opponent_recent_10g_win_rate</li><li>opponent_season_win_rate</li><li>opponent_recent_5g_run_diff</li><li>opponent_recent_10g_run_diff</li><li>opponent_rest_days</li><li>opponent_back_to_back</li><li>recent_5g_runs_gap</li><li>recent_10g_runs_gap</li><li>season_runs_gap</li><li>recent_5g_allowed_gap</li><li>recent_10g_allowed_gap</li><li>season_allowed_gap</li><li>recent_5g_run_diff_gap</li><li>recent_10g_run_diff_gap</li><li>recent_10g_win_rate_gap</li><li>season_win_rate_gap</li><li>rest_days_gap</li></ul>
+      </div>
+      <div>
+        <div class="eyebrow">Scope</div>
+        <h2>분리 원칙</h2>
+        <p class="note">기존 대시보드 코드와 기존 승패 모델 결과 JSON은 사용하지 않습니다. 이 대시보드는 `run_model/results` 산출물만 읽어 생성됩니다.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
