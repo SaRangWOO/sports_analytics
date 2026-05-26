@@ -1,0 +1,162 @@
+{
+  "generated_at": "2026-05-26T16:16:00",
+  "input_file": "/home/tera/1.project/1.sports_analytics/kbo_analytics/data/official/model_training_games.csv",
+  "model_scope": "independent_run_model",
+  "notes": [
+    "기존 대시보드/승패 모델과 분리된 득점 기반 모델입니다.",
+    "기존 modeling/results 산출물은 사용하지 않습니다.",
+    "완료 경기 원천 CSV만 읽기 전용으로 사용합니다."
+  ],
+  "train_ratio": 0.8,
+  "training_cutoff": "2024-05-15",
+  "feature_rows": 14566,
+  "train_rows": 11696,
+  "validation_rows": 2870,
+  "validation_games": 1435,
+  "feature_columns": [
+    "is_home",
+    "month",
+    "rest_days",
+    "back_to_back",
+    "team_recent_3g_runs",
+    "team_recent_5g_runs",
+    "team_recent_10g_runs",
+    "team_season_runs",
+    "team_recent_5g_allowed",
+    "team_recent_10g_allowed",
+    "team_season_allowed",
+    "team_recent_5g_win_rate",
+    "team_recent_10g_win_rate",
+    "team_season_win_rate",
+    "team_recent_5g_run_diff",
+    "team_recent_10g_run_diff",
+    "opponent_recent_5g_runs",
+    "opponent_recent_10g_runs",
+    "opponent_season_runs",
+    "opponent_recent_5g_allowed",
+    "opponent_recent_10g_allowed",
+    "opponent_season_allowed",
+    "opponent_recent_5g_win_rate",
+    "opponent_recent_10g_win_rate",
+    "opponent_season_win_rate",
+    "opponent_recent_5g_run_diff",
+    "opponent_recent_10g_run_diff",
+    "opponent_rest_days",
+    "opponent_back_to_back",
+    "recent_5g_runs_gap",
+    "recent_10g_runs_gap",
+    "season_runs_gap",
+    "recent_5g_allowed_gap",
+    "recent_10g_allowed_gap",
+    "season_allowed_gap",
+    "recent_5g_run_diff_gap",
+    "recent_10g_run_diff_gap",
+    "recent_10g_win_rate_gap",
+    "season_win_rate_gap",
+    "rest_days_gap"
+  ],
+  "run_regression_scores": [
+    {
+      "model": "Poisson",
+      "mae": 2.7493,
+      "rmse": 3.4986
+    },
+    {
+      "model": "Ridge",
+      "mae": 2.7519,
+      "rmse": 3.499
+    },
+    {
+      "model": "RandomForest",
+      "mae": 2.7677,
+      "rmse": 3.5127
+    },
+    {
+      "model": "HistGradientBoosting",
+      "mae": 2.7457,
+      "rmse": 3.4961
+    }
+  ],
+  "win_conversion_scores": [
+    {
+      "model": "Poisson",
+      "accuracy": 0.5192,
+      "brier_score": 0.2501,
+      "log_loss": 0.6937,
+      "run_diff_direction_accuracy": 0.531
+    },
+    {
+      "model": "Ridge",
+      "accuracy": 0.5115,
+      "brier_score": 0.2504,
+      "log_loss": 0.6942,
+      "run_diff_direction_accuracy": 0.522
+    },
+    {
+      "model": "RandomForest",
+      "accuracy": 0.5157,
+      "brier_score": 0.274,
+      "log_loss": 0.7504,
+      "run_diff_direction_accuracy": 0.5087
+    },
+    {
+      "model": "HistGradientBoosting",
+      "accuracy": 0.5233,
+      "brier_score": 0.2537,
+      "log_loss": 0.7013,
+      "run_diff_direction_accuracy": 0.5199
+    }
+  ],
+  "candidate_scores": [
+    {
+      "model": "Poisson",
+      "mae": 2.7493,
+      "rmse": 3.4986,
+      "accuracy": 0.5192,
+      "brier_score": 0.2501,
+      "log_loss": 0.6937,
+      "run_diff_direction_accuracy": 0.531
+    },
+    {
+      "model": "Ridge",
+      "mae": 2.7519,
+      "rmse": 3.499,
+      "accuracy": 0.5115,
+      "brier_score": 0.2504,
+      "log_loss": 0.6942,
+      "run_diff_direction_accuracy": 0.522
+    },
+    {
+      "model": "RandomForest",
+      "mae": 2.7677,
+      "rmse": 3.5127,
+      "accuracy": 0.5157,
+      "brier_score": 0.274,
+      "log_loss": 0.7504,
+      "run_diff_direction_accuracy": 0.5087
+    },
+    {
+      "model": "HistGradientBoosting",
+      "mae": 2.7457,
+      "rmse": 3.4961,
+      "accuracy": 0.5233,
+      "brier_score": 0.2537,
+      "log_loss": 0.7013,
+      "run_diff_direction_accuracy": 0.5199
+    }
+  ],
+  "selected_model": {
+    "model": "HistGradientBoosting",
+    "mae": 2.7457,
+    "rmse": 3.4961,
+    "accuracy": 0.5233,
+    "brier_score": 0.2537,
+    "log_loss": 0.7013,
+    "run_diff_direction_accuracy": 0.5199
+  },
+  "output_files": [
+    "results/run_model_features.csv",
+    "results/expected_runs_predictions.csv",
+    "results/expected_runs_model.json"
+  ]
+}
