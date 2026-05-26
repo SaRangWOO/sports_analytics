@@ -145,6 +145,50 @@ def sklearn_candidate_specs(recency_weight):
     ]
 
 
+def compact_feature_columns(x: pd.DataFrame):
+    return [
+        col
+        for col in [
+            "is_home",
+            "rest_days",
+            "recent_5_win_rate",
+            "recent_10_win_rate",
+            "avg_run_diff_last_5",
+            "avg_run_diff_last_10",
+            "season_win_rate_prior",
+            "opponent_recent_5_win_rate",
+            "opponent_recent_10_win_rate",
+            "opponent_avg_run_diff_last_5",
+            "opponent_avg_run_diff_last_10",
+            "season_win_rate_gap",
+            "recent_5_win_rate_gap",
+            "recent_10_win_rate_gap",
+            "season_avg_run_diff_gap",
+            "recent_run_diff_10_gap",
+            "venue_win_rate_gap",
+            "head_to_head_win_rate_gap",
+            "elo_diff",
+            "games_last_7_days",
+            "back_to_back",
+        ]
+        if col in x.columns
+    ]
+
+
+def compact_sklearn_candidate_specs(recency_weight):
+    try:
+        from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+    except ImportError:
+        return []
+
+    return [
+        ("핵심 수치 RandomForest 보수 모델", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), None),
+        ("핵심 수치 RandomForest 보수 시간가중 모델", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), recency_weight),
+        ("핵심 수치 GradientBoosting 보수 모델", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), None),
+        ("핵심 수치 GradientBoosting 보수 시간가중 모델", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), recency_weight),
+    ]
+
+
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date, data_dir: Path, results_dir: Path):
     training_games = training_games.copy()
     training_games["date"] = pd.to_datetime(training_games["date"])
@@ -188,7 +232,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     candidate_columns = {
         "기본 흐름 모델": [col for col in x.columns if col not in {"team_elo_pre", "opponent_elo_pre", "elo_diff", "games_last_7_days", "back_to_back"}],
         "전력/일정 피로도 포함 모델": list(x.columns),
-        "핵심 수치 모델": [col for col in ["is_home", "rest_days", "recent_5_win_rate", "recent_10_win_rate", "avg_run_diff_last_5", "avg_run_diff_last_10", "season_win_rate_prior", "opponent_recent_5_win_rate", "opponent_recent_10_win_rate", "opponent_avg_run_diff_last_5", "opponent_avg_run_diff_last_10", "season_win_rate_gap", "recent_5_win_rate_gap", "recent_10_win_rate_gap", "season_avg_run_diff_gap", "recent_run_diff_10_gap", "venue_win_rate_gap", "head_to_head_win_rate_gap", "elo_diff", "games_last_7_days", "back_to_back"] if col in x.columns],
+        "핵심 수치 모델": compact_feature_columns(x),
     }
     best = None
     candidate_results = []
@@ -202,6 +246,20 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         accuracy = round(float((pred == y_test).mean()), 3)
         score = probability_scores(y_test, probability)
         result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "weights": weights, "bias": bias, "model_type": "from_scratch_logistic_regression", "prediction_unit": "team", "test_scaled": test_scaled, "test_frame": features.iloc[split_index:].copy(), "y_test": y_test}
+        candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
+        best = pick_better_model(best, result)
+
+    for name, model, sample_weight in compact_sklearn_candidate_specs(recency_weight):
+        columns = compact_feature_columns(x)
+        x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
+        train_scaled, test_scaled, mean, std = standardize_train_test(x_train, x_test)
+        fit_kwargs = {"sample_weight": sample_weight} if sample_weight is not None else {}
+        model.fit(train_scaled, y_train, **fit_kwargs)
+        probability = normalize_game_probabilities(features.iloc[split_index:], model.predict_proba(test_scaled)[:, 1])
+        pred = (probability >= 0.5).astype(int)
+        accuracy = round(float((pred == y_test).mean()), 3)
+        score = probability_scores(y_test, probability)
+        result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "model": model, "model_type": model.__class__.__name__, "prediction_unit": "team", "test_scaled": test_scaled, "test_frame": features.iloc[split_index:].copy(), "y_test": y_test}
         candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
         best = pick_better_model(best, result)
 

@@ -528,13 +528,19 @@ docker compose up -d
 
 ### 4.5 HTML 확인
 
-dashboard 컨테이너가 떠 있으면 아래 주소에서 확인할 수 있습니다.
+일반 사용자는 GitHub에 배포된 정적 대시보드 링크로 확인합니다.
+
+```text
+https://raw.githack.com/SaRangWOO/sports_analytics/main/docs/
+```
+
+운영 서버 안에서만 직접 확인할 때는 아래 내부 주소를 사용할 수 있습니다. 이 주소는 서버 내부 전용이므로 일반 사용자 브라우저에서는 열리지 않습니다.
 
 ```text
 http://127.0.0.1:8501/latest.html
 ```
 
-직접 임시 서버를 띄울 수도 있습니다.
+개발 중 로컬에서 HTML만 임시 확인해야 할 때는 직접 임시 서버를 띄울 수도 있습니다.
 
 ```bash
 python -m http.server 8501 -d dashboard
