@@ -108,13 +108,16 @@ def recent_prediction_rows(predictions: pd.DataFrame):
     df = predictions.copy().tail(20)
     rows = []
     for _, row in df.iterrows():
+        home_pick = row["predicted_winner"] == row["home_team"]
+        predicted_win_probability = row["home_win_probability"] if home_pick else 1 - row["home_win_probability"]
         rows.append(
             {
                 "경기일": row["date"],
                 "경기": f'{row["away_team"]} @ {row["home_team"]}',
-                "예상 득점": f'{row["away_expected_runs"]:.1f} - {row["home_expected_runs"]:.1f}',
-                "예상 득실차": fmt_float(row["expected_run_diff"], 2),
-                "홈승률": fmt_pct(row["home_win_probability"]),
+                "원정 예상득점": fmt_float(row["away_expected_runs"], 1),
+                "홈 예상득점": fmt_float(row["home_expected_runs"], 1),
+                "홈 기준 득실차": f'{row["expected_run_diff"]:+.2f}',
+                "예측 승률": fmt_pct(predicted_win_probability),
                 "예측": row["predicted_winner"],
                 "실제": row["actual_winner"],
                 "결과": "적중" if row["prediction_result"] == "correct" else "오답",
@@ -157,6 +160,10 @@ def render_dashboard(results_dir: Path, output_path: Path):
         ]
     )
     feature_list = "".join(f"<li>{html.escape(col)}</li>" for col in features)
+    selected_note = (
+        "현재 모델은 승패를 직접 맞히는 모델이 아니라 득점을 먼저 예측하는 기준선 모델입니다. "
+        "승패 정확도는 참고 지표이며, 모델링 관점에서는 MAE/RMSE와 예상 득실차 구간별 성능을 함께 봐야 합니다."
+    )
 
     document = f"""<!doctype html>
 <html lang="ko">
@@ -208,12 +215,14 @@ def render_dashboard(results_dir: Path, output_path: Path):
       <div class="eyebrow">Selected Model</div>
       <h2>선택 모델 요약</h2>
       <div class="grid">{cards}</div>
+      <p class="note">{html.escape(selected_note)}</p>
       <p class="note">생성 시각: {html.escape(str(payload.get("generated_at", "-")))} · 학습 행 {payload.get("train_rows", "-")} · 검증 행 {payload.get("validation_rows", "-")} · 원천: {html.escape(str(payload.get("input_file", "-")))}</p>
     </section>
 
     <section>
       <div class="eyebrow">Model Candidates</div>
       <h2>후보 모델 비교</h2>
+      <p class="note">선택 모델은 득점 예측 오차(MAE)를 우선 기준으로 고릅니다. 승패 정확도와 Brier Score는 예상 득점 차이를 승률로 변환했을 때의 참고 성능입니다.</p>
       {table_html(score_rows, ["모델", "MAE", "RMSE", "승패 정확도", "Brier", "LogLoss", "득실차 방향"])}
     </section>
 
@@ -228,7 +237,8 @@ def render_dashboard(results_dir: Path, output_path: Path):
     <section>
       <div class="eyebrow">Predictions</div>
       <h2>최근 검증 경기 예측</h2>
-      {table_html(recent_rows, ["경기일", "경기", "예상 득점", "예상 득실차", "홈승률", "예측", "실제", "결과"])}
+      <p class="note">득실차는 홈팀 기준입니다. `+`면 홈팀 예상 우세, `-`면 원정팀 예상 우세입니다. 예측 승률은 예측 구단 기준 확률입니다.</p>
+      {table_html(recent_rows, ["경기일", "경기", "원정 예상득점", "홈 예상득점", "홈 기준 득실차", "예측 승률", "예측", "실제", "결과"])}
     </section>
 
     <section class="split">
