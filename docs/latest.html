@@ -3,53 +3,86 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KBO 리그 분석 대시보드</title>
+	  <title>KBO 경기 예측 대시보드</title>
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; color: #1b1f24; background: #f4f6f8; }
-    header { background: #172033; color: white; padding: 30px 32px; }
-    main { padding: 24px 32px 48px; max-width: 1440px; margin: 0 auto; }
-    h1, h2, h3 { margin: 0 0 14px; }
-    .meta { color: #d6e0ef; margin-top: 8px; }
-    .section { margin-top: 22px; background: white; border: 1px solid #dde3ea; border-radius: 8px; padding: 18px; }
+    :root {
+      --bg: #F6F8FB;
+      --card: #FFFFFF;
+      --text: #1F2937;
+      --muted: #6B7280;
+      --line: #E5E7EB;
+      --blue: #2563EB;
+      --blue-bg: #EFF6FF;
+      --green: #16A34A;
+      --green-bg: #ECFDF5;
+      --orange: #F59E0B;
+      --orange-bg: #FFFBEB;
+      --red: #DC2626;
+      --red-bg: #FEF2F2;
+      --shadow: 0 10px 26px rgba(31, 41, 55, 0.06);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif; color: var(--text); background: var(--bg); line-height: 1.55; }
+    header { max-width: 1440px; margin: 0 auto; padding: 30px 32px 8px; color: var(--text); }
+    main { padding: 10px 32px 56px; max-width: 1440px; margin: 0 auto; }
+    h1, h2, h3 { margin: 0 0 14px; letter-spacing: -0.01em; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 17px; }
+    .meta { color: var(--muted); margin-top: 8px; font-size: 14px; }
+    .section { margin-top: 22px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); }
     .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-    .eyebrow { color: #637083; font-size: 13px; font-weight: 700; }
-    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-    .metric { border: 1px solid #e1e7ef; border-radius: 8px; padding: 14px; background: #fbfcfe; }
-    .metric strong { display: block; font-size: 24px; margin-top: 6px; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { padding: 9px 10px; border-bottom: 1px solid #e5e9f0; text-align: right; white-space: nowrap; }
+    .eyebrow { color: var(--blue); font-size: 12px; font-weight: 800; letter-spacing: 0.04em; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .metric { border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: #FBFCFE; color: var(--muted); }
+    .metric strong { display: block; font-size: 22px; margin-top: 6px; color: var(--text); line-height: 1.25; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
     th:first-child, td:first-child, td:nth-child(2) { text-align: left; }
-    th { background: #f0f3f7; font-weight: 700; }
-    select { padding: 9px 12px; border: 1px solid #bcc7d4; border-radius: 6px; font-size: 15px; }
+    th { background: #F3F4F6; color: #374151; font-weight: 800; }
+    tbody tr:hover { background: #F9FAFB; }
+    tbody tr:last-child td { border-bottom: 0; }
+    select { padding: 10px 12px; border: 1px solid #D1D5DB; border-radius: 10px; font-size: 15px; background: white; }
     .team-picker { display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: start; margin-bottom: 18px; }
     .team-buttons { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 8px; }
-    .team-button { border: 1px solid #c8d2df; background: #fff; border-radius: 6px; padding: 9px 6px; cursor: pointer; font-weight: 700; }
-    .team-button.active { background: #172033; border-color: #172033; color: white; }
+    .team-button { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 10px 6px; cursor: pointer; font-weight: 800; color: var(--text); }
+    .team-button.active { background: var(--blue-bg); border-color: #BFDBFE; color: var(--blue); }
     .subsection { margin-top: 18px; }
-    .action-link { display:inline-block; margin-top:10px; padding:9px 12px; border-radius:6px; background:#172033; color:white; font-weight:700; text-decoration:none; }
+    .action-link { display:inline-block; margin-top:10px; padding:10px 14px; border-radius:10px; background:var(--blue); color:white; font-weight:800; text-decoration:none; }
     .tables { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .wide-table { overflow-x: auto; }
-    .note { color: #637083; font-size: 13px; margin-top: 10px; }
+    .note { color: var(--muted); font-size: 13px; margin-top: 10px; }
     .insight-lead { font-size: 18px; line-height: 1.55; margin: 0 0 16px; }
-    .prediction-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-    .prediction-card { border:1px solid #d9e1ec; border-radius:8px; padding:16px; background:#fbfcfe; }
-    .prediction-card .matchup { color:#637083; font-size:13px; font-weight:700; margin-bottom:8px; }
-    .prediction-card h3 { display:flex; justify-content:space-between; gap:10px; font-size:20px; }
-    .prediction-card h3 span { color:#1d4ed8; white-space:nowrap; }
-    .starter-status { color:#111827; font-size:13px; font-weight:700; margin:8px 0 0; }
-    .pitching-signal { color:#374151; font-size:13px; margin-top:8px; }
-    .badges { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
-    .badges span { border:1px solid #c8d2df; border-radius:999px; padding:4px 8px; font-size:12px; font-weight:700; background:white; }
+    .prediction-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:18px; }
+    .prediction-card { border:1px solid var(--line); border-radius:16px; padding:18px; background:var(--card); box-shadow: 0 8px 22px rgba(31, 41, 55, 0.05); }
+    .prediction-card.tone-good { border-color:#BBF7D0; background:linear-gradient(180deg, #FFFFFF 0%, var(--green-bg) 100%); }
+    .prediction-card.tone-watch { border-color:#FDE68A; background:linear-gradient(180deg, #FFFFFF 0%, var(--orange-bg) 100%); }
+    .prediction-card.tone-risk { border-color:#FECACA; background:linear-gradient(180deg, #FFFFFF 0%, var(--red-bg) 100%); }
+    .prediction-card .matchup { color:var(--muted); font-size:13px; font-weight:800; margin-bottom:12px; }
+    .pick-row { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }
+    .pick-row strong { display:block; font-size:22px; line-height:1.28; color:var(--text); }
+    .probability { min-width:88px; text-align:right; }
+    .probability strong { color:var(--blue); font-size:24px; }
+    .small-label { display:block; color:var(--muted); font-size:12px; font-weight:800; margin-bottom:3px; }
+    .starter-status { color:#374151; font-size:13px; font-weight:700; margin:8px 0 0; }
+    .pitching-signal { color:#4B5563; font-size:13px; margin-top:8px; line-height:1.5; }
+    .reason-text { color:var(--text); font-size:14px; font-weight:700; margin:12px 0 6px; }
+    .badges { display:flex; gap:7px; flex-wrap:wrap; margin:12px 0; }
+    .badges span { border-radius:999px; padding:5px 9px; font-size:12px; font-weight:800; border:1px solid transparent; }
+    .badge-trust { background:var(--blue-bg); color:var(--blue); border-color:#BFDBFE !important; }
+    .tone-good .badge-decision { background:var(--green-bg); color:var(--green); border-color:#BBF7D0 !important; }
+    .tone-watch .badge-decision { background:var(--orange-bg); color:#B45309; border-color:#FDE68A !important; }
+    .tone-risk .badge-decision { background:var(--red-bg); color:var(--red); border-color:#FECACA !important; }
     details { margin-top:16px; }
-    summary { cursor:pointer; font-weight:700; }
+    summary { cursor:pointer; font-weight:800; color:var(--blue); }
     @media (max-width: 960px) { .grid, .tables, .team-picker, .team-buttons { grid-template-columns: 1fr; } main { padding: 16px; } }
     @media (max-width: 960px) { .prediction-cards { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
 <header>
-  <h1>KBO 리그 분석 대시보드</h1>
-  <div class="meta">KBO 공식 기록 기준 · 생성일 2026-05-27 · 모델 학습 기준일 2026-05-24</div>
+  <h1>KBO 경기 예측 대시보드</h1>
+  <div class="meta">기준일 2026-05-27 · 경기 전 업데이트 · 오늘 경기 5경기 · 모델 학습 기준일 2026-05-24</div>
 </header>
 <main>
   <section class="section">
@@ -65,7 +98,7 @@
     <div class="subsection">
       <h3>업데이트 상태</h3>
       <div class="grid">
-        <div class="metric">마지막 갱신<strong>2026-05-27 17:00:02</strong></div>
+        <div class="metric">마지막 갱신<strong>2026-05-27 17:04:00</strong></div>
         <div class="metric">업데이트 단계<strong>경기 전 업데이트</strong></div>
         <div class="metric">선발 상태<strong>확정 10 · 추정 0 · 미확인 0</strong></div>
         <div class="metric">라인업 상태<strong>금일 0 · 최근 10 · 미확인 0</strong></div>
@@ -73,61 +106,106 @@
       <p class="note">최근 선발 상태 변경 없음</p>
     </div>
     <div class="prediction-cards">
-        <article class="prediction-card">
+        <article class="prediction-card tone-watch">
           <div class="matchup">SSG vs 삼성</div>
-          <h3>삼성 박빙 우세 <span>53.0%</span></h3>
-          <div class="badges"><span>신뢰도 낮음</span><span>참고</span></div>
+          <div class="pick-row">
+            <div>
+              <span class="small-label">예상 우세</span>
+              <strong>삼성 박빙 우세</strong>
+            </div>
+            <div class="probability">
+              <span class="small-label">예측 승률</span>
+              <strong>53.0%</strong>
+            </div>
+          </div>
+          <div class="badges"><span class="badge-trust">신뢰도 낮음</span><span class="badge-decision">참고</span></div>
           <p class="starter-status">선발 상태: 확정 선발 반영 완료</p>
           <p class="starter-status">예측 변화: 직전 예측 대비 변화 거의 없음</p>
-          <p>삼성 최근 5경기 흐름 우위, 삼성 최근 10경기 흐름 우위</p>
+          <p class="reason-text">삼성 최근 5경기 흐름 우위, 삼성 최근 10경기 흐름 우위</p>
           <p class="pitching-signal">선발 매치업: 삼성: 후라도 · 확정 · ERA 2.40 · WHIP 1.13 / SSG: 베니지아노 · 확정 · ERA 5.83 · WHIP 1.66</p>
           <p class="pitching-signal">확정 선발: 후라도 · ERA 2.40 · WHIP 1.13 · 불펜 피로 낮음</p>
           <p class="pitching-signal">최근 라인업 기준 · 선발 WAR 합 10.47 · 1. 김지찬(중견수), 2. 박승규(우익수), 3. 구자욱(좌익수), 4. 최형우(지명타자), 5. 디아즈(1루수)</p>
         </article>
         
-        <article class="prediction-card">
+        <article class="prediction-card tone-watch">
           <div class="matchup">LG vs 롯데</div>
-          <h3>LG 박빙 <span>52.8%</span></h3>
-          <div class="badges"><span>신뢰도 낮음</span><span>참고만</span></div>
+          <div class="pick-row">
+            <div>
+              <span class="small-label">예상 우세</span>
+              <strong>LG 박빙</strong>
+            </div>
+            <div class="probability">
+              <span class="small-label">예측 승률</span>
+              <strong>52.8%</strong>
+            </div>
+          </div>
+          <div class="badges"><span class="badge-trust">신뢰도 낮음</span><span class="badge-decision">참고만</span></div>
           <p class="starter-status">선발 상태: 확정 선발 반영 완료</p>
           <p class="starter-status">예측 변화: 직전 예측 대비 변화 거의 없음</p>
-          <p>LG 최근 5경기 흐름 우위, LG 최근 10경기 흐름 우위</p>
+          <p class="reason-text">LG 최근 5경기 흐름 우위, LG 최근 10경기 흐름 우위</p>
           <p class="pitching-signal">선발 매치업: LG: 치리노스 · 확정 · ERA 5.70 · WHIP 1.73 / 롯데: 나균안 · 확정 · ERA 2.65 · WHIP 1.27</p>
           <p class="pitching-signal">확정 선발: 치리노스 · ERA 5.70 · WHIP 1.73 · 불펜 피로 높음</p>
           <p class="pitching-signal">최근 라인업 기준 · 선발 WAR 합 5.94 · 1. 홍창기(우익수), 2. 박해민(중견수), 3. 오스틴(1루수), 4. 오지환(유격수), 5. 천성호(지명타자)</p>
         </article>
         
-        <article class="prediction-card">
+        <article class="prediction-card tone-watch">
           <div class="matchup">NC vs 한화</div>
-          <h3>한화 박빙 <span>52.6%</span></h3>
-          <div class="badges"><span>신뢰도 낮음</span><span>참고만</span></div>
+          <div class="pick-row">
+            <div>
+              <span class="small-label">예상 우세</span>
+              <strong>한화 박빙</strong>
+            </div>
+            <div class="probability">
+              <span class="small-label">예측 승률</span>
+              <strong>52.6%</strong>
+            </div>
+          </div>
+          <div class="badges"><span class="badge-trust">신뢰도 낮음</span><span class="badge-decision">참고만</span></div>
           <p class="starter-status">선발 상태: 확정 선발 반영 완료</p>
           <p class="starter-status">예측 변화: 직전 예측 대비 변화 거의 없음</p>
-          <p>한화 최근 5경기 흐름 우위, 한화 최근 10경기 흐름 우위</p>
+          <p class="reason-text">한화 최근 5경기 흐름 우위, 한화 최근 10경기 흐름 우위</p>
           <p class="pitching-signal">선발 매치업: 한화: 박준영 · 확정 · ERA 2.57 · WHIP 1.71 / NC: 토다 · 확정 · ERA 4.54 · WHIP 1.46</p>
           <p class="pitching-signal">확정 선발: 박준영 · ERA 2.57 · WHIP 1.71 · 불펜 피로 낮음</p>
           <p class="pitching-signal">최근 라인업 기준 · 선발 WAR 합 9.14 · 1. 이원석(중견수), 2. 페라자(우익수), 3. 문현빈(좌익수), 4. 노시환(3루수), 5. 허인서(지명타자)</p>
         </article>
         
-        <article class="prediction-card">
+        <article class="prediction-card tone-watch">
           <div class="matchup">KT vs 두산</div>
-          <h3>KT 박빙 <span>51.4%</span></h3>
-          <div class="badges"><span>신뢰도 낮음</span><span>참고만</span></div>
+          <div class="pick-row">
+            <div>
+              <span class="small-label">예상 우세</span>
+              <strong>KT 박빙</strong>
+            </div>
+            <div class="probability">
+              <span class="small-label">예측 승률</span>
+              <strong>51.4%</strong>
+            </div>
+          </div>
+          <div class="badges"><span class="badge-trust">신뢰도 낮음</span><span class="badge-decision">참고만</span></div>
           <p class="starter-status">선발 상태: 확정 선발 반영 완료</p>
           <p class="starter-status">예측 변화: 직전 예측 대비 변화 거의 없음</p>
-          <p>KT 최근 5경기 흐름 우위, KT 최근 득실차 우위</p>
+          <p class="reason-text">KT 최근 5경기 흐름 우위, KT 최근 득실차 우위</p>
           <p class="pitching-signal">선발 매치업: KT: 오원석 · 확정 · ERA 4.20 · WHIP 1.30 / 두산: 벤자민 · 확정 · ERA 3.15 · WHIP 1.51</p>
           <p class="pitching-signal">확정 선발: 오원석 · ERA 4.20 · WHIP 1.30 · 불펜 피로 높음</p>
           <p class="pitching-signal">최근 라인업 기준 · 선발 WAR 합 9.59 · 1. 최원준(우익수), 2. 김현수(1루수), 3. 김민혁(지명타자), 4. 힐리어드(좌익수), 5. 허경민(3루수)</p>
         </article>
         
-        <article class="prediction-card">
+        <article class="prediction-card tone-watch">
           <div class="matchup">KIA vs 키움</div>
-          <h3>KIA 박빙 <span>50.8%</span></h3>
-          <div class="badges"><span>신뢰도 낮음</span><span>참고만</span></div>
+          <div class="pick-row">
+            <div>
+              <span class="small-label">예상 우세</span>
+              <strong>KIA 박빙</strong>
+            </div>
+            <div class="probability">
+              <span class="small-label">예측 승률</span>
+              <strong>50.8%</strong>
+            </div>
+          </div>
+          <div class="badges"><span class="badge-trust">신뢰도 낮음</span><span class="badge-decision">참고만</span></div>
           <p class="starter-status">선발 상태: 확정 선발 반영 완료</p>
-          <p class="starter-status">예측 변화: 이전 예측 없음</p>
-          <p>KIA 최근 5경기 흐름 우위, KIA 최근 10경기 흐름 우위</p>
+          <p class="starter-status">예측 변화: 직전 예측 대비 변화 거의 없음</p>
+          <p class="reason-text">KIA 최근 5경기 흐름 우위, KIA 최근 10경기 흐름 우위</p>
           <p class="pitching-signal">선발 매치업: KIA: 네일 · 확정 · ERA 4.15 · WHIP 1.14 / 키움: 알칸타라 · 확정 · ERA 2.81 · WHIP 1.23</p>
           <p class="pitching-signal">확정 선발: 네일 · ERA 4.15 · WHIP 1.14 · 불펜 피로 높음</p>
           <p class="pitching-signal">최근 라인업 기준 · 선발 WAR 합 0.0 · -</p>

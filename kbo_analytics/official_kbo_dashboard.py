@@ -2216,15 +2216,33 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context, status_payload, lineup_context)
     prediction_cards = append_pregame_prediction_history(prediction_cards, status_payload, lineup_context, reference_datetime or datetime.now(), update_stage)
     summary = today_summary(prediction_cards)
+    def prediction_tone(row):
+        decision = str(row.get("판단", ""))
+        trust = str(row.get("신뢰도", ""))
+        if "예측 가능" in decision or "추천" in decision or trust == "보통":
+            return "tone-good"
+        if "과신" in decision or "위험" in decision:
+            return "tone-risk"
+        return "tone-watch"
+
     prediction_cards_html = "".join(
         f"""
-        <article class="prediction-card">
+        <article class="prediction-card {prediction_tone(row)}">
           <div class="matchup">{escape(row["경기"])}</div>
-          <h3>{escape(row["추천"])} <span>{escape(row["예측승률"])}</span></h3>
-          <div class="badges"><span>신뢰도 {escape(row["신뢰도"])}</span><span>{escape(row["판단"])}</span></div>
+          <div class="pick-row">
+            <div>
+              <span class="small-label">예상 우세</span>
+              <strong>{escape(row["추천"])}</strong>
+            </div>
+            <div class="probability">
+              <span class="small-label">예측 승률</span>
+              <strong>{escape(row["예측승률"])}</strong>
+            </div>
+          </div>
+          <div class="badges"><span class="badge-trust">신뢰도 {escape(row["신뢰도"])}</span><span class="badge-decision">{escape(row["판단"])}</span></div>
           <p class="starter-status">선발 상태: {escape(row["선발 상태"])}</p>
           <p class="starter-status">예측 변화: {escape(row.get("예측 변화", "이전 예측 없음"))}</p>
-          <p>{escape(row["핵심 근거"])}</p>
+          <p class="reason-text">{escape(row["핵심 근거"])}</p>
           <p class="pitching-signal">{escape(row["선발 매치업"])}</p>
           <p class="pitching-signal">{escape(row["투수 신호"])}</p>
           <p class="pitching-signal">{escape(row["라인업 신호"])}</p>
@@ -2241,53 +2259,86 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KBO 리그 분석 대시보드</title>
+	  <title>KBO 경기 예측 대시보드</title>
   <style>
-    body {{ margin: 0; font-family: Arial, sans-serif; color: #1b1f24; background: #f4f6f8; }}
-    header {{ background: #172033; color: white; padding: 30px 32px; }}
-    main {{ padding: 24px 32px 48px; max-width: 1440px; margin: 0 auto; }}
-    h1, h2, h3 {{ margin: 0 0 14px; }}
-    .meta {{ color: #d6e0ef; margin-top: 8px; }}
-    .section {{ margin-top: 22px; background: white; border: 1px solid #dde3ea; border-radius: 8px; padding: 18px; }}
+    :root {{
+      --bg: #F6F8FB;
+      --card: #FFFFFF;
+      --text: #1F2937;
+      --muted: #6B7280;
+      --line: #E5E7EB;
+      --blue: #2563EB;
+      --blue-bg: #EFF6FF;
+      --green: #16A34A;
+      --green-bg: #ECFDF5;
+      --orange: #F59E0B;
+      --orange-bg: #FFFBEB;
+      --red: #DC2626;
+      --red-bg: #FEF2F2;
+      --shadow: 0 10px 26px rgba(31, 41, 55, 0.06);
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{ margin: 0; font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif; color: var(--text); background: var(--bg); line-height: 1.55; }}
+    header {{ max-width: 1440px; margin: 0 auto; padding: 30px 32px 8px; color: var(--text); }}
+    main {{ padding: 10px 32px 56px; max-width: 1440px; margin: 0 auto; }}
+    h1, h2, h3 {{ margin: 0 0 14px; letter-spacing: -0.01em; }}
+    h1 {{ font-size: 30px; }}
+    h2 {{ font-size: 22px; }}
+    h3 {{ font-size: 17px; }}
+    .meta {{ color: var(--muted); margin-top: 8px; font-size: 14px; }}
+    .section {{ margin-top: 22px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); }}
     .section-title {{ display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }}
-    .eyebrow {{ color: #637083; font-size: 13px; font-weight: 700; }}
-    .grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }}
-    .metric {{ border: 1px solid #e1e7ef; border-radius: 8px; padding: 14px; background: #fbfcfe; }}
-    .metric strong {{ display: block; font-size: 24px; margin-top: 6px; }}
-    table {{ width: 100%; border-collapse: collapse; font-size: 14px; }}
-    th, td {{ padding: 9px 10px; border-bottom: 1px solid #e5e9f0; text-align: right; white-space: nowrap; }}
+    .eyebrow {{ color: var(--blue); font-size: 12px; font-weight: 800; letter-spacing: 0.04em; }}
+    .grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }}
+    .metric {{ border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: #FBFCFE; color: var(--muted); }}
+    .metric strong {{ display: block; font-size: 22px; margin-top: 6px; color: var(--text); line-height: 1.25; }}
+    table {{ width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }}
+    th, td {{ padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }}
     th:first-child, td:first-child, td:nth-child(2) {{ text-align: left; }}
-    th {{ background: #f0f3f7; font-weight: 700; }}
-    select {{ padding: 9px 12px; border: 1px solid #bcc7d4; border-radius: 6px; font-size: 15px; }}
+    th {{ background: #F3F4F6; color: #374151; font-weight: 800; }}
+    tbody tr:hover {{ background: #F9FAFB; }}
+    tbody tr:last-child td {{ border-bottom: 0; }}
+    select {{ padding: 10px 12px; border: 1px solid #D1D5DB; border-radius: 10px; font-size: 15px; background: white; }}
     .team-picker {{ display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: start; margin-bottom: 18px; }}
     .team-buttons {{ display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 8px; }}
-    .team-button {{ border: 1px solid #c8d2df; background: #fff; border-radius: 6px; padding: 9px 6px; cursor: pointer; font-weight: 700; }}
-    .team-button.active {{ background: #172033; border-color: #172033; color: white; }}
+    .team-button {{ border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 10px 6px; cursor: pointer; font-weight: 800; color: var(--text); }}
+    .team-button.active {{ background: var(--blue-bg); border-color: #BFDBFE; color: var(--blue); }}
     .subsection {{ margin-top: 18px; }}
-    .action-link {{ display:inline-block; margin-top:10px; padding:9px 12px; border-radius:6px; background:#172033; color:white; font-weight:700; text-decoration:none; }}
+    .action-link {{ display:inline-block; margin-top:10px; padding:10px 14px; border-radius:10px; background:var(--blue); color:white; font-weight:800; text-decoration:none; }}
     .tables {{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }}
     .wide-table {{ overflow-x: auto; }}
-    .note {{ color: #637083; font-size: 13px; margin-top: 10px; }}
+    .note {{ color: var(--muted); font-size: 13px; margin-top: 10px; }}
     .insight-lead {{ font-size: 18px; line-height: 1.55; margin: 0 0 16px; }}
-    .prediction-cards {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }}
-    .prediction-card {{ border:1px solid #d9e1ec; border-radius:8px; padding:16px; background:#fbfcfe; }}
-    .prediction-card .matchup {{ color:#637083; font-size:13px; font-weight:700; margin-bottom:8px; }}
-    .prediction-card h3 {{ display:flex; justify-content:space-between; gap:10px; font-size:20px; }}
-    .prediction-card h3 span {{ color:#1d4ed8; white-space:nowrap; }}
-    .starter-status {{ color:#111827; font-size:13px; font-weight:700; margin:8px 0 0; }}
-    .pitching-signal {{ color:#374151; font-size:13px; margin-top:8px; }}
-    .badges {{ display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }}
-    .badges span {{ border:1px solid #c8d2df; border-radius:999px; padding:4px 8px; font-size:12px; font-weight:700; background:white; }}
+    .prediction-cards {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:18px; }}
+    .prediction-card {{ border:1px solid var(--line); border-radius:16px; padding:18px; background:var(--card); box-shadow: 0 8px 22px rgba(31, 41, 55, 0.05); }}
+    .prediction-card.tone-good {{ border-color:#BBF7D0; background:linear-gradient(180deg, #FFFFFF 0%, var(--green-bg) 100%); }}
+    .prediction-card.tone-watch {{ border-color:#FDE68A; background:linear-gradient(180deg, #FFFFFF 0%, var(--orange-bg) 100%); }}
+    .prediction-card.tone-risk {{ border-color:#FECACA; background:linear-gradient(180deg, #FFFFFF 0%, var(--red-bg) 100%); }}
+    .prediction-card .matchup {{ color:var(--muted); font-size:13px; font-weight:800; margin-bottom:12px; }}
+    .pick-row {{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }}
+    .pick-row strong {{ display:block; font-size:22px; line-height:1.28; color:var(--text); }}
+    .probability {{ min-width:88px; text-align:right; }}
+    .probability strong {{ color:var(--blue); font-size:24px; }}
+    .small-label {{ display:block; color:var(--muted); font-size:12px; font-weight:800; margin-bottom:3px; }}
+    .starter-status {{ color:#374151; font-size:13px; font-weight:700; margin:8px 0 0; }}
+    .pitching-signal {{ color:#4B5563; font-size:13px; margin-top:8px; line-height:1.5; }}
+    .reason-text {{ color:var(--text); font-size:14px; font-weight:700; margin:12px 0 6px; }}
+    .badges {{ display:flex; gap:7px; flex-wrap:wrap; margin:12px 0; }}
+    .badges span {{ border-radius:999px; padding:5px 9px; font-size:12px; font-weight:800; border:1px solid transparent; }}
+    .badge-trust {{ background:var(--blue-bg); color:var(--blue); border-color:#BFDBFE !important; }}
+    .tone-good .badge-decision {{ background:var(--green-bg); color:var(--green); border-color:#BBF7D0 !important; }}
+    .tone-watch .badge-decision {{ background:var(--orange-bg); color:#B45309; border-color:#FDE68A !important; }}
+    .tone-risk .badge-decision {{ background:var(--red-bg); color:var(--red); border-color:#FECACA !important; }}
     details {{ margin-top:16px; }}
-    summary {{ cursor:pointer; font-weight:700; }}
+    summary {{ cursor:pointer; font-weight:800; color:var(--blue); }}
     @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons {{ grid-template-columns: 1fr; }} main {{ padding: 16px; }} }}
     @media (max-width: 960px) {{ .prediction-cards {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>
 <header>
-  <h1>KBO 리그 분석 대시보드</h1>
-  <div class="meta">KBO 공식 기록 기준 · 생성일 {generated_at.isoformat()} · 모델 학습 기준일 {escape(model_payload.get("training_cutoff", ""))}</div>
+  <h1>KBO 경기 예측 대시보드</h1>
+  <div class="meta">기준일 {generated_at.isoformat()} · {escape(update_stage_label)} · 오늘 경기 {len(prediction_cards)}경기 · 모델 학습 기준일 {escape(model_payload.get("training_cutoff", ""))}</div>
 </header>
 <main>
   <section class="section">
