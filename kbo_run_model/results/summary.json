@@ -1,0 +1,859 @@
+{
+  "generated_at": "2026-05-27T16:41:45",
+  "input_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics\\kbo_analytics\\data\\official\\model_training_games.csv",
+  "schedule_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics\\kbo_analytics\\data\\official\\prediction_games.csv",
+  "target_context": {
+    "target_date": "2026-05-27",
+    "report_mode": "지정 날짜 기준",
+    "game_count": 5,
+    "requested_target_date": "2026-05-27"
+  },
+  "schedule_selection_check": {
+    "target_date": "2026-05-27",
+    "report_mode": "지정 날짜 기준",
+    "schedule_rows": 10,
+    "expected_games": 5,
+    "predicted_games": 5,
+    "duplicate_games": 0,
+    "home_away_pairing_ok": true,
+    "game_count_ok": true,
+    "status": "통과"
+  },
+  "train_ratio": 0.8,
+  "training_cutoff": "2025-04-27",
+  "feature_rows": 7342,
+  "train_rows": 5866,
+  "validation_rows": 1476,
+  "validation_games": 738,
+  "feature_columns": [
+    "is_home",
+    "month",
+    "team_recent_5g_runs",
+    "team_recent_10g_runs",
+    "team_season_runs",
+    "team_recent_5g_allowed",
+    "team_recent_10g_allowed",
+    "team_season_allowed",
+    "team_recent_win_rate",
+    "rest_days",
+    "back_to_back",
+    "opponent_recent_5g_runs",
+    "opponent_recent_10g_runs",
+    "opponent_season_runs",
+    "opponent_recent_5g_allowed",
+    "opponent_recent_10g_allowed",
+    "opponent_season_allowed",
+    "opponent_recent_win_rate",
+    "opponent_rest_days",
+    "opponent_back_to_back",
+    "recent_5g_runs_gap",
+    "recent_10g_runs_gap",
+    "season_runs_gap",
+    "recent_5g_allowed_gap",
+    "recent_10g_allowed_gap",
+    "season_allowed_gap",
+    "recent_win_rate_gap",
+    "rest_days_gap"
+  ],
+  "candidate_scores": [
+    {
+      "model": "PoissonRegressor",
+      "run_mae": 2.6591,
+      "run_rmse": 3.3647,
+      "home_win_accuracy": 0.5298,
+      "brier_score": 0.2481
+    },
+    {
+      "model": "Ridge",
+      "run_mae": 2.6608,
+      "run_rmse": 3.3667,
+      "home_win_accuracy": 0.5285,
+      "brier_score": 0.2483
+    },
+    {
+      "model": "RandomForestRegressor",
+      "run_mae": 2.6597,
+      "run_rmse": 3.3651,
+      "home_win_accuracy": 0.5352,
+      "brier_score": 0.2854
+    },
+    {
+      "model": "HistGradientBoostingRegressor",
+      "run_mae": 2.6666,
+      "run_rmse": 3.393,
+      "home_win_accuracy": 0.5434,
+      "brier_score": 0.2864
+    }
+  ],
+  "run_diff_bucket_accuracy": [
+    {
+      "bucket": "-3 이하",
+      "games": 0,
+      "accuracy": ""
+    },
+    {
+      "bucket": "-3 초과 -1 이하",
+      "games": 13,
+      "accuracy": 0.5385
+    },
+    {
+      "bucket": "-1 초과 1 이하",
+      "games": 718,
+      "accuracy": 0.5306
+    },
+    {
+      "bucket": "1 초과 3 미만",
+      "games": 7,
+      "accuracy": 0.4286
+    },
+    {
+      "bucket": "3 이상",
+      "games": 0,
+      "accuracy": ""
+    }
+  ],
+  "abs_run_diff_bucket_metrics": [
+    {
+      "bucket": "0.0 ~ 0.5점",
+      "games": 596,
+      "accuracy": 0.5117,
+      "avg_brier_score": 0.2491
+    },
+    {
+      "bucket": "0.5 ~ 1.0점",
+      "games": 122,
+      "accuracy": 0.623,
+      "avg_brier_score": 0.2408
+    },
+    {
+      "bucket": "1.0 ~ 1.5점",
+      "games": 15,
+      "accuracy": 0.4667,
+      "avg_brier_score": 0.2646
+    },
+    {
+      "bucket": "1.5점 이상",
+      "games": 5,
+      "accuracy": 0.6,
+      "avg_brier_score": 0.2618
+    }
+  ],
+  "season_metrics": [
+    {
+      "season": 2025,
+      "games": 561,
+      "run_mae": 2.6682,
+      "run_rmse": 3.3806,
+      "home_win_accuracy": 0.5312,
+      "brier_score": 0.2482
+    },
+    {
+      "season": 2026,
+      "games": 177,
+      "run_mae": 2.6302,
+      "run_rmse": 3.3136,
+      "home_win_accuracy": 0.5254,
+      "brier_score": 0.2477
+    }
+  ],
+  "team_bias_metrics": [
+    {
+      "team": "키움",
+      "games": 146,
+      "actual_avg_runs": 3.8699,
+      "predicted_avg_runs": 4.7112,
+      "mae": 2.712,
+      "bias": 0.8413
+    },
+    {
+      "team": "롯데",
+      "games": 144,
+      "actual_avg_runs": 4.4097,
+      "predicted_avg_runs": 4.821,
+      "mae": 2.5989,
+      "bias": 0.4113
+    },
+    {
+      "team": "SSG",
+      "games": 149,
+      "actual_avg_runs": 4.5503,
+      "predicted_avg_runs": 4.8118,
+      "mae": 2.552,
+      "bias": 0.2614
+    },
+    {
+      "team": "두산",
+      "games": 147,
+      "actual_avg_runs": 4.5374,
+      "predicted_avg_runs": 4.7661,
+      "mae": 2.7874,
+      "bias": 0.2287
+    },
+    {
+      "team": "KIA",
+      "games": 149,
+      "actual_avg_runs": 4.7785,
+      "predicted_avg_runs": 4.8485,
+      "mae": 2.624,
+      "bias": 0.0699
+    },
+    {
+      "team": "KT",
+      "games": 147,
+      "actual_avg_runs": 4.9184,
+      "predicted_avg_runs": 4.8804,
+      "mae": 2.6714,
+      "bias": -0.038
+    },
+    {
+      "team": "삼성",
+      "games": 149,
+      "actual_avg_runs": 5.1342,
+      "predicted_avg_runs": 4.9408,
+      "mae": 2.6402,
+      "bias": -0.1934
+    },
+    {
+      "team": "LG",
+      "games": 149,
+      "actual_avg_runs": 5.2282,
+      "predicted_avg_runs": 4.928,
+      "mae": 2.6594,
+      "bias": -0.3002
+    },
+    {
+      "team": "한화",
+      "games": 147,
+      "actual_avg_runs": 5.2177,
+      "predicted_avg_runs": 4.8796,
+      "mae": 2.6657,
+      "bias": -0.3381
+    },
+    {
+      "team": "NC",
+      "games": 149,
+      "actual_avg_runs": 5.2282,
+      "predicted_avg_runs": 4.8294,
+      "mae": 2.681,
+      "bias": -0.3988
+    }
+  ],
+  "team_bias_summary": {
+    "over_predicted_teams": [
+      {
+        "team": "키움",
+        "bias": 0.8413,
+        "mae": 2.712
+      },
+      {
+        "team": "롯데",
+        "bias": 0.4113,
+        "mae": 2.5989
+      },
+      {
+        "team": "SSG",
+        "bias": 0.2614,
+        "mae": 2.552
+      },
+      {
+        "team": "두산",
+        "bias": 0.2287,
+        "mae": 2.7874
+      },
+      {
+        "team": "KIA",
+        "bias": 0.0699,
+        "mae": 2.624
+      }
+    ],
+    "under_predicted_teams": [
+      {
+        "team": "NC",
+        "bias": -0.3988,
+        "mae": 2.681
+      },
+      {
+        "team": "한화",
+        "bias": -0.3381,
+        "mae": 2.6657
+      },
+      {
+        "team": "LG",
+        "bias": -0.3002,
+        "mae": 2.6594
+      },
+      {
+        "team": "삼성",
+        "bias": -0.1934,
+        "mae": 2.6402
+      },
+      {
+        "team": "KT",
+        "bias": -0.038,
+        "mae": 2.6714
+      }
+    ]
+  },
+  "starter_schema_inspection": {
+    "has_starter_source_data": false,
+    "matched_columns": [],
+    "available_columns": [
+      "game_id",
+      "date",
+      "team",
+      "opponent",
+      "home_away",
+      "status",
+      "result",
+      "score_team",
+      "score_opp",
+      "ballpark"
+    ],
+    "candidate_columns": [
+      "home_starter",
+      "away_starter",
+      "home_starting_pitcher",
+      "away_starting_pitcher",
+      "home_pitcher",
+      "away_pitcher",
+      "starter",
+      "pitcher",
+      "pitcher_id",
+      "player_id",
+      "era",
+      "whip",
+      "innings_pitched",
+      "earned_runs",
+      "strikeouts",
+      "walks"
+    ],
+    "required_game_starter_columns": [
+      "season",
+      "date",
+      "game_id",
+      "home_team",
+      "away_team",
+      "home_starter_id 또는 home_starter_name",
+      "away_starter_id 또는 away_starter_name"
+    ],
+    "required_pitcher_log_columns": [
+      "season",
+      "date",
+      "game_id",
+      "pitcher_id 또는 pitcher_name",
+      "team",
+      "opponent",
+      "innings_pitched",
+      "earned_runs",
+      "hits_allowed",
+      "walks",
+      "strikeouts",
+      "home_runs_allowed",
+      "pitches"
+    ],
+    "future_starter_features": [
+      "starter_era",
+      "starter_whip",
+      "starter_recent_3g_era",
+      "starter_rest_days",
+      "starter_avg_ip"
+    ],
+    "status": "선발투수 원천 데이터 없음"
+  },
+  "starter_data_status": {
+    "starter_data_available": false,
+    "pitcher_logs_available": false,
+    "starter_schema_ready": true,
+    "pitcher_log_schema_ready": true,
+    "v3_bullpen_schema_reusable": true,
+    "v2_status": "data_collection_phase",
+    "status_label": "Starter data unavailable (Data collection phase)",
+    "training_status": "V2 not trained",
+    "reason": "선발투수/투수 등판 기록 데이터 미수집",
+    "starter_pitchers": {
+      "file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics\\kbo_run_model\\data\\starter_pitchers_sample.csv",
+      "label": "starter_pitchers",
+      "available": false,
+      "phase": "Data collection phase",
+      "v2_training_status": "V2 not trained",
+      "message": "starter_pitchers contains sample/mock rows only",
+      "missing_columns": [],
+      "row_count": 2,
+      "sample_only": true
+    },
+    "pitcher_game_logs": {
+      "file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics\\kbo_run_model\\data\\pitcher_game_logs_sample.csv",
+      "label": "pitcher_game_logs",
+      "available": false,
+      "phase": "Data collection phase",
+      "v2_training_status": "V2 not trained",
+      "message": "pitcher_game_logs contains sample/mock rows only",
+      "missing_columns": [],
+      "row_count": 3,
+      "sample_only": true
+    }
+  },
+  "starter_feature_status": {
+    "starter_features_added": false,
+    "message": "Starter data unavailable (Data collection phase)",
+    "feature_columns": []
+  },
+  "v2_status": "data_collection_phase",
+  "starter_data_available": false,
+  "pitcher_logs_available": false,
+  "starter_schema_ready": true,
+  "pitcher_log_schema_ready": true,
+  "v3_bullpen_schema_reusable": true,
+  "v2_data_search_completed": true,
+  "internal_pitcher_data_found": true,
+  "v2_ready_to_train": false,
+  "v2_blocker": "경기별 선발투수 매핑과 필수 투수 로그 컬럼 부족",
+  "internal_pitcher_data_search": {
+    "v2_data_search_completed": true,
+    "internal_pitcher_data_found": true,
+    "v2_ready_to_train": false,
+    "v2_blocker": "경기별 선발투수 매핑과 필수 투수 로그 컬럼 부족",
+    "files": [
+      {
+        "file": "kbo_analytics/data/manual/confirmed_starters.csv",
+        "columns": [
+          "date",
+          "team",
+          "starter_name",
+          "source",
+          "confirmed_at"
+        ],
+        "normalized_columns": [
+          "date",
+          "team",
+          "starter_name",
+          "source",
+          "confirmed_at"
+        ],
+        "matched_terms": [
+          "starter"
+        ],
+        "mapped_v2_columns": [
+          "date",
+          "team"
+        ],
+        "missing_starter_mapping_columns": [
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_pitcher_log_columns": [
+          "game_id",
+          "pitcher_id",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "row_count": 0,
+        "sample_only": false,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      },
+      {
+        "file": "kbo_analytics/data/official/pitcher_stats.csv",
+        "columns": [
+          "순위",
+          "선수",
+          "팀",
+          "ERA",
+          "경기",
+          "승",
+          "패",
+          "세이브",
+          "홀드",
+          "승률",
+          "이닝",
+          "피안타",
+          "피홈런",
+          "볼넷",
+          "사구",
+          "탈삼진",
+          "실점",
+          "자책",
+          "WHIP"
+        ],
+        "normalized_columns": [
+          "순위",
+          "pitcher_name",
+          "team",
+          "era",
+          "경기",
+          "승",
+          "패",
+          "세이브",
+          "홀드",
+          "승률",
+          "innings_pitched",
+          "hits_allowed",
+          "home_runs_allowed",
+          "walks",
+          "사구",
+          "strikeouts",
+          "실점",
+          "earned_runs",
+          "whip"
+        ],
+        "matched_terms": [
+          "pitcher",
+          "era",
+          "whip"
+        ],
+        "mapped_v2_columns": [
+          "pitcher_name",
+          "team",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed"
+        ],
+        "missing_starter_mapping_columns": [
+          "date",
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_pitcher_log_columns": [
+          "date",
+          "game_id",
+          "pitcher_id",
+          "opponent",
+          "is_starter",
+          "pitches"
+        ],
+        "row_count": 217,
+        "sample_only": false,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      },
+      {
+        "file": "kbo_analytics/data/weekly/player_game_stats.csv",
+        "columns": [
+          "game_id",
+          "date",
+          "player_id",
+          "player_name",
+          "team",
+          "opponent",
+          "home_away",
+          "position",
+          "batting_order",
+          "plate_appearances",
+          "at_bats",
+          "hits",
+          "doubles",
+          "triples",
+          "home_runs",
+          "rbi",
+          "runs",
+          "walks",
+          "strikeouts",
+          "stolen_bases",
+          "innings_pitched",
+          "pitches",
+          "earned_runs",
+          "strikeouts_pitched",
+          "walks_allowed",
+          "hits_allowed"
+        ],
+        "normalized_columns": [
+          "game_id",
+          "date",
+          "pitcher_id",
+          "pitcher_name",
+          "team",
+          "opponent",
+          "home_away",
+          "position",
+          "batting_order",
+          "plate_appearances",
+          "at_bats",
+          "hits",
+          "doubles",
+          "triples",
+          "home_runs",
+          "rbi",
+          "runs",
+          "walks",
+          "strikeouts",
+          "stolen_bases",
+          "innings_pitched",
+          "pitches",
+          "earned_runs",
+          "strikeouts",
+          "walks",
+          "hits_allowed"
+        ],
+        "matched_terms": [
+          "player",
+          "player_id",
+          "innings_pitched",
+          "earned_runs",
+          "strikeouts",
+          "walks",
+          "pitches"
+        ],
+        "mapped_v2_columns": [
+          "date",
+          "game_id",
+          "pitcher_id",
+          "pitcher_name",
+          "team",
+          "opponent",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "pitches"
+        ],
+        "missing_starter_mapping_columns": [
+          "home_team",
+          "away_team",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_pitcher_log_columns": [
+          "is_starter",
+          "home_runs_allowed"
+        ],
+        "row_count": 144,
+        "sample_only": false,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      },
+      {
+        "file": "kbo_analytics/mock_api/player_roster_mapping.csv",
+        "columns": [
+          "player_id",
+          "team",
+          "team_ko",
+          "slot",
+          "role",
+          "player_name",
+          "kbo_player_id",
+          "source"
+        ],
+        "normalized_columns": [
+          "pitcher_id",
+          "team",
+          "team_ko",
+          "slot",
+          "role",
+          "pitcher_name",
+          "kbo_player_id",
+          "source"
+        ],
+        "matched_terms": [
+          "player",
+          "player_id"
+        ],
+        "mapped_v2_columns": [
+          "pitcher_id",
+          "pitcher_name",
+          "team"
+        ],
+        "missing_starter_mapping_columns": [
+          "date",
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_pitcher_log_columns": [
+          "date",
+          "game_id",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "row_count": 120,
+        "sample_only": false,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      },
+      {
+        "file": "kbo_run_model/data/pitcher_game_logs_sample.csv",
+        "columns": [
+          "season",
+          "date",
+          "game_id",
+          "pitcher_id",
+          "pitcher_name",
+          "team",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "normalized_columns": [
+          "season",
+          "date",
+          "game_id",
+          "pitcher_id",
+          "pitcher_name",
+          "team",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "matched_terms": [
+          "pitcher",
+          "starter",
+          "innings_pitched",
+          "earned_runs",
+          "strikeouts",
+          "walks",
+          "pitches"
+        ],
+        "mapped_v2_columns": [
+          "season",
+          "date",
+          "game_id",
+          "pitcher_id",
+          "pitcher_name",
+          "team",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "missing_starter_mapping_columns": [
+          "home_team",
+          "away_team",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_pitcher_log_columns": [],
+        "row_count": 3,
+        "sample_only": true,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      },
+      {
+        "file": "kbo_run_model/data/starter_pitchers_sample.csv",
+        "columns": [
+          "season",
+          "date",
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_name",
+          "away_starter_name",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "normalized_columns": [
+          "season",
+          "date",
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_name",
+          "away_starter_name",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "matched_terms": [
+          "pitcher",
+          "starter"
+        ],
+        "mapped_v2_columns": [
+          "season",
+          "date",
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_name",
+          "away_starter_name",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_starter_mapping_columns": [],
+        "missing_pitcher_log_columns": [
+          "pitcher_id",
+          "team",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "row_count": 2,
+        "sample_only": true,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      }
+    ]
+  },
+  "dashboard": "kbo_run_model/results/report.html",
+  "selected_model": {
+    "model": "PoissonRegressor",
+    "run_mae": 2.6591,
+    "run_rmse": 3.3647,
+    "home_win_accuracy": 0.5298,
+    "brier_score": 0.2481
+  },
+  "outputs": [
+    "team_game_features.csv",
+    "model_scores.csv",
+    "run_diff_bucket_accuracy.csv",
+    "abs_run_diff_bucket_metrics.csv",
+    "season_metrics.csv",
+    "team_bias_metrics.csv",
+    "expected_runs_predictions.csv",
+    "match_predictions.csv",
+    "schedule_selection_check.csv",
+    "summary.json",
+    "report.html"
+  ]
+}
