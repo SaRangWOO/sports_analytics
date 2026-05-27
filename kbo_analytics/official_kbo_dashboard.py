@@ -2225,27 +2225,38 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             return "tone-risk"
         return "tone-watch"
 
+    high_confidence_games = sum(1 for row in prediction_cards if float(row.get("confidence_value", 0)) >= 0.58)
+    watch_games = sum(1 for row in prediction_cards if "참고" in str(row.get("판단", "")))
+    average_confidence = (
+        f'{sum(float(row.get("confidence_value", 0)) for row in prediction_cards) / len(prediction_cards):.1%}'
+        if prediction_cards
+        else "-"
+    )
+
     prediction_cards_html = "".join(
         f"""
         <article class="prediction-card {prediction_tone(row)}">
-          <div class="matchup">{escape(row["경기"])}</div>
-          <div class="pick-row">
-            <div>
-              <span class="small-label">예상 우세</span>
-              <strong>{escape(row["추천"])}</strong>
-            </div>
-            <div class="probability">
-              <span class="small-label">예측 승률</span>
-              <strong>{escape(row["예측승률"])}</strong>
-            </div>
+          <div class="card-topline">
+            <span class="matchup">{escape(row["경기"])}</span>
+            <span class="badge-decision">{escape(row["판단"])}</span>
           </div>
-          <div class="badges"><span class="badge-trust">신뢰도 {escape(row["신뢰도"])}</span><span class="badge-decision">{escape(row["판단"])}</span></div>
-          <p class="starter-status">선발 상태: {escape(row["선발 상태"])}</p>
-          <p class="starter-status">예측 변화: {escape(row.get("예측 변화", "이전 예측 없음"))}</p>
+          <div class="prediction-core">
+            <span class="small-label">예상 우세</span>
+            <strong>{escape(row["추천"])}</strong>
+            <div class="win-probability">{escape(row["예측승률"])}</div>
+          </div>
+          <div class="confidence-block">
+            <div class="confidence-label"><span>신뢰도 {escape(row["신뢰도"])}</span><span>{escape(row["예측승률"])}</span></div>
+            <div class="confidence-track"><span style="width:{float(row.get("confidence_value", 0)) * 100:.0f}%"></span></div>
+          </div>
+          <div class="badges"><span class="badge-trust">승패 추천</span><span>{escape(row["선발 상태"])}</span></div>
           <p class="reason-text">{escape(row["핵심 근거"])}</p>
-          <p class="pitching-signal">{escape(row["선발 매치업"])}</p>
-          <p class="pitching-signal">{escape(row["투수 신호"])}</p>
-          <p class="pitching-signal">{escape(row["라인업 신호"])}</p>
+          <div class="signal-list">
+            <p>{escape(row.get("예측 변화", "이전 예측 없음"))}</p>
+            <p>{escape(row["선발 매치업"])}</p>
+            <p>{escape(row["투수 신호"])}</p>
+            <p>{escape(row["라인업 신호"])}</p>
+          </div>
         </article>
         """
         for row in prediction_cards
@@ -2259,44 +2270,57 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-	  <title>KBO 경기 예측 대시보드</title>
+  <title>KBO 경기 예측 대시보드</title>
   <style>
     :root {{
-      --bg: #F6F8FB;
-      --card: #FFFFFF;
-      --text: #1F2937;
-      --muted: #6B7280;
-      --line: #E5E7EB;
-      --blue: #2563EB;
+      --bg: #F8FAFC;
+      --bg-soft: #EEF4FF;
+      --card: rgba(255, 255, 255, 0.92);
+      --text: #0F172A;
+      --muted: #64748B;
+      --line: #E2E8F0;
+      --blue: #1D4ED8;
+      --navy: #0B1220;
       --blue-bg: #EFF6FF;
-      --green: #16A34A;
+      --green: #059669;
       --green-bg: #ECFDF5;
-      --orange: #F59E0B;
-      --orange-bg: #FFFBEB;
+      --orange: #D97706;
+      --orange-bg: #FFF7ED;
       --red: #DC2626;
       --red-bg: #FEF2F2;
-      --shadow: 0 10px 26px rgba(31, 41, 55, 0.06);
+      --shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
+      --shadow-soft: 0 14px 35px rgba(15, 23, 42, 0.06);
     }}
     * {{ box-sizing: border-box; }}
-    body {{ margin: 0; font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif; color: var(--text); background: var(--bg); line-height: 1.55; }}
-    header {{ max-width: 1440px; margin: 0 auto; padding: 30px 32px 8px; color: var(--text); }}
-    main {{ padding: 10px 32px 56px; max-width: 1440px; margin: 0 auto; }}
+    body {{ margin: 0; font-family: Pretendard, Inter, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif; color: var(--text); background: radial-gradient(circle at 18% 0%, rgba(219, 234, 254, 0.9), transparent 34%), linear-gradient(135deg, var(--bg) 0%, var(--bg-soft) 100%); line-height: 1.55; }}
+    header {{ max-width: 1320px; margin: 0 auto; padding: 34px 28px 14px; color: var(--text); }}
+    main {{ padding: 0 28px 60px; max-width: 1320px; margin: 0 auto; }}
     h1, h2, h3 {{ margin: 0 0 14px; letter-spacing: -0.01em; }}
-    h1 {{ font-size: 30px; }}
-    h2 {{ font-size: 22px; }}
+    h1 {{ font-size: 34px; line-height: 1.18; }}
+    h2 {{ font-size: 24px; }}
     h3 {{ font-size: 17px; }}
-    .meta {{ color: var(--muted); margin-top: 8px; font-size: 14px; }}
-    .section {{ margin-top: 22px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); }}
+    .topbar {{ display:flex; justify-content:space-between; align-items:flex-start; gap:24px; }}
+    .brand-kicker {{ display:inline-flex; align-items:center; gap:8px; margin-bottom:12px; color:var(--blue); font-weight:900; font-size:13px; letter-spacing:0.04em; }}
+    .brand-kicker::before {{ content:""; width:9px; height:9px; border-radius:50%; background:var(--blue); box-shadow:0 0 0 5px var(--blue-bg); }}
+    .meta-panel {{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; min-width:360px; }}
+    .meta-pill {{ border:1px solid rgba(226, 232, 240, 0.9); background:rgba(255,255,255,0.78); color:var(--muted); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:800; box-shadow:var(--shadow-soft); }}
+    .meta {{ color: var(--muted); margin-top: 8px; font-size: 15px; max-width: 760px; }}
+    .section {{ margin-top: 22px; background: var(--card); border: 1px solid rgba(226, 232, 240, 0.75); border-radius: 24px; padding: 24px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }}
+    .hero-section {{ padding: 28px; overflow:hidden; position:relative; }}
+    .hero-section::after {{ content:""; position:absolute; width:260px; height:260px; right:-90px; top:-120px; border-radius:50%; background:rgba(29, 78, 216, 0.08); pointer-events:none; }}
     .section-title {{ display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }}
-    .eyebrow {{ color: var(--blue); font-size: 12px; font-weight: 800; letter-spacing: 0.04em; }}
+    .eyebrow {{ color: var(--blue); font-size: 12px; font-weight: 900; letter-spacing: 0.06em; }}
     .grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }}
-    .metric {{ border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: #FBFCFE; color: var(--muted); }}
-    .metric strong {{ display: block; font-size: 22px; margin-top: 6px; color: var(--text); line-height: 1.25; }}
-    table {{ width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }}
-    th, td {{ padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }}
+    .metric {{ border: 1px solid rgba(226, 232, 240, 0.9); border-radius: 18px; padding: 18px; background: rgba(248, 250, 252, 0.82); color: var(--muted); box-shadow: 0 10px 25px rgba(15, 23, 42, 0.035); }}
+    .metric strong {{ display: block; font-size: 24px; margin-top: 6px; color: var(--text); line-height: 1.25; }}
+    .hero-metrics {{ margin-top:20px; }}
+    .hero-metrics .metric {{ background:rgba(255,255,255,0.8); }}
+    .hero-metrics .metric strong {{ font-size:28px; }}
+    table {{ width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; border: 1px solid rgba(226, 232, 240, 0.95); border-radius: 16px; overflow: hidden; background:white; }}
+    th, td {{ padding: 14px 16px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }}
     th:first-child, td:first-child, td:nth-child(2) {{ text-align: left; }}
-    th {{ background: #F3F4F6; color: #374151; font-weight: 800; }}
-    tbody tr:hover {{ background: #F9FAFB; }}
+    th {{ background: #F8FAFC; color: #334155; font-weight: 900; position:sticky; top:0; z-index:1; }}
+    tbody tr:hover {{ background: #F8FAFC; }}
     tbody tr:last-child td {{ border-bottom: 0; }}
     select {{ padding: 10px 12px; border: 1px solid #D1D5DB; border-radius: 10px; font-size: 15px; background: white; }}
     .team-picker {{ display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: start; margin-bottom: 18px; }}
@@ -2308,48 +2332,63 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .tables {{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }}
     .wide-table {{ overflow-x: auto; }}
     .note {{ color: var(--muted); font-size: 13px; margin-top: 10px; }}
-    .insight-lead {{ font-size: 18px; line-height: 1.55; margin: 0 0 16px; }}
-    .prediction-cards {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:18px; }}
-    .prediction-card {{ border:1px solid var(--line); border-radius:16px; padding:18px; background:var(--card); box-shadow: 0 8px 22px rgba(31, 41, 55, 0.05); }}
-    .prediction-card.tone-good {{ border-color:#BBF7D0; background:linear-gradient(180deg, #FFFFFF 0%, var(--green-bg) 100%); }}
-    .prediction-card.tone-watch {{ border-color:#FDE68A; background:linear-gradient(180deg, #FFFFFF 0%, var(--orange-bg) 100%); }}
-    .prediction-card.tone-risk {{ border-color:#FECACA; background:linear-gradient(180deg, #FFFFFF 0%, var(--red-bg) 100%); }}
-    .prediction-card .matchup {{ color:var(--muted); font-size:13px; font-weight:800; margin-bottom:12px; }}
-    .pick-row {{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }}
-    .pick-row strong {{ display:block; font-size:22px; line-height:1.28; color:var(--text); }}
-    .probability {{ min-width:88px; text-align:right; }}
-    .probability strong {{ color:var(--blue); font-size:24px; }}
-    .small-label {{ display:block; color:var(--muted); font-size:12px; font-weight:800; margin-bottom:3px; }}
+    .insight-lead {{ font-size: 20px; line-height: 1.65; margin: 0 0 16px; max-width:850px; }}
+    .prediction-cards {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:22px; }}
+    .prediction-card {{ border:1px solid rgba(226, 232, 240, 0.72); border-radius:22px; padding:20px; background:rgba(255,255,255,0.9); box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07); }}
+    .prediction-card.tone-good {{ box-shadow: 0 18px 44px rgba(5, 150, 105, 0.10); }}
+    .prediction-card.tone-watch {{ box-shadow: 0 18px 44px rgba(217, 119, 6, 0.10); }}
+    .prediction-card.tone-risk {{ box-shadow: 0 18px 44px rgba(220, 38, 38, 0.10); }}
+    .card-topline {{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; }}
+    .prediction-card .matchup {{ color:var(--text); font-size:18px; font-weight:900; }}
+    .prediction-core {{ padding:18px; border-radius:18px; background:linear-gradient(135deg, rgba(239,246,255,0.95), rgba(255,255,255,0.95)); border:1px solid rgba(191, 219, 254, 0.7); }}
+    .prediction-core strong {{ display:block; font-size:24px; line-height:1.28; color:var(--navy); margin-top:4px; }}
+    .win-probability {{ margin-top:10px; font-size:42px; line-height:1; font-weight:950; color:var(--blue); letter-spacing:-0.03em; }}
+    .small-label {{ display:block; color:var(--muted); font-size:12px; font-weight:900; letter-spacing:0.04em; }}
+    .confidence-block {{ margin:16px 0 10px; }}
+    .confidence-label {{ display:flex; justify-content:space-between; color:var(--muted); font-size:12px; font-weight:900; margin-bottom:8px; }}
+    .confidence-track {{ height:8px; border-radius:999px; background:#E2E8F0; overflow:hidden; }}
+    .confidence-track span {{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg, var(--blue), #60A5FA); }}
     .starter-status {{ color:#374151; font-size:13px; font-weight:700; margin:8px 0 0; }}
-    .pitching-signal {{ color:#4B5563; font-size:13px; margin-top:8px; line-height:1.5; }}
-    .reason-text {{ color:var(--text); font-size:14px; font-weight:700; margin:12px 0 6px; }}
+    .reason-text {{ color:var(--text); font-size:14px; font-weight:800; margin:14px 0 10px; }}
+    .signal-list {{ border-top:1px solid var(--line); margin-top:14px; padding-top:12px; }}
+    .signal-list p {{ color:#475569; font-size:13px; margin:7px 0 0; line-height:1.5; }}
     .badges {{ display:flex; gap:7px; flex-wrap:wrap; margin:12px 0; }}
-    .badges span {{ border-radius:999px; padding:5px 9px; font-size:12px; font-weight:800; border:1px solid transparent; }}
+    .badges span, .badge-decision {{ border-radius:999px; padding:6px 10px; font-size:12px; font-weight:900; border:1px solid transparent; white-space:nowrap; }}
     .badge-trust {{ background:var(--blue-bg); color:var(--blue); border-color:#BFDBFE !important; }}
     .tone-good .badge-decision {{ background:var(--green-bg); color:var(--green); border-color:#BBF7D0 !important; }}
     .tone-watch .badge-decision {{ background:var(--orange-bg); color:#B45309; border-color:#FDE68A !important; }}
     .tone-risk .badge-decision {{ background:var(--red-bg); color:var(--red); border-color:#FECACA !important; }}
     details {{ margin-top:16px; }}
     summary {{ cursor:pointer; font-weight:800; color:var(--blue); }}
-    @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons {{ grid-template-columns: 1fr; }} main {{ padding: 16px; }} }}
-    @media (max-width: 960px) {{ .prediction-cards {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons, .prediction-cards {{ grid-template-columns: 1fr; }} main {{ padding: 0 16px 40px; }} header {{ padding:24px 16px 8px; }} .topbar {{ flex-direction:column; }} .meta-panel {{ justify-content:flex-start; min-width:0; }} }}
   </style>
 </head>
 <body>
 <header>
-  <h1>KBO 경기 예측 대시보드</h1>
-  <div class="meta">기준일 {generated_at.isoformat()} · {escape(update_stage_label)} · 오늘 경기 {len(prediction_cards)}경기 · 모델 학습 기준일 {escape(model_payload.get("training_cutoff", ""))}</div>
+  <div class="topbar">
+    <div>
+      <div class="brand-kicker">KBO PREDICTION LAB</div>
+      <h1>KBO 경기 예측 대시보드</h1>
+      <div class="meta">오늘 경기의 우세 팀, 신뢰도, 선발/라인업 상태를 한 화면에서 확인하는 스포츠 분석 리포트입니다.</div>
+    </div>
+    <div class="meta-panel">
+      <span class="meta-pill">기준일 {generated_at.isoformat()}</span>
+      <span class="meta-pill">{escape(update_stage_label)}</span>
+      <span class="meta-pill">오늘 경기 {len(prediction_cards)}경기</span>
+      <span class="meta-pill">학습 기준 {escape(model_payload.get("training_cutoff", ""))}</span>
+    </div>
+  </div>
 </header>
 <main>
-  <section class="section">
+  <section class="section hero-section">
     <div class="eyebrow">TODAY · 오늘의 판단</div>
     <h2>오늘의 KBO 예측 요약</h2>
     <p class="insight-lead">{escape(summary["headline"])}</p>
-    <div class="grid">
+    <div class="grid hero-metrics">
       <div class="metric">가장 높은 예측<strong>{escape(str(summary["top_pick"]))}</strong></div>
-      <div class="metric">예측 가능 경기<strong>{escape(str(summary["possible_games"]))}</strong></div>
-      <div class="metric">박빙/참고 경기<strong>{escape(str(summary["close_games"]))}</strong></div>
-      <div class="metric">모델 한계<strong>라인업 표시, 모델 미반영</strong></div>
+      <div class="metric">고신뢰 추천<strong>{high_confidence_games}</strong></div>
+      <div class="metric">관망 경기<strong>{watch_games}</strong></div>
+      <div class="metric">평균 신뢰도<strong>{average_confidence}</strong></div>
     </div>
     <div class="subsection">
       <h3>업데이트 상태</h3>
