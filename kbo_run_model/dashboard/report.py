@@ -86,6 +86,123 @@ MATCH_COLUMNS = {
 }
 
 
+def _format_generated_at(value: str) -> str:
+    return value.replace("T", " ")[:16]
+
+
+def _badge(text: str, css_class: str) -> str:
+    return f'<span class="badge {css_class}">{html.escape(text)}</span>'
+
+
+def _pick_badge(text: str) -> str:
+    if text == "관망":
+        return _badge(text, "watch")
+    if text == "오버":
+        return _badge(text, "over")
+    if text == "언더":
+        return _badge(text, "under")
+    return _badge(text, "pick")
+
+
+def _confidence_badge(text: str) -> str:
+    return _badge(f"신뢰도 {text}", {"낮음": "low", "보통": "mid", "높음": "high"}.get(text, "low"))
+
+
+def _score_for_card(predicted_score: str) -> str:
+    return html.escape(predicted_score.replace(" - ", " : "))
+
+
+def _win_probability_text(row) -> str:
+    away_pct = f"{row.away_win_probability * 100:.1f}%"
+    home_pct = f"{row.home_win_probability * 100:.1f}%"
+    return f"{html.escape(str(row.away_team))} {away_pct} · {html.escape(str(row.home_team))} {home_pct}"
+
+
+def _explanation(row) -> str:
+    abs_diff = abs(float(row.expected_run_diff))
+    total_gap = float(row.total_expected_runs) - float(row.over_under_line)
+    if abs_diff < 0.5:
+        return "예상 득실차가 작아 승패와 핸디캡은 관망이 적절합니다."
+    if row.over_under_pick == "오버":
+        return "예상 총득점이 기준점보다 높아 오버 쪽으로 기울어집니다."
+    if row.over_under_pick == "언더":
+        return "예상 총득점이 기준점보다 낮아 언더 쪽으로 기울어집니다."
+    if abs(total_gap) < 0.4:
+        return "예상 총득점이 기준점과 가까워 오버/언더는 관망이 적절합니다."
+    return f"{html.escape(str(row.predicted_winner))} 쪽 우세가 예상되지만 추천 강도는 신뢰도와 함께 확인해야 합니다."
+
+
+def _limited_match_list(frame: pd.DataFrame) -> str:
+    if frame.empty:
+        return "없음"
+    names = (frame["away_team"] + " vs " + frame["home_team"]).head(3).tolist()
+    remaining = len(frame) - len(names)
+    suffix = f" 외 {remaining}경기" if remaining > 0 else ""
+    return ", ".join(names) + suffix
+
+
+def _render_game_cards(match_predictions: pd.DataFrame) -> str:
+    if match_predictions.empty:
+        return '<p class="empty">해당 날짜에 예정된 KBO 경기가 없습니다.</p>'
+
+    cards = []
+    for row in match_predictions.itertuples(index=False):
+        watch_badges = []
+        if row.moneyline_pick == "관망":
+            watch_badges.append("승패 관망")
+        if row.handicap_pick == "관망":
+            watch_badges.append("핸디캡 관망")
+        if row.over_under_pick == "관망":
+            watch_badges.append("오버/언더 관망")
+        badges = "".join(_badge(value, "watch") for value in watch_badges)
+        cards.append(
+            f"""
+      <article class="game-card">
+        <div class="game-head">
+          <div>
+            <div class="game-date">{html.escape(str(row.date))} · KBO</div>
+            <h3><span class="team-name">{html.escape(str(row.away_team))}</span> <span class="muted">원정</span> vs <span class="team-name">{html.escape(str(row.home_team))}</span> <span class="muted">홈</span></h3>
+          </div>
+          {_confidence_badge(str(row.confidence_level))}
+        </div>
+        <div class="score">{_score_for_card(str(row.predicted_score))}</div>
+        <div class="pick-grid">
+          <div><div class="label">승패</div><div class="value">{_pick_badge(str(row.moneyline_pick))}</div></div>
+          <div><div class="label">승률</div><div class="value small">{_win_probability_text(row)}</div></div>
+          <div><div class="label">핸디캡 {row.handicap_line}</div><div class="value">{_pick_badge(str(row.handicap_pick))}</div></div>
+          <div><div class="label">오버/언더 {row.over_under_line}</div><div class="value">{_pick_badge(str(row.over_under_pick))}</div></div>
+          <div><div class="label">예상 승리팀</div><div class="value">{html.escape(str(row.predicted_winner))}</div></div>
+          <div><div class="label">예상 총득점</div><div class="value">{row.total_expected_runs:.1f}점</div></div>
+        </div>
+        <p class="interpretation">{html.escape(_explanation(row))}</p>
+        <div class="badges">{badges}</div>
+      </article>
+"""
+        )
+    return "\n".join(cards)
+
+
+def _render_compact_match_table(match_predictions: pd.DataFrame) -> str:
+    if match_predictions.empty:
+        return '<p class="empty">해당 날짜에 예정된 KBO 경기가 없습니다.</p>'
+    compact = pd.DataFrame(
+        {
+            "경기일시": match_predictions["date"],
+            "매치업": match_predictions["away_team"] + " vs " + match_predictions["home_team"],
+            "예상 스코어": match_predictions["predicted_score"],
+            "승패 추천": match_predictions["moneyline_pick"],
+            "승률": [
+                f"{row.away_team} {row.away_win_probability * 100:.1f}% / {row.home_team} {row.home_win_probability * 100:.1f}%"
+                for row in match_predictions.itertuples(index=False)
+            ],
+            "핸디캡 추천": match_predictions["handicap_pick"],
+            "오버/언더 추천": match_predictions["over_under_pick"],
+            "신뢰도": match_predictions["confidence_level"],
+        }
+    )
+    return compact.to_html(index=False, classes="table compact-table", border=0)
+
+
 def write_html_report(
     output_path: Path,
     summary: dict,
@@ -131,67 +248,41 @@ def write_html_report(
                 "confidence_level",
             ]
         ]
-        match_table = match_display.rename(columns=MATCH_COLUMNS).to_html(index=False, classes="table", border=0)
-        cards = []
-        for row in match_predictions.itertuples(index=False):
-            home_pct = f"{row.home_win_probability * 100:.1f}%"
-            away_pct = f"{row.away_win_probability * 100:.1f}%"
-            watch_badges = []
-            if row.moneyline_pick == "관망":
-                watch_badges.append("승패 관망")
-            if row.handicap_pick == "관망":
-                watch_badges.append("핸디캡 관망")
-            if row.over_under_pick == "관망":
-                watch_badges.append("오버/언더 관망")
-            badges = "".join(f'<span class="badge watch">{html.escape(value)}</span>' for value in watch_badges)
-            confidence_class = {"낮음": "low", "보통": "mid", "높음": "high"}.get(row.confidence_level, "low")
-            cards.append(
-                f"""
-      <article class="game-card">
-        <div class="game-head">
-          <div>
-            <div class="game-date">{html.escape(str(row.date))} · KBO</div>
-            <h3>{html.escape(str(row.away_team))} <span>원정</span> vs {html.escape(str(row.home_team))} <span>홈</span></h3>
-          </div>
-          <span class="badge {confidence_class}">신뢰도 {html.escape(str(row.confidence_level))}</span>
-        </div>
-        <div class="score">{html.escape(str(row.predicted_score))}</div>
-        <div class="pick-grid">
-          <div><div class="label">예상 승리팀</div><div class="value">{html.escape(str(row.predicted_winner))}</div></div>
-          <div><div class="label">승률</div><div class="value">홈 {home_pct} · 원정 {away_pct}</div></div>
-          <div><div class="label">승/패 추천</div><div class="value">{html.escape(str(row.moneyline_pick))}</div></div>
-          <div><div class="label">핸디캡 {row.handicap_line}</div><div class="value">{html.escape(str(row.handicap_pick))}</div></div>
-          <div><div class="label">오버/언더 {row.over_under_line}</div><div class="value">{html.escape(str(row.over_under_pick))}</div></div>
-          <div><div class="label">예상 총득점</div><div class="value">{row.total_expected_runs:.1f}점</div></div>
-        </div>
-        <div class="badges">{badges}</div>
-      </article>
-"""
-            )
-        match_cards = "\n".join(cards)
+        match_table = match_display.rename(columns=MATCH_COLUMNS).to_html(index=False, classes="table full-table", border=0)
+        compact_match_table = _render_compact_match_table(match_predictions)
+        match_cards = _render_game_cards(match_predictions)
     else:
         match_table = '<p class="empty">해당 날짜에 예정된 KBO 경기가 없습니다.</p>'
+        compact_match_table = match_table
         match_cards = match_table
 
     if match_predictions.empty:
-        high_confidence = "없음"
-        watch_games = "없음"
+        high_confidence = "신뢰도 높은 경기 없음"
+        watch_games = "현재 기준으로는 강한 추천 경기 없음"
         high_total = "없음"
         close_games = "없음"
     else:
         sorted_confidence = match_predictions.assign(abs_diff=match_predictions["expected_run_diff"].abs()).sort_values("abs_diff", ascending=False)
-        high_row = sorted_confidence.iloc[0]
-        high_confidence = f"{high_row['away_team']} vs {high_row['home_team']} ({high_row['confidence_level']}, {high_row['predicted_winner']} 우세)"
+        high_candidates = sorted_confidence[sorted_confidence["confidence_level"].ne("낮음")]
+        if high_candidates.empty:
+            high_confidence = "신뢰도 높은 경기 없음"
+        else:
+            high_row = high_candidates.iloc[0]
+            high_confidence = f"{high_row['away_team']} vs {high_row['home_team']} ({high_row['confidence_level']}, {high_row['predicted_winner']} 우세)"
         watch = match_predictions[
             match_predictions["moneyline_pick"].eq("관망")
             | match_predictions["handicap_pick"].eq("관망")
             | match_predictions["over_under_pick"].eq("관망")
         ]
-        watch_games = ", ".join((watch["away_team"] + " vs " + watch["home_team"]).head(5).tolist()) or "없음"
+        all_watch = len(watch) == len(match_predictions)
+        watch_games = "현재 기준으로는 강한 추천 경기 없음" if all_watch else _limited_match_list(watch)
         total_row = match_predictions.sort_values("total_expected_runs", ascending=False).iloc[0]
         high_total = f"{total_row['away_team']} vs {total_row['home_team']} ({total_row['total_expected_runs']:.1f}점)"
         close = match_predictions.assign(abs_diff=match_predictions["expected_run_diff"].abs()).sort_values("abs_diff").head(3)
-        close_games = ", ".join((close["away_team"] + " vs " + close["home_team"]).tolist()) or "없음"
+        close_games = ", ".join(
+            f"{row.away_team} vs {row.home_team} (득실차 {abs(row.expected_run_diff):.2f})"
+            for row in close.itertuples(index=False)
+        ) or "없음"
     search_rows = []
     for row in summary["internal_pitcher_data_search"]["files"]:
         search_rows.append(
@@ -206,7 +297,7 @@ def write_html_report(
         )
     search_table = pd.DataFrame(search_rows).rename(columns=SEARCH_COLUMNS).to_html(index=False, classes="table", border=0)
     selected = html.escape(str(summary["selected_model"]["model"]))
-    generated_at = html.escape(str(summary["generated_at"]))
+    generated_at = html.escape(_format_generated_at(str(summary["generated_at"])))
     starter_schema = summary["starter_schema_inspection"]
     starter_status = html.escape(starter_schema["status"])
     available_columns = ", ".join(starter_schema["available_columns"])
@@ -224,43 +315,59 @@ def write_html_report(
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>KBO 승패·핸디캡·오버/언더 예측 대시보드</title>
+  <title>KBO 승부 예측 대시보드</title>
   <style>
-    body {{ font-family: Arial, sans-serif; margin: 28px; color: #202124; background: #f6f7f9; }}
+    * {{ box-sizing: border-box; }}
+    body {{ font-family: Arial, sans-serif; margin: 28px; color: #202124; background: #f6f7f9; word-break: keep-all; }}
     h1, h2 {{ margin: 0 0 14px; }}
     section {{ margin-top: 24px; background: #fff; border: 1px solid #dadce0; padding: 18px; }}
-    .meta {{ color: #5f6368; margin-bottom: 16px; line-height: 1.6; }}
-    .table {{ border-collapse: collapse; width: 100%; font-size: 14px; }}
-    .table th, .table td {{ border-bottom: 1px solid #dadce0; padding: 8px; text-align: right; }}
+    .subtitle {{ color: #5f6368; margin: 0 0 18px; line-height: 1.6; }}
+    .table-wrap {{ overflow-x: auto; }}
+    .table {{ border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }}
+    .table th, .table td {{ border-bottom: 1px solid #dadce0; padding: 9px; text-align: right; white-space: nowrap; word-break: keep-all; }}
     .table th:first-child, .table td:first-child {{ text-align: left; }}
     .note {{ line-height: 1.6; }}
     .summary-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }}
     .summary-item {{ border: 1px solid #e5e7eb; padding: 12px; }}
     .label {{ color: #5f6368; font-size: 13px; margin-bottom: 6px; }}
     .value {{ font-size: 16px; font-weight: 700; }}
+    .value.small {{ font-size: 14px; line-height: 1.5; }}
     .empty {{ color: #5f6368; }}
     .game-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }}
     .game-card {{ border: 1px solid #d8dde6; padding: 16px; background: #fff; }}
     .game-head {{ display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }}
     .game-date {{ color: #5f6368; font-size: 13px; margin-bottom: 4px; }}
-    .game-card h3 {{ margin: 0; font-size: 18px; }}
-    .game-card h3 span {{ color: #6b7280; font-size: 12px; font-weight: 400; }}
-    .score {{ font-size: 26px; font-weight: 800; margin: 16px 0; }}
+    .game-card h3 {{ margin: 0; font-size: 18px; white-space: nowrap; }}
+    .team-name {{ white-space: nowrap; }}
+    .muted {{ color: #6b7280; font-size: 12px; font-weight: 400; }}
+    .score {{ font-size: 30px; font-weight: 800; margin: 16px 0; white-space: nowrap; }}
     .pick-grid {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }}
     .badge {{ display: inline-block; padding: 4px 8px; border: 1px solid #cbd5e1; font-size: 12px; font-weight: 700; white-space: nowrap; }}
+    .badge.pick {{ background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }}
+    .badge.over {{ background: #fef2f2; color: #b91c1c; border-color: #fecaca; }}
+    .badge.under {{ background: #eef2ff; color: #3730a3; border-color: #c7d2fe; }}
     .badge.low {{ background: #f8fafc; color: #475569; }}
     .badge.mid {{ background: #fff7ed; color: #9a3412; }}
     .badge.high {{ background: #ecfdf5; color: #047857; }}
     .badge.watch {{ margin-right: 6px; margin-top: 10px; background: #f1f5f9; color: #334155; }}
+    .interpretation {{ margin: 14px 0 0; color: #374151; line-height: 1.5; }}
     .detail-table {{ margin-top: 18px; overflow-x: auto; }}
+    details {{ margin-top: 14px; }}
+    summary {{ cursor: pointer; font-weight: 700; }}
   </style>
 </head>
 <body>
-  <h1>KBO 승패·핸디캡·오버/언더 예측 대시보드</h1>
-    <div class="meta">
-      예상 득점, 예상 득실차, 승률, 핸디캡, 오버/언더를 한눈에 확인하는 화면<br>
-      생성 시각={generated_at} | 예측 기준 날짜={target_context["target_date"]} | 해당 날짜 경기 수={target_context["game_count"]} | 데이터 기준={html.escape(target_context["report_mode"])}
+  <h1>KBO 승부 예측 대시보드</h1>
+  <p class="subtitle">KBO 경기 일정에 맞춰 예상 스코어, 승패 확률, 핸디캡, 오버/언더를 자동 계산합니다.</p>
+  <section>
+    <h2>기준 정보</h2>
+    <div class="summary-grid">
+      <div class="summary-item"><div class="label">생성 시각</div><div class="value">{generated_at}</div></div>
+      <div class="summary-item"><div class="label">예측 기준일</div><div class="value">{target_context["target_date"]}</div></div>
+      <div class="summary-item"><div class="label">경기 수</div><div class="value">{target_context["game_count"]}경기</div></div>
+      <div class="summary-item"><div class="label">데이터 기준</div><div class="value">{html.escape(target_context["report_mode"])}</div></div>
     </div>
+  </section>
   <section>
     <h2>일정 선택 상태</h2>
     <div class="summary-grid">
@@ -278,7 +385,12 @@ def write_html_report(
       {match_cards}
     </div>
     <div class="detail-table">
-      {match_table}
+      <h3>상세 예측표</h3>
+      <div class="table-wrap">{compact_match_table}</div>
+      <details>
+        <summary>전체 상세 수치 보기</summary>
+        <div class="table-wrap">{match_table}</div>
+      </details>
     </div>
   </section>
   <section>

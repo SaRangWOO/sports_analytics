@@ -2,43 +2,59 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>KBO 승패·핸디캡·오버/언더 예측 대시보드</title>
+  <title>KBO 승부 예측 대시보드</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 28px; color: #202124; background: #f6f7f9; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 28px; color: #202124; background: #f6f7f9; word-break: keep-all; }
     h1, h2 { margin: 0 0 14px; }
     section { margin-top: 24px; background: #fff; border: 1px solid #dadce0; padding: 18px; }
-    .meta { color: #5f6368; margin-bottom: 16px; line-height: 1.6; }
-    .table { border-collapse: collapse; width: 100%; font-size: 14px; }
-    .table th, .table td { border-bottom: 1px solid #dadce0; padding: 8px; text-align: right; }
+    .subtitle { color: #5f6368; margin: 0 0 18px; line-height: 1.6; }
+    .table-wrap { overflow-x: auto; }
+    .table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
+    .table th, .table td { border-bottom: 1px solid #dadce0; padding: 9px; text-align: right; white-space: nowrap; word-break: keep-all; }
     .table th:first-child, .table td:first-child { text-align: left; }
     .note { line-height: 1.6; }
     .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
     .summary-item { border: 1px solid #e5e7eb; padding: 12px; }
     .label { color: #5f6368; font-size: 13px; margin-bottom: 6px; }
     .value { font-size: 16px; font-weight: 700; }
+    .value.small { font-size: 14px; line-height: 1.5; }
     .empty { color: #5f6368; }
     .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
     .game-card { border: 1px solid #d8dde6; padding: 16px; background: #fff; }
     .game-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
     .game-date { color: #5f6368; font-size: 13px; margin-bottom: 4px; }
-    .game-card h3 { margin: 0; font-size: 18px; }
-    .game-card h3 span { color: #6b7280; font-size: 12px; font-weight: 400; }
-    .score { font-size: 26px; font-weight: 800; margin: 16px 0; }
+    .game-card h3 { margin: 0; font-size: 18px; white-space: nowrap; }
+    .team-name { white-space: nowrap; }
+    .muted { color: #6b7280; font-size: 12px; font-weight: 400; }
+    .score { font-size: 30px; font-weight: 800; margin: 16px 0; white-space: nowrap; }
     .pick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .badge { display: inline-block; padding: 4px 8px; border: 1px solid #cbd5e1; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .badge.pick { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    .badge.over { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .badge.under { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; }
     .badge.low { background: #f8fafc; color: #475569; }
     .badge.mid { background: #fff7ed; color: #9a3412; }
     .badge.high { background: #ecfdf5; color: #047857; }
     .badge.watch { margin-right: 6px; margin-top: 10px; background: #f1f5f9; color: #334155; }
+    .interpretation { margin: 14px 0 0; color: #374151; line-height: 1.5; }
     .detail-table { margin-top: 18px; overflow-x: auto; }
+    details { margin-top: 14px; }
+    summary { cursor: pointer; font-weight: 700; }
   </style>
 </head>
 <body>
-  <h1>KBO 승패·핸디캡·오버/언더 예측 대시보드</h1>
-    <div class="meta">
-      예상 득점, 예상 득실차, 승률, 핸디캡, 오버/언더를 한눈에 확인하는 화면<br>
-      생성 시각=2026-05-27T16:41:45 | 예측 기준 날짜=2026-05-27 | 해당 날짜 경기 수=5 | 데이터 기준=지정 날짜 기준
+  <h1>KBO 승부 예측 대시보드</h1>
+  <p class="subtitle">KBO 경기 일정에 맞춰 예상 스코어, 승패 확률, 핸디캡, 오버/언더를 자동 계산합니다.</p>
+  <section>
+    <h2>기준 정보</h2>
+    <div class="summary-grid">
+      <div class="summary-item"><div class="label">생성 시각</div><div class="value">2026-05-27 16:52</div></div>
+      <div class="summary-item"><div class="label">예측 기준일</div><div class="value">2026-05-27</div></div>
+      <div class="summary-item"><div class="label">경기 수</div><div class="value">5경기</div></div>
+      <div class="summary-item"><div class="label">데이터 기준</div><div class="value">지정 날짜 기준</div></div>
     </div>
+  </section>
   <section>
     <h2>일정 선택 상태</h2>
     <div class="summary-grid">
@@ -58,19 +74,20 @@
         <div class="game-head">
           <div>
             <div class="game-date">2026-05-27 · KBO</div>
-            <h3>KIA <span>원정</span> vs 키움 <span>홈</span></h3>
+            <h3><span class="team-name">KIA</span> <span class="muted">원정</span> vs <span class="team-name">키움</span> <span class="muted">홈</span></h3>
           </div>
           <span class="badge low">신뢰도 낮음</span>
         </div>
-        <div class="score">KIA 4.3 - 키움 3.9</div>
+        <div class="score">KIA 4.3 : 키움 3.9</div>
         <div class="pick-grid">
+          <div><div class="label">승패</div><div class="value"><span class="badge watch">관망</span></div></div>
+          <div><div class="label">승률</div><div class="value small">KIA 52.1% · 키움 47.9%</div></div>
+          <div><div class="label">핸디캡 2.5</div><div class="value"><span class="badge watch">관망</span></div></div>
+          <div><div class="label">오버/언더 8.5</div><div class="value"><span class="badge watch">관망</span></div></div>
           <div><div class="label">예상 승리팀</div><div class="value">KIA</div></div>
-          <div><div class="label">승률</div><div class="value">홈 47.9% · 원정 52.1%</div></div>
-          <div><div class="label">승/패 추천</div><div class="value">관망</div></div>
-          <div><div class="label">핸디캡 2.5</div><div class="value">관망</div></div>
-          <div><div class="label">오버/언더 8.5</div><div class="value">관망</div></div>
           <div><div class="label">예상 총득점</div><div class="value">8.2점</div></div>
         </div>
+        <p class="interpretation">예상 득실차가 작아 승패와 핸디캡은 관망이 적절합니다.</p>
         <div class="badges"><span class="badge watch">승패 관망</span><span class="badge watch">핸디캡 관망</span><span class="badge watch">오버/언더 관망</span></div>
       </article>
 
@@ -79,19 +96,20 @@
         <div class="game-head">
           <div>
             <div class="game-date">2026-05-27 · KBO</div>
-            <h3>KT <span>원정</span> vs 두산 <span>홈</span></h3>
+            <h3><span class="team-name">KT</span> <span class="muted">원정</span> vs <span class="team-name">두산</span> <span class="muted">홈</span></h3>
           </div>
           <span class="badge low">신뢰도 낮음</span>
         </div>
-        <div class="score">KT 4.0 - 두산 3.9</div>
+        <div class="score">KT 4.0 : 두산 3.9</div>
         <div class="pick-grid">
+          <div><div class="label">승패</div><div class="value"><span class="badge watch">관망</span></div></div>
+          <div><div class="label">승률</div><div class="value small">KT 49.7% · 두산 50.3%</div></div>
+          <div><div class="label">핸디캡 2.5</div><div class="value"><span class="badge watch">관망</span></div></div>
+          <div><div class="label">오버/언더 8.5</div><div class="value"><span class="badge under">언더</span></div></div>
           <div><div class="label">예상 승리팀</div><div class="value">두산</div></div>
-          <div><div class="label">승률</div><div class="value">홈 50.3% · 원정 49.7%</div></div>
-          <div><div class="label">승/패 추천</div><div class="value">관망</div></div>
-          <div><div class="label">핸디캡 2.5</div><div class="value">관망</div></div>
-          <div><div class="label">오버/언더 8.5</div><div class="value">언더</div></div>
           <div><div class="label">예상 총득점</div><div class="value">7.9점</div></div>
         </div>
+        <p class="interpretation">예상 득실차가 작아 승패와 핸디캡은 관망이 적절합니다.</p>
         <div class="badges"><span class="badge watch">승패 관망</span><span class="badge watch">핸디캡 관망</span></div>
       </article>
 
@@ -100,19 +118,20 @@
         <div class="game-head">
           <div>
             <div class="game-date">2026-05-27 · KBO</div>
-            <h3>LG <span>원정</span> vs 롯데 <span>홈</span></h3>
+            <h3><span class="team-name">LG</span> <span class="muted">원정</span> vs <span class="team-name">롯데</span> <span class="muted">홈</span></h3>
           </div>
           <span class="badge low">신뢰도 낮음</span>
         </div>
-        <div class="score">LG 3.9 - 롯데 3.7</div>
+        <div class="score">LG 3.9 : 롯데 3.7</div>
         <div class="pick-grid">
+          <div><div class="label">승패</div><div class="value"><span class="badge watch">관망</span></div></div>
+          <div><div class="label">승률</div><div class="value small">LG 50.4% · 롯데 49.6%</div></div>
+          <div><div class="label">핸디캡 2.5</div><div class="value"><span class="badge watch">관망</span></div></div>
+          <div><div class="label">오버/언더 8.5</div><div class="value"><span class="badge under">언더</span></div></div>
           <div><div class="label">예상 승리팀</div><div class="value">LG</div></div>
-          <div><div class="label">승률</div><div class="value">홈 49.6% · 원정 50.4%</div></div>
-          <div><div class="label">승/패 추천</div><div class="value">관망</div></div>
-          <div><div class="label">핸디캡 2.5</div><div class="value">관망</div></div>
-          <div><div class="label">오버/언더 8.5</div><div class="value">언더</div></div>
           <div><div class="label">예상 총득점</div><div class="value">7.6점</div></div>
         </div>
+        <p class="interpretation">예상 득실차가 작아 승패와 핸디캡은 관망이 적절합니다.</p>
         <div class="badges"><span class="badge watch">승패 관망</span><span class="badge watch">핸디캡 관망</span></div>
       </article>
 
@@ -121,19 +140,20 @@
         <div class="game-head">
           <div>
             <div class="game-date">2026-05-27 · KBO</div>
-            <h3>삼성 <span>원정</span> vs SSG <span>홈</span></h3>
+            <h3><span class="team-name">삼성</span> <span class="muted">원정</span> vs <span class="team-name">SSG</span> <span class="muted">홈</span></h3>
           </div>
           <span class="badge low">신뢰도 낮음</span>
         </div>
-        <div class="score">삼성 4.0 - SSG 4.0</div>
+        <div class="score">삼성 4.0 : SSG 4.0</div>
         <div class="pick-grid">
+          <div><div class="label">승패</div><div class="value"><span class="badge watch">관망</span></div></div>
+          <div><div class="label">승률</div><div class="value small">삼성 48.1% · SSG 51.9%</div></div>
+          <div><div class="label">핸디캡 2.5</div><div class="value"><span class="badge watch">관망</span></div></div>
+          <div><div class="label">오버/언더 8.5</div><div class="value"><span class="badge under">언더</span></div></div>
           <div><div class="label">예상 승리팀</div><div class="value">SSG</div></div>
-          <div><div class="label">승률</div><div class="value">홈 51.9% · 원정 48.1%</div></div>
-          <div><div class="label">승/패 추천</div><div class="value">관망</div></div>
-          <div><div class="label">핸디캡 2.5</div><div class="value">관망</div></div>
-          <div><div class="label">오버/언더 8.5</div><div class="value">언더</div></div>
           <div><div class="label">예상 총득점</div><div class="value">8.0점</div></div>
         </div>
+        <p class="interpretation">예상 득실차가 작아 승패와 핸디캡은 관망이 적절합니다.</p>
         <div class="badges"><span class="badge watch">승패 관망</span><span class="badge watch">핸디캡 관망</span></div>
       </article>
 
@@ -142,25 +162,95 @@
         <div class="game-head">
           <div>
             <div class="game-date">2026-05-27 · KBO</div>
-            <h3>한화 <span>원정</span> vs NC <span>홈</span></h3>
+            <h3><span class="team-name">한화</span> <span class="muted">원정</span> vs <span class="team-name">NC</span> <span class="muted">홈</span></h3>
           </div>
           <span class="badge low">신뢰도 낮음</span>
         </div>
-        <div class="score">한화 4.2 - NC 4.3</div>
+        <div class="score">한화 4.2 : NC 4.3</div>
         <div class="pick-grid">
+          <div><div class="label">승패</div><div class="value"><span class="badge watch">관망</span></div></div>
+          <div><div class="label">승률</div><div class="value small">한화 47.7% · NC 52.3%</div></div>
+          <div><div class="label">핸디캡 2.5</div><div class="value"><span class="badge watch">관망</span></div></div>
+          <div><div class="label">오버/언더 8.5</div><div class="value"><span class="badge watch">관망</span></div></div>
           <div><div class="label">예상 승리팀</div><div class="value">NC</div></div>
-          <div><div class="label">승률</div><div class="value">홈 52.3% · 원정 47.7%</div></div>
-          <div><div class="label">승/패 추천</div><div class="value">관망</div></div>
-          <div><div class="label">핸디캡 2.5</div><div class="value">관망</div></div>
-          <div><div class="label">오버/언더 8.5</div><div class="value">관망</div></div>
           <div><div class="label">예상 총득점</div><div class="value">8.5점</div></div>
         </div>
+        <p class="interpretation">예상 득실차가 작아 승패와 핸디캡은 관망이 적절합니다.</p>
         <div class="badges"><span class="badge watch">승패 관망</span><span class="badge watch">핸디캡 관망</span><span class="badge watch">오버/언더 관망</span></div>
       </article>
 
     </div>
     <div class="detail-table">
-      <table class="dataframe table">
+      <h3>상세 예측표</h3>
+      <div class="table-wrap"><table class="dataframe table compact-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>경기일시</th>
+      <th>매치업</th>
+      <th>예상 스코어</th>
+      <th>승패 추천</th>
+      <th>승률</th>
+      <th>핸디캡 추천</th>
+      <th>오버/언더 추천</th>
+      <th>신뢰도</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2026-05-27</td>
+      <td>KIA vs 키움</td>
+      <td>KIA 4.3 - 키움 3.9</td>
+      <td>관망</td>
+      <td>KIA 52.1% / 키움 47.9%</td>
+      <td>관망</td>
+      <td>관망</td>
+      <td>낮음</td>
+    </tr>
+    <tr>
+      <td>2026-05-27</td>
+      <td>KT vs 두산</td>
+      <td>KT 4.0 - 두산 3.9</td>
+      <td>관망</td>
+      <td>KT 49.7% / 두산 50.3%</td>
+      <td>관망</td>
+      <td>언더</td>
+      <td>낮음</td>
+    </tr>
+    <tr>
+      <td>2026-05-27</td>
+      <td>LG vs 롯데</td>
+      <td>LG 3.9 - 롯데 3.7</td>
+      <td>관망</td>
+      <td>LG 50.4% / 롯데 49.6%</td>
+      <td>관망</td>
+      <td>언더</td>
+      <td>낮음</td>
+    </tr>
+    <tr>
+      <td>2026-05-27</td>
+      <td>삼성 vs SSG</td>
+      <td>삼성 4.0 - SSG 4.0</td>
+      <td>관망</td>
+      <td>삼성 48.1% / SSG 51.9%</td>
+      <td>관망</td>
+      <td>언더</td>
+      <td>낮음</td>
+    </tr>
+    <tr>
+      <td>2026-05-27</td>
+      <td>한화 vs NC</td>
+      <td>한화 4.2 - NC 4.3</td>
+      <td>관망</td>
+      <td>한화 47.7% / NC 52.3%</td>
+      <td>관망</td>
+      <td>관망</td>
+      <td>낮음</td>
+    </tr>
+  </tbody>
+</table></div>
+      <details>
+        <summary>전체 상세 수치 보기</summary>
+        <div class="table-wrap"><table class="dataframe table full-table">
   <thead>
     <tr style="text-align: right;">
       <th>경기일시</th>
@@ -273,16 +363,17 @@
       <td>낮음</td>
     </tr>
   </tbody>
-</table>
+</table></div>
+      </details>
     </div>
   </section>
   <section>
     <h2>예측 결과 요약</h2>
     <div class="summary-grid">
-      <div class="summary-item"><div class="label">가장 신뢰도 높은 경기</div><div class="value">KIA vs 키움 (낮음, KIA 우세)</div></div>
-      <div class="summary-item"><div class="label">관망 경기 목록</div><div class="value">KIA vs 키움, KT vs 두산, LG vs 롯데, 삼성 vs SSG, 한화 vs NC</div></div>
+      <div class="summary-item"><div class="label">가장 신뢰도 높은 경기</div><div class="value">신뢰도 높은 경기 없음</div></div>
+      <div class="summary-item"><div class="label">관망 경기 목록</div><div class="value">현재 기준으로는 강한 추천 경기 없음</div></div>
       <div class="summary-item"><div class="label">예상 총득점 높은 경기</div><div class="value">한화 vs NC (8.5점)</div></div>
-      <div class="summary-item"><div class="label">예상 접전 경기</div><div class="value">삼성 vs SSG, 한화 vs NC, KT vs 두산</div></div>
+      <div class="summary-item"><div class="label">예상 접전 경기</div><div class="value">삼성 vs SSG (득실차 0.01), 한화 vs NC (득실차 0.04), KT vs 두산 (득실차 0.17)</div></div>
     </div>
   </section>
   <section>
