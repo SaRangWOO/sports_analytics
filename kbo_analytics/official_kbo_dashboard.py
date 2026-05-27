@@ -2225,6 +2225,37 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             return "tone-risk"
         return "tone-watch"
 
+    def trust_level(row):
+        confidence = float(row.get("confidence_value", 0))
+        if confidence >= 0.58:
+            return "높음"
+        if confidence >= 0.56:
+            return "보통"
+        return "낮음"
+
+    def recommendation_label(row):
+        decision = str(row.get("판단", ""))
+        starter_status = str(row.get("선발 상태", ""))
+        if "미확인" in starter_status:
+            return "정보 부족"
+        if "과신" in decision or "위험" in decision:
+            return "위험"
+        if "예측 가능" in decision or "추천" in decision:
+            return "추천"
+        return "관망"
+
+    def model_summary(row):
+        team = row.get("예측 구단", "-")
+        trust = trust_level(row)
+        recommendation = recommendation_label(row)
+        if recommendation == "추천":
+            return f"예측 우세: {team} · 승률 우위가 있고 신뢰도는 {trust}입니다."
+        if recommendation == "관망":
+            return f"예측 우세: {team} · 승률 우위는 있으나 신뢰도는 {trust}이라 관망이 적절합니다."
+        if recommendation == "정보 부족":
+            return f"예측 우세: {team} · 선발 정보 확인 전까지 보수적으로 해석해야 합니다."
+        return f"예측 우세: {team} · 확률이 높더라도 표본과 변동성을 함께 봐야 합니다."
+
     high_confidence_games = sum(1 for row in prediction_cards if float(row.get("confidence_value", 0)) >= 0.58)
     watch_games = sum(1 for row in prediction_cards if "참고" in str(row.get("판단", "")))
     average_confidence = (
@@ -2247,12 +2278,14 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
               <em>vs</em>
               <span>{escape(featured_right)}</span>
             </div>
+            <p class="featured-reason">오늘 경기 중 모델 신뢰도가 가장 높은 경기입니다.</p>
             <p>{escape(featured_card.get("핵심 근거", "오늘 표시할 핵심 예측이 없습니다."))}</p>
           </div>
           <div class="featured-result">
-            <span class="badge-decision">{escape(featured_card.get("판단", "-"))}</span>
+            <span class="badge-decision">{escape(recommendation_label(featured_card))}</span>
             <strong>{escape(featured_card.get("추천", "-"))}</strong>
             <div class="featured-prob">{escape(featured_card.get("예측승률", "-"))}</div>
+            <p class="featured-trust">신뢰도 {escape(trust_level(featured_card))}</p>
           </div>
         </div>
         """
@@ -2265,7 +2298,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         <article class="prediction-card {prediction_tone(row)}">
           <div class="card-topline">
             <span class="game-chip">KBO · 경기 전</span>
-            <span class="badge-decision">{escape(row["판단"])}</span>
+            <span class="badge-decision">{escape(recommendation_label(row))}</span>
           </div>
           <div class="team-row">
             <span>{escape(row["경기"].split(" vs ", 1)[0])}</span>
@@ -2278,19 +2311,24 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             <div class="win-probability">{escape(row["예측승률"])}</div>
           </div>
           <div class="confidence-block">
-            <div class="confidence-label"><span>신뢰도 {escape(row["신뢰도"])}</span><span>{escape(row["예측승률"])}</span></div>
+            <div class="confidence-label"><span>신뢰도 {escape(trust_level(row))}</span><span>{escape(row["예측승률"])}</span></div>
             <div class="confidence-track"><span style="width:{float(row.get("confidence_value", 0)) * 100:.0f}%"></span></div>
           </div>
           <div class="badges"><span class="badge-trust">승패 추천</span><span>핸디캡 관망</span><span>오버/언더 관망</span></div>
+          <div class="judgement-box">
+            <span class="small-label">모델 판단 요약</span>
+            <p>{escape(model_summary(row))}</p>
+          </div>
           <p class="reason-text">{escape(row["핵심 근거"])}</p>
           <div class="signal-list">
-            <p><strong>모델 판단</strong> · {escape(row["추천"])} / 신뢰도 {escape(row["신뢰도"])}</p>
+            <p><strong>판단 상태</strong> · {escape(row["판단"])} / 표시 등급 {escape(trust_level(row))}</p>
             <p>{escape(row["선발 상태"])}</p>
             <p>{escape(row.get("예측 변화", "이전 예측 없음"))}</p>
             <p>{escape(row["선발 매치업"])}</p>
             <p>{escape(row["투수 신호"])}</p>
             <p>{escape(row["라인업 신호"])}</p>
           </div>
+          <p class="data-standard">기준: 공식 경기 데이터 및 모델 산출값 · 예측 결과는 참고용이며 실제 경기 결과와 다를 수 있습니다.</p>
         </article>
         """
         for row in prediction_cards
@@ -2373,9 +2411,11 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .featured-teams {{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:30px; font-weight:850; letter-spacing:-0.03em; }}
     .featured-teams em, .team-row em {{ color:var(--muted); font-style:normal; font-size:13px; font-weight:900; text-transform:uppercase; }}
     .featured-copy p {{ margin:12px 0 0; color:#475569; font-size:15px; max-width:760px; }}
+    .featured-copy .featured-reason {{ color:var(--blue); font-weight:800; }}
     .featured-result {{ justify-self:end; min-width:260px; border-radius:22px; padding:20px; background:rgba(255,255,255,.86); border:1px solid rgba(226,232,240,.88); box-shadow:var(--shadow-soft); }}
     .featured-result strong {{ display:block; margin-top:14px; color:var(--navy); font-size:24px; line-height:1.25; }}
     .featured-prob {{ margin-top:12px; color:var(--blue); font-size:48px; line-height:1; font-weight:900; letter-spacing:-0.04em; }}
+    .featured-trust {{ margin:10px 0 0; color:var(--muted); font-weight:800; }}
     .prediction-cards {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:22px; }}
     .prediction-card {{ border:1px solid rgba(226, 232, 240, 0.72); border-radius:22px; padding:20px; background:rgba(255,255,255,0.9); box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07); transition:transform .18s ease, box-shadow .18s ease; }}
     .prediction-card:hover {{ transform:translateY(-3px); box-shadow:0 26px 58px rgba(15,23,42,.11); }}
@@ -2395,8 +2435,11 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .confidence-track span {{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg, var(--blue), #60A5FA); }}
     .starter-status {{ color:#374151; font-size:13px; font-weight:700; margin:8px 0 0; }}
     .reason-text {{ color:var(--text); font-size:14px; font-weight:800; margin:14px 0 10px; }}
+    .judgement-box {{ margin-top:14px; padding:14px; border-radius:16px; background:rgba(248,250,252,.86); border:1px solid rgba(226,232,240,.9); }}
+    .judgement-box p {{ margin:6px 0 0; color:var(--text); font-size:14px; font-weight:700; line-height:1.55; }}
     .signal-list {{ border-top:1px solid var(--line); margin-top:14px; padding-top:12px; }}
     .signal-list p {{ color:#475569; font-size:13px; margin:7px 0 0; line-height:1.5; }}
+    .data-standard {{ margin:14px 0 0; padding-top:12px; border-top:1px dashed rgba(148,163,184,.45); color:var(--muted); font-size:12px; line-height:1.5; }}
     .badges {{ display:flex; gap:7px; flex-wrap:wrap; margin:12px 0; }}
     .badges span, .badge-decision {{ border-radius:999px; padding:6px 10px; font-size:12px; font-weight:850; border:1px solid transparent; white-space:nowrap; }}
     .badge-trust {{ background:var(--blue-bg); color:var(--blue); border-color:#BFDBFE !important; }}
@@ -2431,10 +2474,10 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     <p class="insight-lead">{escape(summary["headline"])}</p>
     {featured_html}
     <div class="grid hero-metrics">
-      <div class="metric">TOP PICK<strong>{escape(str(summary["top_pick"]))}</strong><span class="note">가장 높은 예측 승률</span></div>
-      <div class="metric">HIGH CONFIDENCE<strong>{high_confidence_games}</strong><span class="note">58% 이상 경기</span></div>
-      <div class="metric">WATCH LIST<strong>{watch_games}</strong><span class="note">참고·관망 경기</span></div>
-      <div class="metric">AVG CONFIDENCE<strong>{average_confidence}</strong><span class="note">오늘 예측 평균</span></div>
+      <div class="metric">TOP PICK<strong>{escape(str(summary["top_pick"]))}</strong><span class="note">오늘 가장 강한 예측</span></div>
+      <div class="metric">HIGH CONFIDENCE<strong>{high_confidence_games}</strong><span class="note">고신뢰 구간 경기 수</span></div>
+      <div class="metric">WATCH LIST<strong>{watch_games}</strong><span class="note">관망 권장 경기 수</span></div>
+      <div class="metric">AVG CONFIDENCE<strong>{average_confidence}</strong><span class="note">전체 평균 신뢰도</span></div>
     </div>
     <div class="subsection">
       <h3>업데이트 상태</h3>
@@ -2502,8 +2545,8 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
   </section>
 
   <section class="section">
-    <div class="eyebrow">ETC · 모델링 성능 참고</div>
-    <h2>경기 승패 예측 모델 검증</h2>
+    <div class="eyebrow">DETAIL · 상세 데이터</div>
+    <h2>상세 예측 데이터</h2>
     <div class="grid">
       <div class="metric">학습 시즌<strong>{model_payload.get("training_start_year", "-")}~{model_payload.get("training_end_year", "-")}</strong></div>
       <div class="metric">학습 행<strong>{model_payload.get("train_rows", "-")}</strong></div>

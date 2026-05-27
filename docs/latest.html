@@ -72,9 +72,11 @@
     .featured-teams { display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:30px; font-weight:850; letter-spacing:-0.03em; }
     .featured-teams em, .team-row em { color:var(--muted); font-style:normal; font-size:13px; font-weight:900; text-transform:uppercase; }
     .featured-copy p { margin:12px 0 0; color:#475569; font-size:15px; max-width:760px; }
+    .featured-copy .featured-reason { color:var(--blue); font-weight:800; }
     .featured-result { justify-self:end; min-width:260px; border-radius:22px; padding:20px; background:rgba(255,255,255,.86); border:1px solid rgba(226,232,240,.88); box-shadow:var(--shadow-soft); }
     .featured-result strong { display:block; margin-top:14px; color:var(--navy); font-size:24px; line-height:1.25; }
     .featured-prob { margin-top:12px; color:var(--blue); font-size:48px; line-height:1; font-weight:900; letter-spacing:-0.04em; }
+    .featured-trust { margin:10px 0 0; color:var(--muted); font-weight:800; }
     .prediction-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:22px; }
     .prediction-card { border:1px solid rgba(226, 232, 240, 0.72); border-radius:22px; padding:20px; background:rgba(255,255,255,0.9); box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07); transition:transform .18s ease, box-shadow .18s ease; }
     .prediction-card:hover { transform:translateY(-3px); box-shadow:0 26px 58px rgba(15,23,42,.11); }
@@ -94,8 +96,11 @@
     .confidence-track span { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg, var(--blue), #60A5FA); }
     .starter-status { color:#374151; font-size:13px; font-weight:700; margin:8px 0 0; }
     .reason-text { color:var(--text); font-size:14px; font-weight:800; margin:14px 0 10px; }
+    .judgement-box { margin-top:14px; padding:14px; border-radius:16px; background:rgba(248,250,252,.86); border:1px solid rgba(226,232,240,.9); }
+    .judgement-box p { margin:6px 0 0; color:var(--text); font-size:14px; font-weight:700; line-height:1.55; }
     .signal-list { border-top:1px solid var(--line); margin-top:14px; padding-top:12px; }
     .signal-list p { color:#475569; font-size:13px; margin:7px 0 0; line-height:1.5; }
+    .data-standard { margin:14px 0 0; padding-top:12px; border-top:1px dashed rgba(148,163,184,.45); color:var(--muted); font-size:12px; line-height:1.5; }
     .badges { display:flex; gap:7px; flex-wrap:wrap; margin:12px 0; }
     .badges span, .badge-decision { border-radius:999px; padding:6px 10px; font-size:12px; font-weight:850; border:1px solid transparent; white-space:nowrap; }
     .badge-trust { background:var(--blue-bg); color:var(--blue); border-color:#BFDBFE !important; }
@@ -137,25 +142,27 @@
               <em>vs</em>
               <span>키움</span>
             </div>
+            <p class="featured-reason">오늘 경기 중 모델 신뢰도가 가장 높은 경기입니다.</p>
             <p>KIA 최근 5경기 흐름 우위, KIA 최근 10경기 흐름 우위</p>
           </div>
           <div class="featured-result">
-            <span class="badge-decision">참고</span>
+            <span class="badge-decision">관망</span>
             <strong>KIA 박빙 우세</strong>
             <div class="featured-prob">53.2%</div>
+            <p class="featured-trust">신뢰도 낮음</p>
           </div>
         </div>
         
     <div class="grid hero-metrics">
-      <div class="metric">TOP PICK<strong>KIA 박빙 우세 · 53.2%</strong><span class="note">가장 높은 예측 승률</span></div>
-      <div class="metric">HIGH CONFIDENCE<strong>0</strong><span class="note">58% 이상 경기</span></div>
-      <div class="metric">WATCH LIST<strong>5</strong><span class="note">참고·관망 경기</span></div>
-      <div class="metric">AVG CONFIDENCE<strong>52.3%</strong><span class="note">오늘 예측 평균</span></div>
+      <div class="metric">TOP PICK<strong>KIA 박빙 우세 · 53.2%</strong><span class="note">오늘 가장 강한 예측</span></div>
+      <div class="metric">HIGH CONFIDENCE<strong>0</strong><span class="note">고신뢰 구간 경기 수</span></div>
+      <div class="metric">WATCH LIST<strong>5</strong><span class="note">관망 권장 경기 수</span></div>
+      <div class="metric">AVG CONFIDENCE<strong>52.3%</strong><span class="note">전체 평균 신뢰도</span></div>
     </div>
     <div class="subsection">
       <h3>업데이트 상태</h3>
       <div class="grid">
-        <div class="metric">마지막 갱신<strong>2026-05-28 08:00:01</strong></div>
+        <div class="metric">마지막 갱신<strong>2026-05-28 08:34:00</strong></div>
         <div class="metric">업데이트 단계<strong>오전 정식 업데이트</strong></div>
         <div class="metric">선발 상태<strong>확정 0 · 추정 10 · 미확인 0</strong></div>
         <div class="metric">라인업 상태<strong>금일 0 · 최근 10 · 미확인 0</strong></div>
@@ -166,7 +173,7 @@
         <article class="prediction-card tone-watch">
           <div class="card-topline">
             <span class="game-chip">KBO · 경기 전</span>
-            <span class="badge-decision">참고</span>
+            <span class="badge-decision">관망</span>
           </div>
           <div class="team-row">
             <span>KIA</span>
@@ -183,21 +190,26 @@
             <div class="confidence-track"><span style="width:53%"></span></div>
           </div>
           <div class="badges"><span class="badge-trust">승패 추천</span><span>핸디캡 관망</span><span>오버/언더 관망</span></div>
+          <div class="judgement-box">
+            <span class="small-label">모델 판단 요약</span>
+            <p>예측 우세: KIA · 승률 우위는 있으나 신뢰도는 낮음이라 관망이 적절합니다.</p>
+          </div>
           <p class="reason-text">KIA 최근 5경기 흐름 우위, KIA 최근 10경기 흐름 우위</p>
           <div class="signal-list">
-            <p><strong>모델 판단</strong> · KIA 박빙 우세 / 신뢰도 낮음</p>
+            <p><strong>판단 상태</strong> · 참고 / 표시 등급 낮음</p>
             <p>추정 선발 기준</p>
-            <p>이전 예측 없음</p>
+            <p>직전 예측 대비 변화 거의 없음</p>
             <p>선발 매치업: KIA: 이의리 · 추정 · ERA 8.37 · WHIP 1.98 / 키움: 알칸타라 · 추정 · ERA 3.18 · WHIP 1.17</p>
             <p>예상 선발: 이의리 · ERA 8.37 · WHIP 1.98 · 불펜 피로 높음</p>
             <p>최근 라인업 기준 · 선발 WAR 합 10.07 · 1. 박재현(좌익수), 2. 김호령(중견수), 3. 김도영(3루수), 4. 아데를린(1루수), 5. 김선빈(2루수)</p>
           </div>
+          <p class="data-standard">기준: 공식 경기 데이터 및 모델 산출값 · 예측 결과는 참고용이며 실제 경기 결과와 다를 수 있습니다.</p>
         </article>
         
         <article class="prediction-card tone-watch">
           <div class="card-topline">
             <span class="game-chip">KBO · 경기 전</span>
-            <span class="badge-decision">참고</span>
+            <span class="badge-decision">관망</span>
           </div>
           <div class="team-row">
             <span>SSG</span>
@@ -214,21 +226,26 @@
             <div class="confidence-track"><span style="width:53%"></span></div>
           </div>
           <div class="badges"><span class="badge-trust">승패 추천</span><span>핸디캡 관망</span><span>오버/언더 관망</span></div>
+          <div class="judgement-box">
+            <span class="small-label">모델 판단 요약</span>
+            <p>예측 우세: 삼성 · 승률 우위는 있으나 신뢰도는 낮음이라 관망이 적절합니다.</p>
+          </div>
           <p class="reason-text">삼성 최근 5경기 흐름 우위, 삼성 최근 10경기 흐름 우위</p>
           <div class="signal-list">
-            <p><strong>모델 판단</strong> · 삼성 박빙 우세 / 신뢰도 낮음</p>
+            <p><strong>판단 상태</strong> · 참고 / 표시 등급 낮음</p>
             <p>추정 선발 기준</p>
-            <p>이전 예측 없음</p>
+            <p>직전 예측 대비 변화 거의 없음</p>
             <p>선발 매치업: 삼성: 최원태 · 추정 · ERA 5.53 · WHIP 1.67 / SSG: 타케다 · 추정 · ERA 8.69 · WHIP 1.96</p>
             <p>예상 선발: 최원태 · ERA 5.53 · WHIP 1.67 · 불펜 피로 보통</p>
             <p>최근 라인업 기준 · 선발 WAR 합 10.72 · 1. 김지찬(중견수), 2. 박승규(우익수), 3. 구자욱(좌익수), 4. 최형우(지명타자), 5. 디아즈(1루수)</p>
           </div>
+          <p class="data-standard">기준: 공식 경기 데이터 및 모델 산출값 · 예측 결과는 참고용이며 실제 경기 결과와 다를 수 있습니다.</p>
         </article>
         
         <article class="prediction-card tone-watch">
           <div class="card-topline">
             <span class="game-chip">KBO · 경기 전</span>
-            <span class="badge-decision">참고</span>
+            <span class="badge-decision">관망</span>
           </div>
           <div class="team-row">
             <span>LG</span>
@@ -245,21 +262,26 @@
             <div class="confidence-track"><span style="width:53%"></span></div>
           </div>
           <div class="badges"><span class="badge-trust">승패 추천</span><span>핸디캡 관망</span><span>오버/언더 관망</span></div>
+          <div class="judgement-box">
+            <span class="small-label">모델 판단 요약</span>
+            <p>예측 우세: LG · 승률 우위는 있으나 신뢰도는 낮음이라 관망이 적절합니다.</p>
+          </div>
           <p class="reason-text">LG 최근 5경기 흐름 우위, LG 최근 10경기 흐름 우위</p>
           <div class="signal-list">
-            <p><strong>모델 판단</strong> · LG 박빙 우세 / 신뢰도 낮음</p>
+            <p><strong>판단 상태</strong> · 참고 / 표시 등급 낮음</p>
             <p>추정 선발 기준</p>
-            <p>이전 예측 없음</p>
+            <p>직전 예측 대비 변화 거의 없음</p>
             <p>선발 매치업: LG: 치리노스 · 추정 · ERA 6.68 · WHIP 1.81 / 롯데: 김진욱 · 추정 · ERA 3.06 · WHIP 1.23</p>
             <p>예상 선발: 치리노스 · ERA 6.68 · WHIP 1.81 · 불펜 피로 높음</p>
             <p>최근 라인업 기준 · 선발 WAR 합 4.69 · 1. 홍창기(우익수), 2. 박해민(중견수), 3. 오스틴(지명타자), 4. 오지환(유격수), 5. 천성호(1루수)</p>
           </div>
+          <p class="data-standard">기준: 공식 경기 데이터 및 모델 산출값 · 예측 결과는 참고용이며 실제 경기 결과와 다를 수 있습니다.</p>
         </article>
         
         <article class="prediction-card tone-watch">
           <div class="card-topline">
             <span class="game-chip">KBO · 경기 전</span>
-            <span class="badge-decision">참고만</span>
+            <span class="badge-decision">관망</span>
           </div>
           <div class="team-row">
             <span>NC</span>
@@ -276,21 +298,26 @@
             <div class="confidence-track"><span style="width:51%"></span></div>
           </div>
           <div class="badges"><span class="badge-trust">승패 추천</span><span>핸디캡 관망</span><span>오버/언더 관망</span></div>
+          <div class="judgement-box">
+            <span class="small-label">모델 판단 요약</span>
+            <p>예측 우세: 한화 · 승률 우위는 있으나 신뢰도는 낮음이라 관망이 적절합니다.</p>
+          </div>
           <p class="reason-text">한화 최근 5경기 흐름 우위, 한화 최근 10경기 흐름 우위</p>
           <div class="signal-list">
-            <p><strong>모델 판단</strong> · 한화 박빙 / 신뢰도 낮음</p>
+            <p><strong>판단 상태</strong> · 참고만 / 표시 등급 낮음</p>
             <p>추정 선발 기준</p>
-            <p>이전 예측 없음</p>
+            <p>직전 예측 대비 변화 거의 없음</p>
             <p>선발 매치업: 한화: 문동주 · 추정 · ERA 5.18 · WHIP 1.56 / NC: 테일러 · 추정 · ERA 5.77 · WHIP 1.53</p>
             <p>예상 선발: 문동주 · ERA 5.18 · WHIP 1.56 · 불펜 피로 보통</p>
             <p>최근 라인업 기준 · 선발 WAR 합 11.57 · 1. 이원석(중견수), 2. 페라자(우익수), 3. 문현빈(좌익수), 4. 강백호(지명타자), 5. 노시환(3루수)</p>
           </div>
+          <p class="data-standard">기준: 공식 경기 데이터 및 모델 산출값 · 예측 결과는 참고용이며 실제 경기 결과와 다를 수 있습니다.</p>
         </article>
         
         <article class="prediction-card tone-watch">
           <div class="card-topline">
             <span class="game-chip">KBO · 경기 전</span>
-            <span class="badge-decision">참고만</span>
+            <span class="badge-decision">관망</span>
           </div>
           <div class="team-row">
             <span>KT</span>
@@ -307,15 +334,20 @@
             <div class="confidence-track"><span style="width:51%"></span></div>
           </div>
           <div class="badges"><span class="badge-trust">승패 추천</span><span>핸디캡 관망</span><span>오버/언더 관망</span></div>
+          <div class="judgement-box">
+            <span class="small-label">모델 판단 요약</span>
+            <p>예측 우세: 두산 · 승률 우위는 있으나 신뢰도는 낮음이라 관망이 적절합니다.</p>
+          </div>
           <p class="reason-text">두산 홈 경기</p>
           <div class="signal-list">
-            <p><strong>모델 판단</strong> · 두산 박빙 / 신뢰도 낮음</p>
+            <p><strong>판단 상태</strong> · 참고만 / 표시 등급 낮음</p>
             <p>추정 선발 기준</p>
-            <p>이전 예측 없음</p>
+            <p>직전 예측 대비 변화 거의 없음</p>
             <p>선발 매치업: KT: 고영표 · 추정 · ERA 5.33 · WHIP 1.31 / 두산: 벤자민 · 추정 · ERA 2.61 · WHIP 1.35</p>
             <p>예상 선발: 벤자민 · ERA 2.61 · WHIP 1.35 · 불펜 피로 높음</p>
             <p>최근 라인업 기준 · 선발 WAR 합 4.81 · 1. 정수빈(중견수), 2. 박찬호(유격수), 3. 박지훈(3루수), 4. 카메론(지명타자), 5. 김민석(좌익수)</p>
           </div>
+          <p class="data-standard">기준: 공식 경기 데이터 및 모델 산출값 · 예측 결과는 참고용이며 실제 경기 결과와 다를 수 있습니다.</p>
         </article>
         </div>
   </section>
@@ -373,8 +405,8 @@
   </section>
 
   <section class="section">
-    <div class="eyebrow">ETC · 모델링 성능 참고</div>
-    <h2>경기 승패 예측 모델 검증</h2>
+    <div class="eyebrow">DETAIL · 상세 데이터</div>
+    <h2>상세 예측 데이터</h2>
     <div class="grid">
       <div class="metric">학습 시즌<strong>2016~2026</strong></div>
       <div class="metric">학습 행<strong>11924</strong></div>
