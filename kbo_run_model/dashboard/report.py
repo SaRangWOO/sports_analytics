@@ -85,6 +85,82 @@ MATCH_COLUMNS = {
     "confidence_level": "신뢰도",
 }
 
+ERROR_GAME_COLUMNS = {
+    "date": "날짜",
+    "game_key": "경기 ID",
+    "away_team": "원정팀",
+    "home_team": "홈팀",
+    "away_actual_runs": "원정 실제 득점",
+    "away_expected_runs": "원정 예측 득점",
+    "away_run_error": "원정 오차",
+    "home_actual_runs": "홈 실제 득점",
+    "home_expected_runs": "홈 예측 득점",
+    "home_run_error": "홈 오차",
+    "run_mae": "득점 MAE",
+    "actual_total_runs": "실제 총득점",
+    "expected_total_runs": "예상 총득점",
+    "total_run_error": "총득점 오차",
+    "expected_run_diff": "예상 득실차",
+    "actual_run_diff": "실제 득실차",
+    "win_correct": "승패 적중",
+}
+
+WIN_BUCKET_COLUMNS = {
+    "bucket": "예측 승률 구간",
+    "games": "경기 수",
+    "accuracy": "승패 적중률",
+    "avg_expected_run_diff_abs": "평균 예상 득실차 절대값",
+    "avg_run_mae": "평균 득점 MAE",
+}
+
+TOTAL_RUNS_COLUMNS = {
+    "category": "구분",
+    "games": "경기 수",
+    "actual_total_runs_avg": "평균 실제 총득점",
+    "expected_total_runs_avg": "평균 예상 총득점",
+    "total_runs_mae": "총득점 MAE",
+    "over_under_accuracy_8_5": "오버/언더 8.5 적중률",
+}
+
+HANDICAP_COLUMNS = {
+    "handicap_pick": "핸디캡 추천",
+    "games": "경기 수",
+    "recommended_games": "추천 경기 수",
+    "accuracy_2_5": "핸디캡 2.5 적중률",
+}
+
+TEAM_ERROR_COLUMNS = {
+    "team": "팀",
+    "games": "경기 수",
+    "actual_avg_runs": "평균 실제 득점",
+    "predicted_avg_runs": "평균 예측 득점",
+    "run_mae": "득점 MAE",
+    "run_bias": "득점 예측 편향",
+    "opponent_actual_avg_runs": "상대 실제 평균 득점",
+    "opponent_predicted_avg_runs": "상대 예측 평균 득점",
+    "opponent_run_mae": "상대 득점 MAE",
+    "opponent_run_bias": "상대 득점 예측 편향",
+    "bias_direction": "경향",
+}
+
+BALLPARK_COLUMNS = {
+    "ballpark": "구장",
+    "games": "경기 수",
+    "actual_total_runs_avg": "평균 실제 총득점",
+    "expected_total_runs_avg": "평균 예상 총득점",
+    "total_runs_mae": "총득점 MAE",
+    "total_runs_bias": "총득점 예측 편향",
+    "bias_direction": "경향",
+}
+
+MONTHLY_COLUMNS = {
+    "month": "월/구간",
+    "games": "경기 수",
+    "run_mae": "득점 MAE",
+    "total_runs_mae": "총득점 MAE",
+    "win_accuracy": "승패 정확도",
+}
+
 
 def _format_generated_at(value: str) -> str:
     return value.replace("T", " ")[:16]
@@ -203,6 +279,11 @@ def _render_compact_match_table(match_predictions: pd.DataFrame) -> str:
     return compact.to_html(index=False, classes="table compact-table", border=0)
 
 
+def _table(frame: pd.DataFrame, columns: dict[str, str], limit: int | None = None) -> str:
+    data = frame.head(limit) if limit else frame
+    return data.rename(columns=columns).to_html(index=False, classes="table", border=0)
+
+
 def write_html_report(
     output_path: Path,
     summary: dict,
@@ -213,6 +294,7 @@ def write_html_report(
     team_scores: list[dict],
     predictions: pd.DataFrame,
     match_predictions: pd.DataFrame,
+    error_analysis: dict,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     candidate_table = pd.DataFrame(candidate_scores).rename(columns=SCORE_COLUMNS).to_html(index=False, classes="table", border=0)
@@ -221,6 +303,14 @@ def write_html_report(
     season_table = pd.DataFrame(season_scores).rename(columns=SEASON_COLUMNS).to_html(index=False, classes="table", border=0)
     team_table = pd.DataFrame(team_scores).rename(columns=TEAM_COLUMNS).to_html(index=False, classes="table", border=0)
     prediction_table = predictions.head(40).rename(columns=PREDICTION_COLUMNS).to_html(index=False, classes="table", border=0)
+    error_games = error_analysis["game_errors"]
+    top_error_table = _table(error_analysis["top_errors"][list(ERROR_GAME_COLUMNS)], ERROR_GAME_COLUMNS)
+    win_bucket_table = _table(error_analysis["win_probability_buckets"], WIN_BUCKET_COLUMNS)
+    total_runs_table = _table(error_analysis["total_runs"], TOTAL_RUNS_COLUMNS)
+    handicap_table = _table(error_analysis["handicap"], HANDICAP_COLUMNS)
+    team_error_table = _table(error_analysis["team"], TEAM_ERROR_COLUMNS)
+    ballpark_error_table = _table(error_analysis["ballpark"], BALLPARK_COLUMNS)
+    monthly_error_table = _table(error_analysis["monthly"], MONTHLY_COLUMNS)
     match_display = match_predictions.copy()
     if not match_display.empty:
         match_display["league"] = "KBO"
@@ -310,6 +400,18 @@ def write_html_report(
     under_predicted = ", ".join(f"{row['team']}({row['bias']})" for row in summary["team_bias_summary"]["under_predicted_teams"]) or "없음"
     target_context = summary["target_context"]
     schedule_check = summary["schedule_selection_check"]
+    win_accuracy = error_games["win_correct"].mean()
+    close_games = error_games[error_games["expected_run_diff"].abs().lt(0.5)]
+    strong_games = error_games[error_games["expected_run_diff"].abs().ge(1.0)]
+    close_accuracy = close_games["win_correct"].mean() if not close_games.empty else 0
+    strong_accuracy = strong_games["win_correct"].mean() if not strong_games.empty else 0
+    weakness_lines = [
+        f"가장 큰 오차 범주는 {summary['biggest_error_category']}입니다.",
+        f"팀 단위 최약 예측 대상은 {summary['weakest_team_prediction'] or '확인 불가'}입니다.",
+        f"총득점 MAE는 {summary['total_runs_mae']}이고 오버/언더 8.5 적중률은 {summary['over_under_accuracy_8_5']}입니다.",
+        f"접전 예측 경기 승패 적중률은 {close_accuracy:.4f}, 강한 우세 예측 경기 적중률은 {strong_accuracy:.4f}입니다.",
+    ]
+    weakness_summary = "<br>".join(html.escape(line) for line in weakness_lines)
 
     document = f"""<!doctype html>
 <html lang="ko">
@@ -416,6 +518,33 @@ def write_html_report(
     {abs_bucket_table}
     <h3>기존 득실차 방향 구간별 적중률</h3>
     {bucket_table}
+  </section>
+  <section>
+    <h2>성능 개선 진단</h2>
+    <p class="note">
+      {weakness_summary}<br>
+      다음 개선 추천 순서: {html.escape(str(summary["recommended_next_improvement"]))}
+    </p>
+    <div class="summary-grid">
+      <div class="summary-item"><div class="label">검증 경기 승패 정확도</div><div class="value">{win_accuracy:.4f}</div></div>
+      <div class="summary-item"><div class="label">총득점 MAE</div><div class="value">{summary["total_runs_mae"]}</div></div>
+      <div class="summary-item"><div class="label">오버/언더 8.5 적중률</div><div class="value">{summary["over_under_accuracy_8_5"]}</div></div>
+      <div class="summary-item"><div class="label">핸디캡 2.5 적중률</div><div class="value">{summary["handicap_accuracy_2_5"]}</div></div>
+    </div>
+    <h3>오차가 큰 경기 TOP 10</h3>
+    <div class="table-wrap">{top_error_table}</div>
+    <h3>승률 구간별 적중률</h3>
+    <div class="table-wrap">{win_bucket_table}</div>
+    <h3>총득점 예측 오차</h3>
+    <div class="table-wrap">{total_runs_table}</div>
+    <h3>핸디캡/오버언더 적중률</h3>
+    <div class="table-wrap">{handicap_table}</div>
+    <h3>팀별 과대/과소 예측 경향</h3>
+    <div class="table-wrap">{team_error_table}</div>
+    <h3>구장별 오차</h3>
+    <div class="table-wrap">{ballpark_error_table}</div>
+    <h3>월별/시즌 구간별 오차</h3>
+    <div class="table-wrap">{monthly_error_table}</div>
   </section>
   <section>
     <h2>데이터 상태</h2>

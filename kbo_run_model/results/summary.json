@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-27T17:20:39",
+  "generated_at": "2026-05-28T08:52:50",
   "input_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\model_training_games.csv",
   "schedule_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\prediction_games.csv",
   "target_context": {
@@ -513,7 +513,7 @@
           "home_runs_allowed",
           "pitches"
         ],
-        "row_count": 72,
+        "row_count": 90,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -594,7 +594,7 @@
           "is_starter",
           "pitches"
         ],
-        "row_count": 231,
+        "row_count": 233,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -1051,7 +1051,7 @@
           "home_runs_allowed",
           "pitches"
         ],
-        "row_count": 590,
+        "row_count": 605,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -1193,6 +1193,14 @@
       }
     ]
   },
+  "error_analysis_completed": true,
+  "biggest_error_category": "총득점 예측",
+  "weakest_team_prediction": "두산",
+  "weakest_ballpark_prediction": "청주",
+  "total_runs_mae": 3.9159,
+  "over_under_accuracy_8_5": 0.577,
+  "handicap_accuracy_2_5": 0.6635,
+  "recommended_next_improvement": "구장 득점 팩터 → 팀별 공격/실점 편향 보정 → 선발투수와 불펜 로그 수집",
   "dashboard": "kbo_run_model/results/report.html",
   "selected_model": {
     "model": "HistGradientBoostingRegressor",
@@ -1211,6 +1219,13 @@
     "expected_runs_predictions.csv",
     "match_predictions.csv",
     "schedule_selection_check.csv",
+    "error_analysis_games.csv",
+    "win_probability_bucket_metrics.csv",
+    "total_runs_error_metrics.csv",
+    "handicap_metrics.csv",
+    "team_error_metrics.csv",
+    "ballpark_error_metrics.csv",
+    "monthly_error_metrics.csv",
     "summary.json",
     "report.html"
   ]
