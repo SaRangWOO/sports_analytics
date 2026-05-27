@@ -8,6 +8,7 @@ from features.team_features import add_opponent_features, add_pre_game_team_feat
 
 def build_prediction_feature_matrix(completed_games: pd.DataFrame, target_games: pd.DataFrame) -> pd.DataFrame:
     completed_rows = build_team_game_rows(completed_games)
+    completed_rows["is_prediction_target"] = False
     target = target_games.copy()
     target["season"] = target["date"].dt.year
     target["game_key"] = target["game_id"].astype(str).str.rsplit("_", n=1).str[0]
@@ -18,6 +19,7 @@ def build_prediction_feature_matrix(completed_games: pd.DataFrame, target_games:
     target["runs_allowed"] = np.nan
     target["target_win"] = 0
     target["month"] = target["date"].dt.month
+    target["is_prediction_target"] = True
     columns = [
         "season",
         "date",
@@ -30,6 +32,7 @@ def build_prediction_feature_matrix(completed_games: pd.DataFrame, target_games:
         "target_runs",
         "runs_allowed",
         "target_win",
+        "is_prediction_target",
     ]
     if "ballpark" in target.columns:
         columns.append("ballpark")
@@ -40,5 +43,9 @@ def build_prediction_feature_matrix(completed_games: pd.DataFrame, target_games:
     combined = combined.sort_values(["season", "date", "game_key", "is_home"]).reset_index(drop=True)
     featured = add_pre_game_team_features(combined)
     featured = add_opponent_features(featured)
-    target_keys = set(target_rows["game_id"])
-    return featured[featured["game_id"].isin(target_keys)].copy().reset_index(drop=True)
+    return (
+        featured[featured["is_prediction_target"].eq(True)]
+        .drop(columns=["is_prediction_target"])
+        .copy()
+        .reset_index(drop=True)
+    )
