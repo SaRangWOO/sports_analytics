@@ -2232,13 +2232,45 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         if prediction_cards
         else "-"
     )
+    featured_card = prediction_cards[0] if prediction_cards else {}
+    featured_matchup = featured_card.get("경기", "-")
+    featured_teams = [team.strip() for team in featured_matchup.split(" vs ", 1)]
+    featured_left = featured_teams[0] if featured_teams else "-"
+    featured_right = featured_teams[1] if len(featured_teams) > 1 else "-"
+    featured_html = (
+        f"""
+        <div class="featured-match {prediction_tone(featured_card)}">
+          <div class="featured-copy">
+            <span class="featured-label">오늘의 핵심 예측</span>
+            <div class="featured-teams">
+              <span>{escape(featured_left)}</span>
+              <em>vs</em>
+              <span>{escape(featured_right)}</span>
+            </div>
+            <p>{escape(featured_card.get("핵심 근거", "오늘 표시할 핵심 예측이 없습니다."))}</p>
+          </div>
+          <div class="featured-result">
+            <span class="badge-decision">{escape(featured_card.get("판단", "-"))}</span>
+            <strong>{escape(featured_card.get("추천", "-"))}</strong>
+            <div class="featured-prob">{escape(featured_card.get("예측승률", "-"))}</div>
+          </div>
+        </div>
+        """
+        if featured_card
+        else '<div class="featured-match"><p class="note">오늘 표시할 핵심 예측이 없습니다.</p></div>'
+    )
 
     prediction_cards_html = "".join(
         f"""
         <article class="prediction-card {prediction_tone(row)}">
           <div class="card-topline">
-            <span class="matchup">{escape(row["경기"])}</span>
+            <span class="game-chip">KBO · 경기 전</span>
             <span class="badge-decision">{escape(row["판단"])}</span>
+          </div>
+          <div class="team-row">
+            <span>{escape(row["경기"].split(" vs ", 1)[0])}</span>
+            <em>vs</em>
+            <span>{escape(row["경기"].split(" vs ", 1)[1] if " vs " in row["경기"] else row["경기"])}</span>
           </div>
           <div class="prediction-core">
             <span class="small-label">예상 우세</span>
@@ -2249,9 +2281,11 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             <div class="confidence-label"><span>신뢰도 {escape(row["신뢰도"])}</span><span>{escape(row["예측승률"])}</span></div>
             <div class="confidence-track"><span style="width:{float(row.get("confidence_value", 0)) * 100:.0f}%"></span></div>
           </div>
-          <div class="badges"><span class="badge-trust">승패 추천</span><span>{escape(row["선발 상태"])}</span></div>
+          <div class="badges"><span class="badge-trust">승패 추천</span><span>핸디캡 관망</span><span>오버/언더 관망</span></div>
           <p class="reason-text">{escape(row["핵심 근거"])}</p>
           <div class="signal-list">
+            <p><strong>모델 판단</strong> · {escape(row["추천"])} / 신뢰도 {escape(row["신뢰도"])}</p>
+            <p>{escape(row["선발 상태"])}</p>
             <p>{escape(row.get("예측 변화", "이전 예측 없음"))}</p>
             <p>{escape(row["선발 매치업"])}</p>
             <p>{escape(row["투수 신호"])}</p>
@@ -2296,23 +2330,24 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     header {{ max-width: 1320px; margin: 0 auto; padding: 34px 28px 14px; color: var(--text); }}
     main {{ padding: 0 28px 60px; max-width: 1320px; margin: 0 auto; }}
     h1, h2, h3 {{ margin: 0 0 14px; letter-spacing: -0.01em; }}
-    h1 {{ font-size: 34px; line-height: 1.18; }}
+    h1 {{ font-size: 36px; line-height: 1.16; font-weight:800; letter-spacing:-0.03em; }}
     h2 {{ font-size: 24px; }}
     h3 {{ font-size: 17px; }}
     .topbar {{ display:flex; justify-content:space-between; align-items:flex-start; gap:24px; }}
-    .brand-kicker {{ display:inline-flex; align-items:center; gap:8px; margin-bottom:12px; color:var(--blue); font-weight:900; font-size:13px; letter-spacing:0.04em; }}
-    .brand-kicker::before {{ content:""; width:9px; height:9px; border-radius:50%; background:var(--blue); box-shadow:0 0 0 5px var(--blue-bg); }}
+    .brand-kicker {{ display:inline-flex; align-items:center; gap:10px; margin-bottom:12px; color:var(--blue); font-weight:900; font-size:13px; letter-spacing:0.04em; }}
+    .brand-mark {{ display:inline-grid; place-items:center; width:34px; height:34px; border-radius:12px; color:white; background:linear-gradient(135deg, var(--blue), #3B82F6); box-shadow:0 12px 26px rgba(29, 78, 216, 0.24); font-size:12px; letter-spacing:-0.01em; }}
     .meta-panel {{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; min-width:360px; }}
     .meta-pill {{ border:1px solid rgba(226, 232, 240, 0.9); background:rgba(255,255,255,0.78); color:var(--muted); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:800; box-shadow:var(--shadow-soft); }}
     .meta {{ color: var(--muted); margin-top: 8px; font-size: 15px; max-width: 760px; }}
-    .section {{ margin-top: 22px; background: var(--card); border: 1px solid rgba(226, 232, 240, 0.75); border-radius: 24px; padding: 24px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }}
+    .section {{ margin-top: 22px; background: var(--card); border: 1px solid rgba(226, 232, 240, 0.72); border-radius: 26px; padding: 24px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }}
     .hero-section {{ padding: 28px; overflow:hidden; position:relative; }}
     .hero-section::after {{ content:""; position:absolute; width:260px; height:260px; right:-90px; top:-120px; border-radius:50%; background:rgba(29, 78, 216, 0.08); pointer-events:none; }}
     .section-title {{ display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }}
     .eyebrow {{ color: var(--blue); font-size: 12px; font-weight: 900; letter-spacing: 0.06em; }}
     .grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }}
-    .metric {{ border: 1px solid rgba(226, 232, 240, 0.9); border-radius: 18px; padding: 18px; background: rgba(248, 250, 252, 0.82); color: var(--muted); box-shadow: 0 10px 25px rgba(15, 23, 42, 0.035); }}
-    .metric strong {{ display: block; font-size: 24px; margin-top: 6px; color: var(--text); line-height: 1.25; }}
+    .metric {{ position:relative; border: 1px solid rgba(226, 232, 240, 0.9); border-radius: 18px; padding: 18px; background: rgba(248, 250, 252, 0.82); color: var(--muted); box-shadow: 0 10px 25px rgba(15, 23, 42, 0.035); }}
+    .metric::before {{ content:""; display:block; width:8px; height:8px; border-radius:999px; background:var(--blue); margin-bottom:10px; opacity:.75; }}
+    .metric strong {{ display: block; font-size: 24px; margin-top: 6px; color: var(--text); line-height: 1.22; font-weight:800; letter-spacing:-0.02em; }}
     .hero-metrics {{ margin-top:20px; }}
     .hero-metrics .metric {{ background:rgba(255,255,255,0.8); }}
     .hero-metrics .metric strong {{ font-size:28px; }}
@@ -2333,43 +2368,53 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .wide-table {{ overflow-x: auto; }}
     .note {{ color: var(--muted); font-size: 13px; margin-top: 10px; }}
     .insight-lead {{ font-size: 20px; line-height: 1.65; margin: 0 0 16px; max-width:850px; }}
+    .featured-match {{ display:grid; grid-template-columns:minmax(0,1fr) 310px; gap:24px; align-items:center; margin:22px 0 8px; padding:24px; border:1px solid rgba(191, 219, 254, 0.7); border-radius:24px; background:linear-gradient(135deg, rgba(239,246,255,.95), rgba(255,255,255,.92)); box-shadow:0 22px 60px rgba(29,78,216,.10); }}
+    .featured-label {{ display:inline-flex; width:max-content; margin-bottom:12px; border-radius:999px; padding:7px 10px; background:var(--blue-bg); color:var(--blue); font-weight:900; font-size:12px; }}
+    .featured-teams {{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:30px; font-weight:850; letter-spacing:-0.03em; }}
+    .featured-teams em, .team-row em {{ color:var(--muted); font-style:normal; font-size:13px; font-weight:900; text-transform:uppercase; }}
+    .featured-copy p {{ margin:12px 0 0; color:#475569; font-size:15px; max-width:760px; }}
+    .featured-result {{ justify-self:end; min-width:260px; border-radius:22px; padding:20px; background:rgba(255,255,255,.86); border:1px solid rgba(226,232,240,.88); box-shadow:var(--shadow-soft); }}
+    .featured-result strong {{ display:block; margin-top:14px; color:var(--navy); font-size:24px; line-height:1.25; }}
+    .featured-prob {{ margin-top:12px; color:var(--blue); font-size:48px; line-height:1; font-weight:900; letter-spacing:-0.04em; }}
     .prediction-cards {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:22px; }}
-    .prediction-card {{ border:1px solid rgba(226, 232, 240, 0.72); border-radius:22px; padding:20px; background:rgba(255,255,255,0.9); box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07); }}
+    .prediction-card {{ border:1px solid rgba(226, 232, 240, 0.72); border-radius:22px; padding:20px; background:rgba(255,255,255,0.9); box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07); transition:transform .18s ease, box-shadow .18s ease; }}
+    .prediction-card:hover {{ transform:translateY(-3px); box-shadow:0 26px 58px rgba(15,23,42,.11); }}
     .prediction-card.tone-good {{ box-shadow: 0 18px 44px rgba(5, 150, 105, 0.10); }}
     .prediction-card.tone-watch {{ box-shadow: 0 18px 44px rgba(217, 119, 6, 0.10); }}
     .prediction-card.tone-risk {{ box-shadow: 0 18px 44px rgba(220, 38, 38, 0.10); }}
-    .card-topline {{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; }}
-    .prediction-card .matchup {{ color:var(--text); font-size:18px; font-weight:900; }}
+    .card-topline {{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }}
+    .game-chip {{ color:var(--muted); background:#F8FAFC; border:1px solid var(--line); border-radius:999px; padding:6px 9px; font-size:12px; font-weight:900; }}
+    .team-row {{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; font-size:20px; font-weight:850; color:var(--navy); letter-spacing:-0.02em; }}
     .prediction-core {{ padding:18px; border-radius:18px; background:linear-gradient(135deg, rgba(239,246,255,0.95), rgba(255,255,255,0.95)); border:1px solid rgba(191, 219, 254, 0.7); }}
     .prediction-core strong {{ display:block; font-size:24px; line-height:1.28; color:var(--navy); margin-top:4px; }}
-    .win-probability {{ margin-top:10px; font-size:42px; line-height:1; font-weight:950; color:var(--blue); letter-spacing:-0.03em; }}
+    .win-probability {{ margin-top:10px; font-size:40px; line-height:1; font-weight:850; color:var(--blue); letter-spacing:-0.04em; }}
     .small-label {{ display:block; color:var(--muted); font-size:12px; font-weight:900; letter-spacing:0.04em; }}
     .confidence-block {{ margin:16px 0 10px; }}
     .confidence-label {{ display:flex; justify-content:space-between; color:var(--muted); font-size:12px; font-weight:900; margin-bottom:8px; }}
-    .confidence-track {{ height:8px; border-radius:999px; background:#E2E8F0; overflow:hidden; }}
+    .confidence-track {{ height:6px; border-radius:999px; background:#E2E8F0; overflow:hidden; }}
     .confidence-track span {{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg, var(--blue), #60A5FA); }}
     .starter-status {{ color:#374151; font-size:13px; font-weight:700; margin:8px 0 0; }}
     .reason-text {{ color:var(--text); font-size:14px; font-weight:800; margin:14px 0 10px; }}
     .signal-list {{ border-top:1px solid var(--line); margin-top:14px; padding-top:12px; }}
     .signal-list p {{ color:#475569; font-size:13px; margin:7px 0 0; line-height:1.5; }}
     .badges {{ display:flex; gap:7px; flex-wrap:wrap; margin:12px 0; }}
-    .badges span, .badge-decision {{ border-radius:999px; padding:6px 10px; font-size:12px; font-weight:900; border:1px solid transparent; white-space:nowrap; }}
+    .badges span, .badge-decision {{ border-radius:999px; padding:6px 10px; font-size:12px; font-weight:850; border:1px solid transparent; white-space:nowrap; }}
     .badge-trust {{ background:var(--blue-bg); color:var(--blue); border-color:#BFDBFE !important; }}
     .tone-good .badge-decision {{ background:var(--green-bg); color:var(--green); border-color:#BBF7D0 !important; }}
     .tone-watch .badge-decision {{ background:var(--orange-bg); color:#B45309; border-color:#FDE68A !important; }}
     .tone-risk .badge-decision {{ background:var(--red-bg); color:var(--red); border-color:#FECACA !important; }}
     details {{ margin-top:16px; }}
     summary {{ cursor:pointer; font-weight:800; color:var(--blue); }}
-    @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons, .prediction-cards {{ grid-template-columns: 1fr; }} main {{ padding: 0 16px 40px; }} header {{ padding:24px 16px 8px; }} .topbar {{ flex-direction:column; }} .meta-panel {{ justify-content:flex-start; min-width:0; }} }}
+    @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons, .prediction-cards, .featured-match {{ grid-template-columns: 1fr; }} main {{ padding: 0 16px 40px; }} header {{ padding:24px 16px 8px; }} .topbar {{ flex-direction:column; }} .meta-panel {{ justify-content:flex-start; min-width:0; }} .featured-result {{ justify-self:stretch; }} }}
   </style>
 </head>
 <body>
 <header>
   <div class="topbar">
     <div>
-      <div class="brand-kicker">KBO PREDICTION LAB</div>
+      <div class="brand-kicker"><span class="brand-mark">KBO</span><span>KBO PREDICTION LAB</span></div>
       <h1>KBO 경기 예측 대시보드</h1>
-      <div class="meta">오늘 경기의 우세 팀, 신뢰도, 선발/라인업 상태를 한 화면에서 확인하는 스포츠 분석 리포트입니다.</div>
+      <div class="meta">데이터 기반 KBO 경기 예측 리포트 · 오늘 경기의 우세 팀, 신뢰도, 선발/라인업 상태를 한 화면에서 확인합니다.</div>
     </div>
     <div class="meta-panel">
       <span class="meta-pill">기준일 {generated_at.isoformat()}</span>
@@ -2384,11 +2429,12 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     <div class="eyebrow">TODAY · 오늘의 판단</div>
     <h2>오늘의 KBO 예측 요약</h2>
     <p class="insight-lead">{escape(summary["headline"])}</p>
+    {featured_html}
     <div class="grid hero-metrics">
-      <div class="metric">가장 높은 예측<strong>{escape(str(summary["top_pick"]))}</strong></div>
-      <div class="metric">고신뢰 추천<strong>{high_confidence_games}</strong></div>
-      <div class="metric">관망 경기<strong>{watch_games}</strong></div>
-      <div class="metric">평균 신뢰도<strong>{average_confidence}</strong></div>
+      <div class="metric">TOP PICK<strong>{escape(str(summary["top_pick"]))}</strong><span class="note">가장 높은 예측 승률</span></div>
+      <div class="metric">HIGH CONFIDENCE<strong>{high_confidence_games}</strong><span class="note">58% 이상 경기</span></div>
+      <div class="metric">WATCH LIST<strong>{watch_games}</strong><span class="note">참고·관망 경기</span></div>
+      <div class="metric">AVG CONFIDENCE<strong>{average_confidence}</strong><span class="note">오늘 예측 평균</span></div>
     </div>
     <div class="subsection">
       <h3>업데이트 상태</h3>
