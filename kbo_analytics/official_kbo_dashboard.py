@@ -2216,10 +2216,13 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context, status_payload, lineup_context)
     prediction_cards = append_pregame_prediction_history(prediction_cards, status_payload, lineup_context, reference_datetime or datetime.now(), update_stage)
     summary = today_summary(prediction_cards)
+    confidence_threshold = float((model_payload.get("confidence_thresholds") or {}).get("top_20_percent_confidence", 0.58))
+    recommendation_enabled = bool((model_payload.get("confidence_thresholds") or {}).get("recommendation_enabled", False))
+
     def prediction_tone(row):
         decision = str(row.get("판단", ""))
-        trust = str(row.get("신뢰도", ""))
-        if "예측 가능" in decision or "추천" in decision or trust == "보통":
+        confidence = float(row.get("confidence_value", 0))
+        if recommendation_enabled and confidence >= confidence_threshold:
             return "tone-good"
         if "과신" in decision or "위험" in decision:
             return "tone-risk"
@@ -2227,7 +2230,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
 
     def trust_level(row):
         confidence = float(row.get("confidence_value", 0))
-        if confidence >= 0.58:
+        if recommendation_enabled and confidence >= confidence_threshold:
             return "높음"
         if confidence >= 0.56:
             return "보통"
@@ -2240,7 +2243,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             return "정보 부족"
         if "과신" in decision or "위험" in decision:
             return "위험"
-        if "예측 가능" in decision or "추천" in decision:
+        if recommendation_enabled and float(row.get("confidence_value", 0)) >= confidence_threshold:
             return "추천"
         return "관망"
 
@@ -2256,8 +2259,8 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             return f"예측 우세: {team} · 선발 정보 확인 전까지 보수적으로 해석해야 합니다."
         return f"예측 우세: {team} · 확률이 높더라도 표본과 변동성을 함께 봐야 합니다."
 
-    high_confidence_games = sum(1 for row in prediction_cards if float(row.get("confidence_value", 0)) >= 0.58)
-    watch_games = sum(1 for row in prediction_cards if "참고" in str(row.get("판단", "")))
+    high_confidence_games = sum(1 for row in prediction_cards if recommendation_label(row) == "추천")
+    watch_games = sum(1 for row in prediction_cards if recommendation_label(row) == "관망")
     average_confidence = (
         f'{sum(float(row.get("confidence_value", 0)) for row in prediction_cards) / len(prediction_cards):.1%}'
         if prediction_cards
@@ -2463,7 +2466,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <span class="meta-pill">기준일 {generated_at.isoformat()}</span>
       <span class="meta-pill">{escape(update_stage_label)}</span>
       <span class="meta-pill">오늘 경기 {len(prediction_cards)}경기</span>
-      <span class="meta-pill">학습 기준 {escape(model_payload.get("training_cutoff", ""))}</span>
+      <span class="meta-pill">예측 학습 {escape(model_payload.get("prediction_training_cutoff", model_payload.get("training_cutoff", "")))}</span>
     </div>
   </div>
 </header>
@@ -2552,6 +2555,12 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="metric">학습 행<strong>{model_payload.get("train_rows", "-")}</strong></div>
       <div class="metric">검증 행<strong>{model_payload.get("test_rows", "-")}</strong></div>
       <div class="metric">검증 정확도<strong>{model_payload.get("accuracy", "-")}</strong></div>
+    </div>
+    <div class="grid">
+      <div class="metric">검증 cutoff<strong>{model_payload.get("validation_cutoff", model_payload.get("training_cutoff", "-"))}</strong></div>
+      <div class="metric">예측 학습 cutoff<strong>{model_payload.get("prediction_training_cutoff", "-")}</strong></div>
+      <div class="metric">최신 반영 경기일<strong>{model_payload.get("latest_completed_game_date_used", "-")}</strong></div>
+      <div class="metric">이번 주 반영<strong>{model_payload.get("current_week_games_included_for_prediction", "-")}</strong></div>
     </div>
     <p class="note">모델 상태: 전체 적중률 {model_payload.get("accuracy", "-")}, 55% 이상 예측 경기 적중률 {confidence_rows[1]["적중률"] if len(confidence_rows) > 1 else "-"}입니다. 현재 선택 모델은 단순 정확도 최고 모델이 아니라, Brier Score와 Log Loss를 함께 고려해 확률 품질이 상대적으로 안정적인 모델을 선택합니다. 60% 이상 구간은 평균 예측승률과 실제 승률이 비슷하더라도 표본 수가 작아 강한 정배보다는 참고 신호로 해석합니다.</p>
     <details>

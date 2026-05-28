@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -106,6 +106,56 @@ def chronological_split_index(dates: pd.Series, train_ratio: float = 0.8):
     cutoff_date = unique_dates.iloc[date_index]
     split_index = int((ordered_dates < cutoff_date).sum())
     return max(min(split_index, len(ordered_dates) - 1), 1)
+
+
+def probability_distribution(values):
+    values = np.asarray(values, dtype=float)
+    if len(values) == 0:
+        return {"total_games": 0, "p50": None, "p75": None, "p90": None, "max": None, "over_53": 0, "over_55": 0, "over_58": 0, "over_60": 0}
+    confidence = np.maximum(values, 1 - values)
+    return {
+        "total_games": int(len(confidence)),
+        "p50": round(float(np.percentile(confidence, 50)), 3),
+        "p75": round(float(np.percentile(confidence, 75)), 3),
+        "p90": round(float(np.percentile(confidence, 90)), 3),
+        "max": round(float(confidence.max()), 3),
+        "over_53": int((confidence >= 0.53).sum()),
+        "over_55": int((confidence >= 0.55).sum()),
+        "over_58": int((confidence >= 0.58).sum()),
+        "over_60": int((confidence >= 0.60).sum()),
+    }
+
+
+def confidence_bucket_policy(y_true: np.ndarray, probability: np.ndarray):
+    confidence = np.maximum(probability, 1 - probability)
+    pred = (probability >= 0.5).astype(int)
+    correct = pred == y_true
+    overall_accuracy = float(correct.mean()) if len(correct) else 0.0
+    top20_threshold = float(np.percentile(confidence, 80)) if len(confidence) else 1.0
+    top20_mask = confidence >= top20_threshold
+    top20_accuracy = float(correct[top20_mask].mean()) if top20_mask.any() else 0.0
+    return {
+        "confidence_thresholds": {
+            "top_20_percent_confidence": round(top20_threshold, 3),
+            "recommendation_enabled": bool(top20_mask.any() and top20_accuracy > overall_accuracy),
+            "recommendation_rule": "confidence가 백테스트 상위 20% 구간이고 해당 구간 적중률이 전체 적중률보다 높을 때 추천 후보로 표시",
+        },
+        "confidence_bucket_performance": {
+            "overall_accuracy": round(overall_accuracy, 3),
+            "top_20_percent_accuracy": round(top20_accuracy, 3),
+            "top_20_percent_games": int(top20_mask.sum()),
+        },
+    }
+
+
+def write_probability_distribution_report(results_dir: Path, backtest_probability, today_probability):
+    rows = []
+    for split, values in [("backtest", backtest_probability), ("today", today_probability)]:
+        row = {"split": split}
+        row.update(probability_distribution(values))
+        rows.append(row)
+    pd.DataFrame(rows).to_csv(results_dir / "probability_distribution_report.csv", index=False, encoding="utf-8-sig")
+    return rows
 
 
 def sklearn_candidate_specs(recency_weight):
@@ -330,7 +380,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
                 score = probability_scores(py_test, probability)
                 candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
 
-    payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, completed)
+    payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games)
     if payload.get("feature_importance"):
         pd.DataFrame(
             [{"feature": feature, "importance": importance} for feature, importance in payload["feature_importance"].items()]
@@ -416,7 +466,40 @@ def permutation_importance(best: dict, y_eval: np.ndarray):
     return {name: round(value, 6) for name, value in sorted(importances, key=lambda x: x[1], reverse=True)}
 
 
-def build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, completed):
+def train_prediction_bundle(best, training_games, prediction_training_cutoff, data_dir, results_dir):
+    prediction_completed = training_games[
+        (training_games["status"] == "Final")
+        & (pd.to_datetime(training_games["date"]).dt.date <= prediction_training_cutoff)
+    ].copy()
+    prediction_model_input = results_dir / "_prediction_model_training_games.tmp.csv"
+    prediction_completed.to_csv(prediction_model_input, index=False, encoding="utf-8-sig")
+    prediction_features = build_features(prediction_model_input)
+    prediction_model_input.unlink(missing_ok=True)
+    columns = best["columns"]
+    if best.get("prediction_unit", "team") == "game":
+        frame = build_game_level_frame(prediction_features).dropna(subset=["target_home_win"]).copy()
+        px, py = prepare_game_level_matrix(frame)
+        weight_dates = pd.to_datetime(frame["date"])
+    else:
+        px, py = prepare_matrix(prediction_features)
+        weight_dates = pd.to_datetime(prediction_features["date"])
+    px = px[columns]
+    scaled, _, mean, std = standardize_train_test(px, px)
+    if best["model_type"] == "from_scratch_logistic_regression":
+        weights, bias = train_logistic_regression(scaled.to_numpy(), py, lr=0.05, epochs=3500)
+        return {"model_type": "from_scratch_logistic_regression", "weights": weights, "bias": bias, "mean": mean, "std": std}
+    from sklearn.base import clone
+    model = clone(best["model"])
+    fit_kwargs = {}
+    if "시간가중" in best["name"]:
+        years = weight_dates.dt.year
+        max_year = int(years.max())
+        fit_kwargs["sample_weight"] = (0.85 ** (max_year - years)).clip(lower=0.35).to_numpy(dtype=float)
+    model.fit(scaled, py, **fit_kwargs)
+    return {"model_type": best["model_type"], "model": model, "mean": mean, "std": std}
+
+
+def build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games):
     columns = best["columns"]
     probability = best["probability"]
     pred = best["pred"]
@@ -426,6 +509,17 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
     bias = best.get("bias")
     prediction_unit = best.get("prediction_unit", "team")
     y_eval = best.get("y_test", y_test)
+    prediction_training_cutoff = prediction_date - timedelta(days=1)
+    latest_completed = training_games[
+        (training_games["status"] == "Final")
+        & (pd.to_datetime(training_games["date"]).dt.date <= prediction_training_cutoff)
+    ].copy()
+    latest_completed_game_date = pd.to_datetime(latest_completed["date"]).dt.date.max().isoformat() if not latest_completed.empty else ""
+    current_week_games_included = bool(
+        not latest_completed.empty
+        and pd.to_datetime(latest_completed["date"]).dt.date.gt(cutoff).any()
+    )
+    prediction_bundle = train_prediction_bundle(best, training_games, prediction_training_cutoff, data_dir, results_dir)
 
     if prediction_unit == "game":
         recent = best["test_frame"].copy()
@@ -468,8 +562,8 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         game_prediction_frame["date_obj"] = pd.to_datetime(game_prediction_frame["date"]).dt.date
         today_games = game_prediction_frame[(game_prediction_frame["date_obj"] == prediction_date) & (game_prediction_frame["target_home_win"].isna())].copy()
         if not today_games.empty:
-            prediction_scaled = align_game_level_matrix(today_games.drop(columns=["date_obj"]), columns, mean, std)
-            game_probability = best["model"].predict_proba(prediction_scaled)[:, 1]
+            prediction_scaled = align_game_level_matrix(today_games.drop(columns=["date_obj"]), columns, prediction_bundle["mean"], prediction_bundle["std"])
+            game_probability = prediction_bundle["model"].predict_proba(prediction_scaled)[:, 1]
             for (_, row), home_prob in zip(today_games.iterrows(), game_probability):
                 home_pick = home_prob >= 0.5
                 predicted_team = row["home_team"] if home_pick else row["away_team"]
@@ -479,11 +573,11 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
                     {"경기일": row["date"], "기준팀": row["away_team"], "상대팀": row["home_team"], "예측 구단": predicted_team, "예측승률": f"{1 - home_prob:.1%}", "예측": "승리 예측" if not home_pick else "패배 예측", "예측 근거": reason},
                 ])
     elif not today_features.empty:
-        prediction_scaled = align_prediction_matrix(today_features.drop(columns=["date_obj"]), columns, mean, std)
-        if best["model_type"] == "from_scratch_logistic_regression":
-            raw_today_probability = sigmoid(prediction_scaled.to_numpy() @ weights + bias)
+        prediction_scaled = align_prediction_matrix(today_features.drop(columns=["date_obj"]), columns, prediction_bundle["mean"], prediction_bundle["std"])
+        if prediction_bundle["model_type"] == "from_scratch_logistic_regression":
+            raw_today_probability = sigmoid(prediction_scaled.to_numpy() @ prediction_bundle["weights"] + prediction_bundle["bias"])
         else:
-            raw_today_probability = best["model"].predict_proba(prediction_scaled)[:, 1]
+            raw_today_probability = prediction_bundle["model"].predict_proba(prediction_scaled)[:, 1]
         today_probability = normalize_game_probabilities(today_features, raw_today_probability)
         today_features["경기일"] = pd.to_datetime(today_features["date"]).dt.strftime("%Y-%m-%d")
         today_features["기준팀"] = today_features["team"]
@@ -494,9 +588,23 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         today_features["예측 근거"] = today_features.apply(lambda row: prediction_reason(row, row["예측 구단"]), axis=1)
         today_predictions = today_features[["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "예측 근거"]].to_dict(orient="records")
 
+    today_probability_values = []
+    for row in today_predictions:
+        try:
+            today_probability_values.append(float(str(row["예측승률"]).replace("%", "")) / 100)
+        except (KeyError, ValueError):
+            continue
+    distribution_rows = write_probability_distribution_report(results_dir, probability, today_probability_values)
+    today_distribution = next((row for row in distribution_rows if row["split"] == "today"), {})
+    policy = confidence_bucket_policy(y_eval, probability)
+
     payload = {
         "available": True,
         "training_cutoff": cutoff.isoformat(),
+        "validation_cutoff": cutoff.isoformat(),
+        "prediction_training_cutoff": prediction_training_cutoff.isoformat(),
+        "latest_completed_game_date_used": latest_completed_game_date,
+        "current_week_games_included_for_prediction": current_week_games_included,
         "training_start_year": int(completed["date"].dt.year.min()),
         "training_end_year": int(completed["date"].dt.year.max()),
         "train_rows": train_rows,
@@ -506,6 +614,10 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         "candidate_results": candidate_results,
         "confidence_metrics": confidence_metrics(y_eval, probability),
         "calibration_table": calibration_table(y_eval, probability),
+        "confidence_thresholds": policy["confidence_thresholds"],
+        "confidence_bucket_performance": policy["confidence_bucket_performance"],
+        "today_probability_distribution": today_distribution,
+        "confidence_policy_note": "예측승률 자체는 보정하지 않고, 백테스트 상위 확신 구간과 정보 품질을 표시용 신뢰도 판단에 사용합니다.",
         "recent_backtest": recent_backtest,
         "today_predictions": today_predictions,
         "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
