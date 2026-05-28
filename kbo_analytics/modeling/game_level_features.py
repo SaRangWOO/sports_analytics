@@ -6,9 +6,26 @@ import numpy as np
 import pandas as pd
 
 
+FATIGUE_SCORE = {"낮음": 0.0, "보통": 1.0, "높음": 2.0}
+NEUTRAL_STARTER_ERA = 4.5
+NEUTRAL_STARTER_WHIP = 1.35
+
+
+def _recent_team_games(working: pd.DataFrame, days: int) -> pd.Series:
+    counts = pd.Series(0, index=working.index, dtype=float)
+    for (_, _), team_rows in working.sort_values(["date_dt", "game_id"]).groupby(["season", "team"], sort=False):
+        dates = team_rows["date_dt"]
+        for idx, current_date in dates.items():
+            counts.loc[idx] = int(((dates < current_date) & (dates >= current_date - pd.Timedelta(days=days))).sum())
+    return counts
+
+
 def build_game_level_frame(features: pd.DataFrame) -> pd.DataFrame:
     rows = []
     working = features.copy()
+    working["date_dt"] = pd.to_datetime(working["date"])
+    working["season"] = working["date_dt"].dt.year
+    working["recent_3day_games"] = _recent_team_games(working, 3)
     working["actual_game_id"] = working["game_id"].astype(str).str.rsplit("_", n=1).str[0]
     for game_id, game_rows in working.groupby("actual_game_id", sort=False):
         if len(game_rows) != 2:
@@ -31,6 +48,14 @@ def build_game_level_frame(features: pd.DataFrame) -> pd.DataFrame:
                 "recent_10_win_rate_gap": round(float(home["recent_10_win_rate"] - away["recent_10_win_rate"]), 4),
                 "season_win_rate_gap": round(float(home["season_win_rate_prior"] - away["season_win_rate_prior"]), 4),
                 "season_avg_run_diff_gap": round(float(home["season_avg_run_diff_prior"] - away["season_avg_run_diff_prior"]), 4),
+                "home_recent_5_runs_avg": round(float(home["avg_score_last_5"]), 4),
+                "away_recent_5_runs_avg": round(float(away["avg_score_last_5"]), 4),
+                "recent_5_runs_avg_gap": round(float(home["avg_score_last_5"] - away["avg_score_last_5"]), 4),
+                "home_recent_5_allowed_avg": round(float(home["avg_allowed_last_5"]), 4),
+                "away_recent_5_allowed_avg": round(float(away["avg_allowed_last_5"]), 4),
+                "recent_5_allowed_avg_gap": round(float(away["avg_allowed_last_5"] - home["avg_allowed_last_5"]), 4),
+                "recent_5_run_creation_gap": round(float(home["avg_score_last_5"] - away["avg_allowed_last_5"]), 4),
+                "recent_10_run_creation_gap": round(float(home["avg_run_diff_last_10"] - away["avg_run_diff_last_10"]), 4),
                 "recent_run_diff_10_gap": round(float(home["avg_run_diff_last_10"] - away["avg_run_diff_last_10"]), 4),
                 "home_venue_win_rate": round(float(home["venue_win_rate_prior"]), 4),
                 "away_venue_win_rate": round(float(away["venue_win_rate_prior"]), 4),
@@ -38,15 +63,104 @@ def build_game_level_frame(features: pd.DataFrame) -> pd.DataFrame:
                 "home_games_last_7_days": int(home["games_last_7_days"]),
                 "away_games_last_7_days": int(away["games_last_7_days"]),
                 "games_last_7_days_gap": int(away["games_last_7_days"] - home["games_last_7_days"]),
+                "home_recent_3day_games": int(home["recent_3day_games"]),
+                "away_recent_3day_games": int(away["recent_3day_games"]),
+                "recent_3day_games_gap": int(away["recent_3day_games"] - home["recent_3day_games"]),
                 "home_rest_days": round(float(home["rest_days"]), 2),
                 "away_rest_days": round(float(away["rest_days"]), 2),
                 "rest_days_gap": round(float(home["rest_days"] - away["rest_days"]), 2),
                 "home_bullpen_fatigue_proxy": round(float(home["games_last_7_days"] + home["back_to_back"] * 1.5), 2),
                 "away_bullpen_fatigue_proxy": round(float(away["games_last_7_days"] + away["back_to_back"] * 1.5), 2),
+                "home_bullpen_fatigue_score": round(float(home["recent_3day_games"] + home["back_to_back"] * 1.5), 2),
+                "away_bullpen_fatigue_score": round(float(away["recent_3day_games"] + away["back_to_back"] * 1.5), 2),
+                "bullpen_fatigue_score_gap": round(float((away["recent_3day_games"] + away["back_to_back"] * 1.5) - (home["recent_3day_games"] + home["back_to_back"] * 1.5)), 2),
                 "bullpen_fatigue_gap": round(float((away["games_last_7_days"] + away["back_to_back"] * 1.5) - (home["games_last_7_days"] + home["back_to_back"] * 1.5)), 2),
             }
         )
     return pd.DataFrame(rows)
+
+
+def _starter_quality(era: float, whip: float, info_quality: float) -> float:
+    era_score = max(0.0, (6.0 - era) / 6.0) * 55.0
+    whip_score = max(0.0, (2.0 - whip) / 2.0) * 45.0
+    return round((era_score + whip_score) * max(info_quality, 0.0), 4)
+
+
+def attach_pitching_context(frame: pd.DataFrame, pitching_context: pd.DataFrame) -> pd.DataFrame:
+    enriched = frame.copy()
+    for side in ["home", "away"]:
+        enriched[f"{side}_starter_era"] = NEUTRAL_STARTER_ERA
+        enriched[f"{side}_starter_whip"] = NEUTRAL_STARTER_WHIP
+        enriched[f"{side}_starter_info_quality"] = 0.0
+        enriched[f"{side}_starter_source"] = "unknown"
+        enriched[f"{side}_starter_quality_score"] = _starter_quality(NEUTRAL_STARTER_ERA, NEUTRAL_STARTER_WHIP, 0.0)
+
+    if not pitching_context.empty:
+        context = pitching_context.copy()
+        context["date"] = pd.to_datetime(context["date"]).dt.strftime("%Y-%m-%d")
+        context["starter_era"] = context["starter_era"].apply(lambda value: _to_float(value, NEUTRAL_STARTER_ERA))
+        context["starter_whip"] = context["starter_whip"].apply(lambda value: _to_float(value, NEUTRAL_STARTER_WHIP))
+        context["starter_info_quality"] = context["starter_info_quality"].apply(lambda value: _to_float(value, 0.0))
+        context["bullpen_fatigue_score_from_label"] = context["bullpen_fatigue"].map(FATIGUE_SCORE).fillna(1.0)
+
+        for side in ["home", "away"]:
+            key = f"{side}_team"
+            side_context = context.rename(
+                columns={
+                    "team": key,
+                    "starter_era": f"{side}_starter_era",
+                    "starter_whip": f"{side}_starter_whip",
+                    "starter_info_quality": f"{side}_starter_info_quality",
+                    "starter_source": f"{side}_starter_source",
+                    "recent_3day_games": f"{side}_recent_3day_games",
+                    "bullpen_fatigue_score_from_label": f"{side}_bullpen_fatigue_score",
+                }
+            )[
+                [
+                    "date",
+                    key,
+                    f"{side}_starter_era",
+                    f"{side}_starter_whip",
+                    f"{side}_starter_info_quality",
+                    f"{side}_starter_source",
+                    f"{side}_recent_3day_games",
+                    f"{side}_bullpen_fatigue_score",
+                ]
+            ]
+            enriched = enriched.merge(side_context, on=["date", key], how="left", suffixes=("", "_ctx"))
+            for column in ["starter_era", "starter_whip", "starter_info_quality", "starter_source", "recent_3day_games", "bullpen_fatigue_score"]:
+                base = f"{side}_{column}"
+                ctx = f"{base}_ctx"
+                if ctx in enriched:
+                    enriched[base] = enriched[ctx].where(enriched[ctx].notna(), enriched[base])
+                    enriched = enriched.drop(columns=[ctx])
+
+    for side in ["home", "away"]:
+        enriched[f"{side}_starter_quality_score"] = enriched.apply(
+            lambda row: _starter_quality(float(row[f"{side}_starter_era"]), float(row[f"{side}_starter_whip"]), float(row[f"{side}_starter_info_quality"])),
+            axis=1,
+        )
+    enriched["starter_era_gap"] = enriched["away_starter_era"] - enriched["home_starter_era"]
+    enriched["starter_whip_gap"] = enriched["away_starter_whip"] - enriched["home_starter_whip"]
+    enriched["starter_quality_gap"] = enriched["home_starter_quality_score"] - enriched["away_starter_quality_score"]
+    enriched["both_starters_confirmed"] = ((enriched["home_starter_source"] == "confirmed") & (enriched["away_starter_source"] == "confirmed")).astype(int)
+    enriched["partial_starter_confirmed"] = (
+        ((enriched["home_starter_source"] == "confirmed") | (enriched["away_starter_source"] == "confirmed"))
+        & (enriched["both_starters_confirmed"] == 0)
+    ).astype(int)
+    enriched["bullpen_fatigue_score_gap"] = enriched["away_bullpen_fatigue_score"] - enriched["home_bullpen_fatigue_score"]
+    return enriched.fillna(
+        {
+            "home_starter_era": NEUTRAL_STARTER_ERA,
+            "away_starter_era": NEUTRAL_STARTER_ERA,
+            "home_starter_whip": NEUTRAL_STARTER_WHIP,
+            "away_starter_whip": NEUTRAL_STARTER_WHIP,
+            "home_starter_info_quality": 0.0,
+            "away_starter_info_quality": 0.0,
+            "home_starter_source": "unknown",
+            "away_starter_source": "unknown",
+        }
+    )
 
 
 def _to_float(value, default=0.0):
@@ -166,7 +280,8 @@ def export_game_level_dataset(features: pd.DataFrame, output_path: str | Path):
 
 def prepare_game_level_matrix(frame: pd.DataFrame):
     x = frame.drop(columns=["date", "game_id", "target_home_win"])
-    x = pd.get_dummies(x, columns=["home_team", "away_team"], drop_first=False, dtype=float)
+    dummy_columns = [column for column in ["home_team", "away_team", "home_starter_source", "away_starter_source"] if column in x.columns]
+    x = pd.get_dummies(x, columns=dummy_columns, drop_first=False, dtype=float)
     y = frame["target_home_win"].to_numpy(dtype=float)
     return x, y
 

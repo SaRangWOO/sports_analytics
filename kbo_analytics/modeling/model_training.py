@@ -11,9 +11,9 @@ from .feature_engineering import build_features
 from .game_level_features import (
     align_game_level_matrix,
     attach_player_context,
+    attach_pitching_context,
     build_game_level_frame,
     build_player_team_context,
-    export_game_level_dataset,
     prepare_game_level_matrix,
 )
 from .model_evaluation import (
@@ -124,6 +124,33 @@ def probability_distribution(values):
         "over_58": int((confidence >= 0.58).sum()),
         "over_60": int((confidence >= 0.60).sum()),
     }
+
+
+def model_probability_spread(model_name: str, y_true: np.ndarray, probability: np.ndarray, accuracy: float, score: dict):
+    confidence = np.maximum(probability, 1 - probability)
+    pred = (probability >= 0.5).astype(int)
+    over_55_mask = confidence >= 0.55
+    return {
+        "model": model_name,
+        "total_games": int(len(probability)),
+        "accuracy": round(float(accuracy), 3),
+        "brier": score["Brier Score"],
+        "logloss": score["Log Loss"],
+        "avg_confidence": round(float(confidence.mean()), 3) if len(confidence) else None,
+        "p75_confidence": round(float(np.percentile(confidence, 75)), 3) if len(confidence) else None,
+        "p90_confidence": round(float(np.percentile(confidence, 90)), 3) if len(confidence) else None,
+        "max_confidence": round(float(confidence.max()), 3) if len(confidence) else None,
+        "over_55": int(over_55_mask.sum()),
+        "over_58": int((confidence >= 0.58).sum()),
+        "over_60": int((confidence >= 0.60).sum()),
+        "over_55_accuracy": round(float((pred[over_55_mask] == y_true[over_55_mask]).mean()), 3) if over_55_mask.any() else None,
+    }
+
+
+def write_model_probability_spread_report(results_dir: Path, rows: list[dict]):
+    output = results_dir / "model_probability_spread_report.csv"
+    pd.DataFrame(rows).to_csv(output, index=False, encoding="utf-8-sig")
+    return rows
 
 
 def confidence_bucket_policy(y_true: np.ndarray, probability: np.ndarray):
@@ -239,6 +266,58 @@ def compact_sklearn_candidate_specs(recency_weight):
     ]
 
 
+def baseball_feature_columns(x: pd.DataFrame):
+    candidates = [
+        "recent_10_win_rate_gap",
+        "season_win_rate_gap",
+        "season_avg_run_diff_gap",
+        "recent_run_diff_10_gap",
+        "venue_win_rate_gap",
+        "rest_days_gap",
+        "games_last_7_days_gap",
+        "home_recent_3day_games",
+        "away_recent_3day_games",
+        "recent_3day_games_gap",
+        "home_bullpen_fatigue_score",
+        "away_bullpen_fatigue_score",
+        "bullpen_fatigue_score_gap",
+        "home_recent_5_runs_avg",
+        "away_recent_5_runs_avg",
+        "recent_5_runs_avg_gap",
+        "home_recent_5_allowed_avg",
+        "away_recent_5_allowed_avg",
+        "recent_5_allowed_avg_gap",
+        "recent_5_run_creation_gap",
+        "recent_10_run_creation_gap",
+        "home_starter_era",
+        "away_starter_era",
+        "starter_era_gap",
+        "home_starter_whip",
+        "away_starter_whip",
+        "starter_whip_gap",
+        "home_starter_info_quality",
+        "away_starter_info_quality",
+        "home_starter_quality_score",
+        "away_starter_quality_score",
+        "starter_quality_gap",
+        "both_starters_confirmed",
+        "partial_starter_confirmed",
+    ]
+    return [column for column in candidates if column in x.columns]
+
+
+def baseball_candidate_specs():
+    try:
+        from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+    except ImportError:
+        return []
+    return [
+        ("야구 핵심 피처 강화 모델", RandomForestClassifier(n_estimators=500, max_depth=6, min_samples_leaf=10, class_weight="balanced_subsample", random_state=42, n_jobs=-1)),
+        ("야구 핵심 피처 GradientBoosting 모델", HistGradientBoostingClassifier(max_iter=260, learning_rate=0.035, max_leaf_nodes=12, l2_regularization=0.12, random_state=42)),
+        ("야구 핵심 피처 RandomForest 모델", RandomForestClassifier(n_estimators=700, max_depth=7, min_samples_leaf=8, class_weight="balanced_subsample", random_state=42, n_jobs=-1)),
+    ]
+
+
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date, data_dir: Path, results_dir: Path):
     training_games = training_games.copy()
     training_games["date"] = pd.to_datetime(training_games["date"])
@@ -251,7 +330,10 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     features = build_features(model_input)
     results_dir.mkdir(parents=True, exist_ok=True)
     features.to_csv(results_dir / "features.csv", index=False, encoding="utf-8-sig")
-    export_game_level_dataset(features, results_dir / "game_level_features.csv")
+    pitching_context_path = data_dir / "pitching_context.csv"
+    pitching_context = pd.read_csv(pitching_context_path) if pitching_context_path.exists() else pd.DataFrame()
+    game_level_features = attach_pitching_context(build_game_level_frame(features), pitching_context)
+    game_level_features.to_csv(results_dir / "game_level_features.csv", index=False, encoding="utf-8-sig")
     run_expectancy_frame = export_run_expectancy_dataset(features, completed, results_dir / "run_expectancy_features.csv")
     player_feature_note = ""
     player_game_frame = pd.DataFrame()
@@ -262,7 +344,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         pitchers = pd.read_csv(pitcher_stats_path)
         player_context = build_player_team_context(hitters, pitchers)
         player_context.to_csv(results_dir / "player_team_context.csv", index=False, encoding="utf-8-sig")
-        player_game_frame = attach_player_context(build_game_level_frame(features), player_context)
+        player_game_frame = attach_player_context(game_level_features, player_context)
         player_game_frame.to_csv(results_dir / "game_level_player_features.csv", index=False, encoding="utf-8-sig")
         player_feature_note = (
             "선수 영향도 피처는 현재 공식 기록 스냅샷 기반 참고 피처입니다. "
@@ -286,6 +368,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     }
     best = None
     candidate_results = []
+    probability_spread_rows = []
 
     for name, columns in candidate_columns.items():
         x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
@@ -297,6 +380,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         score = probability_scores(y_test, probability)
         result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "weights": weights, "bias": bias, "model_type": "from_scratch_logistic_regression", "prediction_unit": "team", "test_scaled": test_scaled, "test_frame": features.iloc[split_index:].copy(), "y_test": y_test}
         candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
+        probability_spread_rows.append(model_probability_spread(name, y_test, probability, accuracy, score))
         best = pick_better_model(best, result)
 
     for name, model, sample_weight in compact_sklearn_candidate_specs(recency_weight):
@@ -311,6 +395,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         score = probability_scores(y_test, probability)
         result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "model": model, "model_type": model.__class__.__name__, "prediction_unit": "team", "test_scaled": test_scaled, "test_frame": features.iloc[split_index:].copy(), "y_test": y_test}
         candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
+        probability_spread_rows.append(model_probability_spread(name, y_test, probability, accuracy, score))
         best = pick_better_model(best, result)
 
     sklearn_candidates = sklearn_candidate_specs(recency_weight)
@@ -326,9 +411,10 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         score = probability_scores(y_test, probability)
         result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "model": model, "model_type": model.__class__.__name__, "prediction_unit": "team", "test_scaled": test_scaled, "test_frame": features.iloc[split_index:].copy(), "y_test": y_test}
         candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
+        probability_spread_rows.append(model_probability_spread(name, y_test, probability, accuracy, score))
         best = pick_better_model(best, result)
 
-    game_frame = build_game_level_frame(features).dropna(subset=["target_home_win"]).copy()
+    game_frame = game_level_features.dropna(subset=["target_home_win"]).copy()
     if sklearn_candidates and len(game_frame) >= 20:
         from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 
@@ -355,6 +441,21 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             score = probability_scores(gy_test, probability)
             result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "model": model, "model_type": model.__class__.__name__, "prediction_unit": "game", "test_scaled": test_scaled, "test_frame": game_frame.iloc[game_split:].copy(), "y_test": gy_test}
             candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
+            probability_spread_rows.append(model_probability_spread(name, gy_test, probability, accuracy, score))
+            best = pick_better_model(best, result)
+
+        baseball_columns = baseball_feature_columns(gx)
+        for name, model in baseball_candidate_specs():
+            gx_train, gx_test = gx.iloc[:game_split][baseball_columns], gx.iloc[game_split:][baseball_columns]
+            train_scaled, test_scaled, mean, std = standardize_train_test(gx_train, gx_test)
+            model.fit(train_scaled, gy_train)
+            probability = model.predict_proba(test_scaled)[:, 1]
+            pred = (probability >= 0.5).astype(int)
+            accuracy = round(float((pred == gy_test).mean()), 3)
+            score = probability_scores(gy_test, probability)
+            result = {"name": name, "columns": baseball_columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "model": model, "model_type": model.__class__.__name__, "prediction_unit": "game", "test_scaled": test_scaled, "test_frame": game_frame.iloc[game_split:].copy(), "y_test": gy_test}
+            candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(baseball_columns), **score})
+            probability_spread_rows.append(model_probability_spread(name, gy_test, probability, accuracy, score))
             best = pick_better_model(best, result)
 
     if sklearn_candidates and not player_game_frame.empty:
@@ -379,8 +480,10 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
                 accuracy = round(float((pred == py_test).mean()), 3)
                 score = probability_scores(py_test, probability)
                 candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
+                probability_spread_rows.append(model_probability_spread(name, py_test, probability, accuracy, score))
 
-    payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games)
+    spread_report = write_model_probability_spread_report(results_dir, probability_spread_rows)
+    payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, spread_report)
     if payload.get("feature_importance"):
         pd.DataFrame(
             [{"feature": feature, "importance": importance} for feature, importance in payload["feature_importance"].items()]
@@ -477,7 +580,9 @@ def train_prediction_bundle(best, training_games, prediction_training_cutoff, da
     prediction_model_input.unlink(missing_ok=True)
     columns = best["columns"]
     if best.get("prediction_unit", "team") == "game":
-        frame = build_game_level_frame(prediction_features).dropna(subset=["target_home_win"]).copy()
+        pitching_context_path = data_dir / "pitching_context.csv"
+        pitching_context = pd.read_csv(pitching_context_path) if pitching_context_path.exists() else pd.DataFrame()
+        frame = attach_pitching_context(build_game_level_frame(prediction_features), pitching_context).dropna(subset=["target_home_win"]).copy()
         px, py = prepare_game_level_matrix(frame)
         weight_dates = pd.to_datetime(frame["date"])
     else:
@@ -499,7 +604,7 @@ def train_prediction_bundle(best, training_games, prediction_training_cutoff, da
     return {"model_type": best["model_type"], "model": model, "mean": mean, "std": std}
 
 
-def build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games):
+def build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, probability_spread_rows):
     columns = best["columns"]
     probability = best["probability"]
     pred = best["pred"]
@@ -558,7 +663,9 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
     today_features = prediction_features[(prediction_features["date_obj"] == prediction_date) & (prediction_features["target_win"].isna())].copy()
     today_predictions = []
     if not today_features.empty and prediction_unit == "game":
-        game_prediction_frame = build_game_level_frame(prediction_features)
+        pitching_context_path = data_dir / "pitching_context.csv"
+        pitching_context = pd.read_csv(pitching_context_path) if pitching_context_path.exists() else pd.DataFrame()
+        game_prediction_frame = attach_pitching_context(build_game_level_frame(prediction_features), pitching_context)
         game_prediction_frame["date_obj"] = pd.to_datetime(game_prediction_frame["date"]).dt.date
         today_games = game_prediction_frame[(game_prediction_frame["date_obj"] == prediction_date) & (game_prediction_frame["target_home_win"].isna())].copy()
         if not today_games.empty:
@@ -597,6 +704,15 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
     distribution_rows = write_probability_distribution_report(results_dir, probability, today_probability_values)
     today_distribution = next((row for row in distribution_rows if row["split"] == "today"), {})
     policy = confidence_bucket_policy(y_eval, probability)
+    selected_spread = next((row for row in probability_spread_rows if row["model"] == best["name"]), {})
+    high_confidence_summary = {
+        "selected_model": best["name"],
+        "overall_accuracy": selected_spread.get("accuracy"),
+        "over_55_games": selected_spread.get("over_55"),
+        "over_55_accuracy": selected_spread.get("over_55_accuracy"),
+        "avg_confidence": selected_spread.get("avg_confidence"),
+        "p90_confidence": selected_spread.get("p90_confidence"),
+    }
 
     payload = {
         "available": True,
@@ -618,6 +734,10 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         "confidence_bucket_performance": policy["confidence_bucket_performance"],
         "today_probability_distribution": today_distribution,
         "confidence_policy_note": "예측승률 자체는 보정하지 않고, 백테스트 상위 확신 구간과 정보 품질을 표시용 신뢰도 판단에 사용합니다.",
+        "model_probability_spread_report": probability_spread_rows,
+        "selected_model_probability_spread": selected_spread,
+        "high_confidence_backtest_summary": high_confidence_summary,
+        "baseball_feature_policy_note": "선발투수, 불펜 피로도, 최근 득점/실점 흐름 피처를 별도 후보 모델에 추가해 비교합니다. 확률을 강제로 키우지 않고 Accuracy, Brier Score, Log Loss, 55% 이상 구간 성능과 확률 분포를 함께 확인합니다.",
         "recent_backtest": recent_backtest,
         "today_predictions": today_predictions,
         "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",

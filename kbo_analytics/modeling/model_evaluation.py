@@ -67,8 +67,35 @@ def calibration_table(y_true: np.ndarray, probability: np.ndarray):
 def pick_better_model(current: dict | None, candidate: dict):
     if current is None:
         return candidate
+    candidate_over55 = _over55_lift(candidate)
+    current_over55 = _over55_lift(current)
+    if candidate_over55 and not current_over55 and candidate["score"]["Brier Score"] <= current["score"]["Brier Score"] + 0.003:
+        return candidate
     if candidate["accuracy"] > current["accuracy"] + 0.005:
         return candidate
     if abs(candidate["accuracy"] - current["accuracy"]) <= 0.005 and candidate["score"]["Brier Score"] < current["score"]["Brier Score"]:
         return candidate
+    if (
+        abs(candidate["accuracy"] - current["accuracy"]) <= 0.005
+        and candidate["score"]["Brier Score"] <= current["score"]["Brier Score"] + 0.001
+        and candidate["score"]["Log Loss"] <= current["score"]["Log Loss"] + 0.003
+        and candidate_over55
+        and not current_over55
+    ):
+        return candidate
     return current
+
+
+def _over55_lift(model_result: dict):
+    y_true = model_result.get("y_test")
+    probability = model_result.get("probability")
+    if y_true is None or probability is None:
+        return False
+    confidence = np.maximum(probability, 1 - probability)
+    mask = confidence >= 0.55
+    if not mask.any():
+        return False
+    pred = (probability >= 0.5).astype(int)
+    overall = float((pred == y_true).mean())
+    high = float((pred[mask] == y_true[mask]).mean())
+    return high > overall
