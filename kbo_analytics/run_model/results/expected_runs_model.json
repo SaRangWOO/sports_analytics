@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-26T16:22:15",
-  "input_file": "/home/tera/1.project/1.sports_analytics/kbo_analytics/data/official/model_training_games.csv",
+  "generated_at": "2026-05-28T17:22:47",
+  "input_file": "kbo_analytics\\data\\official\\model_training_games.csv",
   "model_scope": "independent_run_model",
   "notes": [
     "기존 대시보드/승패 모델과 분리된 득점 기반 모델입니다.",
@@ -67,6 +67,11 @@
       "rmse": 3.499
     },
     {
+      "model": "Tweedie",
+      "mae": 2.7491,
+      "rmse": 3.4984
+    },
+    {
       "model": "RandomForest",
       "mae": 2.7677,
       "rmse": 3.5127
@@ -91,6 +96,13 @@
       "brier_score": 0.2504,
       "log_loss": 0.6942,
       "run_diff_direction_accuracy": 0.522
+    },
+    {
+      "model": "Tweedie",
+      "accuracy": 0.5178,
+      "brier_score": 0.25,
+      "log_loss": 0.6935,
+      "run_diff_direction_accuracy": 0.5282
     },
     {
       "model": "RandomForest",
@@ -127,6 +139,15 @@
       "run_diff_direction_accuracy": 0.522
     },
     {
+      "model": "Tweedie",
+      "mae": 2.7491,
+      "rmse": 3.4984,
+      "accuracy": 0.5178,
+      "brier_score": 0.25,
+      "log_loss": 0.6935,
+      "run_diff_direction_accuracy": 0.5282
+    },
+    {
       "model": "RandomForest",
       "mae": 2.7677,
       "rmse": 3.5127,
@@ -154,9 +175,170 @@
     "log_loss": 0.7013,
     "run_diff_direction_accuracy": 0.5199
   },
+  "error_analysis_summary": {
+    "score_bucket_error": [
+      {
+        "bucket": "HIGH_12_PLUS",
+        "games": 496,
+        "home_mae": 3.541,
+        "away_mae": 3.6643,
+        "total_mae": 5.4296,
+        "run_diff_mae": 5.4882,
+        "accuracy": 0.5323
+      },
+      {
+        "bucket": "LOW_0_6",
+        "games": 357,
+        "home_mae": 2.7309,
+        "away_mae": 3.0382,
+        "total_mae": 5.63,
+        "run_diff_mae": 2.3936,
+        "accuracy": 0.549
+      },
+      {
+        "bucket": "MID_7_11",
+        "games": 582,
+        "home_mae": 1.9309,
+        "away_mae": 1.9296,
+        "total_mae": 1.5603,
+        "run_diff_mae": 3.549,
+        "accuracy": 0.5
+      }
+    ],
+    "error_tag_counts": [
+      {
+        "tag": "BLOWOUT_UNDERPREDICTED",
+        "games": 474
+      },
+      {
+        "tag": "NORMAL",
+        "games": 456
+      },
+      {
+        "tag": "LOW_SCORING_MISS",
+        "games": 161
+      },
+      {
+        "tag": "RUN_DIFF_DIRECTION_MISS",
+        "games": 689
+      },
+      {
+        "tag": "CLOSE_GAME_NOISE",
+        "games": 164
+      },
+      {
+        "tag": "HIGH_SCORING_MISS",
+        "games": 232
+      }
+    ]
+  },
+  "feature_importance_top20": [
+    {
+      "feature": "team_season_runs",
+      "importance_mean": 0.011818,
+      "importance_std": 0.002943
+    },
+    {
+      "feature": "opponent_season_allowed",
+      "importance_mean": 0.004187,
+      "importance_std": 0.001529
+    },
+    {
+      "feature": "season_runs_gap",
+      "importance_mean": 0.002508,
+      "importance_std": 0.000743
+    },
+    {
+      "feature": "season_allowed_gap",
+      "importance_mean": 0.002209,
+      "importance_std": 0.001367
+    },
+    {
+      "feature": "month",
+      "importance_mean": 0.002193,
+      "importance_std": 0.000527
+    },
+    {
+      "feature": "team_recent_10g_allowed",
+      "importance_mean": 0.002172,
+      "importance_std": 0.001477
+    },
+    {
+      "feature": "team_season_win_rate",
+      "importance_mean": 0.001508,
+      "importance_std": 0.000578
+    },
+    {
+      "feature": "season_win_rate_gap",
+      "importance_mean": 0.001018,
+      "importance_std": 0.000278
+    },
+    {
+      "feature": "team_recent_5g_allowed",
+      "importance_mean": 0.000965,
+      "importance_std": 0.001628
+    },
+    {
+      "feature": "recent_10g_allowed_gap",
+      "importance_mean": 0.0008,
+      "importance_std": 0.0005
+    },
+    {
+      "feature": "recent_5g_run_diff_gap",
+      "importance_mean": 0.000614,
+      "importance_std": 0.000374
+    },
+    {
+      "feature": "recent_10g_runs_gap",
+      "importance_mean": 0.000568,
+      "importance_std": 0.000422
+    },
+    {
+      "feature": "rest_days",
+      "importance_mean": 0.000491,
+      "importance_std": 0.00045
+    },
+    {
+      "feature": "team_recent_3g_runs",
+      "importance_mean": 0.000418,
+      "importance_std": 0.000264
+    },
+    {
+      "feature": "team_season_allowed",
+      "importance_mean": 0.000365,
+      "importance_std": 0.00033
+    },
+    {
+      "feature": "team_recent_5g_runs",
+      "importance_mean": 0.000353,
+      "importance_std": 0.000744
+    },
+    {
+      "feature": "opponent_recent_10g_runs",
+      "importance_mean": 0.000339,
+      "importance_std": 0.000244
+    },
+    {
+      "feature": "rest_days_gap",
+      "importance_mean": 0.000313,
+      "importance_std": 0.000238
+    },
+    {
+      "feature": "opponent_recent_10g_run_diff",
+      "importance_mean": 0.000292,
+      "importance_std": 0.000363
+    },
+    {
+      "feature": "recent_10g_win_rate_gap",
+      "importance_mean": 0.000194,
+      "importance_std": 0.000327
+    }
+  ],
   "output_files": [
     "results/run_model_features.csv",
     "results/expected_runs_predictions.csv",
-    "results/expected_runs_model.json"
+    "results/expected_runs_model.json",
+    "results/run_model_error_analysis.csv",
+    "results/run_model_feature_importance.csv"
   ]
 }

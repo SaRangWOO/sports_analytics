@@ -102,6 +102,43 @@ def confidence_rows(predictions: pd.DataFrame):
     return rows
 
 
+def error_bucket_rows(payload: dict):
+    rows = []
+    for row in payload.get("error_analysis_summary", {}).get("score_bucket_error", []):
+        rows.append(
+            {
+                "득점 구간": row.get("bucket", "-"),
+                "경기 수": row.get("games", "-"),
+                "홈 MAE": fmt_float(row.get("home_mae"), 3),
+                "원정 MAE": fmt_float(row.get("away_mae"), 3),
+                "합계 MAE": fmt_float(row.get("total_mae"), 3),
+                "득실차 MAE": fmt_float(row.get("run_diff_mae"), 3),
+                "승패 적중률": fmt_pct(row.get("accuracy")),
+            }
+        )
+    return rows
+
+
+def error_tag_rows(payload: dict):
+    rows = []
+    for row in payload.get("error_analysis_summary", {}).get("error_tag_counts", []):
+        rows.append({"오차 태그": row.get("tag", "-"), "경기 수": row.get("games", "-")})
+    return rows
+
+
+def importance_rows(payload: dict):
+    rows = []
+    for row in payload.get("feature_importance_top20", [])[:12]:
+        rows.append(
+            {
+                "피처": row.get("feature", "-"),
+                "중요도 평균": fmt_float(row.get("importance_mean"), 6),
+                "표준편차": fmt_float(row.get("importance_std"), 6),
+            }
+        )
+    return rows
+
+
 def recent_prediction_rows(predictions: pd.DataFrame):
     if predictions.empty:
         return []
@@ -138,6 +175,9 @@ def render_dashboard(results_dir: Path, output_path: Path):
     summary = prediction_summary(predictions)
     score_rows = model_score_rows(payload)
     conf_rows = confidence_rows(predictions)
+    bucket_rows = error_bucket_rows(payload)
+    tag_rows = error_tag_rows(payload)
+    feature_rows = importance_rows(payload)
     recent_rows = recent_prediction_rows(predictions)
     features = payload.get("feature_columns", [])
 
@@ -232,6 +272,22 @@ def render_dashboard(results_dir: Path, output_path: Path):
       <div class="grid">{summary_cards}</div>
       <h3>예상 득실차 구간별 적중률</h3>
       {table_html(conf_rows, ["예상 득실차 구간", "경기 수", "적중률", "평균 홈승률"])}
+    </section>
+
+    <section>
+      <div class="eyebrow">Error Analysis</div>
+      <h2>득점 구간별 오차 진단</h2>
+      <p class="note">저득점/고득점 경기에서 예상 득점과 실제 득점의 차이를 분리해 봅니다. 이 영역은 모델 개선 포인트를 찾기 위한 진단 리포트입니다.</p>
+      {table_html(bucket_rows, ["득점 구간", "경기 수", "홈 MAE", "원정 MAE", "합계 MAE", "득실차 MAE", "승패 적중률"])}
+      <h3>오차 태그 분포</h3>
+      {table_html(tag_rows, ["오차 태그", "경기 수"])}
+    </section>
+
+    <section>
+      <div class="eyebrow">Feature Importance</div>
+      <h2>선택 모델 피처 중요도</h2>
+      <p class="note">검증 구간에서 permutation importance를 사용해 MAE 기준 중요도를 계산했습니다. 값이 클수록 해당 피처를 섞었을 때 득점 예측 오차가 더 커졌다는 뜻입니다.</p>
+      {table_html(feature_rows, ["피처", "중요도 평균", "표준편차"])}
     </section>
 
     <section>

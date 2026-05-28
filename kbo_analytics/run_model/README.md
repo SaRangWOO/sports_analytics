@@ -68,6 +68,8 @@ cd /home/tera/1.project/1.sports_analytics/kbo_analytics
 | `results/run_model_features.csv` | 팀 기준 2행 구조의 득점 예측 피처 |
 | `results/expected_runs_predictions.csv` | 검증 구간 경기별 예상 득점, 예상 득실차, 홈팀 승률 |
 | `results/expected_runs_model.json` | 후보 모델 성능, 선택 모델, 사용 피처, 실행 메타데이터 |
+| `results/run_model_error_analysis.csv` | 선택 모델의 경기별 득점 오차, 오차 구간, 오차 태그 |
+| `results/run_model_feature_importance.csv` | 선택 모델의 permutation importance |
 | `dashboard.html` | 모델링 전용 HTML 대시보드 |
 
 ## 모델 후보
@@ -76,6 +78,7 @@ cd /home/tera/1.project/1.sports_analytics/kbo_analytics
 
 - Poisson Regression
 - Ridge Regression
+- Tweedie Regression
 - RandomForest Regressor
 - HistGradientBoosting Regressor
 
@@ -94,6 +97,23 @@ cd /home/tera/1.project/1.sports_analytics/kbo_analytics
 - Brier Score
 - Log Loss
 - 예상 득실차 방향 적중률
+
+## 오차 분석
+
+선택 모델에 대해서는 별도 오차 분석 파일을 생성합니다.
+
+`run_model_error_analysis.csv`에는 다음과 같은 태그가 들어갑니다.
+
+| 태그 | 의미 |
+| --- | --- |
+| `LOW_SCORING_MISS` | 실제 저득점 경기에서 승패 예측이 빗나간 경우 |
+| `HIGH_SCORING_MISS` | 실제 고득점 경기에서 승패 예측이 빗나간 경우 |
+| `RUN_DIFF_DIRECTION_MISS` | 예상 득실차 방향과 실제 득실차 방향이 다른 경우 |
+| `BLOWOUT_UNDERPREDICTED` | 실제 큰 점수 차 경기를 박빙으로 예측한 경우 |
+| `CLOSE_GAME_NOISE` | 실제 접전 경기에서 승패 예측이 빗나간 경우 |
+
+`run_model_feature_importance.csv`는 선택 모델의 피처를 하나씩 섞어 보며 MAE가 얼마나 나빠지는지 계산합니다.
+이 값은 모델이 어떤 입력 신호에 민감한지 확인하기 위한 진단용입니다.
 
 ## 해석 방법
 

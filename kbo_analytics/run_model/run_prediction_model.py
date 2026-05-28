@@ -8,7 +8,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
-from sklearn.linear_model import LogisticRegression, PoissonRegressor, Ridge
+from sklearn.inspection import permutation_importance
+from sklearn.linear_model import LogisticRegression, PoissonRegressor, Ridge, TweedieRegressor
 from sklearn.metrics import accuracy_score, brier_score_loss, log_loss, mean_absolute_error, mean_squared_error
 
 
@@ -229,6 +230,7 @@ def train_run_regressors(train_df: pd.DataFrame, val_df: pd.DataFrame, features:
     models = {
         "Poisson": PoissonRegressor(max_iter=500, alpha=0.1),
         "Ridge": Ridge(alpha=2.0),
+        "Tweedie": TweedieRegressor(power=1.5, alpha=0.1, link="log", max_iter=500),
         "RandomForest": RandomForestRegressor(n_estimators=300, max_depth=8, min_samples_leaf=8, random_state=42, n_jobs=-1),
         "HistGradientBoosting": HistGradientBoostingRegressor(max_iter=220, learning_rate=0.04, max_leaf_nodes=15, l2_regularization=0.08, random_state=42),
     }
@@ -307,6 +309,94 @@ def select_model(run_scores: list[dict], win_scores: list[dict]):
     return sorted(candidates, key=lambda row: (row["mae"], row["brier_score"], -row["accuracy"]))[0], candidates
 
 
+def error_tags(row: pd.Series):
+    tags = []
+    wrong = row["prediction_result"] == "wrong"
+    actual_total = row["home_actual_runs"] + row["away_actual_runs"]
+    actual_diff_abs = abs(row["actual_run_diff"])
+    expected_diff_abs = abs(row["expected_run_diff"])
+    direction_miss = (row["expected_run_diff"] > 0) != (row["actual_run_diff"] > 0)
+    if wrong and actual_total <= 6:
+        tags.append("LOW_SCORING_MISS")
+    if wrong and actual_total >= 12:
+        tags.append("HIGH_SCORING_MISS")
+    if direction_miss:
+        tags.append("RUN_DIFF_DIRECTION_MISS")
+    if actual_diff_abs >= 5 and expected_diff_abs < 1:
+        tags.append("BLOWOUT_UNDERPREDICTED")
+    if wrong and actual_diff_abs <= 1:
+        tags.append("CLOSE_GAME_NOISE")
+    return "|".join(tags) if tags else "NORMAL"
+
+
+def scoring_bucket(total_runs: float):
+    if total_runs <= 6:
+        return "LOW_0_6"
+    if total_runs >= 12:
+        return "HIGH_12_PLUS"
+    return "MID_7_11"
+
+
+def build_error_analysis(predictions: pd.DataFrame):
+    frame = predictions.copy()
+    frame["actual_total_runs"] = frame["home_actual_runs"] + frame["away_actual_runs"]
+    frame["expected_total_runs"] = frame["home_expected_runs"] + frame["away_expected_runs"]
+    frame["home_run_error"] = frame["home_expected_runs"] - frame["home_actual_runs"]
+    frame["away_run_error"] = frame["away_expected_runs"] - frame["away_actual_runs"]
+    frame["home_abs_error"] = frame["home_run_error"].abs()
+    frame["away_abs_error"] = frame["away_run_error"].abs()
+    frame["total_run_error"] = frame["expected_total_runs"] - frame["actual_total_runs"]
+    frame["total_abs_error"] = frame["total_run_error"].abs()
+    frame["run_diff_error"] = frame["expected_run_diff"] - frame["actual_run_diff"]
+    frame["run_diff_abs_error"] = frame["run_diff_error"].abs()
+    frame["actual_total_bucket"] = frame["actual_total_runs"].apply(scoring_bucket)
+    frame["error_tags"] = frame.apply(error_tags, axis=1)
+    return frame
+
+
+def error_summary(error_frame: pd.DataFrame):
+    bucket_rows = []
+    for bucket, subset in error_frame.groupby("actual_total_bucket", sort=False):
+        bucket_rows.append(
+            {
+                "bucket": bucket,
+                "games": int(len(subset)),
+                "home_mae": round(float(subset["home_abs_error"].mean()), 4),
+                "away_mae": round(float(subset["away_abs_error"].mean()), 4),
+                "total_mae": round(float(subset["total_abs_error"].mean()), 4),
+                "run_diff_mae": round(float(subset["run_diff_abs_error"].mean()), 4),
+                "accuracy": round(float((subset["prediction_result"] == "correct").mean()), 4),
+            }
+        )
+    tag_rows = []
+    exploded = error_frame.assign(error_tag=error_frame["error_tags"].str.split("|")).explode("error_tag")
+    for tag, subset in exploded.groupby("error_tag", sort=False):
+        tag_rows.append({"tag": tag, "games": int(len(subset))})
+    return {"score_bucket_error": bucket_rows, "error_tag_counts": tag_rows}
+
+
+def selected_feature_importance(model, val_df: pd.DataFrame, features: list[str]):
+    result = permutation_importance(
+        model,
+        val_df[features],
+        val_df["target_runs"],
+        scoring="neg_mean_absolute_error",
+        n_repeats=5,
+        random_state=42,
+        n_jobs=-1,
+    )
+    rows = []
+    for feature, mean_value, std_value in zip(features, result.importances_mean, result.importances_std):
+        rows.append(
+            {
+                "feature": feature,
+                "importance_mean": round(float(max(mean_value, 0.0)), 6),
+                "importance_std": round(float(std_value), 6),
+            }
+        )
+    return sorted(rows, key=lambda row: row["importance_mean"], reverse=True)
+
+
 def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float):
     output_dir.mkdir(parents=True, exist_ok=True)
     team_games = load_completed_team_games(input_path)
@@ -322,6 +412,34 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float):
     selected, candidate_scores = select_model(run_scores, win_scores)
 
     selected_predictions = prediction_map[selected["model"]].copy()
+    selected_error_analysis = build_error_analysis(selected_predictions)
+    selected_error_analysis["date"] = pd.to_datetime(selected_error_analysis["date"]).dt.strftime("%Y-%m-%d")
+    error_columns = [
+        "date",
+        "game_key",
+        "home_team",
+        "away_team",
+        "home_expected_runs",
+        "away_expected_runs",
+        "home_actual_runs",
+        "away_actual_runs",
+        "expected_run_diff",
+        "actual_run_diff",
+        "home_win_probability",
+        "predicted_winner",
+        "actual_winner",
+        "prediction_result",
+        "actual_total_bucket",
+        "home_abs_error",
+        "away_abs_error",
+        "total_abs_error",
+        "run_diff_abs_error",
+        "error_tags",
+    ]
+    selected_error_analysis[error_columns].to_csv(output_dir / "run_model_error_analysis.csv", index=False, encoding="utf-8-sig")
+    importance_rows = selected_feature_importance(trained_models[selected["model"]], val_df, features)
+    pd.DataFrame(importance_rows).to_csv(output_dir / "run_model_feature_importance.csv", index=False, encoding="utf-8-sig")
+
     selected_predictions["date"] = pd.to_datetime(selected_predictions["date"]).dt.strftime("%Y-%m-%d")
     selected_predictions = selected_predictions[
         [
@@ -364,10 +482,14 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float):
         "win_conversion_scores": win_scores,
         "candidate_scores": candidate_scores,
         "selected_model": selected,
+        "error_analysis_summary": error_summary(selected_error_analysis),
+        "feature_importance_top20": importance_rows[:20],
         "output_files": [
             "results/run_model_features.csv",
             "results/expected_runs_predictions.csv",
             "results/expected_runs_model.json",
+            "results/run_model_error_analysis.csv",
+            "results/run_model_feature_importance.csv",
         ],
     }
     (output_dir / "expected_runs_model.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
