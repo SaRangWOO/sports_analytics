@@ -197,6 +197,17 @@ IMPROVEMENT_MODEL_COLUMNS = {
     "brier_score": "브라이어 점수",
 }
 
+PITCHER_VALIDATION_COLUMNS = {
+    "dataset": "데이터셋",
+    "file_exists": "파일 존재",
+    "schema_valid": "스키마 유효",
+    "row_count": "행 수",
+    "game_match_rate": "경기 매칭률",
+    "duplicate_rows": "중복 행",
+    "valid": "학습 가능",
+    "message": "상태",
+}
+
 
 def _format_generated_at(value: str) -> str:
     return value.replace("T", " ")[:16]
@@ -437,6 +448,24 @@ def write_html_report(
     pitcher_columns = ", ".join(starter_schema["required_pitcher_log_columns"])
     starter_features = ", ".join(starter_schema["future_starter_features"])
     starter_data_status = summary["starter_data_status"]
+    pitcher_validation = summary["pitcher_data_validation"]
+    pitcher_validation_rows = []
+    for dataset, row in pitcher_validation.items():
+        pitcher_validation_rows.append(
+            {
+                "dataset": dataset,
+                "file_exists": "예" if row["file_exists"] else "아니오",
+                "schema_valid": "예" if row["schema_valid"] else "아니오",
+                "row_count": row["row_count"],
+                "game_match_rate": row["game_match_rate"],
+                "duplicate_rows": row["duplicate_rows"],
+                "valid": "예" if row["valid"] else "아니오",
+                "message": row["message"],
+            }
+        )
+    pitcher_validation_table = _table(pd.DataFrame(pitcher_validation_rows), PITCHER_VALIDATION_COLUMNS)
+    pitcher_ready = "학습 가능" if summary["pitcher_data_ready_to_train"] else "학습 불가"
+    pitcher_collection_status = "투수 데이터 준비 완료" if summary["pitcher_data_ready_to_train"] else "투수 데이터 미수집"
     over_predicted = ", ".join(f"{row['team']}({row['bias']})" for row in summary["team_bias_summary"]["over_predicted_teams"]) or "없음"
     under_predicted = ", ".join(f"{row['team']}({row['bias']})" for row in summary["team_bias_summary"]["under_predicted_teams"]) or "없음"
     target_context = summary["target_context"]
@@ -652,6 +681,18 @@ def write_html_report(
       동일한 pitcher_game_logs 스키마를 사용해 불펜 피로도 계산이 가능합니다.<br>
       향후 is_starter=False인 등판 기록을 활용할 예정입니다.
     </p>
+    <h3>투수 데이터 준비 상태</h3>
+    <p class="note">
+      현재 상태: {html.escape(pitcher_collection_status)}<br>
+      선발투수 매핑 데이터 존재 여부: {"예" if summary["starter_pitchers_file_exists"] else "아니오"}<br>
+      투수 등판 로그 존재 여부: {"예" if summary["pitcher_game_logs_file_exists"] else "아니오"}<br>
+      필수 컬럼 충족 여부: 선발 매핑 {"예" if summary["starter_pitchers_schema_valid"] else "아니오"}, 투수 로그 {"예" if summary["pitcher_game_logs_schema_valid"] else "아니오"}<br>
+      경기 일정 매칭률: 선발 매핑 {summary["starter_schedule_match_rate"]}, 투수 로그 {summary["pitcher_logs_game_match_rate"]}<br>
+      학습 가능/불가능: {html.escape(pitcher_ready)}<br>
+      차단 사유: {html.escape(str(summary["pitcher_data_blocker"]))}<br>
+      다음 필요한 작업: 실제 경기별 선발투수 매핑과 투수 등판 로그를 pitcher_id 기준으로 적재한 뒤 재검증합니다.
+    </p>
+    <div class="table-wrap">{pitcher_validation_table}</div>
   </section>
   <section>
     <h2>기술 검증용 예측 결과</h2>

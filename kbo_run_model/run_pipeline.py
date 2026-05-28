@@ -11,6 +11,7 @@ from sklearn.linear_model import LogisticRegression
 
 from collectors.load_games import load_completed_team_games
 from collectors.load_starter_data import load_starter_inputs
+from collectors.pitcher_data_validation import validate_pitcher_data_pipeline
 from collectors.schedule import load_schedule, select_target_games, validate_schedule_selection
 from collectors.schema import inspect_starter_schema
 from collectors.search_internal_data import search_internal_pitcher_data
@@ -30,8 +31,8 @@ REPO_DIR = PROJECT_DIR.parent
 DEFAULT_INPUT = REPO_DIR / "kbo_analytics" / "data" / "official" / "model_training_games.csv"
 DEFAULT_SCHEDULE = REPO_DIR / "kbo_analytics" / "data" / "official" / "prediction_games.csv"
 DEFAULT_OUTPUT_DIR = PROJECT_DIR / "results"
-DEFAULT_STARTERS = PROJECT_DIR / "data" / "starter_pitchers_sample.csv"
-DEFAULT_PITCHER_LOGS = PROJECT_DIR / "data" / "pitcher_game_logs_sample.csv"
+DEFAULT_STARTERS = PROJECT_DIR / "data" / "starter_pitchers.csv"
+DEFAULT_PITCHER_LOGS = PROJECT_DIR / "data" / "pitcher_game_logs.csv"
 DASHBOARD_PATH = "kbo_run_model/results/report.html"
 
 
@@ -197,6 +198,7 @@ def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_
     selected_team_metrics, over_predicted_teams, under_predicted_teams = team_bias_metrics(selected_scored_games)
     starter_schema = inspect_starter_schema(input_path)
     internal_data_search = search_internal_pitcher_data(REPO_DIR)
+    pitcher_data_validation = validate_pitcher_data_pipeline(DEFAULT_STARTERS, DEFAULT_PITCHER_LOGS, schedule)
     prediction_feature_df = build_prediction_feature_matrix(team_games, target_games) if not target_games.empty else pd.DataFrame()
     win_converter = _train_win_converter(selected_run_model, train_df, feature_columns)
     match_predictions = _build_match_predictions(selected_run_model, win_converter, prediction_feature_df, feature_columns, target_context)
@@ -222,6 +224,18 @@ def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_
     improvement_experiment["park_metrics"].to_csv(output_dir / "park_factor_metrics.csv", index=False, encoding="utf-8-sig")
     improvement_experiment["bias_metrics"].to_csv(output_dir / "team_bias_feature_metrics.csv", index=False, encoding="utf-8-sig")
     improvement_experiment["model_scores"].to_csv(output_dir / "improvement_model_scores.csv", index=False, encoding="utf-8-sig")
+    pd.DataFrame(
+        [
+            {
+                "dataset": "starter_pitchers",
+                **pitcher_data_validation["starter_pitchers_validation"],
+            },
+            {
+                "dataset": "pitcher_game_logs",
+                **pitcher_data_validation["pitcher_game_logs_validation"],
+            },
+        ]
+    ).to_csv(output_dir / "pitcher_data_validation.csv", index=False, encoding="utf-8-sig")
 
     summary = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
@@ -263,6 +277,15 @@ def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_
         "v2_ready_to_train": bool(internal_data_search["v2_ready_to_train"]),
         "v2_blocker": internal_data_search["v2_blocker"],
         "internal_pitcher_data_search": internal_data_search,
+        **{
+            key: value
+            for key, value in pitcher_data_validation.items()
+            if key not in {"starter_pitchers_validation", "pitcher_game_logs_validation"}
+        },
+        "pitcher_data_validation": {
+            "starter_pitchers": pitcher_data_validation["starter_pitchers_validation"],
+            "pitcher_game_logs": pitcher_data_validation["pitcher_game_logs_validation"],
+        },
         **error_analysis["summary"],
         **improvement_experiment["summary"],
         "dashboard": DASHBOARD_PATH,
@@ -288,6 +311,7 @@ def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_
             "park_factor_metrics.csv",
             "team_bias_feature_metrics.csv",
             "improvement_model_scores.csv",
+            "pitcher_data_validation.csv",
             "summary.json",
             "report.html",
         ],

@@ -49,7 +49,7 @@
   <section>
     <h2>기준 정보</h2>
     <div class="summary-grid">
-      <div class="summary-item"><div class="label">생성 시각</div><div class="value">2026-05-28 09:57</div></div>
+      <div class="summary-item"><div class="label">생성 시각</div><div class="value">2026-05-29 08:38</div></div>
       <div class="summary-item"><div class="label">예측 기준일</div><div class="value">2026-05-27</div></div>
       <div class="summary-item"><div class="label">경기 수</div><div class="value">5경기</div></div>
       <div class="summary-item"><div class="label">데이터 기준</div><div class="value">지정 날짜 기준</div></div>
@@ -1827,7 +1827,7 @@
     <p class="note">
       선수 데이터 확장 상태: 데이터 수집 스키마 준비, 모델 미학습<br>
       사유: 선발투수/투수 등판 기록 데이터 미수집<br>
-      starter_pitchers row_count=2, pitcher_game_logs row_count=3
+      starter_pitchers row_count=0, pitcher_game_logs row_count=0
     </p>
     <p class="note">
       내부 투수 데이터 검색 완료: 예<br>
@@ -1923,10 +1923,18 @@
     </tr>
     <tr>
       <td>kbo_analytics/modeling/results/pregame_prediction_history.csv</td>
-      <td>605</td>
+      <td>670</td>
       <td>game_id, home_team, away_team</td>
       <td>date, home_starter_id, away_starter_id</td>
       <td>date, pitcher_id, team, opponent, is_starter, innings_pitched, earned_runs, hits_allowed, walks, strikeouts, home_runs_allowed, pitches</td>
+      <td>아니오</td>
+    </tr>
+    <tr>
+      <td>kbo_run_model/data/pitcher_game_logs.csv</td>
+      <td>0</td>
+      <td>season, date, game_id, pitcher_id, pitcher_name, team, opponent, is_starter, innings_pitched, earned_runs, hits_allowed, walks, strikeouts, home_runs_allowed, pitches</td>
+      <td>home_team, away_team, home_starter_id, away_starter_id</td>
+      <td></td>
       <td>아니오</td>
     </tr>
     <tr>
@@ -1935,6 +1943,14 @@
       <td>season, date, game_id, pitcher_id, pitcher_name, team, opponent, is_starter, innings_pitched, earned_runs, hits_allowed, walks, strikeouts, home_runs_allowed, pitches</td>
       <td>home_team, away_team, home_starter_id, away_starter_id</td>
       <td></td>
+      <td>아니오</td>
+    </tr>
+    <tr>
+      <td>kbo_run_model/data/starter_pitchers.csv</td>
+      <td>0</td>
+      <td>season, date, game_id, home_team, away_team, home_starter_name, away_starter_name, home_starter_id, away_starter_id</td>
+      <td></td>
+      <td>pitcher_id, team, opponent, is_starter, innings_pitched, earned_runs, hits_allowed, walks, strikeouts, home_runs_allowed, pitches</td>
       <td>아니오</td>
     </tr>
     <tr>
@@ -1959,6 +1975,53 @@
       동일한 pitcher_game_logs 스키마를 사용해 불펜 피로도 계산이 가능합니다.<br>
       향후 is_starter=False인 등판 기록을 활용할 예정입니다.
     </p>
+    <h3>투수 데이터 준비 상태</h3>
+    <p class="note">
+      현재 상태: 투수 데이터 미수집<br>
+      선발투수 매핑 데이터 존재 여부: 예<br>
+      투수 등판 로그 존재 여부: 예<br>
+      필수 컬럼 충족 여부: 선발 매핑 예, 투수 로그 예<br>
+      경기 일정 매칭률: 선발 매핑 0.0, 투수 로그 0.0<br>
+      학습 가능/불가능: 학습 불가<br>
+      차단 사유: 실제 투수 데이터 미수집<br>
+      다음 필요한 작업: 실제 경기별 선발투수 매핑과 투수 등판 로그를 pitcher_id 기준으로 적재한 뒤 재검증합니다.
+    </p>
+    <div class="table-wrap"><table class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>데이터셋</th>
+      <th>파일 존재</th>
+      <th>스키마 유효</th>
+      <th>행 수</th>
+      <th>경기 매칭률</th>
+      <th>중복 행</th>
+      <th>학습 가능</th>
+      <th>상태</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>starter_pitchers</td>
+      <td>예</td>
+      <td>예</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>아니오</td>
+      <td>starter_pitchers.csv 스키마 준비, 실제 데이터 없음</td>
+    </tr>
+    <tr>
+      <td>pitcher_game_logs</td>
+      <td>예</td>
+      <td>예</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>아니오</td>
+      <td>pitcher_game_logs.csv 스키마 준비, 실제 데이터 없음</td>
+    </tr>
+  </tbody>
+</table></div>
   </section>
   <section>
     <h2>기술 검증용 예측 결과</h2>

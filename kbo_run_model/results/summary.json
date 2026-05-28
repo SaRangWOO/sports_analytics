@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-28T09:57:02",
+  "generated_at": "2026-05-29T08:38:18",
   "input_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\model_training_games.csv",
   "schedule_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\prediction_games.csv",
   "target_context": {
@@ -369,26 +369,24 @@
     "training_status": "V2 not trained",
     "reason": "선발투수/투수 등판 기록 데이터 미수집",
     "starter_pitchers": {
-      "file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_run_model\\data\\starter_pitchers_sample.csv",
+      "file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_run_model\\data\\starter_pitchers.csv",
       "label": "starter_pitchers",
       "available": false,
       "phase": "Data collection phase",
       "v2_training_status": "V2 not trained",
-      "message": "starter_pitchers contains sample/mock rows only",
+      "message": "starter_pitchers schema ready but no rows",
       "missing_columns": [],
-      "row_count": 2,
-      "sample_only": true
+      "row_count": 0
     },
     "pitcher_game_logs": {
-      "file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_run_model\\data\\pitcher_game_logs_sample.csv",
+      "file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_run_model\\data\\pitcher_game_logs.csv",
       "label": "pitcher_game_logs",
       "available": false,
       "phase": "Data collection phase",
       "v2_training_status": "V2 not trained",
-      "message": "pitcher_game_logs contains sample/mock rows only",
+      "message": "pitcher_game_logs schema ready but no rows",
       "missing_columns": [],
-      "row_count": 3,
-      "sample_only": true
+      "row_count": 0
     }
   },
   "starter_feature_status": {
@@ -1256,7 +1254,82 @@
           "home_runs_allowed",
           "pitches"
         ],
-        "row_count": 605,
+        "row_count": 670,
+        "sample_only": false,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      },
+      {
+        "file": "kbo_run_model/data/pitcher_game_logs.csv",
+        "columns": [
+          "season",
+          "date",
+          "game_id",
+          "pitcher_id",
+          "pitcher_name",
+          "team",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "normalized_columns": [
+          "season",
+          "date",
+          "game_id",
+          "pitcher_id",
+          "pitcher_name",
+          "team",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "matched_terms": [
+          "pitcher",
+          "starter",
+          "innings_pitched",
+          "earned_runs",
+          "strikeouts",
+          "walks",
+          "pitches"
+        ],
+        "mapped_v2_columns": [
+          "season",
+          "date",
+          "game_id",
+          "pitcher_id",
+          "pitcher_name",
+          "team",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "missing_starter_mapping_columns": [
+          "home_team",
+          "away_team",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_pitcher_log_columns": [],
+        "row_count": 0,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -1338,6 +1411,65 @@
         "ready_to_use": false
       },
       {
+        "file": "kbo_run_model/data/starter_pitchers.csv",
+        "columns": [
+          "season",
+          "date",
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_name",
+          "away_starter_name",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "normalized_columns": [
+          "season",
+          "date",
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_name",
+          "away_starter_name",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "matched_terms": [
+          "pitcher",
+          "starter"
+        ],
+        "mapped_v2_columns": [
+          "season",
+          "date",
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_name",
+          "away_starter_name",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_starter_mapping_columns": [],
+        "missing_pitcher_log_columns": [
+          "pitcher_id",
+          "team",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "row_count": 0,
+        "sample_only": false,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      },
+      {
         "file": "kbo_run_model/data/starter_pitchers_sample.csv",
         "columns": [
           "season",
@@ -1398,6 +1530,42 @@
       }
     ]
   },
+  "pitcher_data_validation_completed": true,
+  "pitcher_data_pipeline_ready": true,
+  "starter_pitchers_file_exists": true,
+  "pitcher_game_logs_file_exists": true,
+  "starter_pitchers_schema_valid": true,
+  "pitcher_game_logs_schema_valid": true,
+  "starter_schedule_match_rate": 0.0,
+  "pitcher_logs_game_match_rate": 0.0,
+  "pitcher_data_ready_to_train": false,
+  "pitcher_data_blocker": "실제 투수 데이터 미수집",
+  "pitcher_data_validation": {
+    "starter_pitchers": {
+      "label": "starter_pitchers.csv",
+      "file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_run_model\\data\\starter_pitchers.csv",
+      "file_exists": true,
+      "schema_valid": true,
+      "row_count": 0,
+      "missing_columns": [],
+      "duplicate_rows": 0,
+      "game_match_rate": 0.0,
+      "valid": false,
+      "message": "starter_pitchers.csv 스키마 준비, 실제 데이터 없음"
+    },
+    "pitcher_game_logs": {
+      "label": "pitcher_game_logs.csv",
+      "file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_run_model\\data\\pitcher_game_logs.csv",
+      "file_exists": true,
+      "schema_valid": true,
+      "row_count": 0,
+      "missing_columns": [],
+      "duplicate_rows": 0,
+      "game_match_rate": 0.0,
+      "valid": false,
+      "message": "pitcher_game_logs.csv 스키마 준비, 실제 데이터 없음"
+    }
+  },
   "error_analysis_completed": true,
   "biggest_error_category": "총득점 예측",
   "weakest_team_prediction": "두산",
@@ -1456,6 +1624,7 @@
     "park_factor_metrics.csv",
     "team_bias_feature_metrics.csv",
     "improvement_model_scores.csv",
+    "pitcher_data_validation.csv",
     "summary.json",
     "report.html"
   ]
