@@ -251,17 +251,34 @@ def train_run_regressors(train_df: pd.DataFrame, val_df: pd.DataFrame, features:
 
 
 def to_game_level_prediction(frame: pd.DataFrame, pred_col: str):
-    home = frame[frame["is_home"].eq(1)][["date", "game_key", "team", "opponent", "target_win", "target_runs", pred_col]].rename(
+    context_cols = [
+        "team_recent_5g_runs",
+        "team_recent_10g_runs",
+        "team_season_runs",
+        "team_recent_5g_allowed",
+        "team_recent_10g_allowed",
+        "team_season_allowed",
+        "team_recent_5g_run_diff",
+        "team_recent_10g_run_diff",
+    ]
+    home_cols = ["date", "game_key", "team", "opponent", "target_win", "target_runs", pred_col] + context_cols
+    away_cols = ["game_key", "target_runs", pred_col] + context_cols
+    home = frame[frame["is_home"].eq(1)][home_cols].rename(
         columns={
             "team": "home_team",
             "opponent": "away_team",
             "target_win": "target_home_win",
             "target_runs": "home_actual_runs",
             pred_col: "home_expected_runs",
+            **{column: f"home_{column}" for column in context_cols},
         }
     )
-    away = frame[frame["is_home"].eq(0)][["game_key", "target_runs", pred_col]].rename(
-        columns={"target_runs": "away_actual_runs", pred_col: "away_expected_runs"}
+    away = frame[frame["is_home"].eq(0)][away_cols].rename(
+        columns={
+            "target_runs": "away_actual_runs",
+            pred_col: "away_expected_runs",
+            **{column: f"away_{column}" for column in context_cols},
+        }
     )
     games = pd.merge(home, away, on="game_key", how="inner")
     games["expected_run_diff"] = games["home_expected_runs"] - games["away_expected_runs"]
@@ -375,6 +392,83 @@ def error_summary(error_frame: pd.DataFrame):
     return {"score_bucket_error": bucket_rows, "error_tag_counts": tag_rows}
 
 
+def tag_summary_rows(error_frame: pd.DataFrame):
+    rows = []
+    bucket_frame = error_frame.rename(columns={"actual_total_bucket": "summary_tag"}).copy()
+    exploded = error_frame.assign(summary_tag=error_frame["error_tags"].str.split("|")).explode("summary_tag")
+    combined = pd.concat([bucket_frame, exploded], ignore_index=True)
+    for tag in ["LOW_0_6", "HIGH_12_PLUS", "BLOWOUT_UNDERPREDICTED", "RUN_DIFF_DIRECTION_MISS", "CLOSE_GAME_NOISE"]:
+        subset = combined[combined["summary_tag"] == tag]
+        if subset.empty:
+            rows.append(
+                {
+                    "tag": tag,
+                    "games": 0,
+                    "mean_mae": None,
+                    "rmse": None,
+                    "mean_actual_runs": None,
+                    "mean_expected_runs": None,
+                    "mean_error": None,
+                    "direction_accuracy": None,
+                }
+            )
+            continue
+        total_error = subset["expected_total_runs"] - subset["actual_total_runs"]
+        direction_hit = (subset["expected_run_diff"] > 0) == (subset["actual_run_diff"] > 0)
+        rows.append(
+            {
+                "tag": tag,
+                "games": int(len(subset)),
+                "mean_mae": round(float((subset["home_abs_error"] + subset["away_abs_error"]).mean() / 2), 4),
+                "rmse": round(float(np.sqrt(np.mean(np.r_[subset["home_run_error"], subset["away_run_error"]] ** 2))), 4),
+                "mean_actual_runs": round(float(subset["actual_total_runs"].mean()), 4),
+                "mean_expected_runs": round(float(subset["expected_total_runs"].mean()), 4),
+                "mean_error": round(float(total_error.mean()), 4),
+                "direction_accuracy": round(float(direction_hit.mean()), 4),
+            }
+        )
+    return rows
+
+
+def feature_context_summary(error_frame: pd.DataFrame, mask: pd.Series):
+    subset = error_frame[mask]
+    if subset.empty:
+        return {}
+    fields = [
+        "home_team_recent_5g_runs",
+        "away_team_recent_5g_runs",
+        "home_team_recent_10g_runs",
+        "away_team_recent_10g_runs",
+        "home_team_season_runs",
+        "away_team_season_runs",
+        "home_team_recent_5g_allowed",
+        "away_team_recent_5g_allowed",
+        "home_team_season_allowed",
+        "away_team_season_allowed",
+    ]
+    return {
+        "games": int(len(subset)),
+        "avg_actual_total_runs": round(float(subset["actual_total_runs"].mean()), 4),
+        "avg_expected_total_runs": round(float(subset["expected_total_runs"].mean()), 4),
+        "avg_total_error": round(float(subset["total_run_error"].mean()), 4),
+        "avg_abs_total_error": round(float(subset["total_abs_error"].mean()), 4),
+        "avg_run_diff_abs_error": round(float(subset["run_diff_abs_error"].mean()), 4),
+        "feature_means": {field: round(float(subset[field].mean()), 4) for field in fields if field in subset},
+    }
+
+
+def build_score_error_summaries(error_frame: pd.DataFrame):
+    high_mask = (error_frame["actual_total_bucket"] == "HIGH_12_PLUS") | error_frame["error_tags"].str.contains("BLOWOUT_UNDERPREDICTED", regex=False)
+    low_mask = error_frame["actual_total_bucket"] == "LOW_0_6"
+    high = feature_context_summary(error_frame, high_mask)
+    low = feature_context_summary(error_frame, low_mask)
+    if high:
+        high["interpretation"] = "고득점/대승 유형에서는 실제 총득점이 예측 총득점보다 크게 높아지는 경기가 많아 시즌 평균 기반 예측이 타선 폭발과 불펜 붕괴를 충분히 잡지 못합니다."
+    if low:
+        low["interpretation"] = "저득점 유형에서는 예측 총득점이 실제 총득점보다 높게 잡히는 경향이 있어 투수전, 구장, 선발 컨디션 같은 억제 요인이 추가로 필요합니다."
+    return high, low
+
+
 def selected_feature_importance(model, val_df: pd.DataFrame, features: list[str]):
     result = permutation_importance(
         model,
@@ -423,6 +517,8 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float):
         "away_expected_runs",
         "home_actual_runs",
         "away_actual_runs",
+        "expected_total_runs",
+        "actual_total_runs",
         "expected_run_diff",
         "actual_run_diff",
         "home_win_probability",
@@ -437,6 +533,9 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float):
         "error_tags",
     ]
     selected_error_analysis[error_columns].to_csv(output_dir / "run_model_error_analysis.csv", index=False, encoding="utf-8-sig")
+    tag_rows = tag_summary_rows(selected_error_analysis)
+    pd.DataFrame(tag_rows).to_csv(output_dir / "error_tag_summary.csv", index=False, encoding="utf-8-sig")
+    high_score_summary, low_score_summary = build_score_error_summaries(selected_error_analysis)
     importance_rows = selected_feature_importance(trained_models[selected["model"]], val_df, features)
     pd.DataFrame(importance_rows).to_csv(output_dir / "run_model_feature_importance.csv", index=False, encoding="utf-8-sig")
 
@@ -483,12 +582,17 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float):
         "candidate_scores": candidate_scores,
         "selected_model": selected,
         "error_analysis_summary": error_summary(selected_error_analysis),
+        "error_tag_summary": tag_rows,
+        "high_score_error_summary": high_score_summary,
+        "low_score_error_summary": low_score_summary,
+        "run_model_next_step_note": "고득점 오차는 타선 폭발과 불펜 붕괴 피처, 저득점 오차는 선발투수·구장·상대 타선 억제 피처를 보강해 분리 검증하는 것이 다음 단계입니다.",
         "feature_importance_top20": importance_rows[:20],
         "output_files": [
             "results/run_model_features.csv",
             "results/expected_runs_predictions.csv",
             "results/expected_runs_model.json",
             "results/run_model_error_analysis.csv",
+            "results/error_tag_summary.csv",
             "results/run_model_feature_importance.csv",
         ],
     }

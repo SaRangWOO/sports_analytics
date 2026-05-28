@@ -69,6 +69,7 @@ cd /home/tera/1.project/1.sports_analytics/kbo_analytics
 | `results/expected_runs_predictions.csv` | 검증 구간 경기별 예상 득점, 예상 득실차, 홈팀 승률 |
 | `results/expected_runs_model.json` | 후보 모델 성능, 선택 모델, 사용 피처, 실행 메타데이터 |
 | `results/run_model_error_analysis.csv` | 선택 모델의 경기별 득점 오차, 오차 구간, 오차 태그 |
+| `results/error_tag_summary.csv` | 오차 태그별 경기 수, 평균 오차, 방향 적중률 요약 |
 | `results/run_model_feature_importance.csv` | 선택 모델의 permutation importance |
 | `dashboard.html` | 모델링 전용 HTML 대시보드 |
 

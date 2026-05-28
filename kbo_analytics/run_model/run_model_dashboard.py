@@ -126,6 +126,47 @@ def error_tag_rows(payload: dict):
     return rows
 
 
+def tag_summary_rows(payload: dict):
+    rows = []
+    for row in payload.get("error_tag_summary", []):
+        rows.append(
+            {
+                "유형": row.get("tag", "-"),
+                "경기 수": row.get("games", "-"),
+                "평균 MAE": fmt_float(row.get("mean_mae"), 3),
+                "RMSE": fmt_float(row.get("rmse"), 3),
+                "평균 실제 득점": fmt_float(row.get("mean_actual_runs"), 2),
+                "평균 예측 득점": fmt_float(row.get("mean_expected_runs"), 2),
+                "평균 오차": fmt_float(row.get("mean_error"), 2),
+                "득실 방향 적중률": fmt_pct(row.get("direction_accuracy")),
+            }
+        )
+    return rows
+
+
+def score_summary_card(title: str, summary: dict):
+    if not summary:
+        return '<p class="empty">요약 데이터가 없습니다.</p>'
+    feature_means = summary.get("feature_means", {})
+    feature_lines = "".join(
+        f"<li>{html.escape(key)}: {fmt_float(value, 2)}</li>"
+        for key, value in list(feature_means.items())[:6]
+    )
+    return f"""
+      <div class="diagnostic-card">
+        <h3>{html.escape(title)}</h3>
+        <p>{html.escape(summary.get("interpretation", ""))}</p>
+        <div class="mini-grid">
+          {metric_card("경기 수", str(summary.get("games", "-")))}
+          {metric_card("평균 실제 총득점", fmt_float(summary.get("avg_actual_total_runs"), 2))}
+          {metric_card("평균 예측 총득점", fmt_float(summary.get("avg_expected_total_runs"), 2))}
+          {metric_card("평균 총득점 오차", fmt_float(summary.get("avg_total_error"), 2))}
+        </div>
+        <ul class="features">{feature_lines}</ul>
+      </div>
+    """
+
+
 def importance_rows(payload: dict):
     rows = []
     for row in payload.get("feature_importance_top20", [])[:12]:
@@ -177,6 +218,7 @@ def render_dashboard(results_dir: Path, output_path: Path):
     conf_rows = confidence_rows(predictions)
     bucket_rows = error_bucket_rows(payload)
     tag_rows = error_tag_rows(payload)
+    detailed_tag_rows = tag_summary_rows(payload)
     feature_rows = importance_rows(payload)
     recent_rows = recent_prediction_rows(predictions)
     features = payload.get("feature_columns", [])
@@ -230,6 +272,7 @@ def render_dashboard(results_dir: Path, output_path: Path):
     h1, h2, h3 {{ margin: 0 0 10px; letter-spacing: 0; }}
     .eyebrow {{ color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; }}
     .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }}
+    .mini-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 12px; }}
     .metric {{ border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: #fbfcfd; min-height: 92px; }}
     .metric p {{ margin: 0 0 8px; color: var(--muted); font-size: 13px; }}
     .metric strong {{ display: block; font-size: 22px; }}
@@ -239,6 +282,8 @@ def render_dashboard(results_dir: Path, output_path: Path):
     th, td {{ padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }}
     th {{ color: #334155; background: #f1f5f9; }}
     .split {{ display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr); gap: 16px; }}
+    .diagnostic-card {{ border: 1px solid var(--line); border-radius: 8px; padding: 16px; background: #fbfcfd; margin-top: 12px; }}
+    .diagnostic-card p {{ color: var(--muted); line-height: 1.6; }}
     ul.features {{ columns: 2; margin: 8px 0 0; padding-left: 20px; color: #334155; }}
     .empty {{ color: var(--muted); }}
     @media (max-width: 760px) {{ main {{ padding: 12px; }} header {{ padding: 22px 16px; }} .split {{ grid-template-columns: 1fr; }} ul.features {{ columns: 1; }} }}
@@ -276,11 +321,16 @@ def render_dashboard(results_dir: Path, output_path: Path):
 
     <section>
       <div class="eyebrow">Error Analysis</div>
-      <h2>득점 구간별 오차 진단</h2>
+      <h2>어떤 경기에서 모델이 크게 틀리는가</h2>
       <p class="note">저득점/고득점 경기에서 예상 득점과 실제 득점의 차이를 분리해 봅니다. 이 영역은 모델 개선 포인트를 찾기 위한 진단 리포트입니다.</p>
       {table_html(bucket_rows, ["득점 구간", "경기 수", "홈 MAE", "원정 MAE", "합계 MAE", "득실차 MAE", "승패 적중률"])}
       <h3>오차 태그 분포</h3>
       {table_html(tag_rows, ["오차 태그", "경기 수"])}
+      <h3>오차 태그별 상세 성능</h3>
+      {table_html(detailed_tag_rows, ["유형", "경기 수", "평균 MAE", "RMSE", "평균 실제 득점", "평균 예측 득점", "평균 오차", "득실 방향 적중률"])}
+      {score_summary_card("고득점 경기 예측 한계", payload.get("high_score_error_summary", {}))}
+      {score_summary_card("저득점 경기 예측 한계", payload.get("low_score_error_summary", {}))}
+      <p class="note">{html.escape(str(payload.get("run_model_next_step_note", "")))}</p>
     </section>
 
     <section>

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-28T17:22:47",
+  "generated_at": "2026-05-29T08:32:08",
   "input_file": "kbo_analytics\\data\\official\\model_training_games.csv",
   "model_scope": "independent_run_model",
   "notes": [
@@ -232,6 +232,101 @@
       }
     ]
   },
+  "error_tag_summary": [
+    {
+      "tag": "LOW_0_6",
+      "games": 357,
+      "mean_mae": 2.8845,
+      "rmse": 3.2472,
+      "mean_actual_runs": 4.3277,
+      "mean_expected_runs": 9.9577,
+      "mean_error": 5.63,
+      "direction_accuracy": 0.5434
+    },
+    {
+      "tag": "HIGH_12_PLUS",
+      "games": 496,
+      "mean_mae": 3.6027,
+      "rmse": 4.6162,
+      "mean_actual_runs": 15.5383,
+      "mean_expected_runs": 10.1087,
+      "mean_error": -5.4296,
+      "direction_accuracy": 0.5081
+    },
+    {
+      "tag": "BLOWOUT_UNDERPREDICTED",
+      "games": 474,
+      "mean_mae": 3.8104,
+      "rmse": 4.6455,
+      "mean_actual_runs": 12.4873,
+      "mean_expected_runs": 10.0562,
+      "mean_error": -2.4311,
+      "direction_accuracy": 0.5232
+    },
+    {
+      "tag": "RUN_DIFF_DIRECTION_MISS",
+      "games": 689,
+      "mean_mae": 2.8069,
+      "rmse": 3.5579,
+      "mean_actual_runs": 10.2685,
+      "mean_expected_runs": 10.0451,
+      "mean_error": -0.2235,
+      "direction_accuracy": 0.0
+    },
+    {
+      "tag": "CLOSE_GAME_NOISE",
+      "games": 164,
+      "mean_mae": 1.9629,
+      "rmse": 2.4346,
+      "mean_actual_runs": 8.8902,
+      "mean_expected_runs": 10.0153,
+      "mean_error": 1.1251,
+      "direction_accuracy": 0.122
+    }
+  ],
+  "high_score_error_summary": {
+    "games": 717,
+    "avg_actual_total_runs": 13.3808,
+    "avg_expected_total_runs": 10.0626,
+    "avg_total_error": -3.3182,
+    "avg_abs_total_error": 4.3459,
+    "avg_run_diff_abs_error": 5.7265,
+    "feature_means": {
+      "home_team_recent_5g_runs": 5.0795,
+      "away_team_recent_5g_runs": 5.119,
+      "home_team_recent_10g_runs": 5.1078,
+      "away_team_recent_10g_runs": 5.049,
+      "home_team_season_runs": 5.0844,
+      "away_team_season_runs": 5.0246,
+      "home_team_recent_5g_allowed": 5.1004,
+      "away_team_recent_5g_allowed": 5.1763,
+      "home_team_season_allowed": 5.0389,
+      "away_team_season_allowed": 5.0995
+    },
+    "interpretation": "고득점/대승 유형에서는 실제 총득점이 예측 총득점보다 크게 높아지는 경기가 많아 시즌 평균 기반 예측이 타선 폭발과 불펜 붕괴를 충분히 잡지 못합니다."
+  },
+  "low_score_error_summary": {
+    "games": 357,
+    "avg_actual_total_runs": 4.3277,
+    "avg_expected_total_runs": 9.9577,
+    "avg_total_error": 5.63,
+    "avg_abs_total_error": 5.63,
+    "avg_run_diff_abs_error": 2.3936,
+    "feature_means": {
+      "home_team_recent_5g_runs": 4.9238,
+      "away_team_recent_5g_runs": 4.8929,
+      "home_team_recent_10g_runs": 5.0063,
+      "away_team_recent_10g_runs": 4.9154,
+      "home_team_season_runs": 4.9167,
+      "away_team_season_runs": 4.8767,
+      "home_team_recent_5g_allowed": 4.9176,
+      "away_team_recent_5g_allowed": 5.0469,
+      "home_team_season_allowed": 4.881,
+      "away_team_season_allowed": 4.8989
+    },
+    "interpretation": "저득점 유형에서는 예측 총득점이 실제 총득점보다 높게 잡히는 경향이 있어 투수전, 구장, 선발 컨디션 같은 억제 요인이 추가로 필요합니다."
+  },
+  "run_model_next_step_note": "고득점 오차는 타선 폭발과 불펜 붕괴 피처, 저득점 오차는 선발투수·구장·상대 타선 억제 피처를 보강해 분리 검증하는 것이 다음 단계입니다.",
   "feature_importance_top20": [
     {
       "feature": "team_season_runs",
@@ -339,6 +434,7 @@
     "results/expected_runs_predictions.csv",
     "results/expected_runs_model.json",
     "results/run_model_error_analysis.csv",
+    "results/error_tag_summary.csv",
     "results/run_model_feature_importance.csv"
   ]
 }
