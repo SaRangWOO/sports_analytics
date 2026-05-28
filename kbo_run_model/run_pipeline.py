@@ -16,6 +16,7 @@ from collectors.schema import inspect_starter_schema
 from collectors.search_internal_data import search_internal_pitcher_data
 from dashboard.report import write_html_report
 from evaluation.error_analysis import build_error_analysis
+from evaluation.improvement_experiment import run_performance_improvement_experiment
 from evaluation.metrics import evaluate_win_conversion, season_metrics, select_model, team_bias_metrics, to_game_predictions
 from features.prediction_features import build_prediction_feature_matrix
 from features.starter_features import add_starter_features
@@ -184,6 +185,14 @@ def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_
     selected_scored_games = prediction_map[selected_name]
     selected_predictions = _format_predictions(prediction_map[selected_name])
     error_analysis = build_error_analysis(selected_scored_games, validation_df)
+    improvement_experiment = run_performance_improvement_experiment(
+        feature_df,
+        feature_columns,
+        selected_run_model,
+        selected_model,
+        error_analysis,
+        train_ratio,
+    )
     selected_season_metrics = season_metrics(selected_scored_games)
     selected_team_metrics, over_predicted_teams, under_predicted_teams = team_bias_metrics(selected_scored_games)
     starter_schema = inspect_starter_schema(input_path)
@@ -209,6 +218,10 @@ def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_
     error_analysis["team"].to_csv(output_dir / "team_error_metrics.csv", index=False, encoding="utf-8-sig")
     error_analysis["ballpark"].to_csv(output_dir / "ballpark_error_metrics.csv", index=False, encoding="utf-8-sig")
     error_analysis["monthly"].to_csv(output_dir / "monthly_error_metrics.csv", index=False, encoding="utf-8-sig")
+    improvement_experiment["comparison"].to_csv(output_dir / "performance_improvement_summary.csv", index=False, encoding="utf-8-sig")
+    improvement_experiment["park_metrics"].to_csv(output_dir / "park_factor_metrics.csv", index=False, encoding="utf-8-sig")
+    improvement_experiment["bias_metrics"].to_csv(output_dir / "team_bias_feature_metrics.csv", index=False, encoding="utf-8-sig")
+    improvement_experiment["model_scores"].to_csv(output_dir / "improvement_model_scores.csv", index=False, encoding="utf-8-sig")
 
     summary = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
@@ -251,6 +264,7 @@ def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_
         "v2_blocker": internal_data_search["v2_blocker"],
         "internal_pitcher_data_search": internal_data_search,
         **error_analysis["summary"],
+        **improvement_experiment["summary"],
         "dashboard": DASHBOARD_PATH,
         "selected_model": selected_model,
         "outputs": [
@@ -270,6 +284,10 @@ def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_
             "team_error_metrics.csv",
             "ballpark_error_metrics.csv",
             "monthly_error_metrics.csv",
+            "performance_improvement_summary.csv",
+            "park_factor_metrics.csv",
+            "team_bias_feature_metrics.csv",
+            "improvement_model_scores.csv",
             "summary.json",
             "report.html",
         ],
@@ -286,6 +304,7 @@ def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_
         selected_predictions,
         match_predictions,
         error_analysis,
+        improvement_experiment,
     )
     return summary
 

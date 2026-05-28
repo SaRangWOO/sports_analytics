@@ -49,7 +49,7 @@
   <section>
     <h2>기준 정보</h2>
     <div class="summary-grid">
-      <div class="summary-item"><div class="label">생성 시각</div><div class="value">2026-05-28 08:52</div></div>
+      <div class="summary-item"><div class="label">생성 시각</div><div class="value">2026-05-28 09:57</div></div>
       <div class="summary-item"><div class="label">예측 기준일</div><div class="value">2026-05-27</div></div>
       <div class="summary-item"><div class="label">경기 수</div><div class="value">5경기</div></div>
       <div class="summary-item"><div class="label">데이터 기준</div><div class="value">지정 날짜 기준</div></div>
@@ -1436,6 +1436,384 @@
 </table></div>
   </section>
   <section>
+    <h2>성능 개선 실험 결과</h2>
+    <p class="note">
+      실험 내용: 구장 득점 팩터와 팀별 공격/실점 예측 편향 보정 피처를 추가해 baseline과 같은 검증 구간에서 비교했습니다.<br>
+      최종 적용 여부: 미적용<br>
+      적용 판단 사유: 총득점 MAE 개선 폭이 적용 기준보다 작거나 오버/언더·핸디캡 적중률이 악화되어 기존 baseline을 유지합니다.<br>
+      개선된 지표: run_mae, run_rmse, total_runs_mae, brier_score<br>
+      악화된 지표: home_win_accuracy, over_under_accuracy_8_5, handicap_accuracy_2_5<br>
+      다음 개선 추천: 최근 경기 가중치 개선과 선발투수/불펜/라인업 데이터 수집
+    </p>
+    <div class="summary-grid">
+      <div class="summary-item"><div class="label">Baseline 총득점 MAE</div><div class="value">3.9159</div></div>
+      <div class="summary-item"><div class="label">Improved 총득점 MAE</div><div class="value">3.8978</div></div>
+      <div class="summary-item"><div class="label">총득점 MAE 변화량</div><div class="value">-0.0181</div></div>
+      <div class="summary-item"><div class="label">Brier 변화</div><div class="value">0.2543 → 0.2537</div></div>
+    </div>
+    <h3>Baseline vs Improved 성능 비교</h3>
+    <div class="table-wrap"><table class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>지표</th>
+      <th>Baseline</th>
+      <th>Improved</th>
+      <th>변화량</th>
+      <th>판정</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>run_mae</td>
+      <td>2.7527</td>
+      <td>2.7370</td>
+      <td>-0.0157</td>
+      <td>개선</td>
+    </tr>
+    <tr>
+      <td>run_rmse</td>
+      <td>3.5004</td>
+      <td>3.4868</td>
+      <td>-0.0136</td>
+      <td>개선</td>
+    </tr>
+    <tr>
+      <td>total_runs_mae</td>
+      <td>3.9159</td>
+      <td>3.8978</td>
+      <td>-0.0181</td>
+      <td>개선</td>
+    </tr>
+    <tr>
+      <td>home_win_accuracy</td>
+      <td>0.5331</td>
+      <td>0.5206</td>
+      <td>-0.0125</td>
+      <td>악화</td>
+    </tr>
+    <tr>
+      <td>brier_score</td>
+      <td>0.2543</td>
+      <td>0.2537</td>
+      <td>-0.0006</td>
+      <td>개선</td>
+    </tr>
+    <tr>
+      <td>over_under_accuracy_8_5</td>
+      <td>0.5770</td>
+      <td>0.5603</td>
+      <td>-0.0167</td>
+      <td>악화</td>
+    </tr>
+    <tr>
+      <td>handicap_accuracy_2_5</td>
+      <td>0.6635</td>
+      <td>0.6503</td>
+      <td>-0.0132</td>
+      <td>악화</td>
+    </tr>
+  </tbody>
+</table></div>
+    <h3>개선 실험 모델별 성능</h3>
+    <div class="table-wrap"><table class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>모델</th>
+      <th>득점 MAE</th>
+      <th>득점 RMSE</th>
+      <th>실험 구분</th>
+      <th>홈팀 승패 정확도</th>
+      <th>브라이어 점수</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>PoissonRegressor</td>
+      <td>2.7578</td>
+      <td>3.5032</td>
+      <td>improved</td>
+      <td>0.5275</td>
+      <td>0.2499</td>
+    </tr>
+    <tr>
+      <td>Ridge</td>
+      <td>2.7637</td>
+      <td>3.5103</td>
+      <td>improved</td>
+      <td>0.5199</td>
+      <td>0.2500</td>
+    </tr>
+    <tr>
+      <td>RandomForestRegressor</td>
+      <td>2.7534</td>
+      <td>3.4947</td>
+      <td>improved</td>
+      <td>0.5275</td>
+      <td>0.2708</td>
+    </tr>
+    <tr>
+      <td>HistGradientBoostingRegressor</td>
+      <td>2.7370</td>
+      <td>3.4868</td>
+      <td>improved</td>
+      <td>0.5206</td>
+      <td>0.2537</td>
+    </tr>
+  </tbody>
+</table></div>
+    <h3>구장 팩터 효과</h3>
+    <div class="table-wrap"><table class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>구장</th>
+      <th>경기 수</th>
+      <th>평균 총득점</th>
+      <th>평균 홈 득점</th>
+      <th>득점 팩터</th>
+      <th>표본 상태</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>청주</td>
+      <td>30</td>
+      <td>11.7000</td>
+      <td>4.5667</td>
+      <td>1.1620</td>
+      <td>표본 주의</td>
+    </tr>
+    <tr>
+      <td>포항</td>
+      <td>39</td>
+      <td>10.4103</td>
+      <td>5.5641</td>
+      <td>1.0339</td>
+      <td>표본 주의</td>
+    </tr>
+    <tr>
+      <td>울산</td>
+      <td>44</td>
+      <td>7.4091</td>
+      <td>3.8636</td>
+      <td>0.7359</td>
+      <td>일반</td>
+    </tr>
+    <tr>
+      <td>대전</td>
+      <td>96</td>
+      <td>9.8438</td>
+      <td>5.2083</td>
+      <td>0.9777</td>
+      <td>일반</td>
+    </tr>
+    <tr>
+      <td>마산</td>
+      <td>213</td>
+      <td>10.4319</td>
+      <td>5.2958</td>
+      <td>1.0361</td>
+      <td>일반</td>
+    </tr>
+    <tr>
+      <td>창원</td>
+      <td>503</td>
+      <td>10.2048</td>
+      <td>5.2724</td>
+      <td>1.0135</td>
+      <td>일반</td>
+    </tr>
+    <tr>
+      <td>한밭</td>
+      <td>603</td>
+      <td>9.9337</td>
+      <td>4.5904</td>
+      <td>0.9866</td>
+      <td>일반</td>
+    </tr>
+    <tr>
+      <td>사직</td>
+      <td>690</td>
+      <td>10.7217</td>
+      <td>5.1652</td>
+      <td>1.0649</td>
+      <td>일반</td>
+    </tr>
+    <tr>
+      <td>대구</td>
+      <td>690</td>
+      <td>10.9391</td>
+      <td>5.4101</td>
+      <td>1.0865</td>
+      <td>일반</td>
+    </tr>
+    <tr>
+      <td>문학</td>
+      <td>726</td>
+      <td>10.2631</td>
+      <td>5.1419</td>
+      <td>1.0193</td>
+      <td>일반</td>
+    </tr>
+    <tr>
+      <td>고척</td>
+      <td>729</td>
+      <td>9.6063</td>
+      <td>4.8299</td>
+      <td>0.9541</td>
+      <td>일반</td>
+    </tr>
+    <tr>
+      <td>수원</td>
+      <td>731</td>
+      <td>10.1669</td>
+      <td>4.9699</td>
+      <td>1.0098</td>
+      <td>일반</td>
+    </tr>
+    <tr>
+      <td>광주</td>
+      <td>734</td>
+      <td>10.2071</td>
+      <td>5.1635</td>
+      <td>1.0137</td>
+      <td>일반</td>
+    </tr>
+    <tr>
+      <td>잠실</td>
+      <td>1455</td>
+      <td>9.3698</td>
+      <td>4.9258</td>
+      <td>0.9306</td>
+      <td>일반</td>
+    </tr>
+  </tbody>
+</table></div>
+    <h3>팀 편향 보정 효과</h3>
+    <div class="table-wrap"><table class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>팀</th>
+      <th>경기 수</th>
+      <th>평균 예측 오차</th>
+      <th>평균 절대 예측 오차</th>
+      <th>평균 허용득점 예측 오차</th>
+      <th>평균 절대 허용득점 오차</th>
+      <th>편향 보정 후보</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>두산</td>
+      <td>1458</td>
+      <td>-0.1967</td>
+      <td>2.8302</td>
+      <td>0.2026</td>
+      <td>2.6405</td>
+      <td>중립</td>
+    </tr>
+    <tr>
+      <td>넥센</td>
+      <td>429</td>
+      <td>-0.3177</td>
+      <td>2.8224</td>
+      <td>-0.1663</td>
+      <td>2.6526</td>
+      <td>과소예측 보정 후보</td>
+    </tr>
+    <tr>
+      <td>LG</td>
+      <td>1453</td>
+      <td>-0.0813</td>
+      <td>2.7854</td>
+      <td>0.1911</td>
+      <td>2.6265</td>
+      <td>중립</td>
+    </tr>
+    <tr>
+      <td>NC</td>
+      <td>1449</td>
+      <td>-0.0698</td>
+      <td>2.7736</td>
+      <td>-0.0135</td>
+      <td>2.7688</td>
+      <td>중립</td>
+    </tr>
+    <tr>
+      <td>키움</td>
+      <td>1038</td>
+      <td>0.2752</td>
+      <td>2.7214</td>
+      <td>0.0732</td>
+      <td>2.7301</td>
+      <td>과대예측 보정 후보</td>
+    </tr>
+    <tr>
+      <td>SK</td>
+      <td>716</td>
+      <td>0.0212</td>
+      <td>2.7199</td>
+      <td>0.0059</td>
+      <td>2.7513</td>
+      <td>중립</td>
+    </tr>
+    <tr>
+      <td>롯데</td>
+      <td>1455</td>
+      <td>0.0657</td>
+      <td>2.7161</td>
+      <td>-0.1389</td>
+      <td>2.7700</td>
+      <td>중립</td>
+    </tr>
+    <tr>
+      <td>KIA</td>
+      <td>1464</td>
+      <td>-0.1027</td>
+      <td>2.6990</td>
+      <td>-0.1045</td>
+      <td>2.7198</td>
+      <td>중립</td>
+    </tr>
+    <tr>
+      <td>삼성</td>
+      <td>1454</td>
+      <td>-0.0557</td>
+      <td>2.6924</td>
+      <td>-0.1222</td>
+      <td>2.7405</td>
+      <td>중립</td>
+    </tr>
+    <tr>
+      <td>KT</td>
+      <td>1457</td>
+      <td>0.0594</td>
+      <td>2.6720</td>
+      <td>0.0186</td>
+      <td>2.7178</td>
+      <td>중립</td>
+    </tr>
+    <tr>
+      <td>한화</td>
+      <td>1453</td>
+      <td>0.1962</td>
+      <td>2.6334</td>
+      <td>-0.1110</td>
+      <td>2.7695</td>
+      <td>중립</td>
+    </tr>
+    <tr>
+      <td>SSG</td>
+      <td>740</td>
+      <td>0.0080</td>
+      <td>2.6081</td>
+      <td>0.0066</td>
+      <td>2.7598</td>
+      <td>중립</td>
+    </tr>
+  </tbody>
+</table></div>
+  </section>
+  <section>
     <h2>데이터 상태</h2>
     <p class="note">
       선발투수 데이터 상태: 선발투수 원천 데이터 없음<br>
@@ -1517,6 +1895,14 @@
       <td>pitcher_id, pitcher_name, team</td>
       <td>date, game_id, home_team, away_team, home_starter_id, away_starter_id</td>
       <td>date, game_id, opponent, is_starter, innings_pitched, earned_runs, hits_allowed, walks, strikeouts, home_runs_allowed, pitches</td>
+      <td>아니오</td>
+    </tr>
+    <tr>
+      <td>kbo_analytics/modeling/results/game_level_features.csv</td>
+      <td>7141</td>
+      <td>date, game_id, home_team, away_team</td>
+      <td>home_starter_id, away_starter_id</td>
+      <td>pitcher_id, team, opponent, is_starter, innings_pitched, earned_runs, hits_allowed, walks, strikeouts, home_runs_allowed, pitches</td>
       <td>아니오</td>
     </tr>
     <tr>
