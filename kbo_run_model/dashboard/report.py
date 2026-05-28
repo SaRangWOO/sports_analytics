@@ -161,6 +161,42 @@ MONTHLY_COLUMNS = {
     "win_accuracy": "승패 정확도",
 }
 
+IMPROVEMENT_COLUMNS = {
+    "metric": "지표",
+    "baseline": "Baseline",
+    "improved": "Improved",
+    "delta": "변화량",
+    "direction": "판정",
+}
+
+PARK_FACTOR_COLUMNS = {
+    "ballpark": "구장",
+    "games": "경기 수",
+    "avg_total_runs": "평균 총득점",
+    "avg_home_runs": "평균 홈 득점",
+    "run_factor": "득점 팩터",
+    "sample_note": "표본 상태",
+}
+
+TEAM_BIAS_FEATURE_COLUMNS = {
+    "team": "팀",
+    "games": "경기 수",
+    "avg_prediction_error": "평균 예측 오차",
+    "avg_abs_prediction_error": "평균 절대 예측 오차",
+    "avg_allowed_prediction_error": "평균 허용득점 예측 오차",
+    "avg_abs_allowed_prediction_error": "평균 절대 허용득점 오차",
+    "bias_direction": "편향 보정 후보",
+}
+
+IMPROVEMENT_MODEL_COLUMNS = {
+    "model_version": "실험 구분",
+    "model": "모델",
+    "run_mae": "득점 MAE",
+    "run_rmse": "득점 RMSE",
+    "home_win_accuracy": "홈팀 승패 정확도",
+    "brier_score": "브라이어 점수",
+}
+
 
 def _format_generated_at(value: str) -> str:
     return value.replace("T", " ")[:16]
@@ -295,6 +331,7 @@ def write_html_report(
     predictions: pd.DataFrame,
     match_predictions: pd.DataFrame,
     error_analysis: dict,
+    improvement_experiment: dict,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     candidate_table = pd.DataFrame(candidate_scores).rename(columns=SCORE_COLUMNS).to_html(index=False, classes="table", border=0)
@@ -311,6 +348,10 @@ def write_html_report(
     team_error_table = _table(error_analysis["team"], TEAM_ERROR_COLUMNS)
     ballpark_error_table = _table(error_analysis["ballpark"], BALLPARK_COLUMNS)
     monthly_error_table = _table(error_analysis["monthly"], MONTHLY_COLUMNS)
+    improvement_table = _table(improvement_experiment["comparison"], IMPROVEMENT_COLUMNS)
+    park_factor_table = _table(improvement_experiment["park_metrics"], PARK_FACTOR_COLUMNS)
+    team_bias_feature_table = _table(improvement_experiment["bias_metrics"], TEAM_BIAS_FEATURE_COLUMNS)
+    improvement_model_table = _table(improvement_experiment["model_scores"], IMPROVEMENT_MODEL_COLUMNS)
     match_display = match_predictions.copy()
     if not match_display.empty:
         match_display["league"] = "KBO"
@@ -412,6 +453,9 @@ def write_html_report(
         f"접전 예측 경기 승패 적중률은 {close_accuracy:.4f}, 강한 우세 예측 경기 적중률은 {strong_accuracy:.4f}입니다.",
     ]
     weakness_summary = "<br>".join(html.escape(line) for line in weakness_lines)
+    improved_metrics = ", ".join(summary["improved_metrics"]) or "없음"
+    worsened_metrics = ", ".join(summary["worsened_metrics"]) or "없음"
+    final_applied = "적용" if summary["final_model_applied"] else "미적용"
 
     document = f"""<!doctype html>
 <html lang="ko">
@@ -545,6 +589,31 @@ def write_html_report(
     <div class="table-wrap">{ballpark_error_table}</div>
     <h3>월별/시즌 구간별 오차</h3>
     <div class="table-wrap">{monthly_error_table}</div>
+  </section>
+  <section>
+    <h2>성능 개선 실험 결과</h2>
+    <p class="note">
+      실험 내용: 구장 득점 팩터와 팀별 공격/실점 예측 편향 보정 피처를 추가해 baseline과 같은 검증 구간에서 비교했습니다.<br>
+      최종 적용 여부: {final_applied}<br>
+      적용 판단 사유: {html.escape(str(summary["final_model_reason"]))}<br>
+      개선된 지표: {html.escape(improved_metrics)}<br>
+      악화된 지표: {html.escape(worsened_metrics)}<br>
+      다음 개선 추천: {html.escape(str(summary["next_recommended_improvement"]))}
+    </p>
+    <div class="summary-grid">
+      <div class="summary-item"><div class="label">Baseline 총득점 MAE</div><div class="value">{summary["baseline_total_runs_mae"]}</div></div>
+      <div class="summary-item"><div class="label">Improved 총득점 MAE</div><div class="value">{summary["improved_total_runs_mae"]}</div></div>
+      <div class="summary-item"><div class="label">총득점 MAE 변화량</div><div class="value">{summary["total_runs_mae_delta"]}</div></div>
+      <div class="summary-item"><div class="label">Brier 변화</div><div class="value">{summary["baseline_brier_score"]} → {summary["improved_brier_score"]}</div></div>
+    </div>
+    <h3>Baseline vs Improved 성능 비교</h3>
+    <div class="table-wrap">{improvement_table}</div>
+    <h3>개선 실험 모델별 성능</h3>
+    <div class="table-wrap">{improvement_model_table}</div>
+    <h3>구장 팩터 효과</h3>
+    <div class="table-wrap">{park_factor_table}</div>
+    <h3>팀 편향 보정 효과</h3>
+    <div class="table-wrap">{team_bias_feature_table}</div>
   </section>
   <section>
     <h2>데이터 상태</h2>
