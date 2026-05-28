@@ -167,9 +167,9 @@ def score_summary_card(title: str, summary: dict):
     """
 
 
-def importance_rows(payload: dict):
+def importance_rows(payload: dict, limit: int = 20):
     rows = []
-    for row in payload.get("feature_importance_top20", [])[:12]:
+    for row in payload.get("feature_importance_top20", [])[:limit]:
         rows.append(
             {
                 "피처": row.get("feature", "-"),
@@ -178,6 +178,99 @@ def importance_rows(payload: dict):
             }
         )
     return rows
+
+
+def load_run_model_results(results_dir: Path):
+    model_path = results_dir / "expected_runs_model.json"
+    prediction_path = results_dir / "expected_runs_predictions.csv"
+    if not model_path.exists() or not prediction_path.exists():
+        raise FileNotFoundError("Run model results are missing. Run run_prediction_model.py first.")
+    payload = json.loads(model_path.read_text(encoding="utf-8"))
+    predictions = pd.read_csv(prediction_path)
+    return payload, predictions, model_path, prediction_path
+
+
+def render_embedded_dashboard(results_dir: Path = DEFAULT_RESULTS):
+    payload, predictions, model_path, prediction_path = load_run_model_results(results_dir)
+    selected = payload.get("selected_model", {})
+    summary = prediction_summary(predictions)
+    cards = "".join(
+        [
+            metric_card("선택 모델", selected.get("model", "-"), "득점 MAE 기준 우선 선택"),
+            metric_card("MAE", fmt_float(selected.get("mae"), 4), "득점 평균 절대 오차"),
+            metric_card("RMSE", fmt_float(selected.get("rmse"), 4), "큰 오차 반영"),
+            metric_card("승패 변환 정확도", fmt_pct(selected.get("accuracy")), "예상 득실차 기반"),
+            metric_card("Brier Score", fmt_float(selected.get("brier_score"), 4), "확률 품질"),
+            metric_card("검증 경기", str(payload.get("validation_games", "-")), f'cutoff {payload.get("training_cutoff", "-")}'),
+        ]
+    )
+    summary_cards = "".join(
+        [
+            metric_card("평균 홈 예상 득점", fmt_float(summary.get("avg_home_runs"), 2)),
+            metric_card("평균 원정 예상 득점", fmt_float(summary.get("avg_away_runs"), 2)),
+            metric_card("평균 절대 예상 득실차", fmt_float(summary.get("avg_abs_run_diff"), 2)),
+            metric_card("1점 이상 우세 경기", str(summary.get("big_edge_games", "-")), f'적중률 {fmt_pct(summary.get("big_edge_accuracy"))}'),
+        ]
+    )
+    return f"""
+      <div class="run-model-panel">
+        <section class="run-model-hero">
+          <div>
+            <div class="eyebrow">INDEPENDENT RUN MODEL</div>
+            <h2>득점 기반 승부 예측</h2>
+            <p>독립 득점 기반 모델 결과입니다. 기존 경기 승패 모델과 결과를 섞지 않고, 팀별 예상 득점을 먼저 예측한 뒤 예상 득실차를 홈팀 승률로 변환합니다.</p>
+            <p class="run-model-source">생성 시각: {html.escape(str(payload.get("generated_at", "-")))} · 결과 JSON: {html.escape(str(model_path))} · 예측 CSV: {html.escape(str(prediction_path))}</p>
+          </div>
+        </section>
+
+        <section class="run-model-section">
+          <div class="section-title">
+            <div>
+              <div class="eyebrow">SELECTED MODEL</div>
+              <h2>선택 모델 요약</h2>
+            </div>
+          </div>
+          <div class="run-model-grid">{cards}</div>
+          <p class="note">이 모델은 기존 승패 모델을 대체하지 않는 별도 실험 모델입니다. 성능이 기존 모델보다 낮으면 낮은 그대로 표시합니다.</p>
+        </section>
+
+        <section class="run-model-section">
+          <div class="eyebrow">MODEL CANDIDATES</div>
+          <h2>후보 모델 비교</h2>
+          <p class="note">선택 모델은 득점 예측 오차(MAE)를 우선 기준으로 고릅니다. 승패 정확도와 Brier Score는 예상 득점 차이를 승률로 변환했을 때의 참고 성능입니다.</p>
+          <div class="run-model-tablewrap">{table_html(model_score_rows(payload), ["모델", "MAE", "RMSE", "승패 정확도", "Brier", "LogLoss", "득실차 방향"])}</div>
+        </section>
+
+        <section class="run-model-section">
+          <div class="eyebrow">EXPECTED RUNS</div>
+          <h2>예상 득점 예측 결과</h2>
+          <div class="run-model-grid">{summary_cards}</div>
+          <h3>예상 득실차 구간별 적중률</h3>
+          <div class="run-model-tablewrap">{table_html(confidence_rows(predictions), ["예상 득실차 구간", "경기 수", "적중률", "평균 홈승률"])}</div>
+          <h3>최근 검증 경기 예측</h3>
+          <div class="run-model-tablewrap">{table_html(recent_prediction_rows(predictions), ["경기일", "경기", "원정 예상득점", "홈 예상득점", "홈 기준 득실차", "예측 승률", "예측", "실제", "결과"])}</div>
+        </section>
+
+        <section class="run-model-section">
+          <div class="eyebrow">ERROR ANALYSIS</div>
+          <h2>오차 태그 요약</h2>
+          <p class="note">득점 기반 모델이 어떤 경기에서 크게 틀리는지 보기 위한 진단 리포트입니다. 예측값을 보정하지 않고 오차 유형만 분해합니다.</p>
+          <div class="run-model-tablewrap">{table_html(tag_summary_rows(payload), ["유형", "경기 수", "평균 MAE", "RMSE", "평균 실제 득점", "평균 예측 득점", "평균 오차", "득실 방향 적중률"])}</div>
+          <div class="run-model-split">
+            {score_summary_card("고득점 경기 예측 한계", payload.get("high_score_error_summary", {}))}
+            {score_summary_card("저득점 경기 예측 한계", payload.get("low_score_error_summary", {}))}
+          </div>
+          <p class="note">{html.escape(str(payload.get("run_model_next_step_note", "")))}</p>
+        </section>
+
+        <section class="run-model-section">
+          <div class="eyebrow">FEATURE IMPORTANCE</div>
+          <h2>피처 중요도 TOP 20</h2>
+          <p class="note">Permutation importance를 사용해 MAE 기준 중요도를 계산했습니다. 값이 클수록 해당 피처를 섞었을 때 득점 예측 오차가 커졌다는 뜻입니다.</p>
+          <div class="run-model-tablewrap">{table_html(importance_rows(payload, 20), ["피처", "중요도 평균", "표준편차"])}</div>
+        </section>
+      </div>
+    """
 
 
 def recent_prediction_rows(predictions: pd.DataFrame):
@@ -205,13 +298,7 @@ def recent_prediction_rows(predictions: pd.DataFrame):
 
 
 def render_dashboard(results_dir: Path, output_path: Path):
-    model_path = results_dir / "expected_runs_model.json"
-    prediction_path = results_dir / "expected_runs_predictions.csv"
-    if not model_path.exists() or not prediction_path.exists():
-        raise FileNotFoundError("Run model results are missing. Run run_prediction_model.py first.")
-
-    payload = json.loads(model_path.read_text(encoding="utf-8"))
-    predictions = pd.read_csv(prediction_path)
+    payload, predictions, _, _ = load_run_model_results(results_dir)
     selected = payload.get("selected_model", {})
     summary = prediction_summary(predictions)
     score_rows = model_score_rows(payload)

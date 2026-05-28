@@ -52,6 +52,21 @@ cd /home/tera/1.project/1.sports_analytics/kbo_analytics
 .venv/bin/python run_model/run_model_dashboard.py
 ```
 
+운영 대시보드에 통합해서 확인하려면 기존 대시보드 생성 스크립트를 실행합니다.
+
+```bash
+.venv/bin/python official_kbo_dashboard.py
+```
+
+`latest.html`에는 두 개의 탭이 표시됩니다.
+
+| 탭 | 내용 |
+| --- | --- |
+| `경기 예측` | 기존 운영 승패 예측 대시보드 |
+| `득점 기반 승부 예측` | `run_model/results` 파일을 읽어 렌더링한 독립 득점 기반 모델 결과 |
+
+두 탭은 화면에서만 함께 보이며, 모델 입력과 결과 파일은 서로 섞지 않습니다.
+
 옵션을 직접 지정할 수도 있습니다.
 
 ```bash

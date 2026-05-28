@@ -21,6 +21,8 @@ from modeling.train_win_predictor import (
     standardize_train_test,
     train_logistic_regression,
 )
+from run_model.run_model_dashboard import DEFAULT_RESULTS as RUN_MODEL_RESULTS
+from run_model.run_model_dashboard import render_embedded_dashboard
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -2340,6 +2342,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         f'<button type="button" class="team-button" data-team="{escape(team)}">{escape(team)}</button>'
         for team in standings["팀"]
     )
+    run_model_html = render_embedded_dashboard(RUN_MODEL_RESULTS)
     html = f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -2449,9 +2452,28 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .tone-good .badge-decision {{ background:var(--green-bg); color:var(--green); border-color:#BBF7D0 !important; }}
     .tone-watch .badge-decision {{ background:var(--orange-bg); color:#B45309; border-color:#FDE68A !important; }}
     .tone-risk .badge-decision {{ background:var(--red-bg); color:var(--red); border-color:#FECACA !important; }}
+    .dashboard-tabs {{ display:flex; gap:10px; margin:0 0 22px; padding:8px; width:max-content; max-width:100%; border:1px solid rgba(226,232,240,.85); border-radius:18px; background:rgba(255,255,255,.76); box-shadow:var(--shadow-soft); }}
+    .tab-button {{ border:0; border-radius:13px; padding:11px 16px; background:transparent; color:var(--muted); font-size:14px; font-weight:900; cursor:pointer; }}
+    .tab-button.active {{ background:var(--blue); color:white; box-shadow:0 12px 26px rgba(29,78,216,.20); }}
+    .tab-panel {{ display:none; }}
+    .tab-panel.active {{ display:block; }}
+    .run-model-panel {{ display:grid; gap:22px; }}
+    .run-model-hero, .run-model-section {{ background:var(--card); border:1px solid rgba(226,232,240,.72); border-radius:26px; padding:24px; box-shadow:var(--shadow); backdrop-filter:blur(10px); }}
+    .run-model-hero p {{ max-width:920px; color:#475569; margin:10px 0 0; }}
+    .run-model-source {{ font-size:12px; color:var(--muted) !important; word-break:break-all; }}
+    .run-model-grid, .run-model-panel .mini-grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }}
+    .run-model-panel .metric {{ min-height:96px; }}
+    .run-model-panel .metric p {{ margin:0 0 8px; color:var(--muted); font-size:13px; font-weight:800; }}
+    .run-model-panel .metric span {{ display:block; margin-top:8px; color:var(--muted); font-size:12px; }}
+    .run-model-tablewrap {{ overflow-x:auto; margin-top:12px; }}
+    .run-model-split {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }}
+    .run-model-panel .diagnostic-card {{ border:1px solid rgba(226,232,240,.9); border-radius:18px; padding:18px; background:rgba(248,250,252,.82); }}
+    .run-model-panel .diagnostic-card p {{ color:var(--muted); line-height:1.6; }}
+    .run-model-panel ul.features {{ columns:2; margin:8px 0 0; padding-left:20px; color:#334155; }}
+    .run-model-panel .empty {{ color:var(--muted); }}
     details {{ margin-top:16px; }}
     summary {{ cursor:pointer; font-weight:800; color:var(--blue); }}
-    @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons, .prediction-cards, .featured-match {{ grid-template-columns: 1fr; }} main {{ padding: 0 16px 40px; }} header {{ padding:24px 16px 8px; }} .topbar {{ flex-direction:column; }} .meta-panel {{ justify-content:flex-start; min-width:0; }} .featured-result {{ justify-self:stretch; }} }}
+    @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons, .prediction-cards, .featured-match, .run-model-grid, .run-model-panel .mini-grid, .run-model-split {{ grid-template-columns: 1fr; }} main {{ padding: 0 16px 40px; }} header {{ padding:24px 16px 8px; }} .topbar {{ flex-direction:column; }} .meta-panel {{ justify-content:flex-start; min-width:0; }} .featured-result {{ justify-self:stretch; }} .dashboard-tabs {{ width:100%; }} .tab-button {{ flex:1; }} }}
   </style>
 </head>
 <body>
@@ -2471,6 +2493,11 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
   </div>
 </header>
 <main>
+  <nav class="dashboard-tabs" aria-label="KBO dashboard tabs">
+    <button type="button" class="tab-button active" data-tab="gamePrediction">경기 예측</button>
+    <button type="button" class="tab-button" data-tab="runPrediction">득점 기반 승부 예측</button>
+  </nav>
+  <div id="gamePrediction" class="tab-panel active">
   <section class="section hero-section">
     <div class="eyebrow">TODAY · 오늘의 판단</div>
     <h2>오늘의 KBO 예측 요약</h2>
@@ -2588,9 +2615,17 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     </details>
     <p class="note">예측 모델은 매일 오전 갱신 기준 완료 경기만 학습/검증에 사용합니다. 확신 구간으로 갈수록 전체 경기보다 높은 적중률을 보였지만, 58% 이상·60% 이상 구간은 표본 수가 줄어들기 때문에 장기 검증이 더 필요합니다. 불펜 피로와 휴식일은 경기 단위 모델 피처로 반영했고, 선발투수는 경기 전 업데이트에서 GameCenter 확정 선발을 확인합니다. 라인업은 대시보드 판단 정보로 표시하지만, 과거 시점별 라인업 스냅샷이 쌓이기 전까지 최종 승패 모델 피처에는 직접 반영하지 않습니다.</p>
   </section>
+  </div>
+  <div id="runPrediction" class="tab-panel">
+    {run_model_html}
+  </div>
 </main>
 <script>
 const TEAM_DATA = {payload};
+document.querySelectorAll('.tab-button').forEach(button => button.addEventListener('click', () => {{
+  document.querySelectorAll('.tab-button').forEach(item => item.classList.toggle('active', item === button));
+  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.toggle('active', panel.id === button.dataset.tab));
+}}));
 function renderTable(rows, cols) {{
   if (!rows || rows.length === 0) return '<p class="note">표시할 데이터가 없습니다.</p>';
   return '<table><thead><tr>' + cols.map(c => `<th>${{c}}</th>`).join('') + '</tr></thead><tbody>' +
