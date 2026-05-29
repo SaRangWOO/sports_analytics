@@ -22,7 +22,7 @@ from modeling.train_win_predictor import (
     train_logistic_regression,
 )
 from run_model.run_model_dashboard import DEFAULT_RESULTS as RUN_MODEL_RESULTS
-from run_model.run_model_dashboard import render_embedded_dashboard
+from run_model.run_model_dashboard import render_prediction_board_embedded
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -2342,7 +2342,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         f'<button type="button" class="team-button" data-team="{escape(team)}">{escape(team)}</button>'
         for team in standings["팀"]
     )
-    run_model_html = render_embedded_dashboard(RUN_MODEL_RESULTS)
+    run_model_html = render_prediction_board_embedded(RUN_MODEL_RESULTS)
     html = f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -2471,9 +2471,24 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .run-model-panel .diagnostic-card p {{ color:var(--muted); line-height:1.6; }}
     .run-model-panel ul.features {{ columns:2; margin:8px 0 0; padding-left:20px; color:#334155; }}
     .run-model-panel .empty {{ color:var(--muted); }}
+    .match-card-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin:14px 0 20px; }}
+    .match-card {{ border:1px solid rgba(226,232,240,.85); border-radius:20px; padding:18px; background:rgba(255,255,255,.9); box-shadow:var(--shadow-soft); }}
+    .match-card-top {{ display:flex; justify-content:space-between; align-items:center; gap:10px; color:var(--muted); font-size:12px; font-weight:850; }}
+    .match-card h3 {{ margin-top:14px; font-size:19px; color:var(--navy); }}
+    .score-line {{ margin:12px 0 16px; color:var(--blue); font-size:28px; line-height:1.2; font-weight:900; letter-spacing:-0.03em; }}
+    .match-meta {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }}
+    .match-meta div {{ border:1px solid var(--line); border-radius:14px; padding:10px; background:#F8FAFC; }}
+    .match-meta span {{ display:block; color:var(--muted); font-size:11px; font-weight:850; }}
+    .match-meta strong {{ display:block; margin-top:4px; font-size:14px; }}
+    .match-pills {{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }}
+    .match-pills span, .match-badge {{ border-radius:999px; padding:6px 10px; font-size:12px; font-weight:850; border:1px solid var(--line); background:#F8FAFC; color:#334155; }}
+    .match-badge.pick {{ background:var(--green-bg); color:var(--green); border-color:#BBF7D0; }}
+    .match-badge.watch {{ background:var(--orange-bg); color:#B45309; border-color:#FDE68A; }}
+    .match-badge.risk {{ background:var(--red-bg); color:var(--red); border-color:#FECACA; }}
+    .run-model-diagnostics {{ background:var(--card); border:1px solid rgba(226,232,240,.72); border-radius:22px; padding:18px; box-shadow:var(--shadow-soft); }}
     details {{ margin-top:16px; }}
     summary {{ cursor:pointer; font-weight:800; color:var(--blue); }}
-    @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons, .prediction-cards, .featured-match, .run-model-grid, .run-model-panel .mini-grid, .run-model-split {{ grid-template-columns: 1fr; }} main {{ padding: 0 16px 40px; }} header {{ padding:24px 16px 8px; }} .topbar {{ flex-direction:column; }} .meta-panel {{ justify-content:flex-start; min-width:0; }} .featured-result {{ justify-self:stretch; }} .dashboard-tabs {{ width:100%; }} .tab-button {{ flex:1; }} }}
+    @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons, .prediction-cards, .featured-match, .run-model-grid, .run-model-panel .mini-grid, .run-model-split, .match-card-grid {{ grid-template-columns: 1fr; }} main {{ padding: 0 16px 40px; }} header {{ padding:24px 16px 8px; }} .topbar {{ flex-direction:column; }} .meta-panel {{ justify-content:flex-start; min-width:0; }} .featured-result {{ justify-self:stretch; }} .dashboard-tabs {{ width:100%; }} .tab-button {{ flex:1; }} }}
   </style>
 </head>
 <body>
