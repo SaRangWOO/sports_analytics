@@ -62,13 +62,6 @@
       "Log Loss": 0.691
     },
     {
-      "모델": "LogisticRegression 보수 모델",
-      "검증 정확도": 0.515,
-      "피처 수": 64,
-      "Brier Score": 0.253,
-      "Log Loss": 0.699
-    },
-    {
       "모델": "RandomForest 비선형 모델",
       "검증 정확도": 0.529,
       "피처 수": 64,
@@ -95,13 +88,6 @@
       "피처 수": 64,
       "Brier Score": 0.248,
       "Log Loss": 0.689
-    },
-    {
-      "모델": "ExtraTrees 보수 모델",
-      "검증 정확도": 0.521,
-      "피처 수": 64,
-      "Brier Score": 0.25,
-      "Log Loss": 0.693
     },
     {
       "모델": "GradientBoosting 비선형 모델",
@@ -396,21 +382,6 @@
       "over_55_accuracy": 0.552
     },
     {
-      "model": "LogisticRegression 보수 모델",
-      "total_games": 2926,
-      "accuracy": 0.515,
-      "brier": 0.253,
-      "logloss": 0.699,
-      "avg_confidence": 0.559,
-      "p75_confidence": 0.585,
-      "p90_confidence": 0.614,
-      "max_confidence": 0.805,
-      "over_55": 1512,
-      "over_58": 812,
-      "over_60": 478,
-      "over_55_accuracy": 0.522
-    },
-    {
       "model": "RandomForest 비선형 모델",
       "total_games": 2926,
       "accuracy": 0.529,
@@ -469,21 +440,6 @@
       "over_58": 201,
       "over_60": 44,
       "over_55_accuracy": 0.566
-    },
-    {
-      "model": "ExtraTrees 보수 모델",
-      "total_games": 2926,
-      "accuracy": 0.521,
-      "brier": 0.25,
-      "logloss": 0.693,
-      "avg_confidence": 0.527,
-      "p75_confidence": 0.54,
-      "p90_confidence": 0.555,
-      "max_confidence": 0.587,
-      "over_55": 396,
-      "over_58": 14,
-      "over_60": 0,
-      "over_55_accuracy": 0.51
     },
     {
       "model": "GradientBoosting 비선형 모델",
@@ -970,266 +926,6 @@
     "head_to_head_win_rate_gap": 0.0,
     "games_last_7_days": 0.0,
     "back_to_back": 0.0
-  },
-  "diagnostic_reports": {
-    "feature_diagnostic_report": "modeling/results/feature_diagnostic_report.csv",
-    "game_type_performance_report": "modeling/results/game_type_performance_report.csv",
-    "data_gap_analysis": "modeling/results/data_gap_analysis.csv",
-    "model_selection_report": "modeling/results/model_selection_report.csv",
-    "seasonal_performance_report": "modeling/results/seasonal_performance_report.csv",
-    "model_insight_summary": "modeling/results/model_insight_summary.json"
-  },
-  "diagnostic_report_rows": {
-    "feature_diagnostics": 21,
-    "game_type_segments": 12,
-    "seasonal_segments": 21,
-    "model_selection_rows": 27,
-    "data_gaps": 11
-  },
-  "model_insight_summary": {
-    "current_baseline": {
-      "selected_model": "핵심 수치 GradientBoosting 보수 모델",
-      "accuracy": 0.537,
-      "brier": 0.249,
-      "log_loss": 0.691
-    },
-    "strongest_features": [
-      "elo_diff",
-      "is_home",
-      "rest_days",
-      "recent_5_win_rate",
-      "recent_10_win_rate",
-      "avg_run_diff_last_5",
-      "avg_run_diff_last_10",
-      "season_win_rate_prior"
-    ],
-    "weak_features": [
-      "opponent_recent_10_win_rate",
-      "opponent_avg_run_diff_last_5",
-      "opponent_avg_run_diff_last_10",
-      "season_win_rate_gap",
-      "recent_5_win_rate_gap",
-      "recent_10_win_rate_gap",
-      "season_avg_run_diff_gap",
-      "recent_run_diff_10_gap",
-      "venue_win_rate_gap",
-      "head_to_head_win_rate_gap",
-      "games_last_7_days",
-      "back_to_back"
-    ],
-    "best_performing_segments": [
-      {
-        "segment": "득실차 차이 큼",
-        "total_games": 1232,
-        "accuracy": 0.554,
-        "brier": 0.248,
-        "log_loss": 0.689,
-        "avg_confidence": 0.556,
-        "over_55_games": 673,
-        "over_55_accuracy": 0.536
-      },
-      {
-        "segment": "연패 흐름",
-        "total_games": 577,
-        "accuracy": 0.549,
-        "brier": 0.245,
-        "log_loss": 0.683,
-        "avg_confidence": 0.554,
-        "over_55_games": 302,
-        "over_55_accuracy": 0.586
-      },
-      {
-        "segment": "강팀 vs 약팀",
-        "total_games": 1148,
-        "accuracy": 0.544,
-        "brier": 0.251,
-        "log_loss": 0.695,
-        "avg_confidence": 0.557,
-        "over_55_games": 625,
-        "over_55_accuracy": 0.493
-      },
-      {
-        "segment": "원정팀 관점 행",
-        "total_games": 1463,
-        "accuracy": 0.538,
-        "brier": 0.249,
-        "log_loss": 0.691,
-        "avg_confidence": 0.548,
-        "over_55_games": 672,
-        "over_55_accuracy": 0.546
-      },
-      {
-        "segment": "전체",
-        "total_games": 2926,
-        "accuracy": 0.537,
-        "brier": 0.249,
-        "log_loss": 0.691,
-        "avg_confidence": 0.548,
-        "over_55_games": 1348,
-        "over_55_accuracy": 0.545
-      }
-    ],
-    "worst_performing_segments": [
-      {
-        "segment": "연승 흐름",
-        "total_games": 589,
-        "accuracy": 0.48,
-        "brier": 0.253,
-        "log_loss": 0.699,
-        "avg_confidence": 0.551,
-        "over_55_games": 293,
-        "over_55_accuracy": 0.495
-      },
-      {
-        "segment": "최근 5경기 흐름 차이 큼",
-        "total_games": 1750,
-        "accuracy": 0.51,
-        "brier": 0.251,
-        "log_loss": 0.694,
-        "avg_confidence": 0.552,
-        "over_55_games": 870,
-        "over_55_accuracy": 0.523
-      },
-      {
-        "segment": "박빙 경기",
-        "total_games": 1089,
-        "accuracy": 0.518,
-        "brier": 0.25,
-        "log_loss": 0.692,
-        "avg_confidence": 0.515,
-        "over_55_games": 0,
-        "over_55_accuracy": null
-      },
-      {
-        "segment": "전체",
-        "total_games": 2926,
-        "accuracy": 0.537,
-        "brier": 0.249,
-        "log_loss": 0.691,
-        "avg_confidence": 0.548,
-        "over_55_games": 1348,
-        "over_55_accuracy": 0.545
-      },
-      {
-        "segment": "홈팀 관점 행",
-        "total_games": 1463,
-        "accuracy": 0.537,
-        "brier": 0.249,
-        "log_loss": 0.69,
-        "avg_confidence": 0.548,
-        "over_55_games": 676,
-        "over_55_accuracy": 0.544
-      }
-    ],
-    "data_gaps": [
-      {
-        "data_candidate": "확정 선발투수",
-        "current_availability": "부분 확보",
-        "automatic_collection": "가능",
-        "known_before_prediction": "경기 전 발표 후 가능",
-        "leakage_risk": "낮음",
-        "expected_effect": "높음",
-        "implementation_difficulty": "중간"
-      },
-      {
-        "data_candidate": "선발 최근 3경기 성적",
-        "current_availability": "미흡",
-        "automatic_collection": "가능",
-        "known_before_prediction": "경기 전 가능",
-        "leakage_risk": "중간",
-        "expected_effect": "높음",
-        "implementation_difficulty": "중간"
-      },
-      {
-        "data_candidate": "선발 휴식일",
-        "current_availability": "부분 확보",
-        "automatic_collection": "가능",
-        "known_before_prediction": "경기 전 가능",
-        "leakage_risk": "낮음",
-        "expected_effect": "중간",
-        "implementation_difficulty": "낮음"
-      },
-      {
-        "data_candidate": "불펜 최근 3일 실제 투구 수",
-        "current_availability": "미확보",
-        "automatic_collection": "수집기 필요",
-        "known_before_prediction": "경기 전 가능",
-        "leakage_risk": "중간",
-        "expected_effect": "높음",
-        "implementation_difficulty": "높음"
-      },
-      {
-        "data_candidate": "전날 선발 이닝",
-        "current_availability": "미확보",
-        "automatic_collection": "가능",
-        "known_before_prediction": "경기 전 가능",
-        "leakage_risk": "중간",
-        "expected_effect": "중간",
-        "implementation_difficulty": "중간"
-      },
-      {
-        "data_candidate": "라인업 확정 여부",
-        "current_availability": "표시용 확보",
-        "automatic_collection": "가능",
-        "known_before_prediction": "경기 직전 가능",
-        "leakage_risk": "중간",
-        "expected_effect": "중간",
-        "implementation_difficulty": "중간"
-      },
-      {
-        "data_candidate": "팀 OPS / wRC+ 유사 지표",
-        "current_availability": "부분 확보",
-        "automatic_collection": "가능",
-        "known_before_prediction": "경기 전 가능",
-        "leakage_risk": "낮음",
-        "expected_effect": "중간",
-        "implementation_difficulty": "중간"
-      },
-      {
-        "data_candidate": "구장별 득점 환경",
-        "current_availability": "미확보",
-        "automatic_collection": "가능",
-        "known_before_prediction": "경기 전 가능",
-        "leakage_risk": "낮음",
-        "expected_effect": "중간",
-        "implementation_difficulty": "중간"
-      },
-      {
-        "data_candidate": "날씨",
-        "current_availability": "미확보",
-        "automatic_collection": "외부 API 필요",
-        "known_before_prediction": "경기 전 가능",
-        "leakage_risk": "낮음",
-        "expected_effect": "중간",
-        "implementation_difficulty": "높음"
-      },
-      {
-        "data_candidate": "상대 선발 유형",
-        "current_availability": "미흡",
-        "automatic_collection": "가능",
-        "known_before_prediction": "경기 전 가능",
-        "leakage_risk": "중간",
-        "expected_effect": "중간",
-        "implementation_difficulty": "중간"
-      },
-      {
-        "data_candidate": "좌우 투수/타자 매치업",
-        "current_availability": "미확보",
-        "automatic_collection": "수집기 필요",
-        "known_before_prediction": "경기 전 가능",
-        "leakage_risk": "중간",
-        "expected_effect": "높음",
-        "implementation_difficulty": "높음"
-      }
-    ],
-    "recommended_next_steps": [
-      "확정 선발 최근 3경기 성적과 휴식일을 과거 시점 스냅샷으로 저장",
-      "불펜 최근 3일 실제 투구 수와 전날 선발 이닝 수집",
-      "구장별 득점 환경과 라인업 확정 정보를 예측 시점 기준으로 축적",
-      "후보 모델은 Brier/Log Loss와 확신 구간 적중률 개선이 확인될 때만 교체"
-    ],
-    "safe_to_replace_model": false,
-    "reason_not_to_replace_if_false": "후보 모델이 정확도와 확률 품질을 동시에 안정적으로 개선했다는 근거가 부족합니다."
   },
   "player_feature_note": "선수 영향도 피처는 현재 공식 기록 스냅샷 기반 참고 피처입니다. 과거 시점별 선수 스냅샷이 쌓이면 최종 모델 선택 후보로 승격할 수 있습니다.",
   "player_feature_files": [
