@@ -31,6 +31,26 @@
   ],
   "best_performing_segments": [
     {
+      "segment": "명시 연패 streak",
+      "total_games": 738,
+      "accuracy": 0.566,
+      "brier": 0.246,
+      "log_loss": 0.685,
+      "avg_confidence": 0.55,
+      "over_55_games": 361,
+      "over_55_accuracy": 0.573
+    },
+    {
+      "segment": "연패 득실 악화",
+      "total_games": 487,
+      "accuracy": 0.563,
+      "brier": 0.246,
+      "log_loss": 0.685,
+      "avg_confidence": 0.553,
+      "over_55_games": 256,
+      "over_55_accuracy": 0.578
+    },
+    {
       "segment": "득실차 차이 큼",
       "total_games": 1232,
       "accuracy": 0.554,
@@ -59,26 +79,6 @@
       "avg_confidence": 0.557,
       "over_55_games": 625,
       "over_55_accuracy": 0.493
-    },
-    {
-      "segment": "원정팀 관점 행",
-      "total_games": 1463,
-      "accuracy": 0.538,
-      "brier": 0.249,
-      "log_loss": 0.691,
-      "avg_confidence": 0.548,
-      "over_55_games": 672,
-      "over_55_accuracy": 0.546
-    },
-    {
-      "segment": "전체",
-      "total_games": 2926,
-      "accuracy": 0.537,
-      "brier": 0.249,
-      "log_loss": 0.691,
-      "avg_confidence": 0.548,
-      "over_55_games": 1348,
-      "over_55_accuracy": 0.545
     }
   ],
   "worst_performing_segments": [
@@ -113,24 +113,24 @@
       "over_55_accuracy": null
     },
     {
-      "segment": "전체",
-      "total_games": 2926,
-      "accuracy": 0.537,
-      "brier": 0.249,
-      "log_loss": 0.691,
-      "avg_confidence": 0.548,
-      "over_55_games": 1348,
-      "over_55_accuracy": 0.545
+      "segment": "명시 연승 streak",
+      "total_games": 739,
+      "accuracy": 0.524,
+      "brier": 0.251,
+      "log_loss": 0.694,
+      "avg_confidence": 0.549,
+      "over_55_games": 347,
+      "over_55_accuracy": 0.516
     },
     {
-      "segment": "홈팀 관점 행",
-      "total_games": 1463,
-      "accuracy": 0.537,
-      "brier": 0.249,
-      "log_loss": 0.69,
-      "avg_confidence": 0.548,
-      "over_55_games": 676,
-      "over_55_accuracy": 0.544
+      "segment": "연승 회귀 위험",
+      "total_games": 375,
+      "accuracy": 0.531,
+      "brier": 0.25,
+      "log_loss": 0.694,
+      "avg_confidence": 0.546,
+      "over_55_games": 163,
+      "over_55_accuracy": 0.534
     }
   ],
   "data_gaps": [

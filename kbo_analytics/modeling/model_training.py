@@ -27,6 +27,31 @@ from .run_expectancy import export_run_expectancy_dataset
 from .train_win_predictor import prepare_matrix, sigmoid, standardize_train_test, train_logistic_regression
 
 
+STREAK_FEATURES = {
+    "team_current_streak_length",
+    "team_current_streak_type",
+    "opponent_current_streak_length",
+    "opponent_current_streak_type",
+    "streak_length_gap",
+    "team_losing_streak_flag",
+    "team_winning_streak_flag",
+    "opponent_losing_streak_flag",
+    "opponent_winning_streak_flag",
+    "winning_streak_regression_risk",
+    "winning_streak_with_low_run_diff",
+    "winning_streak_after_close_games",
+    "winning_streak_bullpen_fatigue_proxy",
+    "losing_streak_with_negative_run_diff",
+    "losing_streak_allowed_runs_spike",
+    "losing_streak_low_scoring_offense",
+    "opponent_vs_losing_streak_flag",
+}
+
+
+def non_streak_columns(columns):
+    return [column for column in columns if column not in STREAK_FEATURES]
+
+
 def align_prediction_matrix(features: pd.DataFrame, feature_columns: list[str], mean: pd.Series, std: pd.Series):
     x, _ = prepare_matrix(features)
     x = x.reindex(columns=feature_columns, fill_value=0)
@@ -147,6 +172,38 @@ def model_probability_spread(model_name: str, y_true: np.ndarray, probability: n
     }
 
 
+def streak_experiment_metrics(model_name: str, feature_set: str, frame: pd.DataFrame, y_true: np.ndarray, probability: np.ndarray, selected_candidate: bool):
+    pred = (probability >= 0.5).astype(int)
+    confidence = np.maximum(probability, 1 - probability)
+    over_55_mask = confidence >= 0.55
+    winning_mask = frame.get("team_winning_streak_flag", pd.Series(0, index=frame.index)).to_numpy() == 1
+    losing_mask = frame.get("team_losing_streak_flag", pd.Series(0, index=frame.index)).to_numpy() == 1
+    close_mask = confidence < 0.53
+    score = probability_scores(y_true, probability)
+
+    def accuracy_for(mask):
+        return round(float((pred[mask] == y_true[mask]).mean()), 3) if mask.any() else None
+
+    return {
+        "model": model_name,
+        "feature_set": feature_set,
+        "accuracy": round(float((pred == y_true).mean()), 3),
+        "brier": score["Brier Score"],
+        "log_loss": score["Log Loss"],
+        "over_55_games": int(over_55_mask.sum()),
+        "over_55_accuracy": accuracy_for(over_55_mask),
+        "winning_streak_accuracy": accuracy_for(winning_mask),
+        "losing_streak_accuracy": accuracy_for(losing_mask),
+        "close_game_accuracy": accuracy_for(close_mask),
+        "selected_candidate": selected_candidate,
+    }
+
+
+def write_streak_feature_experiment_report(results_dir: Path, rows: list[dict]):
+    pd.DataFrame(rows).to_csv(results_dir / "streak_feature_experiment_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
 def write_model_probability_spread_report(results_dir: Path, rows: list[dict]):
     output = results_dir / "model_probability_spread_report.csv"
     pd.DataFrame(rows).to_csv(output, index=False, encoding="utf-8-sig")
@@ -255,6 +312,11 @@ def compact_feature_columns(x: pd.DataFrame):
     ]
 
 
+def streak_feature_columns(x: pd.DataFrame):
+    columns = compact_feature_columns(x) + list(STREAK_FEATURES)
+    return [column for column in columns if column in x.columns]
+
+
 def compact_sklearn_candidate_specs(recency_weight):
     try:
         from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
@@ -266,6 +328,20 @@ def compact_sklearn_candidate_specs(recency_weight):
         ("핵심 수치 RandomForest 보수 시간가중 모델", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), recency_weight),
         ("핵심 수치 GradientBoosting 보수 모델", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), None),
         ("핵심 수치 GradientBoosting 보수 시간가중 모델", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), recency_weight),
+    ]
+
+
+def streak_candidate_specs(recency_weight):
+    try:
+        from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+    except ImportError:
+        return []
+
+    return [
+        ("Streak 피처 RandomForest 실험", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), None),
+        ("Streak 피처 RandomForest 시간가중 실험", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), recency_weight),
+        ("Streak 피처 GradientBoosting 실험", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), None),
+        ("Streak 피처 GradientBoosting 시간가중 실험", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), recency_weight),
     ]
 
 
@@ -365,13 +441,14 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     recency_weight = (0.85 ** (max_train_year - train_years)).clip(lower=0.35).to_numpy(dtype=float)
 
     candidate_columns = {
-        "기본 흐름 모델": [col for col in x.columns if col not in {"team_elo_pre", "opponent_elo_pre", "elo_diff", "games_last_7_days", "back_to_back"}],
-        "전력/일정 피로도 포함 모델": list(x.columns),
+        "기본 흐름 모델": [col for col in non_streak_columns(x.columns) if col not in {"team_elo_pre", "opponent_elo_pre", "elo_diff", "games_last_7_days", "back_to_back"}],
+        "전력/일정 피로도 포함 모델": non_streak_columns(x.columns),
         "핵심 수치 모델": compact_feature_columns(x),
     }
     best = None
     candidate_results = []
     probability_spread_rows = []
+    streak_experiment_rows = []
 
     for name, columns in candidate_columns.items():
         x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
@@ -399,11 +476,26 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         result = {"name": name, "columns": columns, "accuracy": accuracy, "score": score, "probability": probability, "pred": pred, "mean": mean, "std": std, "model": model, "model_type": model.__class__.__name__, "prediction_unit": "team", "test_scaled": test_scaled, "test_frame": features.iloc[split_index:].copy(), "y_test": y_test}
         candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
         probability_spread_rows.append(model_probability_spread(name, y_test, probability, accuracy, score))
+        streak_experiment_rows.append(streak_experiment_metrics(name, "compact_baseline", features.iloc[split_index:].copy(), y_test, probability, False))
         best = pick_better_model(best, result)
+
+    for name, model, sample_weight in streak_candidate_specs(recency_weight):
+        columns = streak_feature_columns(x)
+        x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
+        train_scaled, test_scaled, mean, std = standardize_train_test(x_train, x_test)
+        fit_kwargs = {"sample_weight": sample_weight} if sample_weight is not None else {}
+        model.fit(train_scaled, y_train, **fit_kwargs)
+        probability = normalize_game_probabilities(features.iloc[split_index:], model.predict_proba(test_scaled)[:, 1])
+        pred = (probability >= 0.5).astype(int)
+        accuracy = round(float((pred == y_test).mean()), 3)
+        score = probability_scores(y_test, probability)
+        candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
+        probability_spread_rows.append(model_probability_spread(name, y_test, probability, accuracy, score))
+        streak_experiment_rows.append(streak_experiment_metrics(name, "compact_plus_streak", features.iloc[split_index:].copy(), y_test, probability, False))
 
     sklearn_candidates = sklearn_candidate_specs(recency_weight)
     for name, model, sample_weight in sklearn_candidates:
-        columns = list(x.columns)
+        columns = non_streak_columns(x.columns)
         x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
         train_scaled, test_scaled, mean, std = standardize_train_test(x_train, x_test)
         fit_kwargs = {"sample_weight": sample_weight} if sample_weight is not None else {}
@@ -485,8 +577,14 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
                 candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
                 probability_spread_rows.append(model_probability_spread(name, py_test, probability, accuracy, score))
 
+    for row in streak_experiment_rows:
+        row["selected_candidate"] = row["model"] == best["name"]
+    streak_report = write_streak_feature_experiment_report(results_dir, streak_experiment_rows)
     spread_report = write_model_probability_spread_report(results_dir, probability_spread_rows)
     payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, spread_report)
+    payload["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
+    payload["streak_feature_experiment_rows"] = len(streak_report)
+    payload.setdefault("diagnostic_reports", {})["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     if payload.get("feature_importance"):
         pd.DataFrame(
             [{"feature": feature, "importance": importance} for feature, importance in payload["feature_importance"].items()]
@@ -617,6 +715,10 @@ def write_game_type_performance_report(results_dir: Path, frame: pd.DataFrame, y
         "강팀 vs 약팀": frame.get("season_win_rate_gap", pd.Series(0, index=frame.index)).abs().to_numpy() >= 0.12,
         "연승 흐름": frame.get("recent_5_win_rate", pd.Series(0.5, index=frame.index)).to_numpy() >= 0.8,
         "연패 흐름": frame.get("recent_5_win_rate", pd.Series(0.5, index=frame.index)).to_numpy() <= 0.2,
+        "명시 연승 streak": frame.get("team_winning_streak_flag", pd.Series(0, index=frame.index)).to_numpy() == 1,
+        "명시 연패 streak": frame.get("team_losing_streak_flag", pd.Series(0, index=frame.index)).to_numpy() == 1,
+        "연승 회귀 위험": frame.get("winning_streak_regression_risk", pd.Series(0, index=frame.index)).to_numpy() > 0,
+        "연패 득실 악화": frame.get("losing_streak_with_negative_run_diff", pd.Series(0, index=frame.index)).to_numpy() == 1,
     }
     rows = [segment_metrics(segment, y_true, probability, np.asarray(mask, dtype=bool)) for segment, mask in masks.items()]
     pd.DataFrame(rows).to_csv(results_dir / "game_type_performance_report.csv", index=False, encoding="utf-8-sig")
