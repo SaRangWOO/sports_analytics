@@ -4,6 +4,7 @@ import argparse
 import json
 from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -34,6 +35,7 @@ DEFAULT_OUTPUT_DIR = PROJECT_DIR / "results"
 DEFAULT_STARTERS = PROJECT_DIR / "data" / "starter_pitchers.csv"
 DEFAULT_PITCHER_LOGS = PROJECT_DIR / "data" / "pitcher_game_logs.csv"
 DASHBOARD_PATH = "kbo_run_model/results/report.html"
+KST = ZoneInfo("Asia/Seoul")
 
 
 def _merge_scores(run_scores: list[dict], win_scores: list[dict]) -> list[dict]:
@@ -167,11 +169,19 @@ def _build_match_predictions(
     return output[columns]
 
 
-def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_ratio: float, target_date: date | None) -> dict:
+def run_pipeline(
+    input_path: Path,
+    schedule_path: Path,
+    output_dir: Path,
+    train_ratio: float,
+    target_date: date | None,
+    allow_past_fallback: bool,
+) -> dict:
     output_dir.mkdir(parents=True, exist_ok=True)
     team_games = load_completed_team_games(input_path)
     schedule = load_schedule(schedule_path)
-    target_games, target_context = select_target_games(schedule, target_date, date.today())
+    current_date_kst = datetime.now(KST).date()
+    target_games, target_context = select_target_games(schedule, target_date, current_date_kst, allow_past_fallback)
     feature_df, feature_columns = build_feature_matrix(team_games)
     starters, pitcher_logs, starter_data_status = load_starter_inputs(DEFAULT_STARTERS, DEFAULT_PITCHER_LOGS)
     feature_df, feature_columns, starter_feature_status = add_starter_features(feature_df, feature_columns, starters, pitcher_logs)
@@ -238,7 +248,7 @@ def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_
     ).to_csv(output_dir / "pitcher_data_validation.csv", index=False, encoding="utf-8-sig")
 
     summary = {
-        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "generated_at": datetime.now(KST).isoformat(timespec="seconds"),
         "input_file": str(input_path),
         "schedule_file": str(schedule_path),
         "target_context": {
@@ -246,6 +256,15 @@ def run_pipeline(input_path: Path, schedule_path: Path, output_dir: Path, train_
             "game_count": int(len(match_predictions)),
             "requested_target_date": target_date.isoformat() if target_date else "",
         },
+        "current_date_kst": target_context["current_date_kst"],
+        "schedule_latest_date": target_context["schedule_latest_date"],
+        "selected_target_date": target_context["selected_target_date"],
+        "schedule_is_stale": target_context["schedule_is_stale"],
+        "stale_schedule_days": target_context["stale_schedule_days"],
+        "has_future_schedule": target_context["has_future_schedule"],
+        "allow_past_fallback": target_context["allow_past_fallback"],
+        "schedule_selection_reason": target_context["schedule_selection_reason"],
+        "user_prediction_available": target_context["user_prediction_available"],
         "schedule_selection_check": schedule_check,
         "train_ratio": train_ratio,
         "training_cutoff": pd.Timestamp(cutoff).strftime("%Y-%m-%d"),
@@ -340,12 +359,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--train-ratio", type=float, default=0.8)
     parser.add_argument("--target-date", type=lambda value: datetime.strptime(value, "%Y-%m-%d").date(), default=None)
+    parser.add_argument("--allow-past-fallback", action="store_true")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    summary = run_pipeline(args.input, args.schedule, args.output_dir, args.train_ratio, args.target_date)
+    summary = run_pipeline(args.input, args.schedule, args.output_dir, args.train_ratio, args.target_date, args.allow_past_fallback)
     selected = summary["selected_model"]
     print("KBO expected-runs model completed")
     print(f"selected_model={selected['model']}")
@@ -355,6 +375,8 @@ def main() -> None:
     print(f"brier_score={selected['brier_score']}")
     print(f"target_date={summary['target_context']['target_date']}")
     print(f"report_mode={summary['target_context']['report_mode']}")
+    print(f"schedule_is_stale={summary['schedule_is_stale']}")
+    print(f"user_prediction_available={summary['user_prediction_available']}")
     print(f"match_predictions={summary['target_context']['game_count']}")
     print(f"outputs={args.output_dir}")
 
