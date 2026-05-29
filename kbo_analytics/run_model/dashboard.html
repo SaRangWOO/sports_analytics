@@ -54,28 +54,28 @@
 </head>
 <body>
   <main>
-
+    
       <div class="run-model-panel">
         <section class="run-model-hero match-board-hero">
           <div>
             <div class="eyebrow">KBO MATCH PREDICTION</div>
             <h2>KBO 승부 예측 대시보드</h2>
             <p>KBO 경기 일정에 맞춰 예상 스코어, 승패 확률, 핸디캡, 오버/언더를 자동 계산합니다.</p>
-            <p class="run-model-source">독립 득점 기반 모델 결과 · 선택 모델 HistGradientBoosting · 결과 JSON: kbo_analytics\run_model\results\expected_runs_model.json · 예측 CSV: kbo_analytics\run_model\results\expected_runs_predictions.csv</p>
+            <p class="run-model-source">독립 득점 기반 모델 결과 · 선택 모델 HistGradientBoosting · 최신 결과 파일 기준</p>
           </div>
         </section>
 
         <section class="run-model-section">
           <div class="eyebrow">BASE INFO</div>
           <h2>기준 정보</h2>
-          <div class="run-model-grid"><div class="metric"><p>생성 시간</p><strong>2026-05-29T14:14:39</strong></div><div class="metric"><p>예측 기준일</p><strong>2026-05-24</strong></div><div class="metric"><p>경기 수</p><strong>5</strong></div><div class="metric"><p>데이터 기준</p><strong>expected_runs_model.json, expected_runs_predictions.csv</strong></div></div>
+          <div class="run-model-grid"><div class="metric"><p>생성 시간</p><strong>2026-05-29 14:14</strong></div><div class="metric"><p>예측 기준일</p><strong>2026-05-24</strong></div><div class="metric"><p>표시 경기</p><strong>5경기</strong></div><div class="metric"><p>데이터 기준</p><strong>모델 결과 / 예측 CSV</strong><span>최신 run_model 산출물</span></div></div>
         </section>
 
         <section class="run-model-section">
           <div class="eyebrow">SCHEDULE STATUS</div>
           <h2>일정 선택 상태</h2>
-          <div class="run-model-grid schedule-grid"><div class="metric"><p>선택 모드</p><strong>최신 결과 기준</strong><span>expected_runs_predictions.csv 최신 경기일</span></div><div class="metric"><p>일정 원본 행 수</p><strong>1435</strong></div><div class="metric"><p>예상 경기 수 / 쌍생성 경기 수</p><strong>5 / 10</strong></div><div class="metric"><p>홈/원정 매칭</p><strong>완료</strong></div><div class="metric"><p>중복 경기</p><strong>0</strong></div><div class="metric"><p>검증 상태</p><strong>완료 경기 검증 데이터</strong></div></div>
-          <p class="note">이 탭은 `expected_runs_predictions.csv`의 최신 경기일을 기준으로 표시합니다. 현재 결과 파일은 완료 경기 검증 구간을 포함하므로 실제 운영 예측과 구분해서 해석해야 합니다.</p>
+          <div class="run-model-grid schedule-grid"><div class="metric"><p>선택 모드</p><strong>최신 경기일</strong><span>예측 CSV의 가장 최근 경기일</span></div><div class="metric"><p>생성 경기</p><strong>5경기</strong></div><div class="metric"><p>홈/원정 매칭</p><strong>완료</strong></div><div class="metric"><p>검증 상태</p><strong>완료 경기 기반</strong><span>완료 경기 검증 데이터</span></div></div>
+          <p class="note">최신 경기일 기준 5경기를 표시합니다. 원본 1435행 중 홈/원정 쌍 10행을 사용했고, 중복 경기는 0건입니다. 현재 결과 파일은 완료 경기 검증 구간을 포함하므로 실제 운영 예측과 구분해서 해석해야 합니다.</p>
         </section>
 
         <section class="run-model-section">
@@ -100,7 +100,7 @@
           <span>O/U 8.5 오버</span>
         </div>
       </article>
-
+    
       <article class="match-card pick">
         <div class="match-card-top">
           <span>2026-05-24</span>
@@ -118,7 +118,7 @@
           <span>O/U 8.5 오버</span>
         </div>
       </article>
-
+    
       <article class="match-card pick">
         <div class="match-card-top">
           <span>2026-05-24</span>
@@ -136,7 +136,7 @@
           <span>O/U 8.5 오버</span>
         </div>
       </article>
-
+    
       <article class="match-card pick">
         <div class="match-card-top">
           <span>2026-05-24</span>
@@ -154,7 +154,7 @@
           <span>O/U 8.5 오버</span>
         </div>
       </article>
-
+    
       <article class="match-card watch">
         <div class="match-card-top">
           <span>2026-05-24</span>
@@ -178,14 +178,14 @@
 
         <details class="run-model-diagnostics">
           <summary>모델 진단 보기</summary>
-
+          
       <div class="run-model-panel">
         <section class="run-model-hero">
           <div>
             <div class="eyebrow">INDEPENDENT RUN MODEL</div>
             <h2>득점 기반 승부 예측</h2>
             <p>독립 득점 기반 모델 결과입니다. 기존 경기 승패 모델과 결과를 섞지 않고, 팀별 예상 득점을 먼저 예측한 뒤 예상 득실차를 홈팀 승률로 변환합니다.</p>
-            <p class="run-model-source">생성 시각: 2026-05-29T14:14:39 · 결과 JSON: kbo_analytics\run_model\results\expected_runs_model.json · 예측 CSV: kbo_analytics\run_model\results\expected_runs_predictions.csv</p>
+            <p class="run-model-source">생성 시각: 2026-05-29T14:14:39 · 결과 JSON: C:\Users\PCuser\Documents\New project\sports_analytics_feature_work\kbo_analytics\run_model\results\expected_runs_model.json · 예측 CSV: C:\Users\PCuser\Documents\New project\sports_analytics_feature_work\kbo_analytics\run_model\results\expected_runs_predictions.csv</p>
           </div>
         </section>
 
@@ -223,7 +223,7 @@
           <p class="note">득점 기반 모델이 어떤 경기에서 크게 틀리는지 보기 위한 진단 리포트입니다. 예측값을 보정하지 않고 오차 유형만 분해합니다.</p>
           <div class="run-model-tablewrap"><table><thead><tr><th>유형</th><th>경기 수</th><th>평균 MAE</th><th>RMSE</th><th>평균 실제 득점</th><th>평균 예측 득점</th><th>평균 오차</th><th>득실 방향 적중률</th></tr></thead><tbody><tr><td>LOW_0_6</td><td>357</td><td>2.885</td><td>3.247</td><td>4.33</td><td>9.96</td><td>5.63</td><td>54.3%</td></tr><tr><td>HIGH_12_PLUS</td><td>496</td><td>3.603</td><td>4.616</td><td>15.54</td><td>10.11</td><td>-5.43</td><td>50.8%</td></tr><tr><td>BLOWOUT_UNDERPREDICTED</td><td>474</td><td>3.810</td><td>4.646</td><td>12.49</td><td>10.06</td><td>-2.43</td><td>52.3%</td></tr><tr><td>RUN_DIFF_DIRECTION_MISS</td><td>689</td><td>2.807</td><td>3.558</td><td>10.27</td><td>10.05</td><td>-0.22</td><td>0.0%</td></tr><tr><td>CLOSE_GAME_NOISE</td><td>164</td><td>1.963</td><td>2.435</td><td>8.89</td><td>10.02</td><td>1.13</td><td>12.2%</td></tr></tbody></table></div>
           <div class="run-model-split">
-
+            
       <div class="diagnostic-card">
         <h3>고득점 경기 예측 한계</h3>
         <p>고득점/대승 유형에서는 실제 총득점이 예측 총득점보다 크게 높아지는 경기가 많아 시즌 평균 기반 예측이 타선 폭발과 불펜 붕괴를 충분히 잡지 못합니다.</p>
@@ -235,8 +235,8 @@
         </div>
         <ul class="features"><li>home_team_recent_5g_runs: 5.08</li><li>away_team_recent_5g_runs: 5.12</li><li>home_team_recent_10g_runs: 5.11</li><li>away_team_recent_10g_runs: 5.05</li><li>home_team_season_runs: 5.08</li><li>away_team_season_runs: 5.02</li></ul>
       </div>
-
-
+    
+            
       <div class="diagnostic-card">
         <h3>저득점 경기 예측 한계</h3>
         <p>저득점 유형에서는 예측 총득점이 실제 총득점보다 높게 잡히는 경향이 있어 투수전, 구장, 선발 컨디션 같은 억제 요인이 추가로 필요합니다.</p>
@@ -248,7 +248,7 @@
         </div>
         <ul class="features"><li>home_team_recent_5g_runs: 4.92</li><li>away_team_recent_5g_runs: 4.89</li><li>home_team_recent_10g_runs: 5.01</li><li>away_team_recent_10g_runs: 4.92</li><li>home_team_season_runs: 4.92</li><li>away_team_season_runs: 4.88</li></ul>
       </div>
-
+    
           </div>
           <p class="note">고득점 오차는 타선 폭발과 불펜 붕괴 피처, 저득점 오차는 선발투수·구장·상대 타선 억제 피처를 보강해 분리 검증하는 것이 다음 단계입니다.</p>
         </section>
@@ -260,10 +260,10 @@
           <div class="run-model-tablewrap"><table><thead><tr><th>피처</th><th>중요도 평균</th><th>표준편차</th></tr></thead><tbody><tr><td>team_season_runs</td><td>0.011818</td><td>0.002943</td></tr><tr><td>opponent_season_allowed</td><td>0.004187</td><td>0.001529</td></tr><tr><td>season_runs_gap</td><td>0.002508</td><td>0.000743</td></tr><tr><td>season_allowed_gap</td><td>0.002209</td><td>0.001367</td></tr><tr><td>month</td><td>0.002193</td><td>0.000527</td></tr><tr><td>team_recent_10g_allowed</td><td>0.002172</td><td>0.001477</td></tr><tr><td>team_season_win_rate</td><td>0.001508</td><td>0.000578</td></tr><tr><td>season_win_rate_gap</td><td>0.001018</td><td>0.000278</td></tr><tr><td>team_recent_5g_allowed</td><td>0.000965</td><td>0.001628</td></tr><tr><td>recent_10g_allowed_gap</td><td>0.000800</td><td>0.000500</td></tr><tr><td>recent_5g_run_diff_gap</td><td>0.000614</td><td>0.000374</td></tr><tr><td>recent_10g_runs_gap</td><td>0.000568</td><td>0.000422</td></tr><tr><td>rest_days</td><td>0.000491</td><td>0.000450</td></tr><tr><td>team_recent_3g_runs</td><td>0.000418</td><td>0.000264</td></tr><tr><td>team_season_allowed</td><td>0.000365</td><td>0.000330</td></tr><tr><td>team_recent_5g_runs</td><td>0.000353</td><td>0.000744</td></tr><tr><td>opponent_recent_10g_runs</td><td>0.000339</td><td>0.000244</td></tr><tr><td>rest_days_gap</td><td>0.000313</td><td>0.000238</td></tr><tr><td>opponent_recent_10g_run_diff</td><td>0.000292</td><td>0.000363</td></tr><tr><td>recent_10g_win_rate_gap</td><td>0.000194</td><td>0.000327</td></tr></tbody></table></div>
         </section>
       </div>
-
+    
         </details>
       </div>
-
+    
   </main>
 </body>
 </html>

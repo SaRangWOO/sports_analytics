@@ -27,6 +27,11 @@ def fmt_pct(value, digits=1):
         return "-"
 
 
+def fmt_timestamp(value):
+    text = str(value or "-")
+    return text.replace("T", " ")[:16] if text != "-" else "-"
+
+
 def table_html(rows: list[dict], columns: list[str], limit: int | None = None):
     rows = rows[:limit] if limit else rows
     if not rows:
@@ -253,7 +258,7 @@ def board_status(payload: dict, predictions: pd.DataFrame, model_path: Path, pre
     latest_rows = predictions[predictions["date"].eq(latest_date)] if latest_date != "-" else predictions
     duplicate_games = int(latest_rows["game_key"].duplicated().sum()) if "game_key" in latest_rows else 0
     return {
-        "generated_at": payload.get("generated_at", "-"),
+        "generated_at": fmt_timestamp(payload.get("generated_at", "-")),
         "prediction_date": latest_date,
         "game_count": len(latest_rows),
         "total_rows": len(predictions),
@@ -261,7 +266,7 @@ def board_status(payload: dict, predictions: pd.DataFrame, model_path: Path, pre
         "duplicate_games": duplicate_games,
         "home_away_match": "완료" if len(latest_rows) else "확인 필요",
         "validation_status": "완료 경기 검증 데이터",
-        "data_source": f"{model_path.name}, {prediction_path.name}",
+        "data_source": "모델 결과 / 예측 CSV",
     }
 
 
@@ -381,18 +386,16 @@ def render_prediction_board_embedded(results_dir: Path = DEFAULT_RESULTS):
         [
             metric_card("생성 시간", str(status["generated_at"])),
             metric_card("예측 기준일", str(status["prediction_date"])),
-            metric_card("경기 수", str(status["game_count"])),
-            metric_card("데이터 기준", str(status["data_source"])),
+            metric_card("표시 경기", f'{status["game_count"]}경기'),
+            metric_card("데이터 기준", str(status["data_source"]), "최신 run_model 산출물"),
         ]
     )
     schedule_cards = "".join(
         [
-            metric_card("선택 모드", "최신 결과 기준", "expected_runs_predictions.csv 최신 경기일"),
-            metric_card("일정 원본 행 수", str(status["total_rows"])),
-            metric_card("예상 경기 수 / 쌍생성 경기 수", f'{status["game_count"]} / {status["pair_rows"]}'),
+            metric_card("선택 모드", "최신 경기일", "예측 CSV의 가장 최근 경기일"),
+            metric_card("생성 경기", f'{status["game_count"]}경기'),
             metric_card("홈/원정 매칭", str(status["home_away_match"])),
-            metric_card("중복 경기", str(status["duplicate_games"])),
-            metric_card("검증 상태", str(status["validation_status"])),
+            metric_card("검증 상태", "완료 경기 기반", str(status["validation_status"])),
         ]
     )
     diagnostics = render_model_diagnostics_embedded(results_dir)
@@ -403,7 +406,7 @@ def render_prediction_board_embedded(results_dir: Path = DEFAULT_RESULTS):
             <div class="eyebrow">KBO MATCH PREDICTION</div>
             <h2>KBO 승부 예측 대시보드</h2>
             <p>KBO 경기 일정에 맞춰 예상 스코어, 승패 확률, 핸디캡, 오버/언더를 자동 계산합니다.</p>
-            <p class="run-model-source">독립 득점 기반 모델 결과 · 선택 모델 {html.escape(str(selected.get("model", "-")))} · 결과 JSON: {html.escape(str(model_path))} · 예측 CSV: {html.escape(str(prediction_path))}</p>
+            <p class="run-model-source">독립 득점 기반 모델 결과 · 선택 모델 {html.escape(str(selected.get("model", "-")))} · 최신 결과 파일 기준</p>
           </div>
         </section>
 
@@ -417,7 +420,7 @@ def render_prediction_board_embedded(results_dir: Path = DEFAULT_RESULTS):
           <div class="eyebrow">SCHEDULE STATUS</div>
           <h2>일정 선택 상태</h2>
           <div class="run-model-grid schedule-grid">{schedule_cards}</div>
-          <p class="note">이 탭은 `expected_runs_predictions.csv`의 최신 경기일을 기준으로 표시합니다. 현재 결과 파일은 완료 경기 검증 구간을 포함하므로 실제 운영 예측과 구분해서 해석해야 합니다.</p>
+          <p class="note">최신 경기일 기준 {status["game_count"]}경기를 표시합니다. 원본 {status["total_rows"]}행 중 홈/원정 쌍 {status["pair_rows"]}행을 사용했고, 중복 경기는 {status["duplicate_games"]}건입니다. 현재 결과 파일은 완료 경기 검증 구간을 포함하므로 실제 운영 예측과 구분해서 해석해야 합니다.</p>
         </section>
 
         <section class="run-model-section">
