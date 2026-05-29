@@ -188,15 +188,18 @@ def write_probability_distribution_report(results_dir: Path, backtest_probabilit
 def sklearn_candidate_specs(recency_weight):
     try:
         from sklearn.calibration import CalibratedClassifierCV
-        from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+        from sklearn.ensemble import ExtraTreesClassifier, HistGradientBoostingClassifier, RandomForestClassifier
+        from sklearn.linear_model import LogisticRegression
     except ImportError:
         return []
 
     return [
+        ("LogisticRegression 보수 모델", LogisticRegression(C=0.35, class_weight="balanced", max_iter=1500, random_state=42), None),
         ("RandomForest 비선형 모델", RandomForestClassifier(n_estimators=500, max_depth=7, min_samples_leaf=8, class_weight="balanced", random_state=42, n_jobs=-1), None),
         ("RandomForest 시간가중 모델", RandomForestClassifier(n_estimators=500, max_depth=7, min_samples_leaf=8, class_weight="balanced", random_state=42, n_jobs=-1), recency_weight),
         ("RandomForest 보수 모델", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), None),
         ("RandomForest 보수 시간가중 모델", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), recency_weight),
+        ("ExtraTrees 보수 모델", ExtraTreesClassifier(n_estimators=700, max_depth=6, min_samples_leaf=10, class_weight="balanced", random_state=42, n_jobs=-1), None),
         ("GradientBoosting 비선형 모델", HistGradientBoostingClassifier(max_iter=220, learning_rate=0.04, max_leaf_nodes=15, l2_regularization=0.08, random_state=42), None),
         ("GradientBoosting 시간가중 모델", HistGradientBoostingClassifier(max_iter=220, learning_rate=0.04, max_leaf_nodes=15, l2_regularization=0.08, random_state=42), recency_weight),
         ("GradientBoosting 보수 모델", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), None),
@@ -569,6 +572,189 @@ def permutation_importance(best: dict, y_eval: np.ndarray):
     return {name: round(value, 6) for name, value in sorted(importances, key=lambda x: x[1], reverse=True)}
 
 
+def segment_metrics(segment: str, y_true: np.ndarray, probability: np.ndarray, mask: np.ndarray):
+    if not mask.any():
+        return {
+            "segment": segment,
+            "total_games": 0,
+            "accuracy": None,
+            "brier": None,
+            "log_loss": None,
+            "avg_confidence": None,
+            "over_55_games": 0,
+            "over_55_accuracy": None,
+        }
+    y_segment = y_true[mask]
+    p_segment = probability[mask]
+    pred = (p_segment >= 0.5).astype(int)
+    confidence = np.maximum(p_segment, 1 - p_segment)
+    over_55 = confidence >= 0.55
+    score = probability_scores(y_segment, p_segment)
+    return {
+        "segment": segment,
+        "total_games": int(mask.sum()),
+        "accuracy": round(float((pred == y_segment).mean()), 3),
+        "brier": score["Brier Score"],
+        "log_loss": score["Log Loss"],
+        "avg_confidence": round(float(confidence.mean()), 3),
+        "over_55_games": int(over_55.sum()),
+        "over_55_accuracy": round(float((pred[over_55] == y_segment[over_55]).mean()), 3) if over_55.any() else None,
+    }
+
+
+def write_game_type_performance_report(results_dir: Path, frame: pd.DataFrame, y_true: np.ndarray, probability: np.ndarray):
+    confidence = np.maximum(probability, 1 - probability)
+    masks = {
+        "전체": np.ones(len(frame), dtype=bool),
+        "홈팀 관점 행": frame.get("is_home", pd.Series(0, index=frame.index)).to_numpy() == 1,
+        "원정팀 관점 행": frame.get("is_home", pd.Series(0, index=frame.index)).to_numpy() == 0,
+        "최근 5경기 흐름 차이 큼": frame.get("recent_5_win_rate_gap", pd.Series(0, index=frame.index)).abs().to_numpy() >= 0.2,
+        "시즌 승률 차이 큼": frame.get("season_win_rate_gap", pd.Series(0, index=frame.index)).abs().to_numpy() >= 0.08,
+        "득실차 차이 큼": frame.get("season_avg_run_diff_gap", pd.Series(0, index=frame.index)).abs().to_numpy() >= 1.0,
+        "휴식일 차이 큼": frame.get("rest_days_gap", pd.Series(0, index=frame.index)).abs().to_numpy() >= 1.0,
+        "불펜 피로 차이 큼": frame.get("bullpen_fatigue_score_gap", pd.Series(0, index=frame.index)).abs().to_numpy() >= 1.0,
+        "박빙 경기": confidence < 0.53,
+        "강팀 vs 약팀": frame.get("season_win_rate_gap", pd.Series(0, index=frame.index)).abs().to_numpy() >= 0.12,
+        "연승 흐름": frame.get("recent_5_win_rate", pd.Series(0.5, index=frame.index)).to_numpy() >= 0.8,
+        "연패 흐름": frame.get("recent_5_win_rate", pd.Series(0.5, index=frame.index)).to_numpy() <= 0.2,
+    }
+    rows = [segment_metrics(segment, y_true, probability, np.asarray(mask, dtype=bool)) for segment, mask in masks.items()]
+    pd.DataFrame(rows).to_csv(results_dir / "game_type_performance_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_seasonal_performance_report(results_dir: Path, frame: pd.DataFrame, y_true: np.ndarray, probability: np.ndarray):
+    dates = pd.to_datetime(frame["date"])
+    years = dates.dt.year
+    rows = []
+    periods = {
+        "전체 기간": np.ones(len(frame), dtype=bool),
+        "최근 3년": years >= years.max() - 2,
+        "최근 2년": years >= years.max() - 1,
+        "2026 시즌": years == 2026,
+    }
+    for label, mask in periods.items():
+        rows.append(segment_metrics(label, y_true, probability, np.asarray(mask, dtype=bool)))
+    month_periods = dates.dt.to_period("M")
+    for month in sorted(month_periods.dropna().unique()):
+        mask = month_periods.eq(month).to_numpy()
+        rows.append(segment_metrics(str(month), y_true, probability, mask))
+    pd.DataFrame(rows).to_csv(results_dir / "seasonal_performance_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_feature_diagnostic_report(results_dir: Path, payload: dict):
+    importance = payload.get("feature_importance", {})
+    selected_columns = payload.get("feature_columns", [])
+    rows = []
+    for rank, feature in enumerate(selected_columns, start=1):
+        value = float(importance.get(feature, 0.0))
+        if value > 0.01:
+            diagnostic = "strong_signal"
+        elif value > 0.002:
+            diagnostic = "usable_signal"
+        elif value > 0:
+            diagnostic = "weak_signal"
+        else:
+            diagnostic = "no_positive_permutation_signal"
+        rows.append(
+            {
+                "feature": feature,
+                "selected_importance": round(value, 6),
+                "selected_rank": rank,
+                "diagnostic": diagnostic,
+                "note": "Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.",
+            }
+        )
+    rows = sorted(rows, key=lambda row: row["selected_importance"], reverse=True)
+    pd.DataFrame(rows).to_csv(results_dir / "feature_diagnostic_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_model_selection_report(results_dir: Path, candidate_results: list[dict], probability_spread_rows: list[dict], selected_model: str):
+    spread_by_model = {row["model"]: row for row in probability_spread_rows}
+    rows = []
+    for row in candidate_results:
+        model = row["모델"]
+        spread = spread_by_model.get(model, {})
+        rows.append(
+            {
+                "model": model,
+                "selected": model == selected_model,
+                "accuracy": row.get("검증 정확도"),
+                "brier": row.get("Brier Score"),
+                "log_loss": row.get("Log Loss"),
+                "feature_count": row.get("피처 수"),
+                "over_55_games": spread.get("over_55"),
+                "over_55_accuracy": spread.get("over_55_accuracy"),
+                "over_58_games": spread.get("over_58"),
+                "over_60_games": spread.get("over_60"),
+                "avg_confidence": spread.get("avg_confidence"),
+                "p90_confidence": spread.get("p90_confidence"),
+            }
+        )
+    pd.DataFrame(rows).to_csv(results_dir / "model_selection_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_data_gap_analysis(results_dir: Path):
+    rows = [
+        ["확정 선발투수", "부분 확보", "가능", "경기 전 발표 후 가능", "낮음", "높음", "중간"],
+        ["선발 최근 3경기 성적", "미흡", "가능", "경기 전 가능", "중간", "높음", "중간"],
+        ["선발 휴식일", "부분 확보", "가능", "경기 전 가능", "낮음", "중간", "낮음"],
+        ["불펜 최근 3일 실제 투구 수", "미확보", "수집기 필요", "경기 전 가능", "중간", "높음", "높음"],
+        ["전날 선발 이닝", "미확보", "가능", "경기 전 가능", "중간", "중간", "중간"],
+        ["라인업 확정 여부", "표시용 확보", "가능", "경기 직전 가능", "중간", "중간", "중간"],
+        ["팀 OPS / wRC+ 유사 지표", "부분 확보", "가능", "경기 전 가능", "낮음", "중간", "중간"],
+        ["구장별 득점 환경", "미확보", "가능", "경기 전 가능", "낮음", "중간", "중간"],
+        ["날씨", "미확보", "외부 API 필요", "경기 전 가능", "낮음", "중간", "높음"],
+        ["상대 선발 유형", "미흡", "가능", "경기 전 가능", "중간", "중간", "중간"],
+        ["좌우 투수/타자 매치업", "미확보", "수집기 필요", "경기 전 가능", "중간", "높음", "높음"],
+    ]
+    frame = pd.DataFrame(
+        rows,
+        columns=["data_candidate", "current_availability", "automatic_collection", "known_before_prediction", "leakage_risk", "expected_effect", "implementation_difficulty"],
+    )
+    frame.to_csv(results_dir / "data_gap_analysis.csv", index=False, encoding="utf-8-sig")
+    return frame.to_dict(orient="records")
+
+
+def write_model_insight_summary(results_dir: Path, payload: dict, feature_rows: list[dict], segment_rows: list[dict], data_gaps: list[dict]):
+    sorted_segments = [row for row in segment_rows if row["total_games"]]
+    best_segments = sorted(sorted_segments, key=lambda row: row["accuracy"] or 0, reverse=True)[:5]
+    worst_segments = sorted(sorted_segments, key=lambda row: row["accuracy"] or 1)[:5]
+    strongest = [row["feature"] for row in feature_rows[:8]]
+    weak = [row["feature"] for row in feature_rows if row["diagnostic"] in {"weak_signal", "no_positive_permutation_signal"}][-12:]
+    selected = payload.get("selected_model")
+    candidate_rows = payload.get("candidate_results", [])
+    selected_row = next((row for row in candidate_rows if row["모델"] == selected), {})
+    best_accuracy_row = max(candidate_rows, key=lambda row: row.get("검증 정확도", 0)) if candidate_rows else {}
+    safe_to_replace = bool(best_accuracy_row and best_accuracy_row.get("모델") != selected and best_accuracy_row.get("검증 정확도", 0) > selected_row.get("검증 정확도", 0) + 0.005)
+    summary = {
+        "current_baseline": {
+            "selected_model": selected,
+            "accuracy": payload.get("accuracy"),
+            "brier": selected_row.get("Brier Score"),
+            "log_loss": selected_row.get("Log Loss"),
+        },
+        "strongest_features": strongest,
+        "weak_features": weak,
+        "best_performing_segments": best_segments,
+        "worst_performing_segments": worst_segments,
+        "data_gaps": data_gaps,
+        "recommended_next_steps": [
+            "확정 선발 최근 3경기 성적과 휴식일을 과거 시점 스냅샷으로 저장",
+            "불펜 최근 3일 실제 투구 수와 전날 선발 이닝 수집",
+            "구장별 득점 환경과 라인업 확정 정보를 예측 시점 기준으로 축적",
+            "후보 모델은 Brier/Log Loss와 확신 구간 적중률 개선이 확인될 때만 교체",
+        ],
+        "safe_to_replace_model": safe_to_replace,
+        "reason_not_to_replace_if_false": "" if safe_to_replace else "후보 모델이 정확도와 확률 품질을 동시에 안정적으로 개선했다는 근거가 부족합니다.",
+    }
+    (results_dir / "model_insight_summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+    return summary
+
+
 def train_prediction_bundle(best, training_games, prediction_training_cutoff, data_dir, results_dir):
     prediction_completed = training_games[
         (training_games["status"] == "Final")
@@ -753,4 +939,27 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         payload["feature_importance"] = {name: round(float(value), 6) for name, value in sorted(zip(columns, importances), key=lambda x: x[1], reverse=True)}
     else:
         payload["feature_importance"] = permutation_importance(best, y_eval)
+    eval_frame = best["test_frame"].copy()
+    feature_diagnostics = write_feature_diagnostic_report(results_dir, payload)
+    game_type_segments = write_game_type_performance_report(results_dir, eval_frame, np.asarray(y_eval), np.asarray(probability))
+    seasonal_segments = write_seasonal_performance_report(results_dir, eval_frame, np.asarray(y_eval), np.asarray(probability))
+    model_selection_rows = write_model_selection_report(results_dir, candidate_results, probability_spread_rows, best["name"])
+    data_gaps = write_data_gap_analysis(results_dir)
+    insight_summary = write_model_insight_summary(results_dir, payload, feature_diagnostics, game_type_segments, data_gaps)
+    payload["diagnostic_reports"] = {
+        "feature_diagnostic_report": "modeling/results/feature_diagnostic_report.csv",
+        "game_type_performance_report": "modeling/results/game_type_performance_report.csv",
+        "data_gap_analysis": "modeling/results/data_gap_analysis.csv",
+        "model_selection_report": "modeling/results/model_selection_report.csv",
+        "seasonal_performance_report": "modeling/results/seasonal_performance_report.csv",
+        "model_insight_summary": "modeling/results/model_insight_summary.json",
+    }
+    payload["diagnostic_report_rows"] = {
+        "feature_diagnostics": len(feature_diagnostics),
+        "game_type_segments": len(game_type_segments),
+        "seasonal_segments": len(seasonal_segments),
+        "model_selection_rows": len(model_selection_rows),
+        "data_gaps": len(data_gaps),
+    }
+    payload["model_insight_summary"] = insight_summary
     return payload
