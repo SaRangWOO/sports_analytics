@@ -266,7 +266,7 @@ def _limited_match_list(frame: pd.DataFrame) -> str:
 
 def _render_game_cards(match_predictions: pd.DataFrame) -> str:
     if match_predictions.empty:
-        return '<p class="empty">해당 날짜에 예정된 KBO 경기가 없습니다.</p>'
+        return '<p class="empty">예측 가능한 최신 일정이 없어 사용자용 경기 예측표를 생성하지 않았습니다.</p>'
 
     cards = []
     for row in match_predictions.itertuples(index=False):
@@ -307,7 +307,7 @@ def _render_game_cards(match_predictions: pd.DataFrame) -> str:
 
 def _render_compact_match_table(match_predictions: pd.DataFrame) -> str:
     if match_predictions.empty:
-        return '<p class="empty">해당 날짜에 예정된 KBO 경기가 없습니다.</p>'
+        return '<p class="empty">예측 가능한 최신 일정이 없어 사용자용 상세 예측표를 생성하지 않았습니다.</p>'
     compact = pd.DataFrame(
         {
             "경기일시": match_predictions["date"],
@@ -329,6 +329,37 @@ def _render_compact_match_table(match_predictions: pd.DataFrame) -> str:
 def _table(frame: pd.DataFrame, columns: dict[str, str], limit: int | None = None) -> str:
     data = frame.head(limit) if limit else frame
     return data.rename(columns=columns).to_html(index=False, classes="table", border=0)
+
+
+def _schedule_notice(target_context: dict) -> str:
+    current_date = html.escape(str(target_context.get("current_date_kst", "")))
+    latest_date = html.escape(str(target_context.get("schedule_latest_date", "")))
+    selected_date = html.escape(str(target_context.get("selected_target_date", "")))
+    if target_context.get("schedule_is_stale") and not target_context.get("user_prediction_available"):
+        return f"""
+  <section class="notice warning">
+    <h2>예측 가능한 최신 KBO 일정이 없습니다</h2>
+    <p class="note">현재 일정 데이터의 최신 경기일은 {latest_date}입니다.<br>
+    현재 기준일은 {current_date}입니다.<br>
+    최신 KBO 일정 데이터가 업데이트되지 않아 사용자용 예측표를 생성하지 않았습니다.<br>
+    prediction_games.csv를 최신 일정으로 갱신한 뒤 다시 실행하세요.</p>
+  </section>
+"""
+    if target_context.get("report_mode") == "과거 경기 기준 리포트":
+        return """
+  <section class="notice warning">
+    <h2>과거 경기 기준 리포트</h2>
+    <p class="note">주의: 최신 예정 일정이 없어 과거 경기 기준으로 표시 중입니다.</p>
+  </section>
+"""
+    if target_context.get("schedule_selection_reason") == "사용자가 지정한 과거 경기 기준":
+        return f"""
+  <section class="notice info">
+    <h2>사용자가 지정한 과거 경기 기준</h2>
+    <p class="note">지정한 예측 기준일 {selected_date}은 현재 기준일 {current_date}보다 과거입니다.</p>
+  </section>
+"""
+    return ""
 
 
 def write_html_report(
@@ -394,9 +425,9 @@ def write_html_report(
         compact_match_table = _render_compact_match_table(match_predictions)
         match_cards = _render_game_cards(match_predictions)
     else:
-        match_table = '<p class="empty">해당 날짜에 예정된 KBO 경기가 없습니다.</p>'
-        compact_match_table = match_table
-        match_cards = match_table
+        match_cards = _render_game_cards(match_predictions)
+        compact_match_table = _render_compact_match_table(match_predictions)
+        match_table = '<p class="empty">표시할 사용자용 예측 상세 수치가 없습니다.</p>'
 
     if match_predictions.empty:
         high_confidence = "신뢰도 높은 경기 없음"
@@ -470,6 +501,8 @@ def write_html_report(
     under_predicted = ", ".join(f"{row['team']}({row['bias']})" for row in summary["team_bias_summary"]["under_predicted_teams"]) or "없음"
     target_context = summary["target_context"]
     schedule_check = summary["schedule_selection_check"]
+    schedule_notice = _schedule_notice(target_context)
+    target_date_display = html.escape(str(target_context["target_date"] or "없음"))
     win_accuracy = error_games["win_correct"].mean()
     close_games = error_games[error_games["expected_run_diff"].abs().lt(0.5)]
     strong_games = error_games[error_games["expected_run_diff"].abs().ge(1.0)]
@@ -529,6 +562,8 @@ def write_html_report(
     .detail-table {{ margin-top: 18px; overflow-x: auto; }}
     details {{ margin-top: 14px; }}
     summary {{ cursor: pointer; font-weight: 700; }}
+    .notice.warning {{ border-color: #f59e0b; background: #fffbeb; }}
+    .notice.info {{ border-color: #93c5fd; background: #eff6ff; }}
   </style>
 </head>
 <body>
@@ -538,11 +573,12 @@ def write_html_report(
     <h2>기준 정보</h2>
     <div class="summary-grid">
       <div class="summary-item"><div class="label">생성 시각</div><div class="value">{generated_at}</div></div>
-      <div class="summary-item"><div class="label">예측 기준일</div><div class="value">{target_context["target_date"]}</div></div>
+      <div class="summary-item"><div class="label">예측 기준일</div><div class="value">{target_date_display}</div></div>
       <div class="summary-item"><div class="label">경기 수</div><div class="value">{target_context["game_count"]}경기</div></div>
       <div class="summary-item"><div class="label">데이터 기준</div><div class="value">{html.escape(target_context["report_mode"])}</div></div>
     </div>
   </section>
+  {schedule_notice}
   <section>
     <h2>일정 선택 상태</h2>
     <div class="summary-grid">
