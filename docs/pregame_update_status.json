@@ -1,60 +1,71 @@
 {
-  "run_time": "2026-05-30 18:30:02",
-  "reference_date": "2026-05-30",
-  "update_stage": "pregame",
-  "games_checked": 4,
-  "teams_checked": 8,
+  "run_time": "2026-05-31 08:00:01",
+  "reference_date": "2026-05-31",
+  "update_stage": "morning",
+  "games_checked": 5,
+  "teams_checked": 10,
   "starter_status_summary": {
-    "confirmed": 8,
-    "estimated": 0,
+    "confirmed": 0,
+    "estimated": 10,
     "unknown": 0
   },
   "dashboard_updated": true,
   "github_pushed": true,
   "games": [
     {
-      "game_id": "2026-05-30_KIA_LG",
+      "game_id": "20260531HTLG0",
       "home_team": "LG",
       "away_team": "KIA",
       "home_starter": "송승기",
-      "away_starter": "올러",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
+      "away_starter": "황동하",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
     },
     {
-      "game_id": "2026-05-30_롯데_NC",
+      "game_id": "20260531OBSS0",
+      "home_team": "삼성",
+      "away_team": "두산",
+      "home_starter": "후라도",
+      "away_starter": "최승용",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
+    },
+    {
+      "game_id": "20260531LTNC0",
       "home_team": "NC",
       "away_team": "롯데",
-      "home_starter": "라일리",
-      "away_starter": "이민석",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
+      "home_starter": "구창모",
+      "away_starter": "김진욱",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
     },
     {
-      "game_id": "2026-05-30_SSG_한화",
+      "game_id": "20260531SKHH0",
       "home_team": "한화",
       "away_team": "SSG",
       "home_starter": "류현진",
-      "away_starter": "김건우",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
+      "away_starter": "베니지아노",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
     },
     {
-      "game_id": "2026-05-30_KT_키움",
+      "game_id": "20260531KTWO0",
       "home_team": "키움",
       "away_team": "KT",
       "home_starter": "박정훈",
-      "away_starter": "문용익",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
+      "away_starter": "보쉴리",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
     }
   ],
   "changes": []
