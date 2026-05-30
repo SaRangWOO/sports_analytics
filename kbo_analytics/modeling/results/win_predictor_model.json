@@ -63,7 +63,7 @@
     },
     {
       "모델": "Streak 피처 RandomForest 실험",
-      "검증 정확도": 0.529,
+      "검증 정확도": 0.528,
       "피처 수": 38,
       "Brier Score": 0.248,
       "Log Loss": 0.69
@@ -426,17 +426,17 @@
     {
       "model": "Streak 피처 RandomForest 실험",
       "total_games": 2926,
-      "accuracy": 0.529,
+      "accuracy": 0.528,
       "brier": 0.248,
       "logloss": 0.69,
       "avg_confidence": 0.539,
       "p75_confidence": 0.557,
-      "p90_confidence": 0.576,
+      "p90_confidence": 0.577,
       "max_confidence": 0.626,
-      "over_55": 960,
-      "over_58": 248,
-      "over_60": 54,
-      "over_55_accuracy": 0.565
+      "over_55": 963,
+      "over_58": 244,
+      "over_60": 53,
+      "over_55_accuracy": 0.56
     },
     {
       "model": "Streak 피처 RandomForest 시간가중 실험",
@@ -446,12 +446,12 @@
       "logloss": 0.69,
       "avg_confidence": 0.54,
       "p75_confidence": 0.559,
-      "p90_confidence": 0.577,
-      "max_confidence": 0.637,
-      "over_55": 1031,
-      "over_58": 241,
-      "over_60": 45,
-      "over_55_accuracy": 0.54
+      "p90_confidence": 0.578,
+      "max_confidence": 0.633,
+      "over_55": 1022,
+      "over_58": 256,
+      "over_60": 46,
+      "over_55_accuracy": 0.547
     },
     {
       "model": "Streak 피처 GradientBoosting 실험",
