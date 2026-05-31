@@ -1,27 +1,27 @@
 {
   "available": true,
-  "training_cutoff": "2026-05-24",
-  "validation_cutoff": "2026-05-24",
-  "prediction_training_cutoff": "2026-05-30",
-  "latest_completed_game_date_used": "2026-05-30",
-  "current_week_games_included_for_prediction": true,
+  "training_cutoff": "2026-05-31",
+  "validation_cutoff": "2026-05-31",
+  "prediction_training_cutoff": "2026-05-31",
+  "latest_completed_game_date_used": "2026-05-31",
+  "current_week_games_included_for_prediction": false,
   "training_start_year": 2016,
   "training_end_year": 2026,
-  "train_rows": 11924,
-  "test_rows": 2926,
-  "accuracy": 0.537,
+  "train_rows": 11964,
+  "test_rows": 2942,
+  "accuracy": 0.544,
   "selected_model": "핵심 수치 GradientBoosting 보수 모델",
   "candidate_results": [
     {
       "모델": "기본 흐름 모델",
-      "검증 정확도": 0.51,
+      "검증 정확도": 0.507,
       "피처 수": 59,
       "Brier Score": 0.256,
-      "Log Loss": 0.705
+      "Log Loss": 0.706
     },
     {
       "모델": "전력/일정 피로도 포함 모델",
-      "검증 정확도": 0.515,
+      "검증 정확도": 0.521,
       "피처 수": 64,
       "Brier Score": 0.253,
       "Log Loss": 0.699
@@ -35,274 +35,274 @@
     },
     {
       "모델": "핵심 수치 RandomForest 보수 모델",
-      "검증 정확도": 0.531,
+      "검증 정확도": 0.534,
       "피처 수": 21,
       "Brier Score": 0.248,
-      "Log Loss": 0.69
+      "Log Loss": 0.689
     },
     {
       "모델": "핵심 수치 RandomForest 보수 시간가중 모델",
-      "검증 정확도": 0.528,
+      "검증 정확도": 0.531,
       "피처 수": 21,
       "Brier Score": 0.248,
       "Log Loss": 0.689
     },
     {
       "모델": "핵심 수치 GradientBoosting 보수 모델",
-      "검증 정확도": 0.537,
+      "검증 정확도": 0.544,
       "피처 수": 21,
-      "Brier Score": 0.249,
-      "Log Loss": 0.691
+      "Brier Score": 0.248,
+      "Log Loss": 0.689
     },
     {
       "모델": "핵심 수치 GradientBoosting 보수 시간가중 모델",
-      "검증 정확도": 0.535,
+      "검증 정확도": 0.54,
       "피처 수": 21,
-      "Brier Score": 0.249,
-      "Log Loss": 0.691
+      "Brier Score": 0.248,
+      "Log Loss": 0.689
     },
     {
       "모델": "Streak 피처 RandomForest 실험",
-      "검증 정확도": 0.527,
-      "피처 수": 38,
-      "Brier Score": 0.248,
-      "Log Loss": 0.69
-    },
-    {
-      "모델": "Streak 피처 RandomForest 시간가중 실험",
       "검증 정확도": 0.536,
       "피처 수": 38,
       "Brier Score": 0.248,
       "Log Loss": 0.69
     },
     {
+      "모델": "Streak 피처 RandomForest 시간가중 실험",
+      "검증 정확도": 0.535,
+      "피처 수": 38,
+      "Brier Score": 0.248,
+      "Log Loss": 0.689
+    },
+    {
       "모델": "Streak 피처 GradientBoosting 실험",
-      "검증 정확도": 0.537,
+      "검증 정확도": 0.543,
+      "피처 수": 38,
+      "Brier Score": 0.249,
+      "Log Loss": 0.691
+    },
+    {
+      "모델": "Streak 피처 GradientBoosting 시간가중 실험",
+      "검증 정확도": 0.543,
       "피처 수": 38,
       "Brier Score": 0.248,
       "Log Loss": 0.69
     },
     {
-      "모델": "Streak 피처 GradientBoosting 시간가중 실험",
-      "검증 정확도": 0.541,
-      "피처 수": 38,
-      "Brier Score": 0.249,
-      "Log Loss": 0.692
-    },
-    {
       "모델": "LogisticRegression 보수 모델",
-      "검증 정확도": 0.515,
+      "검증 정확도": 0.521,
       "피처 수": 64,
       "Brier Score": 0.253,
       "Log Loss": 0.699
     },
     {
       "모델": "RandomForest 비선형 모델",
-      "검증 정확도": 0.529,
-      "피처 수": 64,
-      "Brier Score": 0.248,
-      "Log Loss": 0.69
-    },
-    {
-      "모델": "RandomForest 시간가중 모델",
-      "검증 정확도": 0.523,
-      "피처 수": 64,
-      "Brier Score": 0.248,
-      "Log Loss": 0.69
-    },
-    {
-      "모델": "RandomForest 보수 모델",
-      "검증 정확도": 0.53,
-      "피처 수": 64,
-      "Brier Score": 0.248,
-      "Log Loss": 0.69
-    },
-    {
-      "모델": "RandomForest 보수 시간가중 모델",
       "검증 정확도": 0.527,
       "피처 수": 64,
       "Brier Score": 0.248,
       "Log Loss": 0.689
     },
     {
+      "모델": "RandomForest 시간가중 모델",
+      "검증 정확도": 0.53,
+      "피처 수": 64,
+      "Brier Score": 0.248,
+      "Log Loss": 0.689
+    },
+    {
+      "모델": "RandomForest 보수 모델",
+      "검증 정확도": 0.531,
+      "피처 수": 64,
+      "Brier Score": 0.248,
+      "Log Loss": 0.689
+    },
+    {
+      "모델": "RandomForest 보수 시간가중 모델",
+      "검증 정확도": 0.532,
+      "피처 수": 64,
+      "Brier Score": 0.248,
+      "Log Loss": 0.689
+    },
+    {
       "모델": "ExtraTrees 보수 모델",
-      "검증 정확도": 0.521,
+      "검증 정확도": 0.531,
       "피처 수": 64,
       "Brier Score": 0.25,
-      "Log Loss": 0.693
+      "Log Loss": 0.692
     },
     {
       "모델": "GradientBoosting 비선형 모델",
-      "검증 정확도": 0.527,
+      "검증 정확도": 0.536,
       "피처 수": 64,
-      "Brier Score": 0.25,
-      "Log Loss": 0.694
+      "Brier Score": 0.248,
+      "Log Loss": 0.69
     },
     {
       "모델": "GradientBoosting 시간가중 모델",
-      "검증 정확도": 0.524,
+      "검증 정확도": 0.528,
       "피처 수": 64,
       "Brier Score": 0.249,
       "Log Loss": 0.692
     },
     {
       "모델": "GradientBoosting 보수 모델",
-      "검증 정확도": 0.528,
+      "검증 정확도": 0.532,
       "피처 수": 64,
       "Brier Score": 0.248,
-      "Log Loss": 0.69
+      "Log Loss": 0.689
     },
     {
       "모델": "GradientBoosting 보수 시간가중 모델",
-      "검증 정확도": 0.527,
+      "검증 정확도": 0.533,
       "피처 수": 64,
-      "Brier Score": 0.249,
-      "Log Loss": 0.692
+      "Brier Score": 0.248,
+      "Log Loss": 0.689
     },
     {
       "모델": "GradientBoosting 확률보정(sigmoid)",
-      "검증 정확도": 0.504,
+      "검증 정확도": 0.515,
+      "피처 수": 64,
+      "Brier Score": 0.25,
+      "Log Loss": 0.694
+    },
+    {
+      "모델": "GradientBoosting 확률보정(isotonic)",
+      "검증 정확도": 0.516,
       "피처 수": 64,
       "Brier Score": 0.251,
       "Log Loss": 0.695
     },
     {
-      "모델": "GradientBoosting 확률보정(isotonic)",
-      "검증 정확도": 0.509,
-      "피처 수": 64,
-      "Brier Score": 0.251,
-      "Log Loss": 0.696
-    },
-    {
       "모델": "경기 단위 RandomForest 모델",
-      "검증 정확도": 0.504,
-      "피처 수": 71,
-      "Brier Score": 0.251,
-      "Log Loss": 0.694
+      "검증 정확도": 0.512,
+      "피처 수": 73,
+      "Brier Score": 0.25,
+      "Log Loss": 0.693
     },
     {
       "모델": "경기 단위 RandomForest 시간가중 모델",
-      "검증 정확도": 0.52,
-      "피처 수": 71,
+      "검증 정확도": 0.511,
+      "피처 수": 73,
       "Brier Score": 0.25,
       "Log Loss": 0.694
     },
     {
       "모델": "경기 단위 GradientBoosting 모델",
-      "검증 정확도": 0.486,
-      "피처 수": 71,
-      "Brier Score": 0.26,
-      "Log Loss": 0.714
+      "검증 정확도": 0.489,
+      "피처 수": 73,
+      "Brier Score": 0.261,
+      "Log Loss": 0.716
     },
     {
       "모델": "야구 핵심 피처 강화 모델",
-      "검증 정확도": 0.518,
+      "검증 정확도": 0.52,
       "피처 수": 34,
       "Brier Score": 0.249,
       "Log Loss": 0.692
     },
     {
       "모델": "야구 핵심 피처 GradientBoosting 모델",
-      "검증 정확도": 0.519,
+      "검증 정확도": 0.51,
       "피처 수": 34,
       "Brier Score": 0.256,
-      "Log Loss": 0.706
+      "Log Loss": 0.707
     },
     {
       "모델": "야구 핵심 피처 RandomForest 모델",
-      "검증 정확도": 0.507,
+      "검증 정확도": 0.509,
       "피처 수": 34,
       "Brier Score": 0.25,
-      "Log Loss": 0.693
+      "Log Loss": 0.692
     },
     {
       "모델": "경기 단위 선수영향도 참고 RandomForest",
-      "검증 정확도": 0.49,
-      "피처 수": 88,
+      "검증 정확도": 0.485,
+      "피처 수": 90,
       "Brier Score": 0.252,
       "Log Loss": 0.698
     },
     {
       "모델": "경기 단위 선수영향도 참고 GradientBoosting",
-      "검증 정확도": 0.5,
-      "피처 수": 88,
-      "Brier Score": 0.259,
-      "Log Loss": 0.713
+      "검증 정확도": 0.515,
+      "피처 수": 90,
+      "Brier Score": 0.258,
+      "Log Loss": 0.711
     }
   ],
   "confidence_metrics": [
     {
       "구간": "전체 경기",
-      "경기 수": 2926,
-      "적중률": 0.537
+      "경기 수": 2942,
+      "적중률": 0.544
     },
     {
       "구간": "55% 이상 확신 경기",
-      "경기 수": 1348,
-      "적중률": 0.545
+      "경기 수": 1288,
+      "적중률": 0.555
     },
     {
       "구간": "58% 이상 확신 경기",
-      "경기 수": 533,
-      "적중률": 0.565
+      "경기 수": 409,
+      "적중률": 0.584
     },
     {
       "구간": "60% 이상 확신 경기",
-      "경기 수": 150,
-      "적중률": 0.533
+      "경기 수": 87,
+      "적중률": 0.54
     },
     {
       "구간": "Brier Score",
       "경기 수": "-",
-      "적중률": 0.249
+      "적중률": 0.248
     },
     {
       "구간": "Log Loss",
       "경기 수": "-",
-      "적중률": 0.691
+      "적중률": 0.689
     }
   ],
   "calibration_table": [
     {
       "예측승률 구간": "45% 미만",
-      "경기 수": 674,
-      "평균 예측승률": "42.2%",
-      "실제 승률": "45.5%"
+      "경기 수": 642,
+      "평균 예측승률": "42.5%",
+      "실제 승률": "44.4%"
     },
     {
       "예측승률 구간": "45~50%",
-      "경기 수": 793,
-      "평균 예측승률": "47.7%",
-      "실제 승률": "46.9%"
+      "경기 수": 831,
+      "평균 예측승률": "47.6%",
+      "실제 승률": "46.6%"
     },
     {
       "예측승률 구간": "50~55%",
-      "경기 수": 785,
-      "평균 예측승률": "52.3%",
-      "실제 승률": "53.0%"
+      "경기 수": 823,
+      "평균 예측승률": "52.4%",
+      "실제 승률": "53.6%"
     },
     {
       "예측승률 구간": "55~60%",
-      "경기 수": 598,
-      "평균 예측승률": "57.3%",
-      "실제 승률": "54.7%"
+      "경기 수": 602,
+      "평균 예측승률": "57.2%",
+      "실제 승률": "55.5%"
     },
     {
       "예측승률 구간": "60% 이상",
-      "경기 수": 76,
-      "평균 예측승률": "61.6%",
-      "실제 승률": "53.9%"
+      "경기 수": 44,
+      "평균 예측승률": "61.7%",
+      "실제 승률": "54.5%"
     }
   ],
   "confidence_thresholds": {
-    "top_20_percent_confidence": 0.579,
+    "top_20_percent_confidence": 0.574,
     "recommendation_enabled": true,
     "recommendation_rule": "confidence가 백테스트 상위 20% 구간이고 해당 구간 적중률이 전체 적중률보다 높을 때 추천 후보로 표시"
   },
   "confidence_bucket_performance": {
-    "overall_accuracy": 0.537,
-    "top_20_percent_accuracy": 0.58,
-    "top_20_percent_games": 586
+    "overall_accuracy": 0.544,
+    "top_20_percent_accuracy": 0.594,
+    "top_20_percent_games": 589
   },
   "today_probability_distribution": {
     "split": "today",
@@ -320,602 +320,602 @@
   "model_probability_spread_report": [
     {
       "model": "기본 흐름 모델",
-      "total_games": 2926,
-      "accuracy": 0.51,
+      "total_games": 2942,
+      "accuracy": 0.507,
       "brier": 0.256,
-      "logloss": 0.705,
-      "avg_confidence": 0.561,
-      "p75_confidence": 0.588,
-      "p90_confidence": 0.621,
-      "max_confidence": 0.796,
-      "over_55": 1556,
-      "over_58": 878,
-      "over_60": 507,
-      "over_55_accuracy": 0.503
+      "logloss": 0.706,
+      "avg_confidence": 0.56,
+      "p75_confidence": 0.587,
+      "p90_confidence": 0.62,
+      "max_confidence": 0.797,
+      "over_55": 1543,
+      "over_58": 869,
+      "over_60": 499,
+      "over_55_accuracy": 0.504
     },
     {
       "model": "전력/일정 피로도 포함 모델",
-      "total_games": 2926,
-      "accuracy": 0.515,
+      "total_games": 2942,
+      "accuracy": 0.521,
       "brier": 0.253,
       "logloss": 0.699,
-      "avg_confidence": 0.559,
-      "p75_confidence": 0.585,
-      "p90_confidence": 0.614,
+      "avg_confidence": 0.558,
+      "p75_confidence": 0.582,
+      "p90_confidence": 0.613,
       "max_confidence": 0.805,
-      "over_55": 1510,
-      "over_58": 816,
-      "over_60": 478,
+      "over_55": 1489,
+      "over_58": 780,
+      "over_60": 459,
       "over_55_accuracy": 0.522
     },
     {
       "model": "핵심 수치 모델",
-      "total_games": 2926,
+      "total_games": 2942,
       "accuracy": 0.529,
       "brier": 0.25,
       "logloss": 0.693,
       "avg_confidence": 0.558,
-      "p75_confidence": 0.582,
+      "p75_confidence": 0.581,
       "p90_confidence": 0.617,
-      "max_confidence": 0.827,
-      "over_55": 1448,
-      "over_58": 766,
-      "over_60": 463,
-      "over_55_accuracy": 0.559
+      "max_confidence": 0.828,
+      "over_55": 1446,
+      "over_58": 752,
+      "over_60": 465,
+      "over_55_accuracy": 0.564
     },
     {
       "model": "핵심 수치 RandomForest 보수 모델",
-      "total_games": 2926,
-      "accuracy": 0.531,
+      "total_games": 2942,
+      "accuracy": 0.534,
       "brier": 0.248,
-      "logloss": 0.69,
+      "logloss": 0.689,
       "avg_confidence": 0.543,
       "p75_confidence": 0.562,
-      "p90_confidence": 0.583,
+      "p90_confidence": 0.582,
       "max_confidence": 0.631,
-      "over_55": 1145,
-      "over_58": 333,
-      "over_60": 103,
-      "over_55_accuracy": 0.561
+      "over_55": 1146,
+      "over_58": 315,
+      "over_60": 99,
+      "over_55_accuracy": 0.572
     },
     {
       "model": "핵심 수치 RandomForest 보수 시간가중 모델",
-      "total_games": 2926,
-      "accuracy": 0.528,
+      "total_games": 2942,
+      "accuracy": 0.531,
       "brier": 0.248,
       "logloss": 0.689,
       "avg_confidence": 0.543,
       "p75_confidence": 0.563,
-      "p90_confidence": 0.582,
-      "max_confidence": 0.63,
-      "over_55": 1165,
-      "over_58": 328,
-      "over_60": 72,
-      "over_55_accuracy": 0.559
+      "p90_confidence": 0.581,
+      "max_confidence": 0.629,
+      "over_55": 1160,
+      "over_58": 314,
+      "over_60": 66,
+      "over_55_accuracy": 0.566
     },
     {
       "model": "핵심 수치 GradientBoosting 보수 모델",
-      "total_games": 2926,
-      "accuracy": 0.537,
-      "brier": 0.249,
-      "logloss": 0.691,
-      "avg_confidence": 0.548,
-      "p75_confidence": 0.574,
-      "p90_confidence": 0.59,
-      "max_confidence": 0.726,
-      "over_55": 1348,
-      "over_58": 533,
-      "over_60": 150,
-      "over_55_accuracy": 0.545
+      "total_games": 2942,
+      "accuracy": 0.544,
+      "brier": 0.248,
+      "logloss": 0.689,
+      "avg_confidence": 0.546,
+      "p75_confidence": 0.57,
+      "p90_confidence": 0.585,
+      "max_confidence": 0.683,
+      "over_55": 1288,
+      "over_58": 409,
+      "over_60": 87,
+      "over_55_accuracy": 0.555
     },
     {
       "model": "핵심 수치 GradientBoosting 보수 시간가중 모델",
-      "total_games": 2926,
-      "accuracy": 0.535,
-      "brier": 0.249,
-      "logloss": 0.691,
-      "avg_confidence": 0.547,
-      "p75_confidence": 0.573,
-      "p90_confidence": 0.591,
-      "max_confidence": 0.754,
-      "over_55": 1315,
-      "over_58": 527,
-      "over_60": 156,
-      "over_55_accuracy": 0.552
+      "total_games": 2942,
+      "accuracy": 0.54,
+      "brier": 0.248,
+      "logloss": 0.689,
+      "avg_confidence": 0.545,
+      "p75_confidence": 0.568,
+      "p90_confidence": 0.583,
+      "max_confidence": 0.666,
+      "over_55": 1273,
+      "over_58": 388,
+      "over_60": 92,
+      "over_55_accuracy": 0.556
     },
     {
       "model": "Streak 피처 RandomForest 실험",
-      "total_games": 2926,
-      "accuracy": 0.527,
-      "brier": 0.248,
-      "logloss": 0.69,
-      "avg_confidence": 0.54,
-      "p75_confidence": 0.557,
-      "p90_confidence": 0.577,
-      "max_confidence": 0.626,
-      "over_55": 960,
-      "over_58": 256,
-      "over_60": 59,
-      "over_55_accuracy": 0.56
-    },
-    {
-      "model": "Streak 피처 RandomForest 시간가중 실험",
-      "total_games": 2926,
+      "total_games": 2942,
       "accuracy": 0.536,
       "brier": 0.248,
       "logloss": 0.69,
       "avg_confidence": 0.54,
-      "p75_confidence": 0.559,
-      "p90_confidence": 0.578,
-      "max_confidence": 0.633,
-      "over_55": 1031,
-      "over_58": 258,
-      "over_60": 45,
-      "over_55_accuracy": 0.543
+      "p75_confidence": 0.558,
+      "p90_confidence": 0.576,
+      "max_confidence": 0.628,
+      "over_55": 959,
+      "over_58": 247,
+      "over_60": 54,
+      "over_55_accuracy": 0.559
     },
     {
-      "model": "Streak 피처 GradientBoosting 실험",
-      "total_games": 2926,
-      "accuracy": 0.537,
+      "model": "Streak 피처 RandomForest 시간가중 실험",
+      "total_games": 2942,
+      "accuracy": 0.535,
       "brier": 0.248,
-      "logloss": 0.69,
-      "avg_confidence": 0.543,
-      "p75_confidence": 0.566,
-      "p90_confidence": 0.58,
-      "max_confidence": 0.668,
-      "over_55": 1203,
-      "over_58": 290,
-      "over_60": 44,
+      "logloss": 0.689,
+      "avg_confidence": 0.54,
+      "p75_confidence": 0.559,
+      "p90_confidence": 0.578,
+      "max_confidence": 0.632,
+      "over_55": 1041,
+      "over_58": 251,
+      "over_60": 45,
       "over_55_accuracy": 0.551
     },
     {
-      "model": "Streak 피처 GradientBoosting 시간가중 실험",
-      "total_games": 2926,
-      "accuracy": 0.541,
+      "model": "Streak 피처 GradientBoosting 실험",
+      "total_games": 2942,
+      "accuracy": 0.543,
       "brier": 0.249,
-      "logloss": 0.692,
-      "avg_confidence": 0.548,
-      "p75_confidence": 0.573,
-      "p90_confidence": 0.592,
-      "max_confidence": 0.755,
-      "over_55": 1326,
-      "over_58": 584,
-      "over_60": 192,
-      "over_55_accuracy": 0.546
+      "logloss": 0.691,
+      "avg_confidence": 0.552,
+      "p75_confidence": 0.58,
+      "p90_confidence": 0.602,
+      "max_confidence": 0.768,
+      "over_55": 1379,
+      "over_58": 737,
+      "over_60": 321,
+      "over_55_accuracy": 0.548
+    },
+    {
+      "model": "Streak 피처 GradientBoosting 시간가중 실험",
+      "total_games": 2942,
+      "accuracy": 0.543,
+      "brier": 0.248,
+      "logloss": 0.69,
+      "avg_confidence": 0.545,
+      "p75_confidence": 0.568,
+      "p90_confidence": 0.581,
+      "max_confidence": 0.672,
+      "over_55": 1257,
+      "over_58": 328,
+      "over_60": 81,
+      "over_55_accuracy": 0.555
     },
     {
       "model": "LogisticRegression 보수 모델",
-      "total_games": 2926,
-      "accuracy": 0.515,
+      "total_games": 2942,
+      "accuracy": 0.521,
       "brier": 0.253,
       "logloss": 0.699,
-      "avg_confidence": 0.559,
-      "p75_confidence": 0.585,
-      "p90_confidence": 0.614,
+      "avg_confidence": 0.558,
+      "p75_confidence": 0.582,
+      "p90_confidence": 0.613,
       "max_confidence": 0.805,
-      "over_55": 1512,
-      "over_58": 812,
-      "over_60": 478,
+      "over_55": 1489,
+      "over_58": 780,
+      "over_60": 457,
       "over_55_accuracy": 0.522
     },
     {
       "model": "RandomForest 비선형 모델",
-      "total_games": 2926,
-      "accuracy": 0.529,
+      "total_games": 2942,
+      "accuracy": 0.527,
       "brier": 0.248,
-      "logloss": 0.69,
+      "logloss": 0.689,
       "avg_confidence": 0.543,
-      "p75_confidence": 0.564,
+      "p75_confidence": 0.563,
       "p90_confidence": 0.583,
-      "max_confidence": 0.639,
-      "over_55": 1100,
-      "over_58": 334,
-      "over_60": 96,
-      "over_55_accuracy": 0.566
+      "max_confidence": 0.645,
+      "over_55": 1129,
+      "over_58": 348,
+      "over_60": 93,
+      "over_55_accuracy": 0.581
     },
     {
       "model": "RandomForest 시간가중 모델",
-      "total_games": 2926,
-      "accuracy": 0.523,
+      "total_games": 2942,
+      "accuracy": 0.53,
       "brier": 0.248,
-      "logloss": 0.69,
-      "avg_confidence": 0.544,
-      "p75_confidence": 0.565,
-      "p90_confidence": 0.584,
-      "max_confidence": 0.633,
-      "over_55": 1139,
-      "over_58": 355,
-      "over_60": 111,
-      "over_55_accuracy": 0.565
+      "logloss": 0.689,
+      "avg_confidence": 0.543,
+      "p75_confidence": 0.563,
+      "p90_confidence": 0.581,
+      "max_confidence": 0.64,
+      "over_55": 1122,
+      "over_58": 319,
+      "over_60": 90,
+      "over_55_accuracy": 0.579
     },
     {
       "model": "RandomForest 보수 모델",
-      "total_games": 2926,
-      "accuracy": 0.53,
+      "total_games": 2942,
+      "accuracy": 0.531,
       "brier": 0.248,
-      "logloss": 0.69,
+      "logloss": 0.689,
       "avg_confidence": 0.54,
       "p75_confidence": 0.558,
-      "p90_confidence": 0.573,
-      "max_confidence": 0.628,
-      "over_55": 962,
-      "over_58": 210,
-      "over_60": 60,
-      "over_55_accuracy": 0.564
+      "p90_confidence": 0.574,
+      "max_confidence": 0.627,
+      "over_55": 985,
+      "over_58": 219,
+      "over_60": 52,
+      "over_55_accuracy": 0.57
     },
     {
       "model": "RandomForest 보수 시간가중 모델",
-      "total_games": 2926,
-      "accuracy": 0.527,
+      "total_games": 2942,
+      "accuracy": 0.532,
       "brier": 0.248,
       "logloss": 0.689,
       "avg_confidence": 0.541,
       "p75_confidence": 0.559,
-      "p90_confidence": 0.576,
+      "p90_confidence": 0.574,
       "max_confidence": 0.618,
-      "over_55": 1033,
-      "over_58": 201,
-      "over_60": 44,
-      "over_55_accuracy": 0.566
+      "over_55": 1042,
+      "over_58": 196,
+      "over_60": 40,
+      "over_55_accuracy": 0.572
     },
     {
       "model": "ExtraTrees 보수 모델",
-      "total_games": 2926,
-      "accuracy": 0.521,
+      "total_games": 2942,
+      "accuracy": 0.531,
       "brier": 0.25,
-      "logloss": 0.693,
+      "logloss": 0.692,
       "avg_confidence": 0.527,
-      "p75_confidence": 0.54,
-      "p90_confidence": 0.555,
+      "p75_confidence": 0.539,
+      "p90_confidence": 0.554,
       "max_confidence": 0.587,
-      "over_55": 396,
-      "over_58": 14,
+      "over_55": 368,
+      "over_58": 12,
       "over_60": 0,
-      "over_55_accuracy": 0.51
+      "over_55_accuracy": 0.511
     },
     {
       "model": "GradientBoosting 비선형 모델",
-      "total_games": 2926,
-      "accuracy": 0.527,
-      "brier": 0.25,
-      "logloss": 0.694,
-      "avg_confidence": 0.554,
-      "p75_confidence": 0.578,
-      "p90_confidence": 0.602,
-      "max_confidence": 0.709,
-      "over_55": 1452,
-      "over_58": 682,
-      "over_60": 315,
-      "over_55_accuracy": 0.54
+      "total_games": 2942,
+      "accuracy": 0.536,
+      "brier": 0.248,
+      "logloss": 0.69,
+      "avg_confidence": 0.548,
+      "p75_confidence": 0.571,
+      "p90_confidence": 0.589,
+      "max_confidence": 0.673,
+      "over_55": 1372,
+      "over_58": 489,
+      "over_60": 163,
+      "over_55_accuracy": 0.573
     },
     {
       "model": "GradientBoosting 시간가중 모델",
-      "total_games": 2926,
-      "accuracy": 0.524,
+      "total_games": 2942,
+      "accuracy": 0.528,
       "brier": 0.249,
       "logloss": 0.692,
-      "avg_confidence": 0.547,
-      "p75_confidence": 0.569,
-      "p90_confidence": 0.588,
-      "max_confidence": 0.671,
-      "over_55": 1316,
-      "over_58": 429,
-      "over_60": 158,
-      "over_55_accuracy": 0.543
+      "avg_confidence": 0.551,
+      "p75_confidence": 0.572,
+      "p90_confidence": 0.596,
+      "max_confidence": 0.705,
+      "over_55": 1368,
+      "over_58": 583,
+      "over_60": 244,
+      "over_55_accuracy": 0.561
     },
     {
       "model": "GradientBoosting 보수 모델",
-      "total_games": 2926,
-      "accuracy": 0.528,
+      "total_games": 2942,
+      "accuracy": 0.532,
       "brier": 0.248,
-      "logloss": 0.69,
-      "avg_confidence": 0.544,
-      "p75_confidence": 0.565,
-      "p90_confidence": 0.581,
-      "max_confidence": 0.631,
-      "over_55": 1224,
-      "over_58": 319,
-      "over_60": 96,
-      "over_55_accuracy": 0.559
+      "logloss": 0.689,
+      "avg_confidence": 0.545,
+      "p75_confidence": 0.566,
+      "p90_confidence": 0.582,
+      "max_confidence": 0.623,
+      "over_55": 1290,
+      "over_58": 337,
+      "over_60": 70,
+      "over_55_accuracy": 0.574
     },
     {
       "model": "GradientBoosting 보수 시간가중 모델",
-      "total_games": 2926,
-      "accuracy": 0.527,
-      "brier": 0.249,
-      "logloss": 0.692,
-      "avg_confidence": 0.547,
-      "p75_confidence": 0.569,
-      "p90_confidence": 0.587,
-      "max_confidence": 0.668,
-      "over_55": 1290,
-      "over_58": 421,
-      "over_60": 169,
-      "over_55_accuracy": 0.55
+      "total_games": 2942,
+      "accuracy": 0.533,
+      "brier": 0.248,
+      "logloss": 0.689,
+      "avg_confidence": 0.544,
+      "p75_confidence": 0.563,
+      "p90_confidence": 0.578,
+      "max_confidence": 0.626,
+      "over_55": 1213,
+      "over_58": 253,
+      "over_60": 57,
+      "over_55_accuracy": 0.572
     },
     {
       "model": "GradientBoosting 확률보정(sigmoid)",
-      "total_games": 2926,
-      "accuracy": 0.504,
-      "brier": 0.251,
-      "logloss": 0.695,
-      "avg_confidence": 0.534,
-      "p75_confidence": 0.547,
-      "p90_confidence": 0.565,
-      "max_confidence": 0.677,
-      "over_55": 621,
-      "over_58": 154,
-      "over_60": 40,
-      "over_55_accuracy": 0.512
-    },
-    {
-      "model": "GradientBoosting 확률보정(isotonic)",
-      "total_games": 2926,
-      "accuracy": 0.509,
-      "brier": 0.251,
-      "logloss": 0.696,
-      "avg_confidence": 0.54,
-      "p75_confidence": 0.554,
-      "p90_confidence": 0.575,
-      "max_confidence": 0.794,
-      "over_55": 816,
-      "over_58": 235,
-      "over_60": 98,
+      "total_games": 2942,
+      "accuracy": 0.515,
+      "brier": 0.25,
+      "logloss": 0.694,
+      "avg_confidence": 0.532,
+      "p75_confidence": 0.546,
+      "p90_confidence": 0.564,
+      "max_confidence": 0.659,
+      "over_55": 585,
+      "over_58": 108,
+      "over_60": 36,
       "over_55_accuracy": 0.521
     },
     {
-      "model": "경기 단위 RandomForest 모델",
-      "total_games": 1407,
-      "accuracy": 0.504,
+      "model": "GradientBoosting 확률보정(isotonic)",
+      "total_games": 2942,
+      "accuracy": 0.516,
       "brier": 0.251,
-      "logloss": 0.694,
+      "logloss": 0.695,
+      "avg_confidence": 0.537,
+      "p75_confidence": 0.549,
+      "p90_confidence": 0.574,
+      "max_confidence": 0.743,
+      "over_55": 705,
+      "over_58": 234,
+      "over_60": 120,
+      "over_55_accuracy": 0.536
+    },
+    {
+      "model": "경기 단위 RandomForest 모델",
+      "total_games": 1415,
+      "accuracy": 0.512,
+      "brier": 0.25,
+      "logloss": 0.693,
       "avg_confidence": 0.531,
-      "p75_confidence": 0.546,
+      "p75_confidence": 0.547,
       "p90_confidence": 0.563,
-      "max_confidence": 0.621,
-      "over_55": 291,
-      "over_58": 39,
-      "over_60": 11,
-      "over_55_accuracy": 0.498
+      "max_confidence": 0.65,
+      "over_55": 309,
+      "over_58": 52,
+      "over_60": 15,
+      "over_55_accuracy": 0.508
     },
     {
       "model": "경기 단위 RandomForest 시간가중 모델",
-      "total_games": 1407,
-      "accuracy": 0.52,
+      "total_games": 1415,
+      "accuracy": 0.511,
       "brier": 0.25,
       "logloss": 0.694,
       "avg_confidence": 0.533,
       "p75_confidence": 0.548,
-      "p90_confidence": 0.566,
-      "max_confidence": 0.64,
-      "over_55": 322,
-      "over_58": 66,
-      "over_60": 24,
-      "over_55_accuracy": 0.525
+      "p90_confidence": 0.564,
+      "max_confidence": 0.629,
+      "over_55": 312,
+      "over_58": 59,
+      "over_60": 18,
+      "over_55_accuracy": 0.513
     },
     {
       "model": "경기 단위 GradientBoosting 모델",
-      "total_games": 1407,
-      "accuracy": 0.486,
-      "brier": 0.26,
-      "logloss": 0.714,
+      "total_games": 1415,
+      "accuracy": 0.489,
+      "brier": 0.261,
+      "logloss": 0.716,
       "avg_confidence": 0.57,
-      "p75_confidence": 0.599,
-      "p90_confidence": 0.643,
-      "max_confidence": 0.828,
-      "over_55": 791,
-      "over_58": 510,
-      "over_60": 346,
-      "over_55_accuracy": 0.502
+      "p75_confidence": 0.597,
+      "p90_confidence": 0.641,
+      "max_confidence": 0.866,
+      "over_55": 802,
+      "over_58": 488,
+      "over_60": 335,
+      "over_55_accuracy": 0.494
     },
     {
       "model": "야구 핵심 피처 강화 모델",
-      "total_games": 1407,
-      "accuracy": 0.518,
+      "total_games": 1415,
+      "accuracy": 0.52,
       "brier": 0.249,
       "logloss": 0.692,
-      "avg_confidence": 0.534,
-      "p75_confidence": 0.55,
+      "avg_confidence": 0.535,
+      "p75_confidence": 0.552,
       "p90_confidence": 0.566,
-      "max_confidence": 0.648,
-      "over_55": 362,
-      "over_58": 57,
-      "over_60": 22,
-      "over_55_accuracy": 0.558
+      "max_confidence": 0.653,
+      "over_55": 382,
+      "over_58": 58,
+      "over_60": 18,
+      "over_55_accuracy": 0.545
     },
     {
       "model": "야구 핵심 피처 GradientBoosting 모델",
-      "total_games": 1407,
-      "accuracy": 0.519,
+      "total_games": 1415,
+      "accuracy": 0.51,
       "brier": 0.256,
-      "logloss": 0.706,
+      "logloss": 0.707,
       "avg_confidence": 0.567,
       "p75_confidence": 0.594,
-      "p90_confidence": 0.644,
-      "max_confidence": 0.849,
-      "over_55": 745,
-      "over_58": 467,
+      "p90_confidence": 0.639,
+      "max_confidence": 0.832,
+      "over_55": 753,
+      "over_58": 464,
       "over_60": 318,
-      "over_55_accuracy": 0.518
+      "over_55_accuracy": 0.527
     },
     {
       "model": "야구 핵심 피처 RandomForest 모델",
-      "total_games": 1407,
-      "accuracy": 0.507,
+      "total_games": 1415,
+      "accuracy": 0.509,
       "brier": 0.25,
-      "logloss": 0.693,
+      "logloss": 0.692,
       "avg_confidence": 0.536,
       "p75_confidence": 0.553,
-      "p90_confidence": 0.569,
-      "max_confidence": 0.659,
-      "over_55": 407,
+      "p90_confidence": 0.571,
+      "max_confidence": 0.661,
+      "over_55": 408,
       "over_58": 82,
-      "over_60": 27,
-      "over_55_accuracy": 0.541
+      "over_60": 25,
+      "over_55_accuracy": 0.551
     },
     {
       "model": "경기 단위 선수영향도 참고 RandomForest",
-      "total_games": 1407,
-      "accuracy": 0.49,
+      "total_games": 1415,
+      "accuracy": 0.485,
       "brier": 0.252,
       "logloss": 0.698,
-      "avg_confidence": 0.533,
+      "avg_confidence": 0.532,
       "p75_confidence": 0.547,
-      "p90_confidence": 0.567,
-      "max_confidence": 0.617,
-      "over_55": 312,
-      "over_58": 67,
-      "over_60": 14,
-      "over_55_accuracy": 0.474
+      "p90_confidence": 0.565,
+      "max_confidence": 0.624,
+      "over_55": 311,
+      "over_58": 60,
+      "over_60": 10,
+      "over_55_accuracy": 0.469
     },
     {
       "model": "경기 단위 선수영향도 참고 GradientBoosting",
-      "total_games": 1407,
-      "accuracy": 0.5,
-      "brier": 0.259,
-      "logloss": 0.713,
-      "avg_confidence": 0.57,
-      "p75_confidence": 0.601,
-      "p90_confidence": 0.642,
-      "max_confidence": 0.862,
-      "over_55": 791,
-      "over_58": 502,
-      "over_60": 356,
-      "over_55_accuracy": 0.499
+      "total_games": 1415,
+      "accuracy": 0.515,
+      "brier": 0.258,
+      "logloss": 0.711,
+      "avg_confidence": 0.572,
+      "p75_confidence": 0.602,
+      "p90_confidence": 0.645,
+      "max_confidence": 0.82,
+      "over_55": 833,
+      "over_58": 524,
+      "over_60": 366,
+      "over_55_accuracy": 0.495
     }
   ],
   "selected_model_probability_spread": {
     "model": "핵심 수치 GradientBoosting 보수 모델",
-    "total_games": 2926,
-    "accuracy": 0.537,
-    "brier": 0.249,
-    "logloss": 0.691,
-    "avg_confidence": 0.548,
-    "p75_confidence": 0.574,
-    "p90_confidence": 0.59,
-    "max_confidence": 0.726,
-    "over_55": 1348,
-    "over_58": 533,
-    "over_60": 150,
-    "over_55_accuracy": 0.545
+    "total_games": 2942,
+    "accuracy": 0.544,
+    "brier": 0.248,
+    "logloss": 0.689,
+    "avg_confidence": 0.546,
+    "p75_confidence": 0.57,
+    "p90_confidence": 0.585,
+    "max_confidence": 0.683,
+    "over_55": 1288,
+    "over_58": 409,
+    "over_60": 87,
+    "over_55_accuracy": 0.555
   },
   "high_confidence_backtest_summary": {
     "selected_model": "핵심 수치 GradientBoosting 보수 모델",
-    "overall_accuracy": 0.537,
-    "over_55_games": 1348,
-    "over_55_accuracy": 0.545,
-    "avg_confidence": 0.548,
-    "p90_confidence": 0.59
+    "overall_accuracy": 0.544,
+    "over_55_games": 1288,
+    "over_55_accuracy": 0.555,
+    "avg_confidence": 0.546,
+    "p90_confidence": 0.585
   },
   "baseball_feature_policy_note": "선발투수, 불펜 피로도, 최근 득점/실점 흐름 피처를 별도 후보 모델에 추가해 비교합니다. 확률을 강제로 키우지 않고 Accuracy, Brier Score, Log Loss, 55% 이상 구간 성능과 확률 분포를 함께 확인합니다.",
   "recent_backtest": [
     {
-      "경기일": "2026-05-22",
-      "경기": "두산 vs 한화",
+      "경기일": "2026-05-29",
+      "경기": "SSG vs 한화",
       "예측 구단": "한화",
-      "예측승률": "51.0%",
+      "예측승률": "59.2%",
       "실제 승리 구단": "한화",
       "결과": "적중",
-      "예측 근거": "한화 홈 경기"
+      "예측 근거": "한화 최근 5경기 흐름 우위, 한화 최근 10경기 흐름 우위"
     },
     {
-      "경기일": "2026-05-22",
-      "경기": "삼성 vs 롯데",
+      "경기일": "2026-05-29",
+      "경기": "두산 vs 삼성",
       "예측 구단": "삼성",
-      "예측승률": "51.6%",
-      "실제 승리 구단": "삼성",
-      "결과": "적중",
-      "예측 근거": "삼성 최근 10경기 흐름 우위, 삼성 시즌 상대전적 우위"
-    },
-    {
-      "경기일": "2026-05-23",
-      "경기": "SSG vs KIA",
-      "예측 구단": "KIA",
-      "예측승률": "54.8%",
-      "실제 승리 구단": "KIA",
-      "결과": "적중",
-      "예측 근거": "KIA 시즌 누적 승률 우위, KIA 최근 5경기 흐름 우위"
-    },
-    {
-      "경기일": "2026-05-23",
-      "경기": "NC vs KT",
-      "예측 구단": "KT",
-      "예측승률": "59.5%",
-      "실제 승리 구단": "KT",
-      "결과": "적중",
-      "예측 근거": "KT 최근 5경기 흐름 우위, KT 시즌 득실차 우위"
-    },
-    {
-      "경기일": "2026-05-23",
-      "경기": "키움 vs LG",
-      "예측 구단": "LG",
-      "예측승률": "56.6%",
-      "실제 승리 구단": "LG",
-      "결과": "적중",
-      "예측 근거": "LG 시즌 상대전적 우위, LG 홈 경기"
-    },
-    {
-      "경기일": "2026-05-23",
-      "경기": "두산 vs 한화",
-      "예측 구단": "한화",
-      "예측승률": "53.4%",
-      "실제 승리 구단": "한화",
-      "결과": "적중",
-      "예측 근거": "한화 홈 경기"
-    },
-    {
-      "경기일": "2026-05-23",
-      "경기": "삼성 vs 롯데",
-      "예측 구단": "삼성",
-      "예측승률": "50.9%",
-      "실제 승리 구단": "롯데",
+      "예측승률": "57.1%",
+      "실제 승리 구단": "두산",
       "결과": "오답",
       "예측 근거": "삼성 최근 5경기 흐름 우위, 삼성 최근 10경기 흐름 우위"
     },
     {
-      "경기일": "2026-05-24",
-      "경기": "SSG vs KIA",
-      "예측 구단": "KIA",
-      "예측승률": "58.6%",
-      "실제 승리 구단": "KIA",
-      "결과": "적중",
-      "예측 근거": "KIA 시즌 누적 승률 우위, KIA 최근 5경기 흐름 우위"
-    },
-    {
-      "경기일": "2026-05-24",
-      "경기": "NC vs KT",
-      "예측 구단": "KT",
-      "예측승률": "59.5%",
-      "실제 승리 구단": "NC",
-      "결과": "오답",
-      "예측 근거": "KT 최근 5경기 흐름 우위, KT 시즌 득실차 우위"
-    },
-    {
-      "경기일": "2026-05-24",
-      "경기": "키움 vs LG",
+      "경기일": "2026-05-30",
+      "경기": "KIA vs LG",
       "예측 구단": "LG",
-      "예측승률": "57.6%",
+      "예측승률": "56.3%",
       "실제 승리 구단": "LG",
       "결과": "적중",
-      "예측 근거": "LG 시즌 상대전적 우위, LG 홈 경기"
+      "예측 근거": "LG 시즌 누적 승률 우위, LG 홈/원정 성향 우위"
     },
     {
-      "경기일": "2026-05-24",
-      "경기": "두산 vs 한화",
+      "경기일": "2026-05-30",
+      "경기": "KT vs 키움",
+      "예측 구단": "KT",
+      "예측승률": "54.4%",
+      "실제 승리 구단": "KT",
+      "결과": "적중",
+      "예측 근거": "KT 최근 5경기 흐름 우위, KT 최근 10경기 흐름 우위"
+    },
+    {
+      "경기일": "2026-05-30",
+      "경기": "롯데 vs NC",
+      "예측 구단": "NC",
+      "예측승률": "51.0%",
+      "실제 승리 구단": "NC",
+      "결과": "적중",
+      "예측 근거": "NC 시즌 누적 승률 우위, NC 홈/원정 성향 우위"
+    },
+    {
+      "경기일": "2026-05-30",
+      "경기": "SSG vs 한화",
       "예측 구단": "한화",
-      "예측승률": "55.6%",
+      "예측승률": "59.2%",
       "실제 승리 구단": "한화",
       "결과": "적중",
-      "예측 근거": "한화 홈 경기"
+      "예측 근거": "한화 최근 5경기 흐름 우위, 한화 최근 10경기 흐름 우위"
     },
     {
-      "경기일": "2026-05-24",
-      "경기": "삼성 vs 롯데",
+      "경기일": "2026-05-30",
+      "경기": "두산 vs 삼성",
       "예측 구단": "삼성",
-      "예측승률": "51.8%",
+      "예측승률": "57.2%",
+      "실제 승리 구단": "두산",
+      "결과": "오답",
+      "예측 근거": "삼성 최근 5경기 흐름 우위, 삼성 최근 10경기 흐름 우위"
+    },
+    {
+      "경기일": "2026-05-31",
+      "경기": "KIA vs LG",
+      "예측 구단": "LG",
+      "예측승률": "56.3%",
+      "실제 승리 구단": "LG",
+      "결과": "적중",
+      "예측 근거": "LG 시즌 누적 승률 우위, LG 최근 5경기 흐름 우위"
+    },
+    {
+      "경기일": "2026-05-31",
+      "경기": "KT vs 키움",
+      "예측 구단": "KT",
+      "예측승률": "55.0%",
+      "실제 승리 구단": "KT",
+      "결과": "적중",
+      "예측 근거": "KT 최근 5경기 흐름 우위, KT 최근 10경기 흐름 우위"
+    },
+    {
+      "경기일": "2026-05-31",
+      "경기": "롯데 vs NC",
+      "예측 구단": "NC",
+      "예측승률": "52.0%",
+      "실제 승리 구단": "NC",
+      "결과": "적중",
+      "예측 근거": "NC 시즌 누적 승률 우위, NC 최근 5경기 흐름 우위"
+    },
+    {
+      "경기일": "2026-05-31",
+      "경기": "SSG vs 한화",
+      "예측 구단": "한화",
+      "예측승률": "59.1%",
+      "실제 승리 구단": "한화",
+      "결과": "적중",
+      "예측 근거": "한화 최근 5경기 흐름 우위, 한화 최근 10경기 흐름 우위"
+    },
+    {
+      "경기일": "2026-05-31",
+      "경기": "두산 vs 삼성",
+      "예측 구단": "삼성",
+      "예측승률": "54.9%",
       "실제 승리 구단": "삼성",
       "결과": "적중",
-      "예측 근거": "삼성 시즌 상대전적 우위"
+      "예측 근거": "삼성 최근 득실차 우위, 삼성 홈 경기"
     }
   ],
   "today_predictions": [],
@@ -946,7 +946,7 @@
   "model_type": "HistGradientBoostingClassifier",
   "prediction_unit": "team",
   "feature_importance": {
-    "elo_diff": 0.004,
+    "elo_diff": 0.002,
     "is_home": 0.0,
     "rest_days": 0.0,
     "recent_5_win_rate": 0.0,
@@ -987,9 +987,9 @@
   "model_insight_summary": {
     "current_baseline": {
       "selected_model": "핵심 수치 GradientBoosting 보수 모델",
-      "accuracy": 0.537,
-      "brier": 0.249,
-      "log_loss": 0.691
+      "accuracy": 0.544,
+      "brier": 0.248,
+      "log_loss": 0.689
     },
     "strongest_features": [
       "elo_diff",
@@ -1017,106 +1017,106 @@
     ],
     "best_performing_segments": [
       {
-        "segment": "명시 연패 streak",
-        "total_games": 738,
-        "accuracy": 0.566,
-        "brier": 0.246,
-        "log_loss": 0.685,
-        "avg_confidence": 0.55,
-        "over_55_games": 361,
-        "over_55_accuracy": 0.573
-      },
-      {
         "segment": "연패 득실 악화",
-        "total_games": 487,
-        "accuracy": 0.563,
-        "brier": 0.246,
-        "log_loss": 0.685,
-        "avg_confidence": 0.553,
-        "over_55_games": 256,
-        "over_55_accuracy": 0.578
+        "total_games": 494,
+        "accuracy": 0.589,
+        "brier": 0.245,
+        "log_loss": 0.682,
+        "avg_confidence": 0.551,
+        "over_55_games": 245,
+        "over_55_accuracy": 0.588
       },
       {
-        "segment": "득실차 차이 큼",
-        "total_games": 1232,
-        "accuracy": 0.554,
-        "brier": 0.248,
-        "log_loss": 0.689,
-        "avg_confidence": 0.556,
-        "over_55_games": 673,
-        "over_55_accuracy": 0.536
+        "segment": "명시 연패 streak",
+        "total_games": 744,
+        "accuracy": 0.578,
+        "brier": 0.245,
+        "log_loss": 0.682,
+        "avg_confidence": 0.548,
+        "over_55_games": 346,
+        "over_55_accuracy": 0.581
       },
       {
         "segment": "연패 흐름",
-        "total_games": 577,
-        "accuracy": 0.549,
-        "brier": 0.245,
-        "log_loss": 0.683,
+        "total_games": 582,
+        "accuracy": 0.564,
+        "brier": 0.244,
+        "log_loss": 0.682,
+        "avg_confidence": 0.551,
+        "over_55_games": 285,
+        "over_55_accuracy": 0.604
+      },
+      {
+        "segment": "득실차 차이 큼",
+        "total_games": 1228,
+        "accuracy": 0.556,
+        "brier": 0.248,
+        "log_loss": 0.688,
         "avg_confidence": 0.554,
-        "over_55_games": 302,
-        "over_55_accuracy": 0.586
+        "over_55_games": 655,
+        "over_55_accuracy": 0.548
       },
       {
         "segment": "강팀 vs 약팀",
-        "total_games": 1148,
-        "accuracy": 0.544,
-        "brier": 0.251,
-        "log_loss": 0.695,
-        "avg_confidence": 0.557,
-        "over_55_games": 625,
-        "over_55_accuracy": 0.493
+        "total_games": 1142,
+        "accuracy": 0.553,
+        "brier": 0.25,
+        "log_loss": 0.693,
+        "avg_confidence": 0.555,
+        "over_55_games": 607,
+        "over_55_accuracy": 0.511
       }
     ],
     "worst_performing_segments": [
       {
         "segment": "연승 흐름",
-        "total_games": 589,
-        "accuracy": 0.48,
-        "brier": 0.253,
-        "log_loss": 0.699,
-        "avg_confidence": 0.551,
-        "over_55_games": 293,
-        "over_55_accuracy": 0.495
+        "total_games": 600,
+        "accuracy": 0.498,
+        "brier": 0.251,
+        "log_loss": 0.695,
+        "avg_confidence": 0.548,
+        "over_55_games": 288,
+        "over_55_accuracy": 0.524
       },
       {
         "segment": "최근 5경기 흐름 차이 큼",
-        "total_games": 1750,
-        "accuracy": 0.51,
-        "brier": 0.251,
-        "log_loss": 0.694,
-        "avg_confidence": 0.552,
-        "over_55_games": 870,
-        "over_55_accuracy": 0.523
-      },
-      {
-        "segment": "박빙 경기",
-        "total_games": 1089,
-        "accuracy": 0.518,
-        "brier": 0.25,
+        "total_games": 1764,
+        "accuracy": 0.522,
+        "brier": 0.249,
         "log_loss": 0.692,
-        "avg_confidence": 0.515,
-        "over_55_games": 0,
-        "over_55_accuracy": null
-      },
-      {
-        "segment": "명시 연승 streak",
-        "total_games": 739,
-        "accuracy": 0.524,
-        "brier": 0.251,
-        "log_loss": 0.694,
         "avg_confidence": 0.549,
-        "over_55_games": 347,
-        "over_55_accuracy": 0.516
+        "over_55_games": 832,
+        "over_55_accuracy": 0.544
       },
       {
         "segment": "연승 회귀 위험",
-        "total_games": 375,
-        "accuracy": 0.531,
+        "total_games": 381,
+        "accuracy": 0.525,
         "brier": 0.25,
-        "log_loss": 0.694,
+        "log_loss": 0.693,
+        "avg_confidence": 0.544,
+        "over_55_games": 159,
+        "over_55_accuracy": 0.547
+      },
+      {
+        "segment": "명시 연승 streak",
+        "total_games": 746,
+        "accuracy": 0.529,
+        "brier": 0.25,
+        "log_loss": 0.693,
         "avg_confidence": 0.546,
-        "over_55_games": 163,
-        "over_55_accuracy": 0.534
+        "over_55_games": 334,
+        "over_55_accuracy": 0.524
+      },
+      {
+        "segment": "박빙 경기",
+        "total_games": 1098,
+        "accuracy": 0.541,
+        "brier": 0.248,
+        "log_loss": 0.69,
+        "avg_confidence": 0.516,
+        "over_55_games": 0,
+        "over_55_accuracy": null
       }
     ],
     "data_gaps": [
@@ -1240,5 +1240,5 @@
   "run_expectancy_files": [
     "modeling/results/run_expectancy_features.csv"
   ],
-  "run_expectancy_rows": 7141
+  "run_expectancy_rows": 7169
 }

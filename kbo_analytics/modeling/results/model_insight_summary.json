@@ -1,9 +1,9 @@
 {
   "current_baseline": {
     "selected_model": "핵심 수치 GradientBoosting 보수 모델",
-    "accuracy": 0.537,
-    "brier": 0.249,
-    "log_loss": 0.691
+    "accuracy": 0.544,
+    "brier": 0.248,
+    "log_loss": 0.689
   },
   "strongest_features": [
     "elo_diff",
@@ -31,106 +31,106 @@
   ],
   "best_performing_segments": [
     {
-      "segment": "명시 연패 streak",
-      "total_games": 738,
-      "accuracy": 0.566,
-      "brier": 0.246,
-      "log_loss": 0.685,
-      "avg_confidence": 0.55,
-      "over_55_games": 361,
-      "over_55_accuracy": 0.573
-    },
-    {
       "segment": "연패 득실 악화",
-      "total_games": 487,
-      "accuracy": 0.563,
-      "brier": 0.246,
-      "log_loss": 0.685,
-      "avg_confidence": 0.553,
-      "over_55_games": 256,
-      "over_55_accuracy": 0.578
+      "total_games": 494,
+      "accuracy": 0.589,
+      "brier": 0.245,
+      "log_loss": 0.682,
+      "avg_confidence": 0.551,
+      "over_55_games": 245,
+      "over_55_accuracy": 0.588
     },
     {
-      "segment": "득실차 차이 큼",
-      "total_games": 1232,
-      "accuracy": 0.554,
-      "brier": 0.248,
-      "log_loss": 0.689,
-      "avg_confidence": 0.556,
-      "over_55_games": 673,
-      "over_55_accuracy": 0.536
+      "segment": "명시 연패 streak",
+      "total_games": 744,
+      "accuracy": 0.578,
+      "brier": 0.245,
+      "log_loss": 0.682,
+      "avg_confidence": 0.548,
+      "over_55_games": 346,
+      "over_55_accuracy": 0.581
     },
     {
       "segment": "연패 흐름",
-      "total_games": 577,
-      "accuracy": 0.549,
-      "brier": 0.245,
-      "log_loss": 0.683,
+      "total_games": 582,
+      "accuracy": 0.564,
+      "brier": 0.244,
+      "log_loss": 0.682,
+      "avg_confidence": 0.551,
+      "over_55_games": 285,
+      "over_55_accuracy": 0.604
+    },
+    {
+      "segment": "득실차 차이 큼",
+      "total_games": 1228,
+      "accuracy": 0.556,
+      "brier": 0.248,
+      "log_loss": 0.688,
       "avg_confidence": 0.554,
-      "over_55_games": 302,
-      "over_55_accuracy": 0.586
+      "over_55_games": 655,
+      "over_55_accuracy": 0.548
     },
     {
       "segment": "강팀 vs 약팀",
-      "total_games": 1148,
-      "accuracy": 0.544,
-      "brier": 0.251,
-      "log_loss": 0.695,
-      "avg_confidence": 0.557,
-      "over_55_games": 625,
-      "over_55_accuracy": 0.493
+      "total_games": 1142,
+      "accuracy": 0.553,
+      "brier": 0.25,
+      "log_loss": 0.693,
+      "avg_confidence": 0.555,
+      "over_55_games": 607,
+      "over_55_accuracy": 0.511
     }
   ],
   "worst_performing_segments": [
     {
       "segment": "연승 흐름",
-      "total_games": 589,
-      "accuracy": 0.48,
-      "brier": 0.253,
-      "log_loss": 0.699,
-      "avg_confidence": 0.551,
-      "over_55_games": 293,
-      "over_55_accuracy": 0.495
+      "total_games": 600,
+      "accuracy": 0.498,
+      "brier": 0.251,
+      "log_loss": 0.695,
+      "avg_confidence": 0.548,
+      "over_55_games": 288,
+      "over_55_accuracy": 0.524
     },
     {
       "segment": "최근 5경기 흐름 차이 큼",
-      "total_games": 1750,
-      "accuracy": 0.51,
-      "brier": 0.251,
-      "log_loss": 0.694,
-      "avg_confidence": 0.552,
-      "over_55_games": 870,
-      "over_55_accuracy": 0.523
-    },
-    {
-      "segment": "박빙 경기",
-      "total_games": 1089,
-      "accuracy": 0.518,
-      "brier": 0.25,
+      "total_games": 1764,
+      "accuracy": 0.522,
+      "brier": 0.249,
       "log_loss": 0.692,
-      "avg_confidence": 0.515,
-      "over_55_games": 0,
-      "over_55_accuracy": null
-    },
-    {
-      "segment": "명시 연승 streak",
-      "total_games": 739,
-      "accuracy": 0.524,
-      "brier": 0.251,
-      "log_loss": 0.694,
       "avg_confidence": 0.549,
-      "over_55_games": 347,
-      "over_55_accuracy": 0.516
+      "over_55_games": 832,
+      "over_55_accuracy": 0.544
     },
     {
       "segment": "연승 회귀 위험",
-      "total_games": 375,
-      "accuracy": 0.531,
+      "total_games": 381,
+      "accuracy": 0.525,
       "brier": 0.25,
-      "log_loss": 0.694,
+      "log_loss": 0.693,
+      "avg_confidence": 0.544,
+      "over_55_games": 159,
+      "over_55_accuracy": 0.547
+    },
+    {
+      "segment": "명시 연승 streak",
+      "total_games": 746,
+      "accuracy": 0.529,
+      "brier": 0.25,
+      "log_loss": 0.693,
       "avg_confidence": 0.546,
-      "over_55_games": 163,
-      "over_55_accuracy": 0.534
+      "over_55_games": 334,
+      "over_55_accuracy": 0.524
+    },
+    {
+      "segment": "박빙 경기",
+      "total_games": 1098,
+      "accuracy": 0.541,
+      "brier": 0.248,
+      "log_loss": 0.69,
+      "avg_confidence": 0.516,
+      "over_55_games": 0,
+      "over_55_accuracy": null
     }
   ],
   "data_gaps": [
