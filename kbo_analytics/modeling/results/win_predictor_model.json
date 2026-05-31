@@ -63,14 +63,14 @@
     },
     {
       "모델": "Streak 피처 RandomForest 실험",
-      "검증 정확도": 0.528,
+      "검증 정확도": 0.532,
       "피처 수": 38,
       "Brier Score": 0.248,
       "Log Loss": 0.69
     },
     {
       "모델": "Streak 피처 RandomForest 시간가중 실험",
-      "검증 정확도": 0.535,
+      "검증 정확도": 0.534,
       "피처 수": 38,
       "Brier Score": 0.248,
       "Log Loss": 0.69
@@ -224,10 +224,10 @@
     },
     {
       "모델": "경기 단위 선수영향도 참고 GradientBoosting",
-      "검증 정확도": 0.497,
+      "검증 정확도": 0.5,
       "피처 수": 88,
       "Brier Score": 0.259,
-      "Log Loss": 0.712
+      "Log Loss": 0.713
     }
   ],
   "confidence_metrics": [
@@ -306,11 +306,11 @@
   },
   "today_probability_distribution": {
     "split": "today",
-    "total_games": 2,
-    "p50": 0.528,
-    "p75": 0.528,
-    "p90": 0.528,
-    "max": 0.528,
+    "total_games": 0,
+    "p50": null,
+    "p75": null,
+    "p90": null,
+    "max": null,
     "over_53": 0,
     "over_55": 0,
     "over_58": 0,
@@ -426,32 +426,32 @@
     {
       "model": "Streak 피처 RandomForest 실험",
       "total_games": 2926,
-      "accuracy": 0.528,
-      "brier": 0.248,
-      "logloss": 0.69,
-      "avg_confidence": 0.539,
-      "p75_confidence": 0.557,
-      "p90_confidence": 0.577,
-      "max_confidence": 0.63,
-      "over_55": 953,
-      "over_58": 246,
-      "over_60": 59,
-      "over_55_accuracy": 0.559
-    },
-    {
-      "model": "Streak 피처 RandomForest 시간가중 실험",
-      "total_games": 2926,
-      "accuracy": 0.535,
+      "accuracy": 0.532,
       "brier": 0.248,
       "logloss": 0.69,
       "avg_confidence": 0.54,
       "p75_confidence": 0.558,
+      "p90_confidence": 0.577,
+      "max_confidence": 0.628,
+      "over_55": 969,
+      "over_58": 242,
+      "over_60": 66,
+      "over_55_accuracy": 0.564
+    },
+    {
+      "model": "Streak 피처 RandomForest 시간가중 실험",
+      "total_games": 2926,
+      "accuracy": 0.534,
+      "brier": 0.248,
+      "logloss": 0.69,
+      "avg_confidence": 0.54,
+      "p75_confidence": 0.559,
       "p90_confidence": 0.578,
-      "max_confidence": 0.634,
-      "over_55": 1039,
-      "over_58": 239,
+      "max_confidence": 0.632,
+      "over_55": 1037,
+      "over_58": 254,
       "over_60": 45,
-      "over_55_accuracy": 0.546
+      "over_55_accuracy": 0.544
     },
     {
       "model": "Streak 피처 GradientBoosting 실험",
@@ -762,26 +762,26 @@
       "avg_confidence": 0.533,
       "p75_confidence": 0.547,
       "p90_confidence": 0.567,
-      "max_confidence": 0.625,
-      "over_55": 313,
-      "over_58": 70,
-      "over_60": 13,
-      "over_55_accuracy": 0.492
+      "max_confidence": 0.617,
+      "over_55": 312,
+      "over_58": 67,
+      "over_60": 14,
+      "over_55_accuracy": 0.474
     },
     {
       "model": "경기 단위 선수영향도 참고 GradientBoosting",
       "total_games": 1407,
-      "accuracy": 0.497,
+      "accuracy": 0.5,
       "brier": 0.259,
-      "logloss": 0.712,
-      "avg_confidence": 0.571,
-      "p75_confidence": 0.6,
-      "p90_confidence": 0.644,
-      "max_confidence": 0.86,
-      "over_55": 825,
-      "over_58": 508,
-      "over_60": 349,
-      "over_55_accuracy": 0.507
+      "logloss": 0.713,
+      "avg_confidence": 0.57,
+      "p75_confidence": 0.601,
+      "p90_confidence": 0.642,
+      "max_confidence": 0.862,
+      "over_55": 791,
+      "over_58": 502,
+      "over_60": 356,
+      "over_55_accuracy": 0.499
     }
   ],
   "selected_model_probability_spread": {
@@ -918,26 +918,7 @@
       "예측 근거": "삼성 시즌 상대전적 우위"
     }
   ],
-  "today_predictions": [
-    {
-      "경기일": "2026-05-31",
-      "기준팀": "KIA",
-      "상대팀": "LG",
-      "예측 구단": "LG",
-      "예측승률": "47.2%",
-      "예측": "패배 예측",
-      "예측 근거": "LG 시즌 누적 승률 우위, LG 최근 5경기 흐름 우위"
-    },
-    {
-      "경기일": "2026-05-31",
-      "기준팀": "LG",
-      "상대팀": "KIA",
-      "예측 구단": "LG",
-      "예측승률": "52.8%",
-      "예측": "승리 예측",
-      "예측 근거": "LG 시즌 누적 승률 우위, LG 최근 5경기 흐름 우위"
-    }
-  ],
+  "today_predictions": [],
   "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
   "feature_columns": [
     "is_home",
