@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+from pandas.errors import EmptyDataError
 
 
 SEARCH_TERMS = [
@@ -90,14 +91,20 @@ def _row_count(path: Path) -> int:
 
 
 def _inspect_csv(path: Path, repo_dir: Path) -> dict:
-    columns = pd.read_csv(path, nrows=0).columns.tolist()
+    try:
+        columns = pd.read_csv(path, nrows=0).columns.tolist()
+    except EmptyDataError:
+        columns = []
     normalized = _normalized_columns(columns)
     text = " ".join([path.name, *columns]).lower()
     matched_terms = [term for term in SEARCH_TERMS if term.lower() in text]
     mapped_columns = [column for column in V2_COLUMNS if column in normalized]
     starter_missing = [column for column in REQUIRED_FOR_TRAINING["starter_mapping"] if column not in normalized]
     log_missing = [column for column in REQUIRED_FOR_TRAINING["pitcher_logs"] if column not in normalized]
-    sample_text = " ".join(pd.read_csv(path, dtype=str).head(5).fillna("").to_numpy().ravel()).upper()
+    try:
+        sample_text = " ".join(pd.read_csv(path, dtype=str).head(5).fillna("").to_numpy().ravel()).upper()
+    except EmptyDataError:
+        sample_text = ""
     sample_only = "SAMPLE_" in sample_text or "MOCK_" in sample_text
     usable_as_starter_mapping = not starter_missing and _row_count(path) > 0 and not sample_only
     usable_as_pitcher_logs = not log_missing and _row_count(path) > 0 and not sample_only
