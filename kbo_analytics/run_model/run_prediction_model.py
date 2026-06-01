@@ -15,6 +15,7 @@ from sklearn.metrics import accuracy_score, brier_score_loss, log_loss, mean_abs
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = ROOT_DIR / "data" / "official" / "model_training_games.csv"
+DEFAULT_SCHEDULE_INPUT = ROOT_DIR / "data" / "official" / "prediction_games.csv"
 DEFAULT_RESULTS = Path(__file__).resolve().parent / "results"
 
 
@@ -22,20 +23,26 @@ def _base_game_id(game_id: str):
     return str(game_id).rsplit("_", 1)[0]
 
 
-def load_completed_team_games(input_path: Path):
+def load_team_games(input_path: Path, completed_only: bool = True):
     df = pd.read_csv(input_path)
     required = {"game_id", "date", "team", "opponent", "home_away", "status", "score_team", "score_opp"}
     missing = sorted(required - set(df.columns))
     if missing:
         raise ValueError(f"Missing required columns: {missing}")
 
-    df = df[df["status"].eq("Final")].copy()
+    if completed_only:
+        df = df[df["status"].eq("Final")].copy()
     df["date"] = pd.to_datetime(df["date"])
     df["base_game_id"] = df["game_id"].map(_base_game_id)
     df["score_team"] = pd.to_numeric(df["score_team"], errors="coerce")
     df["score_opp"] = pd.to_numeric(df["score_opp"], errors="coerce")
-    df = df.dropna(subset=["score_team", "score_opp"])
+    if completed_only:
+        df = df.dropna(subset=["score_team", "score_opp"])
     return df.sort_values(["date", "base_game_id", "home_away", "team"]).reset_index(drop=True)
+
+
+def load_completed_team_games(input_path: Path):
+    return load_team_games(input_path, completed_only=True)
 
 
 def build_base_run_df(team_games: pd.DataFrame):
@@ -45,7 +52,8 @@ def build_base_run_df(team_games: pd.DataFrame):
     df["is_home"] = df["home_away"].eq("H").astype(int)
     df["target_runs"] = df["score_team"]
     df["runs_allowed"] = df["score_opp"]
-    df["target_win"] = (df["score_team"] > df["score_opp"]).astype(int)
+    completed_score = df["score_team"].notna() & df["score_opp"].notna()
+    df["target_win"] = np.where(completed_score, (df["score_team"] > df["score_opp"]).astype(int), np.nan)
     df["month"] = df["date"].dt.month
     df["game_key"] = df["base_game_id"]
 
@@ -289,6 +297,7 @@ def to_game_level_prediction(frame: pd.DataFrame, pred_col: str):
 def evaluate_win_conversion(trained_models: dict, train_df: pd.DataFrame, val_df: pd.DataFrame, features: list[str]):
     scores = []
     predictions = {}
+    win_models = {}
     for name, model in trained_models.items():
         train_scored = train_df.copy()
         val_scored = val_df.copy()
@@ -300,6 +309,7 @@ def evaluate_win_conversion(trained_models: dict, train_df: pd.DataFrame, val_df
 
         clf = LogisticRegression(fit_intercept=True)
         clf.fit(train_games[["expected_run_diff"]], train_games["target_home_win"])
+        win_models[name] = clf
         val_games["home_win_probability"] = clf.predict_proba(val_games[["expected_run_diff"]])[:, 1]
         val_games["pred_home_win"] = (val_games["home_win_probability"] >= 0.5).astype(int)
         val_games["predicted_winner"] = np.where(val_games["pred_home_win"].eq(1), val_games["home_team"], val_games["away_team"])
@@ -315,7 +325,7 @@ def evaluate_win_conversion(trained_models: dict, train_df: pd.DataFrame, val_df
         }
         scores.append(score)
         predictions[name] = val_games
-    return scores, predictions
+    return scores, predictions, win_models
 
 
 def select_model(run_scores: list[dict], win_scores: list[dict]):
@@ -491,7 +501,62 @@ def selected_feature_importance(model, val_df: pd.DataFrame, features: list[str]
     return sorted(rows, key=lambda row: row["importance_mean"], reverse=True)
 
 
-def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float):
+def build_today_predictions(input_path: Path, schedule_path: Path, reference_date: pd.Timestamp, selected_model, win_model, features: list[str], output_dir: Path):
+    schedule_games = load_team_games(schedule_path, completed_only=False)
+    target_date = pd.Timestamp(reference_date).normalize()
+    scheduled = schedule_games[(schedule_games["status"].eq("Scheduled")) & (schedule_games["date"].dt.normalize().eq(target_date))].copy()
+    output_columns = [
+        "date",
+        "game_key",
+        "home_team",
+        "away_team",
+        "home_expected_runs",
+        "away_expected_runs",
+        "expected_run_diff",
+        "home_win_probability",
+        "predicted_winner",
+    ]
+    if scheduled.empty:
+        empty = pd.DataFrame(columns=output_columns)
+        empty.to_csv(output_dir / "today_expected_runs_predictions.csv", index=False, encoding="utf-8-sig")
+        return empty, {
+            "reference_date": target_date.strftime("%Y-%m-%d"),
+            "scheduled_games": 0,
+            "message": "오늘 예정 경기가 없습니다.",
+        }
+
+    completed = load_completed_team_games(input_path)
+    prediction_source = pd.concat([completed, scheduled], ignore_index=True).sort_values(["date", "base_game_id", "home_away", "team"])
+    run_df = merge_opponent_features(create_rolling_run_features(build_base_run_df(prediction_source)))
+    today_frame = run_df[run_df["date"].dt.normalize().eq(target_date) & run_df["target_runs"].isna()].copy()
+    today_frame = today_frame.dropna(subset=features)
+    if today_frame.empty:
+        empty = pd.DataFrame(columns=output_columns)
+        empty.to_csv(output_dir / "today_expected_runs_predictions.csv", index=False, encoding="utf-8-sig")
+        return empty, {
+            "reference_date": target_date.strftime("%Y-%m-%d"),
+            "scheduled_games": int(scheduled["base_game_id"].nunique()),
+            "message": "예정 경기 피처를 생성할 수 없습니다.",
+        }
+
+    scored = today_frame.copy()
+    scored["pred_runs_today"] = np.clip(selected_model.predict(scored[features]), 0, None)
+    games = to_game_level_prediction(scored, "pred_runs_today")
+    games = games.drop(columns=[col for col in ["home_actual_runs", "away_actual_runs", "target_home_win", "actual_run_diff"] if col in games.columns])
+    games["home_win_probability"] = win_model.predict_proba(games[["expected_run_diff"]])[:, 1]
+    games["predicted_winner"] = np.where(games["home_win_probability"] >= 0.5, games["home_team"], games["away_team"])
+    games["date"] = pd.to_datetime(games["date"]).dt.strftime("%Y-%m-%d")
+    for col in ["home_expected_runs", "away_expected_runs", "expected_run_diff", "home_win_probability"]:
+        games[col] = games[col].round(4)
+    games[output_columns].to_csv(output_dir / "today_expected_runs_predictions.csv", index=False, encoding="utf-8-sig")
+    return games[output_columns], {
+        "reference_date": target_date.strftime("%Y-%m-%d"),
+        "scheduled_games": int(len(games)),
+        "message": f"{len(games)}경기 예정 경기 예측을 생성했습니다.",
+    }
+
+
+def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float, reference_date: str | None = None, schedule_path: Path = DEFAULT_SCHEDULE_INPUT):
     output_dir.mkdir(parents=True, exist_ok=True)
     team_games = load_completed_team_games(input_path)
     run_df = build_base_run_df(team_games)
@@ -502,8 +567,10 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float):
 
     train_df, val_df, cutoff = chronological_split(run_df, train_ratio)
     trained_models, run_scores = train_run_regressors(train_df, val_df, features)
-    win_scores, prediction_map = evaluate_win_conversion(trained_models, train_df, val_df, features)
+    win_scores, prediction_map, win_models = evaluate_win_conversion(trained_models, train_df, val_df, features)
     selected, candidate_scores = select_model(run_scores, win_scores)
+    ref_date = pd.Timestamp(reference_date or datetime.now().date())
+    today_predictions, today_status = build_today_predictions(input_path, schedule_path, ref_date, trained_models[selected["model"]], win_models[selected["model"]], features, output_dir)
 
     selected_predictions = prediction_map[selected["model"]].copy()
     selected_error_analysis = build_error_analysis(selected_predictions)
@@ -581,6 +648,8 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float):
         "win_conversion_scores": win_scores,
         "candidate_scores": candidate_scores,
         "selected_model": selected,
+        "today_prediction_status": today_status,
+        "today_prediction_rows": int(len(today_predictions)),
         "error_analysis_summary": error_summary(selected_error_analysis),
         "error_tag_summary": tag_rows,
         "high_score_error_summary": high_score_summary,
@@ -590,6 +659,7 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float):
         "output_files": [
             "results/run_model_features.csv",
             "results/expected_runs_predictions.csv",
+            "results/today_expected_runs_predictions.csv",
             "results/expected_runs_model.json",
             "results/run_model_error_analysis.csv",
             "results/error_tag_summary.csv",
@@ -603,14 +673,16 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float):
 def parse_args():
     parser = argparse.ArgumentParser(description="Independent KBO expected-runs prediction model")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT, help="Completed team-game CSV path")
+    parser.add_argument("--schedule-input", type=Path, default=DEFAULT_SCHEDULE_INPUT, help="Current schedule CSV path")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_RESULTS, help="Directory for run model outputs")
     parser.add_argument("--train-ratio", type=float, default=0.8, help="Chronological train split ratio")
+    parser.add_argument("--reference-date", default=datetime.now().date().isoformat(), help="Scheduled game prediction date")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    payload = run_pipeline(args.input, args.output_dir, args.train_ratio)
+    payload = run_pipeline(args.input, args.output_dir, args.train_ratio, args.reference_date, args.schedule_input)
     selected = payload["selected_model"]
     print("Independent KBO run model completed")
     print(f"selected_model={selected['model']}")

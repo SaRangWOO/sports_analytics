@@ -23,6 +23,9 @@ from modeling.train_win_predictor import (
 )
 from run_model.run_model_dashboard import DEFAULT_RESULTS as RUN_MODEL_RESULTS
 from run_model.run_model_dashboard import render_prediction_board_embedded
+from run_model.run_prediction_model import DEFAULT_INPUT as RUN_MODEL_INPUT
+from run_model.run_prediction_model import DEFAULT_SCHEDULE_INPUT as RUN_MODEL_SCHEDULE_INPUT
+from run_model.run_prediction_model import run_pipeline as run_expected_runs_pipeline
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -2342,6 +2345,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         f'<button type="button" class="team-button" data-team="{escape(team)}">{escape(team)}</button>'
         for team in standings["팀"]
     )
+    run_expected_runs_pipeline(RUN_MODEL_INPUT, RUN_MODEL_RESULTS, 0.8, generated_at.isoformat(), RUN_MODEL_SCHEDULE_INPUT)
     run_model_html = render_prediction_board_embedded(RUN_MODEL_RESULTS)
     html = f"""<!doctype html>
 <html lang="ko">

@@ -61,119 +61,29 @@
             <div class="eyebrow">KBO MATCH PREDICTION</div>
             <h2>KBO 승부 예측 대시보드</h2>
             <p>KBO 경기 일정에 맞춰 예상 스코어, 승패 확률, 핸디캡, 오버/언더를 자동 계산합니다.</p>
-            <p class="run-model-source">독립 득점 기반 모델 결과 · 선택 모델 HistGradientBoosting · 최신 결과 파일 기준</p>
+            <p class="run-model-source">독립 득점 기반 모델 결과 · 선택 모델 HistGradientBoosting · 오늘 예측 파일: today_expected_runs_predictions.csv</p>
           </div>
         </section>
 
         <section class="run-model-section">
           <div class="eyebrow">BASE INFO</div>
           <h2>기준 정보</h2>
-          <div class="run-model-grid"><div class="metric"><p>생성 시간</p><strong>2026-05-29 14:14</strong></div><div class="metric"><p>예측 기준일</p><strong>2026-05-24</strong></div><div class="metric"><p>표시 경기</p><strong>5경기</strong></div><div class="metric"><p>데이터 기준</p><strong>모델 결과 / 예측 CSV</strong><span>최신 run_model 산출물</span></div></div>
+          <div class="run-model-grid"><div class="metric"><p>생성 시간</p><strong>2026-06-01 12:29</strong></div><div class="metric"><p>기준일</p><strong>2026-06-01</strong></div><div class="metric"><p>예정 경기</p><strong>0경기</strong></div><div class="metric"><p>상태</p><strong>오늘 예정 경기가 없습니다.</strong></div></div>
         </section>
 
         <section class="run-model-section">
           <div class="eyebrow">SCHEDULE STATUS</div>
           <h2>일정 선택 상태</h2>
-          <div class="run-model-grid schedule-grid"><div class="metric"><p>선택 모드</p><strong>최신 경기일</strong><span>예측 CSV의 가장 최근 경기일</span></div><div class="metric"><p>생성 경기</p><strong>5경기</strong></div><div class="metric"><p>홈/원정 매칭</p><strong>완료</strong></div><div class="metric"><p>검증 상태</p><strong>완료 경기 기반</strong><span>완료 경기 검증 데이터</span></div></div>
-          <p class="note">최신 경기일 기준 5경기를 표시합니다. 원본 1435행 중 홈/원정 쌍 10행을 사용했고, 중복 경기는 0건입니다. 현재 결과 파일은 완료 경기 검증 구간을 포함하므로 실제 운영 예측과 구분해서 해석해야 합니다.</p>
+          <div class="run-model-grid schedule-grid"><div class="metric"><p>선택 모드</p><strong>기준일 예정 경기</strong><span>today_expected_runs_predictions.csv 기준</span></div><div class="metric"><p>생성 경기</p><strong>0경기</strong></div><div class="metric"><p>홈/원정 매칭</p><strong>예정 경기 없음</strong></div><div class="metric"><p>검증 데이터</p><strong>검증 최신일 2026-05-24</strong></div></div>
+          <p class="note">메인 예측표는 기준일 예정 경기 전용 파일을 사용합니다. validation 결과는 아래 모델 진단의 최근 검증 경기에서만 확인합니다.</p>
         </section>
 
         <section class="run-model-section">
           <div class="eyebrow">MATCH BOARD</div>
           <h2>KBO 경기 예측표</h2>
-          <p class="note">예상 스코어는 `away_expected_runs`, `home_expected_runs`를 사용합니다. 승패 확률은 `home_win_probability`로 홈/원정 확률을 계산합니다. 핸디캡은 예상 득실차 2.5, 오버/언더는 예상 총득점 8.5 기준의 표시용 판단입니다.</p>
-          <div class="match-card-grid">
-      <article class="match-card pick">
-        <div class="match-card-top">
-          <span>2026-05-24</span>
-          <span class="match-badge pick">추천</span>
-        </div>
-        <h3>삼성 vs 롯데</h3>
-        <div class="score-line">삼성 5.5 - 롯데 4.5</div>
-        <div class="match-meta">
-          <div><span>예측 구단</span><strong>삼성</strong></div>
-          <div><span>예측 승률</span><strong>65.5%</strong></div>
-          <div><span>신뢰도</span><strong>높음</strong></div>
-        </div>
-        <div class="match-pills">
-          <span>핸디캡 롯데 +2.5</span>
-          <span>O/U 8.5 오버</span>
-        </div>
-      </article>
-    
-      <article class="match-card pick">
-        <div class="match-card-top">
-          <span>2026-05-24</span>
-          <span class="match-badge pick">추천</span>
-        </div>
-        <h3>NC vs KT</h3>
-        <div class="score-line">NC 4.7 - KT 5.4</div>
-        <div class="match-meta">
-          <div><span>예측 구단</span><strong>KT</strong></div>
-          <div><span>예측 승률</span><strong>66.6%</strong></div>
-          <div><span>신뢰도</span><strong>높음</strong></div>
-        </div>
-        <div class="match-pills">
-          <span>핸디캡 NC +2.5</span>
-          <span>O/U 8.5 오버</span>
-        </div>
-      </article>
-    
-      <article class="match-card pick">
-        <div class="match-card-top">
-          <span>2026-05-24</span>
-          <span class="match-badge pick">추천</span>
-        </div>
-        <h3>키움 vs LG</h3>
-        <div class="score-line">키움 4.5 - LG 5.1</div>
-        <div class="match-meta">
-          <div><span>예측 구단</span><strong>LG</strong></div>
-          <div><span>예측 승률</span><strong>65.1%</strong></div>
-          <div><span>신뢰도</span><strong>높음</strong></div>
-        </div>
-        <div class="match-pills">
-          <span>핸디캡 관망</span>
-          <span>O/U 8.5 오버</span>
-        </div>
-      </article>
-    
-      <article class="match-card pick">
-        <div class="match-card-top">
-          <span>2026-05-24</span>
-          <span class="match-badge pick">추천</span>
-        </div>
-        <h3>두산 vs 한화</h3>
-        <div class="score-line">두산 4.8 - 한화 5.2</div>
-        <div class="match-meta">
-          <div><span>예측 구단</span><strong>한화</strong></div>
-          <div><span>예측 승률</span><strong>60.6%</strong></div>
-          <div><span>신뢰도</span><strong>높음</strong></div>
-        </div>
-        <div class="match-pills">
-          <span>핸디캡 관망</span>
-          <span>O/U 8.5 오버</span>
-        </div>
-      </article>
-    
-      <article class="match-card watch">
-        <div class="match-card-top">
-          <span>2026-05-24</span>
-          <span class="match-badge watch">관망</span>
-        </div>
-        <h3>SSG vs KIA</h3>
-        <div class="score-line">SSG 5.2 - KIA 5.5</div>
-        <div class="match-meta">
-          <div><span>예측 구단</span><strong>KIA</strong></div>
-          <div><span>예측 승률</span><strong>58.6%</strong></div>
-          <div><span>신뢰도</span><strong>보통</strong></div>
-        </div>
-        <div class="match-pills">
-          <span>핸디캡 관망</span>
-          <span>O/U 8.5 오버</span>
-        </div>
-      </article>
-    </div>
-          <div class="run-model-tablewrap"><table><thead><tr><th>경기일</th><th>원정팀 vs 홈팀</th><th>예상 스코어</th><th>승패 확률</th><th>신뢰도</th><th>판단</th><th>핸디캡</th><th>오버/언더</th></tr></thead><tbody><tr><td>2026-05-24</td><td>삼성 vs 롯데</td><td>삼성 5.5 - 롯데 4.5</td><td>삼성 65.5% / 롯데 34.4%</td><td>높음</td><td>추천</td><td>롯데 +2.5</td><td>오버</td></tr><tr><td>2026-05-24</td><td>NC vs KT</td><td>NC 4.7 - KT 5.4</td><td>NC 33.4% / KT 66.6%</td><td>높음</td><td>추천</td><td>NC +2.5</td><td>오버</td></tr><tr><td>2026-05-24</td><td>키움 vs LG</td><td>키움 4.5 - LG 5.1</td><td>키움 34.9% / LG 65.1%</td><td>높음</td><td>추천</td><td>관망</td><td>오버</td></tr><tr><td>2026-05-24</td><td>두산 vs 한화</td><td>두산 4.8 - 한화 5.2</td><td>두산 39.4% / 한화 60.6%</td><td>높음</td><td>추천</td><td>관망</td><td>오버</td></tr><tr><td>2026-05-24</td><td>SSG vs KIA</td><td>SSG 5.2 - KIA 5.5</td><td>SSG 41.4% / KIA 58.6%</td><td>보통</td><td>관망</td><td>관망</td><td>오버</td></tr></tbody></table></div>
+          <p class="note">기준일 예정 경기만 표시합니다. 예상 스코어는 `away_expected_runs`, `home_expected_runs`를 사용하고, 핸디캡은 예상 득실차 2.5, 오버/언더는 예상 총득점 8.5 기준의 표시용 판단입니다.</p>
+          <div class="match-card-grid"><p class="empty">오늘 예정 경기가 없습니다.</p></div>
+          <div class="run-model-tablewrap"><p class="empty">표시할 데이터가 없습니다.</p></div>
         </section>
 
         <details class="run-model-diagnostics">
@@ -185,7 +95,7 @@
             <div class="eyebrow">INDEPENDENT RUN MODEL</div>
             <h2>득점 기반 승부 예측</h2>
             <p>독립 득점 기반 모델 결과입니다. 기존 경기 승패 모델과 결과를 섞지 않고, 팀별 예상 득점을 먼저 예측한 뒤 예상 득실차를 홈팀 승률로 변환합니다.</p>
-            <p class="run-model-source">생성 시각: 2026-05-29T14:14:39 · 결과 JSON: C:\Users\PCuser\Documents\New project\sports_analytics_feature_work\kbo_analytics\run_model\results\expected_runs_model.json · 예측 CSV: C:\Users\PCuser\Documents\New project\sports_analytics_feature_work\kbo_analytics\run_model\results\expected_runs_predictions.csv</p>
+            <p class="run-model-source">생성 시각: 2026-06-01T12:29:31 · 결과 JSON: C:\Users\PCuser\Documents\New project\sports_analytics_feature_work\kbo_analytics\run_model\results\expected_runs_model.json · 예측 CSV: C:\Users\PCuser\Documents\New project\sports_analytics_feature_work\kbo_analytics\run_model\results\expected_runs_predictions.csv</p>
           </div>
         </section>
 

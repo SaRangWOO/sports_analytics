@@ -192,14 +192,15 @@ def load_run_model_results(results_dir: Path):
         raise FileNotFoundError("Run model results are missing. Run run_prediction_model.py first.")
     payload = json.loads(model_path.read_text(encoding="utf-8"))
     predictions = pd.read_csv(prediction_path)
-    return payload, predictions, model_path, prediction_path
+    today_path = results_dir / "today_expected_runs_predictions.csv"
+    today_predictions = pd.read_csv(today_path) if today_path.exists() else pd.DataFrame()
+    return payload, predictions, today_predictions, model_path, prediction_path, today_path
 
 
 def prediction_board_rows(predictions: pd.DataFrame):
     if predictions.empty:
         return []
-    latest_date = predictions["date"].max()
-    df = predictions[predictions["date"].eq(latest_date)].copy()
+    df = predictions.copy()
     df["abs_run_diff"] = df["expected_run_diff"].abs()
     df = df.sort_values("abs_run_diff", ascending=False)
     rows = []
@@ -253,20 +254,22 @@ def prediction_board_rows(predictions: pd.DataFrame):
     return rows
 
 
-def board_status(payload: dict, predictions: pd.DataFrame, model_path: Path, prediction_path: Path):
-    latest_date = predictions["date"].max() if not predictions.empty else "-"
-    latest_rows = predictions[predictions["date"].eq(latest_date)] if latest_date != "-" else predictions
-    duplicate_games = int(latest_rows["game_key"].duplicated().sum()) if "game_key" in latest_rows else 0
+def board_status(payload: dict, today_predictions: pd.DataFrame, validation_predictions: pd.DataFrame):
+    today_status = payload.get("today_prediction_status", {})
+    reference_date = today_status.get("reference_date", "-")
+    validation_latest = validation_predictions["date"].max() if not validation_predictions.empty else "-"
+    duplicate_games = int(today_predictions["game_key"].duplicated().sum()) if "game_key" in today_predictions else 0
     return {
         "generated_at": fmt_timestamp(payload.get("generated_at", "-")),
-        "prediction_date": latest_date,
-        "game_count": len(latest_rows),
-        "total_rows": len(predictions),
-        "pair_rows": len(latest_rows) * 2,
+        "prediction_date": reference_date,
+        "game_count": int(today_status.get("scheduled_games", len(today_predictions))),
+        "total_rows": len(validation_predictions),
+        "pair_rows": len(today_predictions) * 2,
         "duplicate_games": duplicate_games,
-        "home_away_match": "완료" if len(latest_rows) else "확인 필요",
-        "validation_status": "완료 경기 검증 데이터",
-        "data_source": "모델 결과 / 예측 CSV",
+        "home_away_match": "완료" if len(today_predictions) else "예정 경기 없음",
+        "validation_status": "검증 최신일 " + str(validation_latest),
+        "data_source": "오늘 예정 경기 / 검증 데이터 분리",
+        "message": today_status.get("message", ""),
     }
 
 
@@ -294,7 +297,7 @@ def match_card_html(row: dict):
 
 
 def render_model_diagnostics_embedded(results_dir: Path = DEFAULT_RESULTS):
-    payload, predictions, model_path, prediction_path = load_run_model_results(results_dir)
+    payload, predictions, _, model_path, prediction_path, _ = load_run_model_results(results_dir)
     selected = payload.get("selected_model", {})
     summary = prediction_summary(predictions)
     cards = "".join(
@@ -377,25 +380,25 @@ def render_model_diagnostics_embedded(results_dir: Path = DEFAULT_RESULTS):
 
 
 def render_prediction_board_embedded(results_dir: Path = DEFAULT_RESULTS):
-    payload, predictions, model_path, prediction_path = load_run_model_results(results_dir)
+    payload, predictions, today_predictions, model_path, prediction_path, today_path = load_run_model_results(results_dir)
     selected = payload.get("selected_model", {})
-    status = board_status(payload, predictions, model_path, prediction_path)
-    rows = prediction_board_rows(predictions)
+    status = board_status(payload, today_predictions, predictions)
+    rows = prediction_board_rows(today_predictions)
     cards = "".join(match_card_html(row) for row in rows)
     status_cards = "".join(
         [
             metric_card("생성 시간", str(status["generated_at"])),
-            metric_card("예측 기준일", str(status["prediction_date"])),
-            metric_card("표시 경기", f'{status["game_count"]}경기'),
-            metric_card("데이터 기준", str(status["data_source"]), "최신 run_model 산출물"),
+            metric_card("기준일", str(status["prediction_date"])),
+            metric_card("예정 경기", f'{status["game_count"]}경기'),
+            metric_card("상태", str(status["message"] or "오늘 예정 경기 기준")),
         ]
     )
     schedule_cards = "".join(
         [
-            metric_card("선택 모드", "최신 경기일", "예측 CSV의 가장 최근 경기일"),
-            metric_card("생성 경기", f'{status["game_count"]}경기'),
+            metric_card("선택 모드", "기준일 예정 경기", "today_expected_runs_predictions.csv 기준"),
+            metric_card("생성 경기", f'{len(today_predictions)}경기'),
             metric_card("홈/원정 매칭", str(status["home_away_match"])),
-            metric_card("검증 상태", "완료 경기 기반", str(status["validation_status"])),
+            metric_card("검증 데이터", str(status["validation_status"])),
         ]
     )
     diagnostics = render_model_diagnostics_embedded(results_dir)
@@ -406,7 +409,7 @@ def render_prediction_board_embedded(results_dir: Path = DEFAULT_RESULTS):
             <div class="eyebrow">KBO MATCH PREDICTION</div>
             <h2>KBO 승부 예측 대시보드</h2>
             <p>KBO 경기 일정에 맞춰 예상 스코어, 승패 확률, 핸디캡, 오버/언더를 자동 계산합니다.</p>
-            <p class="run-model-source">독립 득점 기반 모델 결과 · 선택 모델 {html.escape(str(selected.get("model", "-")))} · 최신 결과 파일 기준</p>
+            <p class="run-model-source">독립 득점 기반 모델 결과 · 선택 모델 {html.escape(str(selected.get("model", "-")))} · 오늘 예측 파일: {html.escape(today_path.name)}</p>
           </div>
         </section>
 
@@ -420,14 +423,14 @@ def render_prediction_board_embedded(results_dir: Path = DEFAULT_RESULTS):
           <div class="eyebrow">SCHEDULE STATUS</div>
           <h2>일정 선택 상태</h2>
           <div class="run-model-grid schedule-grid">{schedule_cards}</div>
-          <p class="note">최신 경기일 기준 {status["game_count"]}경기를 표시합니다. 원본 {status["total_rows"]}행 중 홈/원정 쌍 {status["pair_rows"]}행을 사용했고, 중복 경기는 {status["duplicate_games"]}건입니다. 현재 결과 파일은 완료 경기 검증 구간을 포함하므로 실제 운영 예측과 구분해서 해석해야 합니다.</p>
+          <p class="note">메인 예측표는 기준일 예정 경기 전용 파일을 사용합니다. validation 결과는 아래 모델 진단의 최근 검증 경기에서만 확인합니다.</p>
         </section>
 
         <section class="run-model-section">
           <div class="eyebrow">MATCH BOARD</div>
           <h2>KBO 경기 예측표</h2>
-          <p class="note">예상 스코어는 `away_expected_runs`, `home_expected_runs`를 사용합니다. 승패 확률은 `home_win_probability`로 홈/원정 확률을 계산합니다. 핸디캡은 예상 득실차 2.5, 오버/언더는 예상 총득점 8.5 기준의 표시용 판단입니다.</p>
-          <div class="match-card-grid">{cards or '<p class="empty">표시할 경기 예측이 없습니다.</p>'}</div>
+          <p class="note">기준일 예정 경기만 표시합니다. 예상 스코어는 `away_expected_runs`, `home_expected_runs`를 사용하고, 핸디캡은 예상 득실차 2.5, 오버/언더는 예상 총득점 8.5 기준의 표시용 판단입니다.</p>
+          <div class="match-card-grid">{cards or '<p class="empty">오늘 예정 경기가 없습니다.</p>'}</div>
           <div class="run-model-tablewrap">{table_html(rows, ["경기일", "원정팀 vs 홈팀", "예상 스코어", "승패 확률", "신뢰도", "판단", "핸디캡", "오버/언더"])}</div>
         </section>
 

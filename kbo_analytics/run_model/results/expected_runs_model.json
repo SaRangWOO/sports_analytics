@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-29T14:14:39",
+  "generated_at": "2026-06-01T12:29:31",
   "input_file": "kbo_analytics\\data\\official\\model_training_games.csv",
   "model_scope": "independent_run_model",
   "notes": [
@@ -175,6 +175,12 @@
     "log_loss": 0.7013,
     "run_diff_direction_accuracy": 0.5199
   },
+  "today_prediction_status": {
+    "reference_date": "2026-06-01",
+    "scheduled_games": 0,
+    "message": "오늘 예정 경기가 없습니다."
+  },
+  "today_prediction_rows": 0,
   "error_analysis_summary": {
     "score_bucket_error": [
       {
@@ -432,6 +438,7 @@
   "output_files": [
     "results/run_model_features.csv",
     "results/expected_runs_predictions.csv",
+    "results/today_expected_runs_predictions.csv",
     "results/expected_runs_model.json",
     "results/run_model_error_analysis.csv",
     "results/error_tag_summary.csv",
