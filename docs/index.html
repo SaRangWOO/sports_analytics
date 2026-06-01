@@ -156,7 +156,7 @@
     </div>
     <div class="meta-panel">
       <span class="meta-pill">기준일 2026-06-01</span>
-      <span class="meta-pill">오전 정식 업데이트</span>
+      <span class="meta-pill">경기 전 업데이트</span>
       <span class="meta-pill">오늘 경기 0경기</span>
       <span class="meta-pill">예측 학습 2026-05-31</span>
     </div>
@@ -182,8 +182,8 @@
     <div class="subsection">
       <h3>업데이트 상태</h3>
       <div class="grid">
-        <div class="metric">마지막 갱신<strong>2026-06-01 12:20:04</strong></div>
-        <div class="metric">업데이트 단계<strong>오전 정식 업데이트</strong></div>
+        <div class="metric">마지막 갱신<strong>2026-06-01 12:30:02</strong></div>
+        <div class="metric">업데이트 단계<strong>경기 전 업데이트</strong></div>
         <div class="metric">선발 상태<strong>확정 0 · 추정 0 · 미확인 0</strong></div>
         <div class="metric">라인업 상태<strong>금일 0 · 최근 0 · 미확인 0</strong></div>
       </div>
@@ -272,7 +272,7 @@
       </div>
       <div class="subsection">
         <h3>모델 후보 비교</h3>
-        <table><thead><tr><th>모델</th><th>검증 정확도</th><th>Brier Score</th><th>Log Loss</th><th>피처 수</th></tr></thead><tbody><tr><td>기본 흐름 모델</td><td>0.507</td><td>0.256</td><td>0.706</td><td>59</td></tr><tr><td>전력/일정 피로도 포함 모델</td><td>0.521</td><td>0.253</td><td>0.699</td><td>64</td></tr><tr><td>핵심 수치 모델</td><td>0.529</td><td>0.25</td><td>0.693</td><td>21</td></tr><tr><td>핵심 수치 RandomForest 보수 모델</td><td>0.534</td><td>0.248</td><td>0.689</td><td>21</td></tr><tr><td>핵심 수치 RandomForest 보수 시간가중 모델</td><td>0.531</td><td>0.248</td><td>0.689</td><td>21</td></tr><tr><td>핵심 수치 GradientBoosting 보수 모델</td><td>0.544</td><td>0.248</td><td>0.689</td><td>21</td></tr><tr><td>핵심 수치 GradientBoosting 보수 시간가중 모델</td><td>0.54</td><td>0.248</td><td>0.689</td><td>21</td></tr><tr><td>Streak 피처 RandomForest 실험</td><td>0.533</td><td>0.248</td><td>0.689</td><td>38</td></tr><tr><td>Streak 피처 RandomForest 시간가중 실험</td><td>0.534</td><td>0.248</td><td>0.689</td><td>38</td></tr><tr><td>Streak 피처 GradientBoosting 실험</td><td>0.543</td><td>0.249</td><td>0.691</td><td>38</td></tr><tr><td>Streak 피처 GradientBoosting 시간가중 실험</td><td>0.543</td><td>0.248</td><td>0.69</td><td>38</td></tr><tr><td>LogisticRegression 보수 모델</td><td>0.521</td><td>0.253</td><td>0.699</td><td>64</td></tr><tr><td>RandomForest 비선형 모델</td><td>0.527</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>RandomForest 시간가중 모델</td><td>0.53</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>RandomForest 보수 모델</td><td>0.531</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>RandomForest 보수 시간가중 모델</td><td>0.532</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>ExtraTrees 보수 모델</td><td>0.531</td><td>0.25</td><td>0.692</td><td>64</td></tr><tr><td>GradientBoosting 비선형 모델</td><td>0.536</td><td>0.248</td><td>0.69</td><td>64</td></tr><tr><td>GradientBoosting 시간가중 모델</td><td>0.528</td><td>0.249</td><td>0.692</td><td>64</td></tr><tr><td>GradientBoosting 보수 모델</td><td>0.532</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>GradientBoosting 보수 시간가중 모델</td><td>0.533</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>GradientBoosting 확률보정(sigmoid)</td><td>0.515</td><td>0.25</td><td>0.694</td><td>64</td></tr><tr><td>GradientBoosting 확률보정(isotonic)</td><td>0.516</td><td>0.251</td><td>0.695</td><td>64</td></tr><tr><td>경기 단위 RandomForest 모델</td><td>0.512</td><td>0.25</td><td>0.693</td><td>73</td></tr><tr><td>경기 단위 RandomForest 시간가중 모델</td><td>0.511</td><td>0.25</td><td>0.694</td><td>73</td></tr><tr><td>경기 단위 GradientBoosting 모델</td><td>0.489</td><td>0.261</td><td>0.716</td><td>73</td></tr><tr><td>야구 핵심 피처 강화 모델</td><td>0.52</td><td>0.249</td><td>0.692</td><td>34</td></tr><tr><td>야구 핵심 피처 GradientBoosting 모델</td><td>0.51</td><td>0.256</td><td>0.707</td><td>34</td></tr><tr><td>야구 핵심 피처 RandomForest 모델</td><td>0.509</td><td>0.25</td><td>0.692</td><td>34</td></tr><tr><td>경기 단위 선수영향도 참고 RandomForest</td><td>0.486</td><td>0.252</td><td>0.698</td><td>90</td></tr><tr><td>경기 단위 선수영향도 참고 GradientBoosting</td><td>0.515</td><td>0.258</td><td>0.711</td><td>90</td></tr></tbody></table>
+        <table><thead><tr><th>모델</th><th>검증 정확도</th><th>Brier Score</th><th>Log Loss</th><th>피처 수</th></tr></thead><tbody><tr><td>기본 흐름 모델</td><td>0.507</td><td>0.256</td><td>0.706</td><td>59</td></tr><tr><td>전력/일정 피로도 포함 모델</td><td>0.521</td><td>0.253</td><td>0.699</td><td>64</td></tr><tr><td>핵심 수치 모델</td><td>0.529</td><td>0.25</td><td>0.693</td><td>21</td></tr><tr><td>핵심 수치 RandomForest 보수 모델</td><td>0.534</td><td>0.248</td><td>0.689</td><td>21</td></tr><tr><td>핵심 수치 RandomForest 보수 시간가중 모델</td><td>0.531</td><td>0.248</td><td>0.689</td><td>21</td></tr><tr><td>핵심 수치 GradientBoosting 보수 모델</td><td>0.544</td><td>0.248</td><td>0.689</td><td>21</td></tr><tr><td>핵심 수치 GradientBoosting 보수 시간가중 모델</td><td>0.54</td><td>0.248</td><td>0.689</td><td>21</td></tr><tr><td>Streak 피처 RandomForest 실험</td><td>0.529</td><td>0.248</td><td>0.69</td><td>38</td></tr><tr><td>Streak 피처 RandomForest 시간가중 실험</td><td>0.538</td><td>0.248</td><td>0.689</td><td>38</td></tr><tr><td>Streak 피처 GradientBoosting 실험</td><td>0.543</td><td>0.249</td><td>0.691</td><td>38</td></tr><tr><td>Streak 피처 GradientBoosting 시간가중 실험</td><td>0.543</td><td>0.248</td><td>0.69</td><td>38</td></tr><tr><td>LogisticRegression 보수 모델</td><td>0.521</td><td>0.253</td><td>0.699</td><td>64</td></tr><tr><td>RandomForest 비선형 모델</td><td>0.527</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>RandomForest 시간가중 모델</td><td>0.53</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>RandomForest 보수 모델</td><td>0.531</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>RandomForest 보수 시간가중 모델</td><td>0.532</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>ExtraTrees 보수 모델</td><td>0.531</td><td>0.25</td><td>0.692</td><td>64</td></tr><tr><td>GradientBoosting 비선형 모델</td><td>0.536</td><td>0.248</td><td>0.69</td><td>64</td></tr><tr><td>GradientBoosting 시간가중 모델</td><td>0.528</td><td>0.249</td><td>0.692</td><td>64</td></tr><tr><td>GradientBoosting 보수 모델</td><td>0.532</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>GradientBoosting 보수 시간가중 모델</td><td>0.533</td><td>0.248</td><td>0.689</td><td>64</td></tr><tr><td>GradientBoosting 확률보정(sigmoid)</td><td>0.515</td><td>0.25</td><td>0.694</td><td>64</td></tr><tr><td>GradientBoosting 확률보정(isotonic)</td><td>0.516</td><td>0.251</td><td>0.695</td><td>64</td></tr><tr><td>경기 단위 RandomForest 모델</td><td>0.504</td><td>0.251</td><td>0.694</td><td>71</td></tr><tr><td>경기 단위 RandomForest 시간가중 모델</td><td>0.528</td><td>0.25</td><td>0.693</td><td>71</td></tr><tr><td>경기 단위 GradientBoosting 모델</td><td>0.489</td><td>0.261</td><td>0.716</td><td>71</td></tr><tr><td>야구 핵심 피처 강화 모델</td><td>0.52</td><td>0.249</td><td>0.692</td><td>34</td></tr><tr><td>야구 핵심 피처 GradientBoosting 모델</td><td>0.51</td><td>0.256</td><td>0.707</td><td>34</td></tr><tr><td>야구 핵심 피처 RandomForest 모델</td><td>0.509</td><td>0.25</td><td>0.692</td><td>34</td></tr><tr><td>경기 단위 선수영향도 참고 RandomForest</td><td>0.499</td><td>0.252</td><td>0.698</td><td>88</td></tr><tr><td>경기 단위 선수영향도 참고 GradientBoosting</td><td>0.515</td><td>0.258</td><td>0.711</td><td>88</td></tr></tbody></table>
       </div>
       <div class="subsection">
         <h3>모델 중요 피처 TOP 10</h3>
@@ -294,29 +294,119 @@
             <div class="eyebrow">KBO MATCH PREDICTION</div>
             <h2>KBO 승부 예측 대시보드</h2>
             <p>KBO 경기 일정에 맞춰 예상 스코어, 승패 확률, 핸디캡, 오버/언더를 자동 계산합니다.</p>
-            <p class="run-model-source">독립 득점 기반 모델 결과 · 선택 모델 Tweedie · 오늘 예측 파일: today_expected_runs_predictions.csv</p>
+            <p class="run-model-source">독립 득점 기반 모델 결과 · 선택 모델 HistGradientBoosting · 최신 결과 파일 기준</p>
           </div>
         </section>
 
         <section class="run-model-section">
           <div class="eyebrow">BASE INFO</div>
           <h2>기준 정보</h2>
-          <div class="run-model-grid"><div class="metric"><p>생성 시간</p><strong>2026-06-01 12:26</strong></div><div class="metric"><p>기준일</p><strong>2026-06-01</strong></div><div class="metric"><p>예정 경기</p><strong>0경기</strong></div><div class="metric"><p>상태</p><strong>오늘 예정 경기가 없습니다.</strong></div></div>
+          <div class="run-model-grid"><div class="metric"><p>생성 시간</p><strong>2026-06-01 12:29</strong></div><div class="metric"><p>예측 기준일</p><strong>2026-05-24</strong></div><div class="metric"><p>표시 경기</p><strong>5경기</strong></div><div class="metric"><p>데이터 기준</p><strong>모델 결과 / 예측 CSV</strong><span>최신 run_model 산출물</span></div></div>
         </section>
 
         <section class="run-model-section">
           <div class="eyebrow">SCHEDULE STATUS</div>
           <h2>일정 선택 상태</h2>
-          <div class="run-model-grid schedule-grid"><div class="metric"><p>선택 모드</p><strong>기준일 예정 경기</strong><span>today_expected_runs_predictions.csv 기준</span></div><div class="metric"><p>생성 경기</p><strong>0경기</strong></div><div class="metric"><p>홈/원정 매칭</p><strong>예정 경기 없음</strong></div><div class="metric"><p>검증 데이터</p><strong>검증 최신일 2026-05-31</strong></div></div>
-          <p class="note">메인 예측표는 기준일 예정 경기 전용 파일을 사용합니다. validation 결과는 아래 모델 진단의 최근 검증 경기에서만 확인합니다.</p>
+          <div class="run-model-grid schedule-grid"><div class="metric"><p>선택 모드</p><strong>최신 경기일</strong><span>예측 CSV의 가장 최근 경기일</span></div><div class="metric"><p>생성 경기</p><strong>5경기</strong></div><div class="metric"><p>홈/원정 매칭</p><strong>완료</strong></div><div class="metric"><p>검증 상태</p><strong>완료 경기 기반</strong><span>완료 경기 검증 데이터</span></div></div>
+          <p class="note">최신 경기일 기준 5경기를 표시합니다. 원본 1435행 중 홈/원정 쌍 10행을 사용했고, 중복 경기는 0건입니다. 현재 결과 파일은 완료 경기 검증 구간을 포함하므로 실제 운영 예측과 구분해서 해석해야 합니다.</p>
         </section>
 
         <section class="run-model-section">
           <div class="eyebrow">MATCH BOARD</div>
           <h2>KBO 경기 예측표</h2>
-          <p class="note">기준일 예정 경기만 표시합니다. 예상 스코어는 `away_expected_runs`, `home_expected_runs`를 사용하고, 핸디캡은 예상 득실차 2.5, 오버/언더는 예상 총득점 8.5 기준의 표시용 판단입니다.</p>
-          <div class="match-card-grid"><p class="empty">오늘 예정 경기가 없습니다.</p></div>
-          <div class="run-model-tablewrap"><p class="empty">표시할 데이터가 없습니다.</p></div>
+          <p class="note">예상 스코어는 `away_expected_runs`, `home_expected_runs`를 사용합니다. 승패 확률은 `home_win_probability`로 홈/원정 확률을 계산합니다. 핸디캡은 예상 득실차 2.5, 오버/언더는 예상 총득점 8.5 기준의 표시용 판단입니다.</p>
+          <div class="match-card-grid">
+      <article class="match-card pick">
+        <div class="match-card-top">
+          <span>2026-05-24</span>
+          <span class="match-badge pick">추천</span>
+        </div>
+        <h3>삼성 vs 롯데</h3>
+        <div class="score-line">삼성 5.5 - 롯데 4.5</div>
+        <div class="match-meta">
+          <div><span>예측 구단</span><strong>삼성</strong></div>
+          <div><span>예측 승률</span><strong>65.5%</strong></div>
+          <div><span>신뢰도</span><strong>높음</strong></div>
+        </div>
+        <div class="match-pills">
+          <span>핸디캡 롯데 +2.5</span>
+          <span>O/U 8.5 오버</span>
+        </div>
+      </article>
+    
+      <article class="match-card pick">
+        <div class="match-card-top">
+          <span>2026-05-24</span>
+          <span class="match-badge pick">추천</span>
+        </div>
+        <h3>NC vs KT</h3>
+        <div class="score-line">NC 4.7 - KT 5.4</div>
+        <div class="match-meta">
+          <div><span>예측 구단</span><strong>KT</strong></div>
+          <div><span>예측 승률</span><strong>66.6%</strong></div>
+          <div><span>신뢰도</span><strong>높음</strong></div>
+        </div>
+        <div class="match-pills">
+          <span>핸디캡 NC +2.5</span>
+          <span>O/U 8.5 오버</span>
+        </div>
+      </article>
+    
+      <article class="match-card pick">
+        <div class="match-card-top">
+          <span>2026-05-24</span>
+          <span class="match-badge pick">추천</span>
+        </div>
+        <h3>키움 vs LG</h3>
+        <div class="score-line">키움 4.5 - LG 5.1</div>
+        <div class="match-meta">
+          <div><span>예측 구단</span><strong>LG</strong></div>
+          <div><span>예측 승률</span><strong>65.1%</strong></div>
+          <div><span>신뢰도</span><strong>높음</strong></div>
+        </div>
+        <div class="match-pills">
+          <span>핸디캡 관망</span>
+          <span>O/U 8.5 오버</span>
+        </div>
+      </article>
+    
+      <article class="match-card pick">
+        <div class="match-card-top">
+          <span>2026-05-24</span>
+          <span class="match-badge pick">추천</span>
+        </div>
+        <h3>두산 vs 한화</h3>
+        <div class="score-line">두산 4.8 - 한화 5.2</div>
+        <div class="match-meta">
+          <div><span>예측 구단</span><strong>한화</strong></div>
+          <div><span>예측 승률</span><strong>60.6%</strong></div>
+          <div><span>신뢰도</span><strong>높음</strong></div>
+        </div>
+        <div class="match-pills">
+          <span>핸디캡 관망</span>
+          <span>O/U 8.5 오버</span>
+        </div>
+      </article>
+    
+      <article class="match-card watch">
+        <div class="match-card-top">
+          <span>2026-05-24</span>
+          <span class="match-badge watch">관망</span>
+        </div>
+        <h3>SSG vs KIA</h3>
+        <div class="score-line">SSG 5.2 - KIA 5.5</div>
+        <div class="match-meta">
+          <div><span>예측 구단</span><strong>KIA</strong></div>
+          <div><span>예측 승률</span><strong>58.6%</strong></div>
+          <div><span>신뢰도</span><strong>보통</strong></div>
+        </div>
+        <div class="match-pills">
+          <span>핸디캡 관망</span>
+          <span>O/U 8.5 오버</span>
+        </div>
+      </article>
+    </div>
+          <div class="run-model-tablewrap"><table><thead><tr><th>경기일</th><th>원정팀 vs 홈팀</th><th>예상 스코어</th><th>승패 확률</th><th>신뢰도</th><th>판단</th><th>핸디캡</th><th>오버/언더</th></tr></thead><tbody><tr><td>2026-05-24</td><td>삼성 vs 롯데</td><td>삼성 5.5 - 롯데 4.5</td><td>삼성 65.5% / 롯데 34.4%</td><td>높음</td><td>추천</td><td>롯데 +2.5</td><td>오버</td></tr><tr><td>2026-05-24</td><td>NC vs KT</td><td>NC 4.7 - KT 5.4</td><td>NC 33.4% / KT 66.6%</td><td>높음</td><td>추천</td><td>NC +2.5</td><td>오버</td></tr><tr><td>2026-05-24</td><td>키움 vs LG</td><td>키움 4.5 - LG 5.1</td><td>키움 34.9% / LG 65.1%</td><td>높음</td><td>추천</td><td>관망</td><td>오버</td></tr><tr><td>2026-05-24</td><td>두산 vs 한화</td><td>두산 4.8 - 한화 5.2</td><td>두산 39.4% / 한화 60.6%</td><td>높음</td><td>추천</td><td>관망</td><td>오버</td></tr><tr><td>2026-05-24</td><td>SSG vs KIA</td><td>SSG 5.2 - KIA 5.5</td><td>SSG 41.4% / KIA 58.6%</td><td>보통</td><td>관망</td><td>관망</td><td>오버</td></tr></tbody></table></div>
         </section>
 
         <details class="run-model-diagnostics">
@@ -328,7 +418,7 @@
             <div class="eyebrow">INDEPENDENT RUN MODEL</div>
             <h2>득점 기반 승부 예측</h2>
             <p>독립 득점 기반 모델 결과입니다. 기존 경기 승패 모델과 결과를 섞지 않고, 팀별 예상 득점을 먼저 예측한 뒤 예상 득실차를 홈팀 승률로 변환합니다.</p>
-            <p class="run-model-source">생성 시각: 2026-06-01T12:26:03 · 결과 JSON: C:\Users\PCuser\Documents\New project\sports_analytics_feature_work\kbo_analytics\run_model\results\expected_runs_model.json · 예측 CSV: C:\Users\PCuser\Documents\New project\sports_analytics_feature_work\kbo_analytics\run_model\results\expected_runs_predictions.csv</p>
+            <p class="run-model-source">생성 시각: 2026-06-01T12:29:31 · 결과 JSON: /home/tera/1.project/1.sports_analytics/kbo_analytics/run_model/results/expected_runs_model.json · 예측 CSV: /home/tera/1.project/1.sports_analytics/kbo_analytics/run_model/results/expected_runs_predictions.csv</p>
           </div>
         </section>
 
@@ -339,7 +429,7 @@
               <h2>선택 모델 요약</h2>
             </div>
           </div>
-          <div class="run-model-grid"><div class="metric"><p>선택 모델</p><strong>Tweedie</strong><span>득점 MAE 기준 우선 선택</span></div><div class="metric"><p>MAE</p><strong>2.7492</strong><span>득점 평균 절대 오차</span></div><div class="metric"><p>RMSE</p><strong>3.4975</strong><span>큰 오차 반영</span></div><div class="metric"><p>승패 변환 정확도</p><strong>52.4%</strong><span>예상 득실차 기반</span></div><div class="metric"><p>Brier Score</p><strong>0.2496</strong><span>확률 품질</span></div><div class="metric"><p>검증 경기</p><strong>1443</strong><span>cutoff 2024-05-21</span></div></div>
+          <div class="run-model-grid"><div class="metric"><p>선택 모델</p><strong>HistGradientBoosting</strong><span>득점 MAE 기준 우선 선택</span></div><div class="metric"><p>MAE</p><strong>2.7457</strong><span>득점 평균 절대 오차</span></div><div class="metric"><p>RMSE</p><strong>3.4961</strong><span>큰 오차 반영</span></div><div class="metric"><p>승패 변환 정확도</p><strong>52.3%</strong><span>예상 득실차 기반</span></div><div class="metric"><p>Brier Score</p><strong>0.2537</strong><span>확률 품질</span></div><div class="metric"><p>검증 경기</p><strong>1435</strong><span>cutoff 2024-05-15</span></div></div>
           <p class="note">이 모델은 기존 승패 모델을 대체하지 않는 별도 실험 모델입니다. 성능이 기존 모델보다 낮으면 낮은 그대로 표시합니다.</p>
         </section>
 
@@ -347,36 +437,36 @@
           <div class="eyebrow">MODEL CANDIDATES</div>
           <h2>후보 모델 비교</h2>
           <p class="note">선택 모델은 득점 예측 오차(MAE)를 우선 기준으로 고릅니다. 승패 정확도와 Brier Score는 예상 득점 차이를 승률로 변환했을 때의 참고 성능입니다.</p>
-          <div class="run-model-tablewrap"><table><thead><tr><th>모델</th><th>MAE</th><th>RMSE</th><th>승패 정확도</th><th>Brier</th><th>LogLoss</th><th>득실차 방향</th></tr></thead><tbody><tr><td>Poisson</td><td>2.7494</td><td>3.4977</td><td>52.3%</td><td>0.2497</td><td>0.6930</td><td>53.4%</td></tr><tr><td>Ridge</td><td>2.7521</td><td>3.4986</td><td>51.3%</td><td>0.2503</td><td>0.6939</td><td>52.4%</td></tr><tr><td>Tweedie</td><td>2.7492</td><td>3.4975</td><td>52.4%</td><td>0.2496</td><td>0.6927</td><td>53.0%</td></tr><tr><td>RandomForest</td><td>2.7668</td><td>3.5118</td><td>52.5%</td><td>0.2728</td><td>0.7481</td><td>51.8%</td></tr><tr><td>HistGradientBoosting</td><td>2.7538</td><td>3.5016</td><td>52.0%</td><td>0.2558</td><td>0.7060</td><td>52.0%</td></tr></tbody></table></div>
+          <div class="run-model-tablewrap"><table><thead><tr><th>모델</th><th>MAE</th><th>RMSE</th><th>승패 정확도</th><th>Brier</th><th>LogLoss</th><th>득실차 방향</th></tr></thead><tbody><tr><td>Poisson</td><td>2.7493</td><td>3.4986</td><td>51.9%</td><td>0.2501</td><td>0.6937</td><td>53.1%</td></tr><tr><td>Ridge</td><td>2.7519</td><td>3.4990</td><td>51.1%</td><td>0.2504</td><td>0.6942</td><td>52.2%</td></tr><tr><td>Tweedie</td><td>2.7491</td><td>3.4984</td><td>51.8%</td><td>0.2500</td><td>0.6935</td><td>52.8%</td></tr><tr><td>RandomForest</td><td>2.7677</td><td>3.5127</td><td>51.6%</td><td>0.2740</td><td>0.7504</td><td>50.9%</td></tr><tr><td>HistGradientBoosting</td><td>2.7457</td><td>3.4961</td><td>52.3%</td><td>0.2537</td><td>0.7013</td><td>52.0%</td></tr></tbody></table></div>
         </section>
 
         <section class="run-model-section">
           <div class="eyebrow">EXPECTED RUNS</div>
           <h2>예상 득점 예측 결과</h2>
-          <div class="run-model-grid"><div class="metric"><p>평균 홈 예상 득점</p><strong>5.10</strong></div><div class="metric"><p>평균 원정 예상 득점</p><strong>5.04</strong></div><div class="metric"><p>평균 절대 예상 득실차</p><strong>0.37</strong></div><div class="metric"><p>1점 이상 우세 경기</p><strong>94</strong><span>적중률 58.5%</span></div></div>
+          <div class="run-model-grid"><div class="metric"><p>평균 홈 예상 득점</p><strong>5.02</strong></div><div class="metric"><p>평균 원정 예상 득점</p><strong>5.00</strong></div><div class="metric"><p>평균 절대 예상 득실차</p><strong>0.39</strong></div><div class="metric"><p>1점 이상 우세 경기</p><strong>79</strong><span>적중률 63.3%</span></div></div>
           <h3>예상 득실차 구간별 적중률</h3>
-          <div class="run-model-tablewrap"><table><thead><tr><th>예상 득실차 구간</th><th>경기 수</th><th>적중률</th><th>평균 홈승률</th></tr></thead><tbody><tr><td>0.0~0.5점</td><td>1141</td><td>51.4%</td><td>52.9%</td></tr><tr><td>0.5~1.0점</td><td>208</td><td>54.8%</td><td>53.8%</td></tr><tr><td>1.0~1.5점</td><td>63</td><td>58.7%</td><td>53.6%</td></tr><tr><td>1.5점 이상</td><td>31</td><td>58.1%</td><td>59.3%</td></tr></tbody></table></div>
+          <div class="run-model-tablewrap"><table><thead><tr><th>예상 득실차 구간</th><th>경기 수</th><th>적중률</th><th>평균 홈승률</th></tr></thead><tbody><tr><td>0.0~0.5점</td><td>987</td><td>51.6%</td><td>53.4%</td></tr><tr><td>0.5~1.0점</td><td>369</td><td>52.0%</td><td>53.5%</td></tr><tr><td>1.0~1.5점</td><td>75</td><td>64.0%</td><td>55.7%</td></tr><tr><td>1.5점 이상</td><td>4</td><td>50.0%</td><td>66.1%</td></tr></tbody></table></div>
           <h3>최근 검증 경기 예측</h3>
-          <div class="run-model-tablewrap"><table><thead><tr><th>경기일</th><th>경기</th><th>원정 예상득점</th><th>홈 예상득점</th><th>홈 기준 득실차</th><th>예측 승률</th><th>예측</th><th>실제</th><th>결과</th></tr></thead><tbody><tr><td>2026-05-28</td><td>한화 @ NC</td><td>5.3</td><td>5.0</td><td>-0.26</td><td>50.2%</td><td>NC</td><td>한화</td><td>오답</td></tr><tr><td>2026-05-28</td><td>KIA @ 키움</td><td>5.1</td><td>4.5</td><td>-0.63</td><td>53.5%</td><td>KIA</td><td>KIA</td><td>적중</td></tr><tr><td>2026-05-28</td><td>KT @ 두산</td><td>5.2</td><td>5.0</td><td>-0.23</td><td>50.5%</td><td>두산</td><td>KT</td><td>오답</td></tr><tr><td>2026-05-28</td><td>LG @ 롯데</td><td>5.1</td><td>4.9</td><td>-0.23</td><td>50.5%</td><td>롯데</td><td>롯데</td><td>적중</td></tr><tr><td>2026-05-28</td><td>삼성 @ SSG</td><td>5.3</td><td>5.0</td><td>-0.22</td><td>50.6%</td><td>SSG</td><td>삼성</td><td>오답</td></tr><tr><td>2026-05-29</td><td>KIA @ LG</td><td>5.0</td><td>4.7</td><td>-0.24</td><td>50.4%</td><td>LG</td><td>LG</td><td>적중</td></tr><tr><td>2026-05-29</td><td>KT @ 키움</td><td>5.4</td><td>4.7</td><td>-0.72</td><td>54.3%</td><td>KT</td><td>KT</td><td>적중</td></tr><tr><td>2026-05-29</td><td>롯데 @ NC</td><td>5.0</td><td>5.4</td><td>+0.37</td><td>56.3%</td><td>NC</td><td>롯데</td><td>오답</td></tr><tr><td>2026-05-29</td><td>두산 @ 삼성</td><td>4.7</td><td>5.2</td><td>+0.46</td><td>57.2%</td><td>삼성</td><td>두산</td><td>오답</td></tr><tr><td>2026-05-29</td><td>SSG @ 한화</td><td>5.2</td><td>5.6</td><td>+0.43</td><td>56.8%</td><td>한화</td><td>한화</td><td>적중</td></tr><tr><td>2026-05-30</td><td>KIA @ LG</td><td>5.0</td><td>4.9</td><td>-0.09</td><td>51.8%</td><td>LG</td><td>LG</td><td>적중</td></tr><tr><td>2026-05-30</td><td>KT @ 키움</td><td>5.4</td><td>4.6</td><td>-0.80</td><td>55.1%</td><td>KT</td><td>KT</td><td>적중</td></tr><tr><td>2026-05-30</td><td>롯데 @ NC</td><td>5.0</td><td>5.3</td><td>+0.22</td><td>54.9%</td><td>NC</td><td>NC</td><td>적중</td></tr><tr><td>2026-05-30</td><td>두산 @ 삼성</td><td>4.8</td><td>5.2</td><td>+0.37</td><td>56.3%</td><td>삼성</td><td>두산</td><td>오답</td></tr><tr><td>2026-05-30</td><td>SSG @ 한화</td><td>5.2</td><td>5.6</td><td>+0.42</td><td>56.8%</td><td>한화</td><td>한화</td><td>적중</td></tr><tr><td>2026-05-31</td><td>KIA @ LG</td><td>4.9</td><td>4.7</td><td>-0.15</td><td>51.2%</td><td>LG</td><td>LG</td><td>적중</td></tr><tr><td>2026-05-31</td><td>KT @ 키움</td><td>5.4</td><td>4.7</td><td>-0.78</td><td>54.9%</td><td>KT</td><td>KT</td><td>적중</td></tr><tr><td>2026-05-31</td><td>롯데 @ NC</td><td>5.0</td><td>5.2</td><td>+0.21</td><td>54.7%</td><td>NC</td><td>NC</td><td>적중</td></tr><tr><td>2026-05-31</td><td>두산 @ 삼성</td><td>4.9</td><td>5.3</td><td>+0.33</td><td>55.9%</td><td>삼성</td><td>삼성</td><td>적중</td></tr><tr><td>2026-05-31</td><td>SSG @ 한화</td><td>5.3</td><td>5.8</td><td>+0.51</td><td>57.6%</td><td>한화</td><td>한화</td><td>적중</td></tr></tbody></table></div>
+          <div class="run-model-tablewrap"><table><thead><tr><th>경기일</th><th>경기</th><th>원정 예상득점</th><th>홈 예상득점</th><th>홈 기준 득실차</th><th>예측 승률</th><th>예측</th><th>실제</th><th>결과</th></tr></thead><tbody><tr><td>2026-05-21</td><td>KT @ 삼성</td><td>5.1</td><td>5.4</td><td>+0.37</td><td>60.4%</td><td>삼성</td><td>삼성</td><td>적중</td></tr><tr><td>2026-05-21</td><td>LG @ KIA</td><td>4.7</td><td>5.6</td><td>+0.87</td><td>69.2%</td><td>KIA</td><td>LG</td><td>오답</td></tr><tr><td>2026-05-21</td><td>롯데 @ 한화</td><td>5.1</td><td>5.1</td><td>+0.05</td><td>54.3%</td><td>한화</td><td>롯데</td><td>오답</td></tr><tr><td>2026-05-21</td><td>NC @ 두산</td><td>4.6</td><td>5.1</td><td>+0.46</td><td>62.0%</td><td>두산</td><td>두산</td><td>적중</td></tr><tr><td>2026-05-21</td><td>SSG @ 키움</td><td>5.3</td><td>4.7</td><td>-0.58</td><td>57.8%</td><td>SSG</td><td>키움</td><td>오답</td></tr><tr><td>2026-05-22</td><td>NC @ KT</td><td>4.7</td><td>5.3</td><td>+0.66</td><td>65.6%</td><td>KT</td><td>KT</td><td>적중</td></tr><tr><td>2026-05-22</td><td>두산 @ 한화</td><td>5.0</td><td>5.3</td><td>+0.26</td><td>58.3%</td><td>한화</td><td>한화</td><td>적중</td></tr><tr><td>2026-05-22</td><td>SSG @ KIA</td><td>5.3</td><td>5.4</td><td>+0.10</td><td>55.2%</td><td>KIA</td><td>KIA</td><td>적중</td></tr><tr><td>2026-05-22</td><td>삼성 @ 롯데</td><td>5.2</td><td>4.5</td><td>-0.71</td><td>60.3%</td><td>삼성</td><td>삼성</td><td>적중</td></tr><tr><td>2026-05-22</td><td>키움 @ LG</td><td>4.7</td><td>5.6</td><td>+0.91</td><td>69.9%</td><td>LG</td><td>키움</td><td>오답</td></tr><tr><td>2026-05-23</td><td>NC @ KT</td><td>4.7</td><td>5.4</td><td>+0.73</td><td>66.8%</td><td>KT</td><td>KT</td><td>적중</td></tr><tr><td>2026-05-23</td><td>두산 @ 한화</td><td>5.1</td><td>5.2</td><td>+0.14</td><td>56.1%</td><td>한화</td><td>한화</td><td>적중</td></tr><tr><td>2026-05-23</td><td>SSG @ KIA</td><td>5.2</td><td>5.3</td><td>+0.06</td><td>54.6%</td><td>KIA</td><td>KIA</td><td>적중</td></tr><tr><td>2026-05-23</td><td>삼성 @ 롯데</td><td>5.3</td><td>4.6</td><td>-0.76</td><td>61.1%</td><td>삼성</td><td>롯데</td><td>오답</td></tr><tr><td>2026-05-23</td><td>키움 @ LG</td><td>4.5</td><td>5.7</td><td>+1.16</td><td>73.7%</td><td>LG</td><td>LG</td><td>적중</td></tr><tr><td>2026-05-24</td><td>NC @ KT</td><td>4.7</td><td>5.4</td><td>+0.72</td><td>66.6%</td><td>KT</td><td>NC</td><td>오답</td></tr><tr><td>2026-05-24</td><td>두산 @ 한화</td><td>4.8</td><td>5.2</td><td>+0.38</td><td>60.6%</td><td>한화</td><td>한화</td><td>적중</td></tr><tr><td>2026-05-24</td><td>SSG @ KIA</td><td>5.2</td><td>5.5</td><td>+0.28</td><td>58.6%</td><td>KIA</td><td>KIA</td><td>적중</td></tr><tr><td>2026-05-24</td><td>삼성 @ 롯데</td><td>5.5</td><td>4.5</td><td>-1.00</td><td>65.5%</td><td>삼성</td><td>삼성</td><td>적중</td></tr><tr><td>2026-05-24</td><td>키움 @ LG</td><td>4.5</td><td>5.1</td><td>+0.63</td><td>65.1%</td><td>LG</td><td>LG</td><td>적중</td></tr></tbody></table></div>
         </section>
 
         <section class="run-model-section">
           <div class="eyebrow">ERROR ANALYSIS</div>
           <h2>오차 태그 요약</h2>
           <p class="note">득점 기반 모델이 어떤 경기에서 크게 틀리는지 보기 위한 진단 리포트입니다. 예측값을 보정하지 않고 오차 유형만 분해합니다.</p>
-          <div class="run-model-tablewrap"><table><thead><tr><th>유형</th><th>경기 수</th><th>평균 MAE</th><th>RMSE</th><th>평균 실제 득점</th><th>평균 예측 득점</th><th>평균 오차</th><th>득실 방향 적중률</th></tr></thead><tbody><tr><td>LOW_0_6</td><td>360</td><td>2.899</td><td>3.271</td><td>4.35</td><td>10.03</td><td>5.68</td><td>53.1%</td></tr><tr><td>HIGH_12_PLUS</td><td>496</td><td>3.576</td><td>4.594</td><td>15.57</td><td>10.27</td><td>-5.31</td><td>52.6%</td></tr><tr><td>BLOWOUT_UNDERPREDICTED</td><td>470</td><td>3.812</td><td>4.649</td><td>12.40</td><td>10.11</td><td>-2.29</td><td>55.5%</td></tr><tr><td>RUN_DIFF_DIRECTION_MISS</td><td>678</td><td>2.751</td><td>3.507</td><td>10.09</td><td>10.13</td><td>0.05</td><td>0.0%</td></tr><tr><td>CLOSE_GAME_NOISE</td><td>155</td><td>2.065</td><td>2.518</td><td>8.34</td><td>10.09</td><td>1.75</td><td>25.2%</td></tr></tbody></table></div>
+          <div class="run-model-tablewrap"><table><thead><tr><th>유형</th><th>경기 수</th><th>평균 MAE</th><th>RMSE</th><th>평균 실제 득점</th><th>평균 예측 득점</th><th>평균 오차</th><th>득실 방향 적중률</th></tr></thead><tbody><tr><td>LOW_0_6</td><td>357</td><td>2.885</td><td>3.247</td><td>4.33</td><td>9.96</td><td>5.63</td><td>54.3%</td></tr><tr><td>HIGH_12_PLUS</td><td>496</td><td>3.603</td><td>4.616</td><td>15.54</td><td>10.11</td><td>-5.43</td><td>50.8%</td></tr><tr><td>BLOWOUT_UNDERPREDICTED</td><td>474</td><td>3.810</td><td>4.646</td><td>12.49</td><td>10.06</td><td>-2.43</td><td>52.3%</td></tr><tr><td>RUN_DIFF_DIRECTION_MISS</td><td>689</td><td>2.807</td><td>3.558</td><td>10.27</td><td>10.05</td><td>-0.22</td><td>0.0%</td></tr><tr><td>CLOSE_GAME_NOISE</td><td>164</td><td>1.963</td><td>2.435</td><td>8.89</td><td>10.02</td><td>1.13</td><td>12.2%</td></tr></tbody></table></div>
           <div class="run-model-split">
             
       <div class="diagnostic-card">
         <h3>고득점 경기 예측 한계</h3>
         <p>고득점/대승 유형에서는 실제 총득점이 예측 총득점보다 크게 높아지는 경기가 많아 시즌 평균 기반 예측이 타선 폭발과 불펜 붕괴를 충분히 잡지 못합니다.</p>
         <div class="mini-grid">
-          <div class="metric"><p>경기 수</p><strong>719</strong></div>
-          <div class="metric"><p>평균 실제 총득점</p><strong>13.37</strong></div>
-          <div class="metric"><p>평균 예측 총득점</p><strong>10.21</strong></div>
-          <div class="metric"><p>평균 총득점 오차</p><strong>-3.17</strong></div>
+          <div class="metric"><p>경기 수</p><strong>717</strong></div>
+          <div class="metric"><p>평균 실제 총득점</p><strong>13.38</strong></div>
+          <div class="metric"><p>평균 예측 총득점</p><strong>10.06</strong></div>
+          <div class="metric"><p>평균 총득점 오차</p><strong>-3.32</strong></div>
         </div>
-        <ul class="features"><li>home_team_recent_5g_runs: 5.08</li><li>away_team_recent_5g_runs: 5.11</li><li>home_team_recent_10g_runs: 5.11</li><li>away_team_recent_10g_runs: 5.04</li><li>home_team_season_runs: 5.06</li><li>away_team_season_runs: 5.01</li></ul>
+        <ul class="features"><li>home_team_recent_5g_runs: 5.08</li><li>away_team_recent_5g_runs: 5.12</li><li>home_team_recent_10g_runs: 5.11</li><li>away_team_recent_10g_runs: 5.05</li><li>home_team_season_runs: 5.08</li><li>away_team_season_runs: 5.02</li></ul>
       </div>
     
             
@@ -384,12 +474,12 @@
         <h3>저득점 경기 예측 한계</h3>
         <p>저득점 유형에서는 예측 총득점이 실제 총득점보다 높게 잡히는 경향이 있어 투수전, 구장, 선발 컨디션 같은 억제 요인이 추가로 필요합니다.</p>
         <div class="mini-grid">
-          <div class="metric"><p>경기 수</p><strong>360</strong></div>
-          <div class="metric"><p>평균 실제 총득점</p><strong>4.35</strong></div>
-          <div class="metric"><p>평균 예측 총득점</p><strong>10.03</strong></div>
-          <div class="metric"><p>평균 총득점 오차</p><strong>5.68</strong></div>
+          <div class="metric"><p>경기 수</p><strong>357</strong></div>
+          <div class="metric"><p>평균 실제 총득점</p><strong>4.33</strong></div>
+          <div class="metric"><p>평균 예측 총득점</p><strong>9.96</strong></div>
+          <div class="metric"><p>평균 총득점 오차</p><strong>5.63</strong></div>
         </div>
-        <ul class="features"><li>home_team_recent_5g_runs: 4.89</li><li>away_team_recent_5g_runs: 4.91</li><li>home_team_recent_10g_runs: 4.99</li><li>away_team_recent_10g_runs: 4.93</li><li>home_team_season_runs: 4.90</li><li>away_team_season_runs: 4.89</li></ul>
+        <ul class="features"><li>home_team_recent_5g_runs: 4.92</li><li>away_team_recent_5g_runs: 4.89</li><li>home_team_recent_10g_runs: 5.01</li><li>away_team_recent_10g_runs: 4.92</li><li>home_team_season_runs: 4.92</li><li>away_team_season_runs: 4.88</li></ul>
       </div>
     
           </div>
@@ -400,7 +490,7 @@
           <div class="eyebrow">FEATURE IMPORTANCE</div>
           <h2>피처 중요도 TOP 20</h2>
           <p class="note">Permutation importance를 사용해 MAE 기준 중요도를 계산했습니다. 값이 클수록 해당 피처를 섞었을 때 득점 예측 오차가 커졌다는 뜻입니다.</p>
-          <div class="run-model-tablewrap"><table><thead><tr><th>피처</th><th>중요도 평균</th><th>표준편차</th></tr></thead><tbody><tr><td>opponent_season_allowed</td><td>0.004545</td><td>0.002961</td></tr><tr><td>team_season_runs</td><td>0.001657</td><td>0.001336</td></tr><tr><td>back_to_back</td><td>0.001289</td><td>0.000432</td></tr><tr><td>season_allowed_gap</td><td>0.001227</td><td>0.001169</td></tr><tr><td>season_runs_gap</td><td>0.001048</td><td>0.002337</td></tr><tr><td>opponent_season_runs</td><td>0.000808</td><td>0.000488</td></tr><tr><td>recent_5g_runs_gap</td><td>0.000482</td><td>0.000604</td></tr><tr><td>opponent_recent_10g_runs</td><td>0.000461</td><td>0.000592</td></tr><tr><td>recent_10g_runs_gap</td><td>0.000364</td><td>0.000604</td></tr><tr><td>rest_days_gap</td><td>0.000362</td><td>0.000354</td></tr><tr><td>team_season_allowed</td><td>0.000354</td><td>0.001577</td></tr><tr><td>recent_5g_allowed_gap</td><td>0.000296</td><td>0.000575</td></tr><tr><td>team_recent_10g_allowed</td><td>0.000260</td><td>0.001431</td></tr><tr><td>season_win_rate_gap</td><td>0.000255</td><td>0.000445</td></tr><tr><td>team_recent_10g_run_diff</td><td>0.000220</td><td>0.000596</td></tr><tr><td>opponent_recent_5g_runs</td><td>0.000165</td><td>0.000197</td></tr><tr><td>opponent_recent_5g_allowed</td><td>0.000157</td><td>0.000191</td></tr><tr><td>team_recent_3g_runs</td><td>0.000144</td><td>0.000180</td></tr><tr><td>opponent_recent_10g_win_rate</td><td>0.000068</td><td>0.000205</td></tr><tr><td>team_recent_5g_runs</td><td>0.000046</td><td>0.000114</td></tr></tbody></table></div>
+          <div class="run-model-tablewrap"><table><thead><tr><th>피처</th><th>중요도 평균</th><th>표준편차</th></tr></thead><tbody><tr><td>team_season_runs</td><td>0.011818</td><td>0.002943</td></tr><tr><td>opponent_season_allowed</td><td>0.004187</td><td>0.001529</td></tr><tr><td>season_runs_gap</td><td>0.002508</td><td>0.000743</td></tr><tr><td>season_allowed_gap</td><td>0.002209</td><td>0.001367</td></tr><tr><td>month</td><td>0.002193</td><td>0.000527</td></tr><tr><td>team_recent_10g_allowed</td><td>0.002172</td><td>0.001477</td></tr><tr><td>team_season_win_rate</td><td>0.001508</td><td>0.000578</td></tr><tr><td>season_win_rate_gap</td><td>0.001018</td><td>0.000278</td></tr><tr><td>team_recent_5g_allowed</td><td>0.000965</td><td>0.001628</td></tr><tr><td>recent_10g_allowed_gap</td><td>0.000800</td><td>0.000500</td></tr><tr><td>recent_5g_run_diff_gap</td><td>0.000614</td><td>0.000374</td></tr><tr><td>recent_10g_runs_gap</td><td>0.000568</td><td>0.000422</td></tr><tr><td>rest_days</td><td>0.000491</td><td>0.000450</td></tr><tr><td>team_recent_3g_runs</td><td>0.000418</td><td>0.000264</td></tr><tr><td>team_season_allowed</td><td>0.000365</td><td>0.000330</td></tr><tr><td>team_recent_5g_runs</td><td>0.000353</td><td>0.000744</td></tr><tr><td>opponent_recent_10g_runs</td><td>0.000339</td><td>0.000244</td></tr><tr><td>rest_days_gap</td><td>0.000313</td><td>0.000238</td></tr><tr><td>opponent_recent_10g_run_diff</td><td>0.000292</td><td>0.000363</td></tr><tr><td>recent_10g_win_rate_gap</td><td>0.000194</td><td>0.000327</td></tr></tbody></table></div>
         </section>
       </div>
     
