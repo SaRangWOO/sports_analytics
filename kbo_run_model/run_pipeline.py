@@ -14,6 +14,7 @@ from collectors.load_games import load_completed_team_games
 from collectors.load_starter_data import load_starter_inputs
 from collectors.pitcher_data_validation import validate_pitcher_data_pipeline
 from collectors.schedule import load_schedule, select_target_games, validate_schedule_selection
+from collectors.schedule_update import build_schedule_status, write_schedule_update_report
 from collectors.schema import inspect_starter_schema
 from collectors.search_internal_data import search_internal_pitcher_data
 from dashboard.report import write_html_report
@@ -181,6 +182,7 @@ def run_pipeline(
     team_games = load_completed_team_games(input_path)
     schedule = load_schedule(schedule_path)
     current_date_kst = datetime.now(KST).date()
+    schedule_update_status = build_schedule_status(schedule_path, current_date_kst)
     target_games, target_context = select_target_games(schedule, target_date, current_date_kst, allow_past_fallback)
     feature_df, feature_columns = build_feature_matrix(team_games)
     starters, pitcher_logs, starter_data_status = load_starter_inputs(DEFAULT_STARTERS, DEFAULT_PITCHER_LOGS)
@@ -223,6 +225,7 @@ def run_pipeline(
     selected_predictions.to_csv(output_dir / "expected_runs_predictions.csv", index=False, encoding="utf-8-sig")
     match_predictions.to_csv(output_dir / "match_predictions.csv", index=False, encoding="utf-8-sig")
     pd.DataFrame([schedule_check]).to_csv(output_dir / "schedule_selection_check.csv", index=False, encoding="utf-8-sig")
+    write_schedule_update_report(schedule_update_status, output_dir / "schedule_update_report.csv")
     error_analysis["game_errors"].to_csv(output_dir / "error_analysis_games.csv", index=False, encoding="utf-8-sig")
     error_analysis["win_probability_buckets"].to_csv(output_dir / "win_probability_bucket_metrics.csv", index=False, encoding="utf-8-sig")
     error_analysis["total_runs"].to_csv(output_dir / "total_runs_error_metrics.csv", index=False, encoding="utf-8-sig")
@@ -265,6 +268,13 @@ def run_pipeline(
         "allow_past_fallback": target_context["allow_past_fallback"],
         "schedule_selection_reason": target_context["schedule_selection_reason"],
         "user_prediction_available": target_context["user_prediction_available"],
+        "schedule_update_check_completed": schedule_update_status["schedule_update_check_completed"],
+        "schedule_file_latest_date": schedule_update_status["schedule_max_date"],
+        "schedule_file_total_games": schedule_update_status["total_games"],
+        "schedule_file_future_games": schedule_update_status["future_games"],
+        "schedule_update_needed": schedule_update_status["schedule_update_needed"],
+        "schedule_update_blocker": schedule_update_status["schedule_update_blocker"],
+        "schedule_update_status": schedule_update_status,
         "schedule_selection_check": schedule_check,
         "train_ratio": train_ratio,
         "training_cutoff": pd.Timestamp(cutoff).strftime("%Y-%m-%d"),
@@ -319,6 +329,7 @@ def run_pipeline(
             "expected_runs_predictions.csv",
             "match_predictions.csv",
             "schedule_selection_check.csv",
+            "schedule_update_report.csv",
             "error_analysis_games.csv",
             "win_probability_bucket_metrics.csv",
             "total_runs_error_metrics.csv",

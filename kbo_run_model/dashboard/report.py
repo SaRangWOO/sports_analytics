@@ -501,8 +501,11 @@ def write_html_report(
     under_predicted = ", ".join(f"{row['team']}({row['bias']})" for row in summary["team_bias_summary"]["under_predicted_teams"]) or "없음"
     target_context = summary["target_context"]
     schedule_check = summary["schedule_selection_check"]
+    schedule_update = summary.get("schedule_update_status", {})
     schedule_notice = _schedule_notice(target_context)
     target_date_display = html.escape(str(target_context["target_date"] or "없음"))
+    schedule_update_needed = "필요" if schedule_update.get("schedule_update_needed") else "불필요"
+    schedule_update_blocker = html.escape(str(schedule_update.get("schedule_update_blocker") or "없음"))
     win_accuracy = error_games["win_correct"].mean()
     close_games = error_games[error_games["expected_run_diff"].abs().lt(0.5)]
     strong_games = error_games[error_games["expected_run_diff"].abs().ge(1.0)]
@@ -588,6 +591,14 @@ def write_html_report(
       <div class="summary-item"><div class="label">홈/원정 매칭</div><div class="value">{"정상" if schedule_check["home_away_pairing_ok"] else "확인 필요"}</div></div>
       <div class="summary-item"><div class="label">중복 경기</div><div class="value">{schedule_check["duplicate_games"]}건</div></div>
       <div class="summary-item"><div class="label">검증 상태</div><div class="value">{html.escape(schedule_check["status"])}</div></div>
+      <div class="summary-item"><div class="label">일정 파일 최신 날짜</div><div class="value">{html.escape(str(schedule_update.get("schedule_max_date", "확인 불가") or "확인 불가"))}</div></div>
+      <div class="summary-item"><div class="label">현재 KST 날짜</div><div class="value">{html.escape(str(schedule_update.get("current_date_kst", "확인 불가") or "확인 불가"))}</div></div>
+      <div class="summary-item"><div class="label">오늘 경기 수</div><div class="value">{schedule_update.get("today_games", 0)}경기</div></div>
+      <div class="summary-item"><div class="label">미래 경기 수</div><div class="value">{schedule_update.get("future_games", 0)}경기</div></div>
+      <div class="summary-item"><div class="label">일정 stale 여부</div><div class="value">{"예" if schedule_update.get("schedule_is_stale") else "아니오"}</div></div>
+      <div class="summary-item"><div class="label">stale 경과일</div><div class="value">{schedule_update.get("stale_schedule_days", 0)}일</div></div>
+      <div class="summary-item"><div class="label">일정 갱신 필요</div><div class="value">{schedule_update_needed}</div></div>
+      <div class="summary-item"><div class="label">일정 갱신 blocker</div><div class="value">{schedule_update_blocker}</div></div>
     </div>
   </section>
   <section>

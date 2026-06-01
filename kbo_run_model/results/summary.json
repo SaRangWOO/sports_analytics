@@ -1,46 +1,76 @@
 {
-  "generated_at": "2026-05-29T14:58:19+09:00",
+  "generated_at": "2026-06-01T15:22:32+09:00",
   "input_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\model_training_games.csv",
   "schedule_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\prediction_games.csv",
   "target_context": {
-    "target_date": "2026-05-29",
-    "selected_target_date": "2026-05-29",
-    "report_mode": "오늘 경기 기준",
-    "current_date_kst": "2026-05-29",
-    "schedule_latest_date": "2026-05-31",
-    "latest_schedule_date": "2026-05-31",
+    "target_date": "2026-06-02",
+    "selected_target_date": "2026-06-02",
+    "report_mode": "다음 예정 경기 기준",
+    "current_date_kst": "2026-06-01",
+    "schedule_latest_date": "2026-06-30",
+    "latest_schedule_date": "2026-06-30",
     "schedule_is_stale": false,
     "stale_schedule_days": 0,
-    "has_today_games": true,
+    "has_today_games": false,
     "has_future_schedule": true,
     "has_future_games": true,
-    "allow_past_fallback": false,
-    "schedule_selection_reason": "오늘 경기 기준",
-    "selection_reason": "오늘 경기 기준",
+    "allow_past_fallback": true,
+    "schedule_selection_reason": "오늘 이후 가장 가까운 예정 경기 기준",
+    "selection_reason": "오늘 이후 가장 가까운 예정 경기 기준",
     "user_prediction_available": true,
     "game_count": 5,
     "requested_target_date": ""
   },
-  "current_date_kst": "2026-05-29",
-  "schedule_latest_date": "2026-05-31",
-  "selected_target_date": "2026-05-29",
+  "current_date_kst": "2026-06-01",
+  "schedule_latest_date": "2026-06-30",
+  "selected_target_date": "2026-06-02",
   "schedule_is_stale": false,
   "stale_schedule_days": 0,
   "has_future_schedule": true,
-  "allow_past_fallback": false,
-  "schedule_selection_reason": "오늘 경기 기준",
+  "allow_past_fallback": true,
+  "schedule_selection_reason": "오늘 이후 가장 가까운 예정 경기 기준",
   "user_prediction_available": true,
+  "schedule_update_check_completed": true,
+  "schedule_file_latest_date": "2026-06-30",
+  "schedule_file_total_games": 405,
+  "schedule_file_future_games": 125,
+  "schedule_update_needed": false,
+  "schedule_update_blocker": "",
+  "schedule_update_status": {
+    "schedule_path": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\prediction_games.csv",
+    "current_date_kst": "2026-06-01",
+    "total_rows": 810,
+    "required_columns_present": true,
+    "missing_columns": "",
+    "schedule_update_check_completed": true,
+    "schedule_min_date": "2026-03-28",
+    "schedule_max_date": "2026-06-30",
+    "total_games": 405,
+    "future_games": 125,
+    "today_games": 0,
+    "schedule_is_stale": false,
+    "stale_schedule_days": 0,
+    "date_parse_ok": true,
+    "team_values_ok": true,
+    "home_away_values_ok": true,
+    "home_away_pairing_ok": true,
+    "same_game_duplicate_count": 0,
+    "row_duplicate_count": 0,
+    "latest_date_not_older_than_before": true,
+    "schedule_update_needed": false,
+    "schedule_update_blocker": ""
+  },
   "schedule_selection_check": {
-    "target_date": "2026-05-29",
-    "selected_target_date": "2026-05-29",
-    "report_mode": "오늘 경기 기준",
-    "current_date_kst": "2026-05-29",
-    "latest_schedule_date": "2026-05-31",
-    "has_today_games": true,
+    "target_date": "2026-06-02",
+    "selected_target_date": "2026-06-02",
+    "report_mode": "다음 예정 경기 기준",
+    "current_date_kst": "2026-06-01",
+    "latest_schedule_date": "2026-06-30",
+    "has_today_games": false,
     "has_future_games": true,
     "schedule_is_stale": false,
     "user_prediction_available": true,
-    "selection_reason": "오늘 경기 기준",
+    "selection_reason": "오늘 이후 가장 가까운 예정 경기 기준",
     "schedule_rows": 10,
     "expected_games": 5,
     "predicted_games": 5,
@@ -50,11 +80,11 @@
     "status": "통과"
   },
   "train_ratio": 0.8,
-  "training_cutoff": "2024-05-15",
-  "feature_rows": 14566,
-  "train_rows": 11696,
-  "validation_rows": 2870,
-  "validation_games": 1435,
+  "training_cutoff": "2024-05-21",
+  "feature_rows": 14622,
+  "train_rows": 11736,
+  "validation_rows": 2886,
+  "validation_games": 1443,
   "feature_columns": [
     "is_home",
     "month",
@@ -88,31 +118,31 @@
   "candidate_scores": [
     {
       "model": "PoissonRegressor",
-      "run_mae": 2.7534,
-      "run_rmse": 3.5016,
-      "home_win_accuracy": 0.5206,
-      "brier_score": 0.2499
+      "run_mae": 2.7532,
+      "run_rmse": 3.5005,
+      "home_win_accuracy": 0.5191,
+      "brier_score": 0.2494
     },
     {
       "model": "Ridge",
-      "run_mae": 2.7534,
-      "run_rmse": 3.4999,
-      "home_win_accuracy": 0.5178,
-      "brier_score": 0.2498
+      "run_mae": 2.7529,
+      "run_rmse": 3.4985,
+      "home_win_accuracy": 0.5225,
+      "brier_score": 0.2493
     },
     {
       "model": "RandomForestRegressor",
-      "run_mae": 2.7588,
-      "run_rmse": 3.5048,
-      "home_win_accuracy": 0.5303,
-      "brier_score": 0.2687
+      "run_mae": 2.7612,
+      "run_rmse": 3.5066,
+      "home_win_accuracy": 0.5357,
+      "brier_score": 0.268
     },
     {
       "model": "HistGradientBoostingRegressor",
-      "run_mae": 2.7527,
-      "run_rmse": 3.5004,
-      "home_win_accuracy": 0.5331,
-      "brier_score": 0.2543
+      "run_mae": 2.7519,
+      "run_rmse": 3.4986,
+      "home_win_accuracy": 0.5308,
+      "brier_score": 0.2523
     }
   ],
   "run_diff_bucket_accuracy": [
@@ -123,18 +153,18 @@
     },
     {
       "bucket": "-3 초과 -1 이하",
-      "games": 56,
-      "accuracy": 0.625
+      "games": 34,
+      "accuracy": 0.6471
     },
     {
       "bucket": "-1 초과 1 이하",
-      "games": 1302,
-      "accuracy": 0.5276
+      "games": 1374,
+      "accuracy": 0.5269
     },
     {
       "bucket": "1 초과 3 미만",
-      "games": 77,
-      "accuracy": 0.5584
+      "games": 35,
+      "accuracy": 0.5714
     },
     {
       "bucket": "3 이상",
@@ -145,180 +175,185 @@
   "abs_run_diff_bucket_metrics": [
     {
       "bucket": "0.0 ~ 0.5점",
-      "games": 906,
-      "accuracy": 0.5232,
+      "games": 989,
+      "accuracy": 0.5177,
       "avg_brier_score": 0.2512
     },
     {
       "bucket": "0.5 ~ 1.0점",
-      "games": 396,
-      "accuracy": 0.5379,
-      "avg_brier_score": 0.2578
+      "games": 385,
+      "accuracy": 0.5506,
+      "avg_brier_score": 0.2549
     },
     {
       "bucket": "1.0 ~ 1.5점",
-      "games": 117,
-      "accuracy": 0.5897,
-      "avg_brier_score": 0.2621
+      "games": 67,
+      "accuracy": 0.597,
+      "avg_brier_score": 0.2589
     },
     {
       "bucket": "1.5점 이상",
-      "games": 16,
-      "accuracy": 0.5625,
-      "avg_brier_score": 0.2842
+      "games": 2,
+      "accuracy": 1.0,
+      "avg_brier_score": 0.0376
     }
   ],
   "season_metrics": [
     {
       "season": 2024,
-      "games": 504,
-      "run_mae": 2.9192,
-      "run_rmse": 3.7219,
-      "home_win_accuracy": 0.498,
-      "brier_score": 0.2567
+      "games": 484,
+      "run_mae": 2.9084,
+      "run_rmse": 3.7153,
+      "home_win_accuracy": 0.4979,
+      "brier_score": 0.2564
     },
     {
       "season": 2025,
       "games": 698,
-      "run_mae": 2.682,
-      "run_rmse": 3.3869,
-      "home_win_accuracy": 0.5501,
-      "brier_score": 0.251
+      "run_mae": 2.6848,
+      "run_rmse": 3.3899,
+      "home_win_accuracy": 0.5444,
+      "brier_score": 0.2481
     },
     {
       "season": 2026,
-      "games": 233,
-      "run_mae": 2.6044,
-      "run_rmse": 3.3367,
-      "home_win_accuracy": 0.5579,
-      "brier_score": 0.259
+      "games": 261,
+      "run_mae": 2.6412,
+      "run_rmse": 3.3682,
+      "home_win_accuracy": 0.5556,
+      "brier_score": 0.2557
     }
   ],
   "team_bias_metrics": [
     {
       "team": "키움",
-      "games": 291,
-      "actual_avg_runs": 4.1546,
-      "predicted_avg_runs": 4.7956,
-      "mae": 2.7286,
-      "bias": 0.6409
-    },
-    {
-      "team": "두산",
-      "games": 283,
-      "actual_avg_runs": 4.8481,
-      "predicted_avg_runs": 5.0499,
-      "mae": 2.9601,
-      "bias": 0.2018
+      "games": 293,
+      "actual_avg_runs": 4.1024,
+      "predicted_avg_runs": 4.7731,
+      "mae": 2.7293,
+      "bias": 0.6707
     },
     {
       "team": "SSG",
-      "games": 287,
-      "actual_avg_runs": 4.7735,
-      "predicted_avg_runs": 4.9394,
-      "mae": 2.6505,
-      "bias": 0.1658
+      "games": 288,
+      "actual_avg_runs": 4.7639,
+      "predicted_avg_runs": 4.9875,
+      "mae": 2.7054,
+      "bias": 0.2236
+    },
+    {
+      "team": "두산",
+      "games": 286,
+      "actual_avg_runs": 4.8531,
+      "predicted_avg_runs": 5.0388,
+      "mae": 2.9452,
+      "bias": 0.1857
     },
     {
       "team": "KT",
-      "games": 285,
-      "actual_avg_runs": 5.014,
-      "predicted_avg_runs": 5.0109,
-      "mae": 2.7711,
-      "bias": -0.0031
+      "games": 287,
+      "actual_avg_runs": 5.0348,
+      "predicted_avg_runs": 5.0391,
+      "mae": 2.769,
+      "bias": 0.0043
+    },
+    {
+      "team": "롯데",
+      "games": 287,
+      "actual_avg_runs": 5.0244,
+      "predicted_avg_runs": 4.9922,
+      "mae": 2.7284,
+      "bias": -0.0322
     },
     {
       "team": "NC",
       "games": 286,
-      "actual_avg_runs": 5.1469,
-      "predicted_avg_runs": 5.0777,
-      "mae": 2.6651,
-      "bias": -0.0692
-    },
-    {
-      "team": "롯데",
-      "games": 284,
-      "actual_avg_runs": 5.0246,
-      "predicted_avg_runs": 4.946,
-      "mae": 2.7157,
-      "bias": -0.0786
+      "actual_avg_runs": 5.1538,
+      "predicted_avg_runs": 5.0862,
+      "mae": 2.6358,
+      "bias": -0.0676
     },
     {
       "team": "KIA",
-      "games": 288,
-      "actual_avg_runs": 5.2188,
-      "predicted_avg_runs": 5.1093,
-      "mae": 2.7328,
-      "bias": -0.1095
+      "games": 290,
+      "actual_avg_runs": 5.1862,
+      "predicted_avg_runs": 5.0658,
+      "mae": 2.723,
+      "bias": -0.1204
     },
     {
       "team": "한화",
       "games": 289,
-      "actual_avg_runs": 5.2007,
-      "predicted_avg_runs": 5.0221,
-      "mae": 2.7722,
-      "bias": -0.1786
+      "actual_avg_runs": 5.2561,
+      "predicted_avg_runs": 5.0526,
+      "mae": 2.785,
+      "bias": -0.2035
     },
     {
       "team": "LG",
-      "games": 288,
-      "actual_avg_runs": 5.4375,
-      "predicted_avg_runs": 5.2216,
-      "mae": 2.8196,
-      "bias": -0.2159
+      "games": 290,
+      "actual_avg_runs": 5.4207,
+      "predicted_avg_runs": 5.2149,
+      "mae": 2.7956,
+      "bias": -0.2058
     },
     {
       "team": "삼성",
-      "games": 289,
-      "actual_avg_runs": 5.4567,
-      "predicted_avg_runs": 5.1927,
-      "mae": 2.7144,
-      "bias": -0.2641
+      "games": 290,
+      "actual_avg_runs": 5.4621,
+      "predicted_avg_runs": 5.1616,
+      "mae": 2.7035,
+      "bias": -0.3005
     }
   ],
   "team_bias_summary": {
     "over_predicted_teams": [
       {
         "team": "키움",
-        "bias": 0.6409,
-        "mae": 2.7286
-      },
-      {
-        "team": "두산",
-        "bias": 0.2018,
-        "mae": 2.9601
+        "bias": 0.6707,
+        "mae": 2.7293
       },
       {
         "team": "SSG",
-        "bias": 0.1658,
-        "mae": 2.6505
+        "bias": 0.2236,
+        "mae": 2.7054
+      },
+      {
+        "team": "두산",
+        "bias": 0.1857,
+        "mae": 2.9452
+      },
+      {
+        "team": "KT",
+        "bias": 0.0043,
+        "mae": 2.769
       }
     ],
     "under_predicted_teams": [
       {
         "team": "삼성",
-        "bias": -0.2641,
-        "mae": 2.7144
+        "bias": -0.3005,
+        "mae": 2.7035
       },
       {
         "team": "LG",
-        "bias": -0.2159,
-        "mae": 2.8196
+        "bias": -0.2058,
+        "mae": 2.7956
       },
       {
         "team": "한화",
-        "bias": -0.1786,
-        "mae": 2.7722
+        "bias": -0.2035,
+        "mae": 2.785
       },
       {
         "team": "KIA",
-        "bias": -0.1095,
-        "mae": 2.7328
+        "bias": -0.1204,
+        "mae": 2.723
       },
       {
-        "team": "롯데",
-        "bias": -0.0786,
-        "mae": 2.7157
+        "team": "NC",
+        "bias": -0.0676,
+        "mae": 2.6358
       }
     ]
   },
@@ -490,64 +525,6 @@
         "ready_to_use": false
       },
       {
-        "file": "kbo_analytics/data/official/lineup_context.csv",
-        "columns": [
-          "date",
-          "game_id",
-          "team",
-          "home_away",
-          "lineup_source",
-          "status_label",
-          "batting_order",
-          "position",
-          "player",
-          "war"
-        ],
-        "normalized_columns": [
-          "date",
-          "game_id",
-          "team",
-          "home_away",
-          "lineup_source",
-          "status_label",
-          "batting_order",
-          "position",
-          "player",
-          "war"
-        ],
-        "matched_terms": [
-          "player"
-        ],
-        "mapped_v2_columns": [
-          "date",
-          "game_id",
-          "team"
-        ],
-        "missing_starter_mapping_columns": [
-          "home_team",
-          "away_team",
-          "home_starter_id",
-          "away_starter_id"
-        ],
-        "missing_pitcher_log_columns": [
-          "pitcher_id",
-          "opponent",
-          "is_starter",
-          "innings_pitched",
-          "earned_runs",
-          "hits_allowed",
-          "walks",
-          "strikeouts",
-          "home_runs_allowed",
-          "pitches"
-        ],
-        "row_count": 90,
-        "sample_only": false,
-        "usable_as_starter_mapping": false,
-        "usable_as_pitcher_logs": false,
-        "ready_to_use": false
-      },
-      {
         "file": "kbo_analytics/data/official/pitcher_stats.csv",
         "columns": [
           "순위",
@@ -622,7 +599,7 @@
           "is_starter",
           "pitches"
         ],
-        "row_count": 233,
+        "row_count": 234,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -984,7 +961,7 @@
           "home_runs_allowed",
           "pitches"
         ],
-        "row_count": 7141,
+        "row_count": 7169,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -1164,7 +1141,7 @@
           "home_runs_allowed",
           "pitches"
         ],
-        "row_count": 7141,
+        "row_count": 7169,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -1284,7 +1261,7 @@
           "home_runs_allowed",
           "pitches"
         ],
-        "row_count": 730,
+        "row_count": 923,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -1600,38 +1577,38 @@
   "biggest_error_category": "총득점 예측",
   "weakest_team_prediction": "두산",
   "weakest_ballpark_prediction": "청주",
-  "total_runs_mae": 3.9159,
-  "over_under_accuracy_8_5": 0.577,
-  "handicap_accuracy_2_5": 0.6635,
+  "total_runs_mae": 3.9231,
+  "over_under_accuracy_8_5": 0.5752,
+  "handicap_accuracy_2_5": 0.663,
   "recommended_next_improvement": "구장 득점 팩터 → 팀별 공격/실점 편향 보정 → 선발투수와 불펜 로그 수집",
   "performance_improvement_experiment_completed": true,
-  "baseline_total_runs_mae": 3.9159,
-  "improved_total_runs_mae": 3.8978,
-  "total_runs_mae_delta": -0.0181,
-  "baseline_brier_score": 0.2543,
-  "improved_brier_score": 0.2537,
+  "baseline_total_runs_mae": 3.9231,
+  "improved_total_runs_mae": 3.9283,
+  "total_runs_mae_delta": 0.0052,
+  "baseline_brier_score": 0.2523,
+  "improved_brier_score": 0.2576,
   "final_model_applied": false,
   "final_model_reason": "총득점 MAE 개선 폭이 적용 기준보다 작거나 오버/언더·핸디캡 적중률이 악화되어 기존 baseline을 유지합니다.",
   "next_recommended_improvement": "최근 경기 가중치 개선과 선발투수/불펜/라인업 데이터 수집",
   "improved_metrics": [
     "run_mae",
     "run_rmse",
-    "total_runs_mae",
-    "brier_score"
+    "handicap_accuracy_2_5"
   ],
   "worsened_metrics": [
+    "total_runs_mae",
     "home_win_accuracy",
-    "over_under_accuracy_8_5",
-    "handicap_accuracy_2_5"
+    "brier_score",
+    "over_under_accuracy_8_5"
   ],
   "improved_selected_model": "HistGradientBoostingRegressor",
   "dashboard": "kbo_run_model/results/report.html",
   "selected_model": {
     "model": "HistGradientBoostingRegressor",
-    "run_mae": 2.7527,
-    "run_rmse": 3.5004,
-    "home_win_accuracy": 0.5331,
-    "brier_score": 0.2543
+    "run_mae": 2.7519,
+    "run_rmse": 3.4986,
+    "home_win_accuracy": 0.5308,
+    "brier_score": 0.2523
   },
   "outputs": [
     "team_game_features.csv",
@@ -1643,6 +1620,7 @@
     "expected_runs_predictions.csv",
     "match_predictions.csv",
     "schedule_selection_check.csv",
+    "schedule_update_report.csv",
     "error_analysis_games.csv",
     "win_probability_bucket_metrics.csv",
     "total_runs_error_metrics.csv",
