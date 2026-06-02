@@ -208,6 +208,40 @@ PITCHER_VALIDATION_COLUMNS = {
     "message": "상태",
 }
 
+INTERNAL_PITCHER_INVENTORY_COLUMNS = {
+    "path": "파일 경로",
+    "rows": "행 수",
+    "candidate_type": "후보 유형",
+    "mapping_potential": "매핑 가능성",
+    "has_game_id": "game_id",
+    "has_date": "date",
+    "has_team": "team",
+    "has_player_id": "player_id",
+    "has_pitcher_name": "투수명",
+    "has_innings_pitched": "이닝",
+    "has_is_starter": "선발 여부",
+}
+
+INTERNAL_PITCHER_MAPPING_COLUMNS = {
+    "source_file": "원천 파일",
+    "target_schema": "목표 스키마",
+    "required_columns_found": "확인 컬럼",
+    "required_columns_missing": "부족 컬럼",
+    "game_id_match_possible": "game_id 매칭",
+    "date_team_match_possible": "날짜/팀 매칭",
+    "conversion_possible": "변환 가능",
+    "blocker": "차단 사유",
+}
+
+INTERNAL_PITCHER_CONVERSION_COLUMNS = {
+    "target_file": "대상 파일",
+    "conversion_attempted": "변환 시도",
+    "conversion_applied": "변환 적용",
+    "output_rows": "출력 행 수",
+    "validation_passed": "검증 통과",
+    "blocker": "차단 사유",
+}
+
 
 def _format_generated_at(value: str) -> str:
     return value.replace("T", " ")[:16]
@@ -495,8 +529,17 @@ def write_html_report(
             }
         )
     pitcher_validation_table = _table(pd.DataFrame(pitcher_validation_rows), PITCHER_VALIDATION_COLUMNS)
+    results_dir = output_path.parent
+    internal_inventory = pd.read_csv(results_dir / "internal_pitcher_data_inventory.csv")
+    internal_mapping = pd.read_csv(results_dir / "internal_pitcher_mapping_report.csv")
+    internal_conversion = pd.read_csv(results_dir / "internal_pitcher_conversion_check.csv")
+    internal_inventory_table = _table(internal_inventory[list(INTERNAL_PITCHER_INVENTORY_COLUMNS)], INTERNAL_PITCHER_INVENTORY_COLUMNS, limit=20)
+    internal_mapping_table = _table(internal_mapping, INTERNAL_PITCHER_MAPPING_COLUMNS)
+    internal_conversion_table = _table(internal_conversion, INTERNAL_PITCHER_CONVERSION_COLUMNS)
     pitcher_ready = "학습 가능" if summary["pitcher_data_ready_to_train"] else "학습 불가"
     pitcher_collection_status = "투수 데이터 준비 완료" if summary["pitcher_data_ready_to_train"] else "투수 데이터 미수집"
+    mapping_train_ready = "학습 가능" if summary["pitcher_data_ready_to_train_after_mapping"] else "학습 불가"
+    mapping_applied = "적용" if summary["internal_pitcher_conversion_applied"] else "미적용"
     over_predicted = ", ".join(f"{row['team']}({row['bias']})" for row in summary["team_bias_summary"]["over_predicted_teams"]) or "없음"
     under_predicted = ", ".join(f"{row['team']}({row['bias']})" for row in summary["team_bias_summary"]["under_predicted_teams"]) or "없음"
     target_context = summary["target_context"]
@@ -740,6 +783,24 @@ def write_html_report(
       다음 필요한 작업: 실제 경기별 선발투수 매핑과 투수 등판 로그를 pitcher_id 기준으로 적재한 뒤 재검증합니다.
     </p>
     <div class="table-wrap">{pitcher_validation_table}</div>
+    <h3>내부 투수 데이터 매핑 분석</h3>
+    <p class="note">
+      발견된 투수/선수 관련 파일 수: {summary["internal_pitcher_candidate_files"]}<br>
+      가장 유망한 선발투수 데이터 파일: {html.escape(str(summary["best_starter_source_file"]))}<br>
+      가장 유망한 투수 로그 데이터 파일: {html.escape(str(summary["best_pitcher_log_source_file"]))}<br>
+      starter_pitchers.csv 변환 가능 여부: {"예" if summary["starter_conversion_possible"] else "아니오"}<br>
+      pitcher_game_logs.csv 변환 가능 여부: {"예" if summary["pitcher_log_conversion_possible"] else "아니오"}<br>
+      변환 적용 여부: {mapping_applied}<br>
+      학습 가능 여부: {mapping_train_ready}<br>
+      차단 사유: {html.escape(str(summary["internal_pitcher_mapping_blocker"]))}<br>
+      다음 권장 작업: {html.escape(str(summary["next_recommended_pitcher_data_step"]))}
+    </p>
+    <h4>내부 후보 파일</h4>
+    <div class="table-wrap">{internal_inventory_table}</div>
+    <h4>목표 스키마 매핑 판단</h4>
+    <div class="table-wrap">{internal_mapping_table}</div>
+    <h4>변환 적용 점검</h4>
+    <div class="table-wrap">{internal_conversion_table}</div>
   </section>
   <section>
     <h2>기술 검증용 예측 결과</h2>
