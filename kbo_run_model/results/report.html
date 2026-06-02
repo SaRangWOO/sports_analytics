@@ -51,26 +51,26 @@
   <section>
     <h2>기준 정보</h2>
     <div class="summary-grid">
-      <div class="summary-item"><div class="label">생성 시각</div><div class="value">2026-06-01 15:22</div></div>
+      <div class="summary-item"><div class="label">생성 시각</div><div class="value">2026-06-02 10:30</div></div>
       <div class="summary-item"><div class="label">예측 기준일</div><div class="value">2026-06-02</div></div>
       <div class="summary-item"><div class="label">경기 수</div><div class="value">5경기</div></div>
-      <div class="summary-item"><div class="label">데이터 기준</div><div class="value">다음 예정 경기 기준</div></div>
+      <div class="summary-item"><div class="label">데이터 기준</div><div class="value">오늘 경기 기준</div></div>
     </div>
   </section>
   
   <section>
     <h2>일정 선택 상태</h2>
     <div class="summary-grid">
-      <div class="summary-item"><div class="label">선택 모드</div><div class="value">다음 예정 경기 기준</div></div>
+      <div class="summary-item"><div class="label">선택 모드</div><div class="value">오늘 경기 기준</div></div>
       <div class="summary-item"><div class="label">일정 원본 행 수</div><div class="value">10</div></div>
       <div class="summary-item"><div class="label">예상 경기 수 / 생성 경기 수</div><div class="value">5 / 5</div></div>
       <div class="summary-item"><div class="label">홈/원정 매칭</div><div class="value">정상</div></div>
       <div class="summary-item"><div class="label">중복 경기</div><div class="value">0건</div></div>
       <div class="summary-item"><div class="label">검증 상태</div><div class="value">통과</div></div>
       <div class="summary-item"><div class="label">일정 파일 최신 날짜</div><div class="value">2026-06-30</div></div>
-      <div class="summary-item"><div class="label">현재 KST 날짜</div><div class="value">2026-06-01</div></div>
-      <div class="summary-item"><div class="label">오늘 경기 수</div><div class="value">0경기</div></div>
-      <div class="summary-item"><div class="label">미래 경기 수</div><div class="value">125경기</div></div>
+      <div class="summary-item"><div class="label">현재 KST 날짜</div><div class="value">2026-06-02</div></div>
+      <div class="summary-item"><div class="label">오늘 경기 수</div><div class="value">5경기</div></div>
+      <div class="summary-item"><div class="label">미래 경기 수</div><div class="value">120경기</div></div>
       <div class="summary-item"><div class="label">일정 stale 여부</div><div class="value">아니오</div></div>
       <div class="summary-item"><div class="label">stale 경과일</div><div class="value">0일</div></div>
       <div class="summary-item"><div class="label">일정 갱신 필요</div><div class="value">불필요</div></div>
@@ -2022,6 +2022,262 @@
       <td>0</td>
       <td>아니오</td>
       <td>pitcher_game_logs.csv 스키마 준비, 실제 데이터 없음</td>
+    </tr>
+  </tbody>
+</table></div>
+    <h3>내부 투수 데이터 매핑 분석</h3>
+    <p class="note">
+      발견된 투수/선수 관련 파일 수: 12<br>
+      가장 유망한 선발투수 데이터 파일: kbo_analytics/data/manual/confirmed_starters.csv<br>
+      가장 유망한 투수 로그 데이터 파일: kbo_analytics/data/weekly/player_game_stats.csv<br>
+      starter_pitchers.csv 변환 가능 여부: 아니오<br>
+      pitcher_game_logs.csv 변환 가능 여부: 아니오<br>
+      변환 적용 여부: 미적용<br>
+      학습 가능 여부: 학습 불가<br>
+      차단 사유: confirmed_starters.csv에 실제 row 없음; home_runs_allowed 컬럼 없음; 명시적 is_starter 컬럼 없음<br>
+      다음 권장 작업: home_runs_allowed와 명시적 is_starter가 포함된 경기별 투수 로그 및 pitcher_id 기반 선발 매핑을 확보합니다.
+    </p>
+    <h4>내부 후보 파일</h4>
+    <div class="table-wrap"><table class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>파일 경로</th>
+      <th>행 수</th>
+      <th>후보 유형</th>
+      <th>매핑 가능성</th>
+      <th>game_id</th>
+      <th>date</th>
+      <th>team</th>
+      <th>player_id</th>
+      <th>투수명</th>
+      <th>이닝</th>
+      <th>선발 여부</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>kbo_analytics/data/manual/confirmed_starters.csv</td>
+      <td>0</td>
+      <td>starter_mapping</td>
+      <td>partial_starter_mapping</td>
+      <td>False</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>kbo_analytics/data/official/lineup_context.csv</td>
+      <td>0</td>
+      <td>player_context</td>
+      <td>not_enough_columns</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>kbo_analytics/data/official/pitcher_stats.csv</td>
+      <td>234</td>
+      <td>pitcher_summary</td>
+      <td>not_enough_columns</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>kbo_analytics/data/official/pitching_context.csv</td>
+      <td>10</td>
+      <td>starter_mapping</td>
+      <td>partial_starter_mapping</td>
+      <td>False</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>kbo_analytics/data/weekly/player_game_stats.csv</td>
+      <td>1056</td>
+      <td>pitcher_game_log</td>
+      <td>partial_pitcher_log</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>kbo_analytics/mock_api/player_roster_mapping.csv</td>
+      <td>120</td>
+      <td>player_context</td>
+      <td>not_enough_columns</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>kbo_analytics/modeling/results/game_level_player_features.csv</td>
+      <td>7169</td>
+      <td>pitcher_summary</td>
+      <td>not_enough_columns</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>kbo_analytics/modeling/results/player_team_context.csv</td>
+      <td>10</td>
+      <td>pitcher_summary</td>
+      <td>not_enough_columns</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>kbo_run_model/data/pitcher_game_logs.csv</td>
+      <td>0</td>
+      <td>pitcher_game_log</td>
+      <td>not_enough_columns</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>kbo_run_model/data/pitcher_game_logs_sample.csv</td>
+      <td>3</td>
+      <td>pitcher_game_log</td>
+      <td>not_enough_columns</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>kbo_run_model/data/starter_pitchers.csv</td>
+      <td>0</td>
+      <td>starter_mapping</td>
+      <td>not_enough_columns</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>kbo_run_model/data/starter_pitchers_sample.csv</td>
+      <td>2</td>
+      <td>starter_mapping</td>
+      <td>not_enough_columns</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table></div>
+    <h4>목표 스키마 매핑 판단</h4>
+    <div class="table-wrap"><table class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>원천 파일</th>
+      <th>목표 스키마</th>
+      <th>확인 컬럼</th>
+      <th>부족 컬럼</th>
+      <th>game_id 매칭</th>
+      <th>날짜/팀 매칭</th>
+      <th>변환 가능</th>
+      <th>차단 사유</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>kbo_analytics/data/manual/confirmed_starters.csv</td>
+      <td>starter_pitchers.csv</td>
+      <td>date, team, starter_name</td>
+      <td>NaN</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>confirmed_starters.csv에 실제 row 없음</td>
+    </tr>
+    <tr>
+      <td>kbo_analytics/data/weekly/player_game_stats.csv</td>
+      <td>pitcher_game_logs.csv</td>
+      <td>game_id, date, player_id, player_name, team, opponent, innings_pitched, earned_runs, hits_allowed, walks_allowed, strikeouts_pitched, pitches</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>home_runs_allowed 컬럼 없음; 명시적 is_starter 컬럼 없음</td>
+    </tr>
+  </tbody>
+</table></div>
+    <h4>변환 적용 점검</h4>
+    <div class="table-wrap"><table class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>대상 파일</th>
+      <th>변환 시도</th>
+      <th>변환 적용</th>
+      <th>출력 행 수</th>
+      <th>검증 통과</th>
+      <th>차단 사유</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>starter_pitchers.csv</td>
+      <td>False</td>
+      <td>False</td>
+      <td>0</td>
+      <td>False</td>
+      <td>confirmed_starters.csv에 실제 row 없음</td>
+    </tr>
+    <tr>
+      <td>pitcher_game_logs.csv</td>
+      <td>False</td>
+      <td>False</td>
+      <td>0</td>
+      <td>False</td>
+      <td>home_runs_allowed 컬럼 없음; 명시적 is_starter 컬럼 없음</td>
     </tr>
   </tbody>
 </table></div>

@@ -1,0 +1,3 @@
+﻿source_file,target_schema,required_columns_found,required_columns_missing,game_id_match_possible,date_team_match_possible,conversion_possible,blocker
+kbo_analytics/data/manual/confirmed_starters.csv,starter_pitchers.csv,"date, team, starter_name",,False,True,False,confirmed_starters.csv에 실제 row 없음
+kbo_analytics/data/weekly/player_game_stats.csv,pitcher_game_logs.csv,"game_id, date, player_id, player_name, team, opponent, innings_pitched, earned_runs, hits_allowed, walks_allowed, strikeouts_pitched, pitches",,True,True,False,home_runs_allowed 컬럼 없음; 명시적 is_starter 컬럼 없음

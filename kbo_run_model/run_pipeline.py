@@ -12,6 +12,7 @@ from sklearn.linear_model import LogisticRegression
 
 from collectors.load_games import load_completed_team_games
 from collectors.load_starter_data import load_starter_inputs
+from collectors.internal_pitcher_mapping import write_internal_pitcher_mapping_outputs
 from collectors.pitcher_data_validation import validate_pitcher_data_pipeline
 from collectors.schedule import load_schedule, select_target_games, validate_schedule_selection
 from collectors.schedule_update import build_schedule_status, write_schedule_update_report
@@ -211,6 +212,7 @@ def run_pipeline(
     starter_schema = inspect_starter_schema(input_path)
     internal_data_search = search_internal_pitcher_data(REPO_DIR)
     pitcher_data_validation = validate_pitcher_data_pipeline(DEFAULT_STARTERS, DEFAULT_PITCHER_LOGS, schedule)
+    internal_pitcher_mapping = write_internal_pitcher_mapping_outputs(REPO_DIR, output_dir, apply=False)
     prediction_feature_df = build_prediction_feature_matrix(team_games, target_games) if not target_games.empty else pd.DataFrame()
     win_converter = _train_win_converter(selected_run_model, train_df, feature_columns)
     match_predictions = _build_match_predictions(selected_run_model, win_converter, prediction_feature_df, feature_columns, target_context)
@@ -315,6 +317,7 @@ def run_pipeline(
             "starter_pitchers": pitcher_data_validation["starter_pitchers_validation"],
             "pitcher_game_logs": pitcher_data_validation["pitcher_game_logs_validation"],
         },
+        **internal_pitcher_mapping,
         **error_analysis["summary"],
         **improvement_experiment["summary"],
         "dashboard": DASHBOARD_PATH,
@@ -342,6 +345,9 @@ def run_pipeline(
             "team_bias_feature_metrics.csv",
             "improvement_model_scores.csv",
             "pitcher_data_validation.csv",
+            "internal_pitcher_data_inventory.csv",
+            "internal_pitcher_mapping_report.csv",
+            "internal_pitcher_conversion_check.csv",
             "summary.json",
             "report.html",
         ],

@@ -12,6 +12,7 @@ def build_prediction_feature_matrix(completed_games: pd.DataFrame, target_games:
     target = target_games.copy()
     target["season"] = target["date"].dt.year
     target["game_key"] = target["game_id"].astype(str).str.rsplit("_", n=1).str[0]
+    completed_rows = completed_rows[~completed_rows["game_key"].isin(target["game_key"])].copy()
     target["score_team"] = np.nan
     target["score_opp"] = np.nan
     target["is_home"] = target["home_away"].eq("H").astype(int)
