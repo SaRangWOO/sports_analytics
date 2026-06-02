@@ -812,6 +812,163 @@ def export_pitching_context(context: dict, output_path: Path, prediction_date: d
     pd.DataFrame(rows).to_csv(output_path, index=False, encoding="utf-8-sig")
 
 
+def _pitching_snapshot_source(starter_source: str):
+    if starter_source == "manual":
+        return "manual"
+    if starter_source == "confirmed":
+        return "KBO GameCenter"
+    if starter_source == "estimated":
+        return "estimated rotation"
+    return "unknown"
+
+
+def append_pitching_daily_snapshot(games: pd.DataFrame, context: dict, output_path: Path, results_dir: Path, prediction_date: date, reference_datetime: datetime):
+    scheduled = games[
+        (pd.to_datetime(games["date"]).dt.date == prediction_date)
+        & (games["status"] == "Scheduled")
+    ].copy()
+    rows = []
+    for _, game in scheduled.iterrows():
+        team = str(game["team"])
+        values = context.get(team, {})
+        starter_source = values.get("starter_source", "unknown")
+        rows.append(
+            {
+                "snapshot_date": reference_datetime.date().isoformat(),
+                "snapshot_time": reference_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                "reference_date": prediction_date.isoformat(),
+                "team": team,
+                "starter_name": values.get("선발명", "-"),
+                "starter_source": starter_source,
+                "starter_info_quality": values.get("starter_info_quality", 0.0),
+                "starter_era": values.get("ERA", "-"),
+                "starter_whip": values.get("WHIP", "-"),
+                "bullpen_fatigue_label": values.get("불펜 피로", "-"),
+                "recent_3day_games": values.get("최근3일 경기", 0),
+                "scheduled_game_id": str(game.get("game_id", "")),
+                "opponent": game.get("opponent", ""),
+                "home_away": game.get("home_away", ""),
+                "data_source": _pitching_snapshot_source(starter_source),
+                "note": "경기 전 수집 스냅샷",
+            }
+        )
+
+    columns = [
+        "snapshot_date",
+        "snapshot_time",
+        "reference_date",
+        "team",
+        "starter_name",
+        "starter_source",
+        "starter_info_quality",
+        "starter_era",
+        "starter_whip",
+        "bullpen_fatigue_label",
+        "recent_3day_games",
+        "scheduled_game_id",
+        "opponent",
+        "home_away",
+        "data_source",
+        "note",
+    ]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    new_frame = pd.DataFrame(rows, columns=columns)
+    if output_path.exists():
+        existing = pd.read_csv(output_path)
+        frame = pd.concat([existing, new_frame], ignore_index=True)
+    else:
+        frame = new_frame
+    if not frame.empty:
+        frame = frame.sort_values("snapshot_time").drop_duplicates(
+            subset=["snapshot_date", "reference_date", "team", "scheduled_game_id"],
+            keep="last",
+        )
+    frame.to_csv(output_path, index=False, encoding="utf-8-sig")
+
+    ref_frame = frame[frame["reference_date"].astype(str).eq(prediction_date.isoformat())] if not frame.empty else frame
+    source_counts = ref_frame["starter_source"].replace({"manual": "confirmed"}).value_counts().to_dict() if not ref_frame.empty else {}
+    status_payload = {
+        "generated_at": reference_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        "reference_date": prediction_date.isoformat(),
+        "snapshot_rows_total": int(len(frame)),
+        "snapshot_rows_for_reference_date": int(len(ref_frame)),
+        "confirmed_starter_count": int(source_counts.get("confirmed", 0)),
+        "estimated_starter_count": int(source_counts.get("estimated", 0)),
+        "unknown_starter_count": int(source_counts.get("unknown", 0)),
+        "teams_with_snapshot": sorted(ref_frame["team"].dropna().astype(str).unique().tolist()) if not ref_frame.empty else [],
+        "scheduled_games": int(len(scheduled) // 2),
+        "snapshot_file": str(output_path.relative_to(BASE_DIR)),
+        "leakage_policy_note": "pitching_daily_snapshot.csv는 예측 시점에 저장된 정보만 누적하며 현재 모델 학습 피처로 사용하지 않습니다.",
+    }
+    results_dir.mkdir(parents=True, exist_ok=True)
+    (results_dir / "pitching_snapshot_status.json").write_text(json.dumps(status_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    return status_payload
+
+
+def update_pitching_snapshot_diagnostics(results_dir: Path, status_payload: dict):
+    starter_report = results_dir / "starter_data_availability_report.csv"
+    if starter_report.exists():
+        frame = pd.read_csv(starter_report)
+        frame = frame[frame["data_item"] != "예측 시점 투수 스냅샷"]
+        frame = pd.concat(
+            [
+                frame,
+                pd.DataFrame(
+                    [
+                        {
+                            "data_item": "예측 시점 투수 스냅샷",
+                            "current_source": "pitching_daily_snapshot.csv",
+                            "available_now": "started",
+                            "collection_method": "official_kbo_dashboard.py 실행 시점의 선발/불펜 context 누적 저장",
+                            "known_before_game": "yes",
+                            "leakage_risk": "low",
+                            "expected_effect": "high_after_accumulation",
+                            "implementation_difficulty": "low",
+                            "next_action": "충분한 기간 누적 후 날짜 기준 shift(1) 피처 실험",
+                        }
+                    ]
+                ),
+            ],
+            ignore_index=True,
+        )
+        frame.to_csv(starter_report, index=False, encoding="utf-8-sig")
+
+    bullpen_report = results_dir / "bullpen_data_availability_report.csv"
+    if bullpen_report.exists():
+        frame = pd.read_csv(bullpen_report)
+        frame = frame[frame["data_item"] != "불펜 피로 proxy 스냅샷"]
+        frame = pd.concat(
+            [
+                frame,
+                pd.DataFrame(
+                    [
+                        {
+                            "data_item": "불펜 피로 proxy 스냅샷",
+                            "current_source": "pitching_daily_snapshot.csv",
+                            "available_now": "proxy_snapshot_started",
+                            "collection_method": "최근 3일 경기 수와 불펜 피로 라벨을 예측 시점 기준으로 누적",
+                            "known_before_game": "yes",
+                            "leakage_risk": "low",
+                            "expected_effect": "medium_after_accumulation",
+                            "implementation_difficulty": "low",
+                            "next_action": "실제 불펜 투구 수 로그 확보 전까지 proxy 히스토리로만 보관",
+                        }
+                    ]
+                ),
+            ],
+            ignore_index=True,
+        )
+        frame.to_csv(bullpen_report, index=False, encoding="utf-8-sig")
+
+    summary_path = results_dir / "model_insight_summary.json"
+    if summary_path.exists():
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        summary["pitching_snapshot_collection_status"] = status_payload
+        summary["leakage_safe_pitching_data_policy"] = "투수 스냅샷은 예측 시점에 알고 있던 정보만 누적 저장하며, 현재 운영 모델 학습 피처로 바로 사용하지 않습니다."
+        summary["next_step_after_snapshot_accumulation"] = "스냅샷이 충분히 쌓이면 선발 최근 성적, 선발 정보 품질, 불펜 피로 proxy를 날짜 기준 shift(1) 피처로 별도 후보 모델에서 검증합니다."
+        summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
 def _lineup_grid_rows(raw_grid) -> list[dict]:
     if isinstance(raw_grid, str):
         try:
@@ -2204,6 +2361,8 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     ] if model_payload.get("available") else []
     pitching_context = build_pitching_context(games, pitchers, generated_at, reference_datetime, update_stage)
     export_pitching_context(pitching_context, DATA_DIR / "pitching_context.csv", generated_at)
+    snapshot_status = append_pitching_daily_snapshot(games, pitching_context, DATA_DIR / "pitching_daily_snapshot.csv", RESULTS_DIR, generated_at, reference_datetime or datetime.now())
+    update_pitching_snapshot_diagnostics(RESULTS_DIR, snapshot_status)
     export_lineup_context(lineup_context, DATA_DIR / "lineup_context.csv", generated_at)
     lineup_confirmed_count = sum(1 for values in lineup_context.values() if values.get("lineup_source") == "confirmed")
     lineup_recent_count = sum(1 for values in lineup_context.values() if values.get("lineup_source") == "recent")

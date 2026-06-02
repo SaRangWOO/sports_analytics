@@ -824,9 +824,22 @@ def write_data_gap_analysis(results_dir: Path):
 def write_starter_data_availability_report(results_dir: Path, data_dir: Path):
     pitching_context_path = data_dir / "pitching_context.csv"
     pitcher_stats_path = data_dir / "pitcher_stats.csv"
+    pitching_snapshot_path = data_dir / "pitching_daily_snapshot.csv"
     has_pitching_context = pitching_context_path.exists()
     has_pitcher_stats = pitcher_stats_path.exists()
+    has_pitching_snapshot = pitching_snapshot_path.exists()
     rows = [
+        {
+            "data_item": "예측 시점 투수 스냅샷",
+            "current_source": "pitching_daily_snapshot.csv",
+            "available_now": "started" if has_pitching_snapshot else "no",
+            "collection_method": "official_kbo_dashboard.py 실행 시점의 선발/불펜 context 누적 저장",
+            "known_before_game": "yes",
+            "leakage_risk": "low",
+            "expected_effect": "high_after_accumulation",
+            "implementation_difficulty": "low",
+            "next_action": "충분한 기간 누적 후 날짜 기준 shift(1) 피처 실험",
+        },
         {
             "data_item": "확정 선발투수",
             "current_source": "pitching_context.csv / KBO GameCenter",
@@ -911,8 +924,21 @@ def write_starter_data_availability_report(results_dir: Path, data_dir: Path):
 
 def write_bullpen_data_availability_report(results_dir: Path, data_dir: Path):
     model_training_path = data_dir / "model_training_games.csv"
+    pitching_snapshot_path = data_dir / "pitching_daily_snapshot.csv"
     has_team_games = model_training_path.exists()
+    has_pitching_snapshot = pitching_snapshot_path.exists()
     rows = [
+        {
+            "data_item": "불펜 피로 proxy 스냅샷",
+            "current_source": "pitching_daily_snapshot.csv",
+            "available_now": "proxy_snapshot_started" if has_pitching_snapshot else "no",
+            "collection_method": "최근 3일 경기 수와 불펜 피로 라벨을 예측 시점 기준으로 누적",
+            "known_before_game": "yes",
+            "leakage_risk": "low",
+            "expected_effect": "medium_after_accumulation",
+            "implementation_difficulty": "low",
+            "next_action": "실제 불펜 투구 수 로그 확보 전까지 proxy 히스토리로만 보관",
+        },
         {
             "data_item": "최근 3일 팀 불펜 등판 수",
             "current_source": "not_available",
@@ -1076,6 +1102,12 @@ def write_model_insight_summary(
         "pitching_data_availability_summary": starter_availability or [],
         "bullpen_data_availability_summary": bullpen_availability or [],
         "pitching_feature_experiment_summary": pitching_experiment_rows or [],
+        "pitching_snapshot_collection_status": {
+            "status": "pending_dashboard_snapshot_step",
+            "note": "official_kbo_dashboard.py의 pitching context 생성 이후 현재 실행 기준 스냅샷 상태로 갱신됩니다.",
+        },
+        "leakage_safe_pitching_data_policy": "투수 스냅샷은 예측 시점에 알고 있던 정보만 누적 저장하며, 현재 운영 모델 학습 피처로 바로 사용하지 않습니다.",
+        "next_step_after_snapshot_accumulation": "스냅샷이 충분히 쌓이면 선발 최근 성적, 선발 정보 품질, 불펜 피로 proxy를 날짜 기준 shift(1) 피처로 별도 후보 모델에서 검증합니다.",
         "recommended_next_steps": [
             "확정 선발 최근 3경기 성적과 휴식일을 과거 시점 스냅샷으로 저장",
             "불펜 최근 3일 실제 투구 수와 전날 선발 이닝 수집",

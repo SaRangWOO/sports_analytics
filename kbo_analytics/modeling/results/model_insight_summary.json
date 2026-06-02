@@ -236,6 +236,17 @@
   ],
   "pitching_data_availability_summary": [
     {
+      "data_item": "예측 시점 투수 스냅샷",
+      "current_source": "pitching_daily_snapshot.csv",
+      "available_now": "started",
+      "collection_method": "official_kbo_dashboard.py 실행 시점의 선발/불펜 context 누적 저장",
+      "known_before_game": "yes",
+      "leakage_risk": "low",
+      "expected_effect": "high_after_accumulation",
+      "implementation_difficulty": "low",
+      "next_action": "충분한 기간 누적 후 날짜 기준 shift(1) 피처 실험"
+    },
+    {
       "data_item": "확정 선발투수",
       "current_source": "pitching_context.csv / KBO GameCenter",
       "available_now": "partial",
@@ -314,6 +325,17 @@
     }
   ],
   "bullpen_data_availability_summary": [
+    {
+      "data_item": "불펜 피로 proxy 스냅샷",
+      "current_source": "pitching_daily_snapshot.csv",
+      "available_now": "proxy_snapshot_started",
+      "collection_method": "최근 3일 경기 수와 불펜 피로 라벨을 예측 시점 기준으로 누적",
+      "known_before_game": "yes",
+      "leakage_risk": "low",
+      "expected_effect": "medium_after_accumulation",
+      "implementation_difficulty": "low",
+      "next_action": "실제 불펜 투구 수 로그 확보 전까지 proxy 히스토리로만 보관"
+    },
     {
       "data_item": "최근 3일 팀 불펜 등판 수",
       "current_source": "not_available",
@@ -458,6 +480,32 @@
       "status": "선발 히스토리와 불펜 사용량 원천 데이터가 모두 필요"
     }
   ],
+  "pitching_snapshot_collection_status": {
+    "generated_at": "2026-06-02 13:09:00",
+    "reference_date": "2026-06-02",
+    "snapshot_rows_total": 10,
+    "snapshot_rows_for_reference_date": 10,
+    "confirmed_starter_count": 0,
+    "estimated_starter_count": 10,
+    "unknown_starter_count": 0,
+    "teams_with_snapshot": [
+      "KIA",
+      "KT",
+      "LG",
+      "NC",
+      "SSG",
+      "두산",
+      "롯데",
+      "삼성",
+      "키움",
+      "한화"
+    ],
+    "scheduled_games": 5,
+    "snapshot_file": "data\\official\\pitching_daily_snapshot.csv",
+    "leakage_policy_note": "pitching_daily_snapshot.csv는 예측 시점에 저장된 정보만 누적하며 현재 모델 학습 피처로 사용하지 않습니다."
+  },
+  "leakage_safe_pitching_data_policy": "투수 스냅샷은 예측 시점에 알고 있던 정보만 누적 저장하며, 현재 운영 모델 학습 피처로 바로 사용하지 않습니다.",
+  "next_step_after_snapshot_accumulation": "스냅샷이 충분히 쌓이면 선발 최근 성적, 선발 정보 품질, 불펜 피로 proxy를 날짜 기준 shift(1) 피처로 별도 후보 모델에서 검증합니다.",
   "recommended_next_steps": [
     "확정 선발 최근 3경기 성적과 휴식일을 과거 시점 스냅샷으로 저장",
     "불펜 최근 3일 실제 투구 수와 전날 선발 이닝 수집",

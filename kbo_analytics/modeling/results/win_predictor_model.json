@@ -63,14 +63,14 @@
     },
     {
       "모델": "Streak 피처 RandomForest 실험",
-      "검증 정확도": 0.528,
+      "검증 정확도": 0.531,
       "피처 수": 38,
       "Brier Score": 0.248,
-      "Log Loss": 0.69
+      "Log Loss": 0.689
     },
     {
       "모델": "Streak 피처 RandomForest 시간가중 실험",
-      "검증 정확도": 0.537,
+      "검증 정확도": 0.53,
       "피처 수": 38,
       "Brier Score": 0.248,
       "Log Loss": 0.689
@@ -426,31 +426,31 @@
     {
       "model": "Streak 피처 RandomForest 실험",
       "total_games": 2942,
-      "accuracy": 0.528,
+      "accuracy": 0.531,
       "brier": 0.248,
-      "logloss": 0.69,
+      "logloss": 0.689,
       "avg_confidence": 0.539,
       "p75_confidence": 0.557,
-      "p90_confidence": 0.577,
-      "max_confidence": 0.628,
-      "over_55": 963,
-      "over_58": 251,
-      "over_60": 54,
-      "over_55_accuracy": 0.57
+      "p90_confidence": 0.576,
+      "max_confidence": 0.625,
+      "over_55": 954,
+      "over_58": 260,
+      "over_60": 56,
+      "over_55_accuracy": 0.572
     },
     {
       "model": "Streak 피처 RandomForest 시간가중 실험",
       "total_games": 2942,
-      "accuracy": 0.537,
+      "accuracy": 0.53,
       "brier": 0.248,
       "logloss": 0.689,
       "avg_confidence": 0.54,
-      "p75_confidence": 0.558,
+      "p75_confidence": 0.559,
       "p90_confidence": 0.577,
-      "max_confidence": 0.63,
-      "over_55": 998,
-      "over_58": 242,
-      "over_60": 42,
+      "max_confidence": 0.631,
+      "over_55": 1036,
+      "over_58": 241,
+      "over_60": 41,
       "over_55_accuracy": 0.554
     },
     {
@@ -1077,8 +1077,8 @@
     "seasonal_segments": 21,
     "model_selection_rows": 31,
     "data_gaps": 11,
-    "starter_data_availability": 7,
-    "bullpen_data_availability": 6,
+    "starter_data_availability": 8,
+    "bullpen_data_availability": 7,
     "pitching_feature_experiment_rows": 5
   },
   "model_insight_summary": {
@@ -1319,6 +1319,17 @@
     ],
     "pitching_data_availability_summary": [
       {
+        "data_item": "예측 시점 투수 스냅샷",
+        "current_source": "pitching_daily_snapshot.csv",
+        "available_now": "started",
+        "collection_method": "official_kbo_dashboard.py 실행 시점의 선발/불펜 context 누적 저장",
+        "known_before_game": "yes",
+        "leakage_risk": "low",
+        "expected_effect": "high_after_accumulation",
+        "implementation_difficulty": "low",
+        "next_action": "충분한 기간 누적 후 날짜 기준 shift(1) 피처 실험"
+      },
+      {
         "data_item": "확정 선발투수",
         "current_source": "pitching_context.csv / KBO GameCenter",
         "available_now": "partial",
@@ -1397,6 +1408,17 @@
       }
     ],
     "bullpen_data_availability_summary": [
+      {
+        "data_item": "불펜 피로 proxy 스냅샷",
+        "current_source": "pitching_daily_snapshot.csv",
+        "available_now": "proxy_snapshot_started",
+        "collection_method": "최근 3일 경기 수와 불펜 피로 라벨을 예측 시점 기준으로 누적",
+        "known_before_game": "yes",
+        "leakage_risk": "low",
+        "expected_effect": "medium_after_accumulation",
+        "implementation_difficulty": "low",
+        "next_action": "실제 불펜 투구 수 로그 확보 전까지 proxy 히스토리로만 보관"
+      },
       {
         "data_item": "최근 3일 팀 불펜 등판 수",
         "current_source": "not_available",
@@ -1541,6 +1563,12 @@
         "status": "선발 히스토리와 불펜 사용량 원천 데이터가 모두 필요"
       }
     ],
+    "pitching_snapshot_collection_status": {
+      "status": "pending_dashboard_snapshot_step",
+      "note": "official_kbo_dashboard.py의 pitching context 생성 이후 현재 실행 기준 스냅샷 상태로 갱신됩니다."
+    },
+    "leakage_safe_pitching_data_policy": "투수 스냅샷은 예측 시점에 알고 있던 정보만 누적 저장하며, 현재 운영 모델 학습 피처로 바로 사용하지 않습니다.",
+    "next_step_after_snapshot_accumulation": "스냅샷이 충분히 쌓이면 선발 최근 성적, 선발 정보 품질, 불펜 피로 proxy를 날짜 기준 shift(1) 피처로 별도 후보 모델에서 검증합니다.",
     "recommended_next_steps": [
       "확정 선발 최근 3경기 성적과 휴식일을 과거 시점 스냅샷으로 저장",
       "불펜 최근 3일 실제 투구 수와 전날 선발 이닝 수집",

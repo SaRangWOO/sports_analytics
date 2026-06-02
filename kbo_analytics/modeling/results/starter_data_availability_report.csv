@@ -6,3 +6,4 @@
 선발 최근 3경기 WHIP 유사 지표,not_available,no,최근 등판 피안타/볼넷/이닝 기반 rolling 계산,yes,medium,high,medium,투수별 피안타·볼넷·이닝 로그 확보 후 생성
 선발 휴식일,not_available,no,확정/추정 선발명과 이전 등판일 차이 계산,yes,low,medium,medium,선발명 히스토리와 투수 등판 로그를 연결한 뒤 추가
 선발 시즌 ERA/WHIP,pitcher_stats.csv / pitching_context.csv,partial,"현재 스냅샷은 표시용으로 사용, 과거 시점별 스냅샷 필요",yes,high_without_snapshots,medium,medium,과거 경기에는 최신 스냅샷을 붙이지 않고 날짜별 누적 기록 저장
+예측 시점 투수 스냅샷,pitching_daily_snapshot.csv,started,official_kbo_dashboard.py 실행 시점의 선발/불펜 context 누적 저장,yes,low,high_after_accumulation,low,충분한 기간 누적 후 날짜 기준 shift(1) 피처 실험
