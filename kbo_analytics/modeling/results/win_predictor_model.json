@@ -2,7 +2,7 @@
   "available": true,
   "training_cutoff": "2026-05-31",
   "validation_cutoff": "2026-05-31",
-  "prediction_training_cutoff": "2026-05-31",
+  "prediction_training_cutoff": "2026-06-01",
   "latest_completed_game_date_used": "2026-05-31",
   "current_week_games_included_for_prediction": false,
   "training_start_year": 2016,
@@ -63,14 +63,14 @@
     },
     {
       "모델": "Streak 피처 RandomForest 실험",
-      "검증 정확도": 0.532,
+      "검증 정확도": 0.533,
       "피처 수": 38,
       "Brier Score": 0.248,
       "Log Loss": 0.689
     },
     {
       "모델": "Streak 피처 RandomForest 시간가중 실험",
-      "검증 정확도": 0.533,
+      "검증 정확도": 0.53,
       "피처 수": 38,
       "Brier Score": 0.248,
       "Log Loss": 0.689
@@ -306,12 +306,12 @@
   },
   "today_probability_distribution": {
     "split": "today",
-    "total_games": 0,
-    "p50": null,
-    "p75": null,
-    "p90": null,
-    "max": null,
-    "over_53": 0,
+    "total_games": 10,
+    "p50": 0.518,
+    "p75": 0.547,
+    "p90": 0.548,
+    "max": 0.548,
+    "over_53": 4,
     "over_55": 0,
     "over_58": 0,
     "over_60": 0
@@ -426,32 +426,32 @@
     {
       "model": "Streak 피처 RandomForest 실험",
       "total_games": 2942,
-      "accuracy": 0.532,
+      "accuracy": 0.533,
       "brier": 0.248,
       "logloss": 0.689,
       "avg_confidence": 0.54,
       "p75_confidence": 0.558,
       "p90_confidence": 0.577,
-      "max_confidence": 0.624,
-      "over_55": 975,
-      "over_58": 259,
-      "over_60": 59,
-      "over_55_accuracy": 0.561
+      "max_confidence": 0.626,
+      "over_55": 979,
+      "over_58": 256,
+      "over_60": 57,
+      "over_55_accuracy": 0.566
     },
     {
       "model": "Streak 피처 RandomForest 시간가중 실험",
       "total_games": 2942,
-      "accuracy": 0.533,
+      "accuracy": 0.53,
       "brier": 0.248,
       "logloss": 0.689,
-      "avg_confidence": 0.541,
-      "p75_confidence": 0.56,
+      "avg_confidence": 0.54,
+      "p75_confidence": 0.559,
       "p90_confidence": 0.577,
-      "max_confidence": 0.633,
-      "over_55": 1033,
-      "over_58": 259,
-      "over_60": 48,
-      "over_55_accuracy": 0.56
+      "max_confidence": 0.634,
+      "over_55": 1027,
+      "over_58": 255,
+      "over_60": 46,
+      "over_55_accuracy": 0.557
     },
     {
       "model": "Streak 피처 GradientBoosting 실험",
@@ -918,7 +918,98 @@
       "예측 근거": "삼성 최근 득실차 우위, 삼성 홈 경기"
     }
   ],
-  "today_predictions": [],
+  "today_predictions": [
+    {
+      "경기일": "2026-06-02",
+      "기준팀": "KIA",
+      "상대팀": "롯데",
+      "예측 구단": "KIA",
+      "예측승률": "54.8%",
+      "예측": "승리 예측",
+      "예측 근거": "KIA 최근 10경기 흐름 우위, KIA 시즌 상대전적 우위"
+    },
+    {
+      "경기일": "2026-06-02",
+      "기준팀": "KT",
+      "상대팀": "LG",
+      "예측 구단": "LG",
+      "예측승률": "50.0%",
+      "예측": "패배 예측",
+      "예측 근거": "양 팀 지표가 비슷해 기본 전력과 최근 흐름을 종합"
+    },
+    {
+      "경기일": "2026-06-02",
+      "기준팀": "LG",
+      "상대팀": "KT",
+      "예측 구단": "LG",
+      "예측승률": "50.0%",
+      "예측": "승리 예측",
+      "예측 근거": "양 팀 지표가 비슷해 기본 전력과 최근 흐름을 종합"
+    },
+    {
+      "경기일": "2026-06-02",
+      "기준팀": "NC",
+      "상대팀": "삼성",
+      "예측 구단": "삼성",
+      "예측승률": "45.3%",
+      "예측": "패배 예측",
+      "예측 근거": "삼성 최근 10경기 흐름 우위, 삼성 최근 득실차 우위"
+    },
+    {
+      "경기일": "2026-06-02",
+      "기준팀": "SSG",
+      "상대팀": "키움",
+      "예측 구단": "키움",
+      "예측승률": "48.2%",
+      "예측": "패배 예측",
+      "예측 근거": "키움 최근 10경기 흐름 우위"
+    },
+    {
+      "경기일": "2026-06-02",
+      "기준팀": "두산",
+      "상대팀": "한화",
+      "예측 구단": "두산",
+      "예측승률": "50.0%",
+      "예측": "승리 예측",
+      "예측 근거": "두산 홈 경기"
+    },
+    {
+      "경기일": "2026-06-02",
+      "기준팀": "롯데",
+      "상대팀": "KIA",
+      "예측 구단": "KIA",
+      "예측승률": "45.2%",
+      "예측": "패배 예측",
+      "예측 근거": "KIA 최근 10경기 흐름 우위, KIA 시즌 상대전적 우위"
+    },
+    {
+      "경기일": "2026-06-02",
+      "기준팀": "삼성",
+      "상대팀": "NC",
+      "예측 구단": "삼성",
+      "예측승률": "54.7%",
+      "예측": "승리 예측",
+      "예측 근거": "삼성 최근 10경기 흐름 우위, 삼성 최근 득실차 우위"
+    },
+    {
+      "경기일": "2026-06-02",
+      "기준팀": "키움",
+      "상대팀": "SSG",
+      "예측 구단": "키움",
+      "예측승률": "51.8%",
+      "예측": "승리 예측",
+      "예측 근거": "키움 최근 10경기 흐름 우위"
+    },
+    {
+      "경기일": "2026-06-02",
+      "기준팀": "한화",
+      "상대팀": "두산",
+      "예측 구단": "두산",
+      "예측승률": "50.0%",
+      "예측": "패배 예측",
+      "예측 근거": "두산 홈 경기"
+    }
+  ],
   "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
   "feature_columns": [
     "is_home",
@@ -972,6 +1063,9 @@
     "feature_diagnostic_report": "modeling/results/feature_diagnostic_report.csv",
     "game_type_performance_report": "modeling/results/game_type_performance_report.csv",
     "data_gap_analysis": "modeling/results/data_gap_analysis.csv",
+    "starter_data_availability_report": "modeling/results/starter_data_availability_report.csv",
+    "bullpen_data_availability_report": "modeling/results/bullpen_data_availability_report.csv",
+    "pitching_feature_experiment_report": "modeling/results/pitching_feature_experiment_report.csv",
     "model_selection_report": "modeling/results/model_selection_report.csv",
     "seasonal_performance_report": "modeling/results/seasonal_performance_report.csv",
     "model_insight_summary": "modeling/results/model_insight_summary.json",
@@ -982,7 +1076,10 @@
     "game_type_segments": 16,
     "seasonal_segments": 21,
     "model_selection_rows": 31,
-    "data_gaps": 11
+    "data_gaps": 11,
+    "starter_data_availability": 7,
+    "bullpen_data_availability": 6,
+    "pitching_feature_experiment_rows": 5
   },
   "model_insight_summary": {
     "current_baseline": {
@@ -1220,12 +1317,237 @@
         "implementation_difficulty": "높음"
       }
     ],
+    "pitching_data_availability_summary": [
+      {
+        "data_item": "확정 선발투수",
+        "current_source": "pitching_context.csv / KBO GameCenter",
+        "available_now": "partial",
+        "collection_method": "경기 전 GameCenter START_PIT_CK와 선발명 수집",
+        "known_before_game": "yes",
+        "leakage_risk": "low",
+        "expected_effect": "high",
+        "implementation_difficulty": "medium",
+        "next_action": "시점별 confirmed starter 히스토리 저장 후 백테스트 피처로 승격"
+      },
+      {
+        "data_item": "선발 최근 3경기 ERA",
+        "current_source": "not_available",
+        "available_now": "no",
+        "collection_method": "투수별 경기 로그와 등판일 기준 rolling 집계 필요",
+        "known_before_game": "yes",
+        "leakage_risk": "medium",
+        "expected_effect": "high",
+        "implementation_difficulty": "medium",
+        "next_action": "투수별 game log 수집기 추가 전까지 모델 피처화 보류"
+      },
+      {
+        "data_item": "선발 최근 3경기 평균 이닝",
+        "current_source": "not_available",
+        "available_now": "no",
+        "collection_method": "투수별 경기 로그에서 해당 경기 이전 등판만 shift(1) 집계",
+        "known_before_game": "yes",
+        "leakage_risk": "medium",
+        "expected_effect": "high",
+        "implementation_difficulty": "medium",
+        "next_action": "투수별 선발 등판 로그 확보 후 생성"
+      },
+      {
+        "data_item": "선발 최근 3경기 실점/자책점",
+        "current_source": "not_available",
+        "available_now": "no",
+        "collection_method": "투수별 등판 로그의 실점/자책 rolling 집계",
+        "known_before_game": "yes",
+        "leakage_risk": "medium",
+        "expected_effect": "high",
+        "implementation_difficulty": "medium",
+        "next_action": "당일 경기 성적 제외 검증 로직과 함께 수집"
+      },
+      {
+        "data_item": "선발 최근 3경기 WHIP 유사 지표",
+        "current_source": "not_available",
+        "available_now": "no",
+        "collection_method": "최근 등판 피안타/볼넷/이닝 기반 rolling 계산",
+        "known_before_game": "yes",
+        "leakage_risk": "medium",
+        "expected_effect": "high",
+        "implementation_difficulty": "medium",
+        "next_action": "투수별 피안타·볼넷·이닝 로그 확보 후 생성"
+      },
+      {
+        "data_item": "선발 휴식일",
+        "current_source": "not_available",
+        "available_now": "no",
+        "collection_method": "확정/추정 선발명과 이전 등판일 차이 계산",
+        "known_before_game": "yes",
+        "leakage_risk": "low",
+        "expected_effect": "medium",
+        "implementation_difficulty": "medium",
+        "next_action": "선발명 히스토리와 투수 등판 로그를 연결한 뒤 추가"
+      },
+      {
+        "data_item": "선발 시즌 ERA/WHIP",
+        "current_source": "pitcher_stats.csv / pitching_context.csv",
+        "available_now": "partial",
+        "collection_method": "현재 스냅샷은 표시용으로 사용, 과거 시점별 스냅샷 필요",
+        "known_before_game": "yes",
+        "leakage_risk": "high_without_snapshots",
+        "expected_effect": "medium",
+        "implementation_difficulty": "medium",
+        "next_action": "과거 경기에는 최신 스냅샷을 붙이지 않고 날짜별 누적 기록 저장"
+      }
+    ],
+    "bullpen_data_availability_summary": [
+      {
+        "data_item": "최근 3일 팀 불펜 등판 수",
+        "current_source": "not_available",
+        "available_now": "no",
+        "collection_method": "투수별 등판 로그에서 선발 제외 투수 수 집계",
+        "known_before_game": "yes",
+        "leakage_risk": "medium",
+        "expected_effect": "high",
+        "implementation_difficulty": "high",
+        "next_action": "투수별 box score 수집기 필요"
+      },
+      {
+        "data_item": "최근 3일 불펜 총 이닝",
+        "current_source": "not_available",
+        "available_now": "no",
+        "collection_method": "팀별 투수 등판 로그에서 불펜 이닝 rolling 집계",
+        "known_before_game": "yes",
+        "leakage_risk": "medium",
+        "expected_effect": "high",
+        "implementation_difficulty": "high",
+        "next_action": "전날 경기까지의 불펜 이닝만 사용하도록 수집"
+      },
+      {
+        "data_item": "최근 3일 불펜 투구 수",
+        "current_source": "not_available",
+        "available_now": "no",
+        "collection_method": "투수별 투구수 로그 수집",
+        "known_before_game": "yes",
+        "leakage_risk": "medium",
+        "expected_effect": "high",
+        "implementation_difficulty": "high",
+        "next_action": "KBO box score 또는 GameCenter 세부 투구 기록 파싱 검토"
+      },
+      {
+        "data_item": "전날 선발 이닝",
+        "current_source": "not_available",
+        "available_now": "no",
+        "collection_method": "전날 경기 선발투수 이닝 추출",
+        "known_before_game": "yes",
+        "leakage_risk": "low",
+        "expected_effect": "medium",
+        "implementation_difficulty": "medium",
+        "next_action": "선발 등판 로그 확보 후 불펜 부담 proxy로 사용"
+      },
+      {
+        "data_item": "전날 불펜 소모량",
+        "current_source": "games_last_7_days/back_to_back proxy",
+        "available_now": "proxy_only",
+        "collection_method": "현재는 일정 기반 proxy, 실제 불펜 이닝으로 대체 필요",
+        "known_before_game": "yes",
+        "leakage_risk": "low",
+        "expected_effect": "high",
+        "implementation_difficulty": "high",
+        "next_action": "proxy는 유지하되 모델 교체 근거로 사용하지 않음"
+      },
+      {
+        "data_item": "핵심 불펜 연투 여부",
+        "current_source": "not_available",
+        "available_now": "no",
+        "collection_method": "세이브/홀드 상위 투수의 최근 2~3일 등판 여부 계산",
+        "known_before_game": "yes",
+        "leakage_risk": "medium",
+        "expected_effect": "high",
+        "implementation_difficulty": "high",
+        "next_action": "핵심 불펜 정의와 등판 로그 수집 후 실험"
+      }
+    ],
+    "pitching_feature_experiment_summary": [
+      {
+        "model": "핵심 수치 GradientBoosting 보수 모델",
+        "feature_set": "baseline_core",
+        "accuracy": 0.544,
+        "brier": 0.248,
+        "log_loss": 0.689,
+        "over_55_games": 1288,
+        "over_55_accuracy": 0.555,
+        "winning_streak_accuracy": 0.529,
+        "losing_streak_accuracy": 0.578,
+        "close_game_accuracy": 0.541,
+        "recent_3year_accuracy": null,
+        "selected_candidate": true,
+        "status": "evaluated"
+      },
+      {
+        "model": "Streak 피처 GradientBoosting 실험",
+        "feature_set": "baseline_plus_streak",
+        "accuracy": 0.543,
+        "brier": 0.249,
+        "log_loss": 0.691,
+        "over_55_games": 1379,
+        "over_55_accuracy": 0.548,
+        "winning_streak_accuracy": 0.528,
+        "losing_streak_accuracy": 0.578,
+        "close_game_accuracy": 0.532,
+        "recent_3year_accuracy": null,
+        "selected_candidate": false,
+        "status": "evaluated"
+      },
+      {
+        "model": "not_available",
+        "feature_set": "baseline_plus_starter",
+        "accuracy": null,
+        "brier": null,
+        "log_loss": null,
+        "over_55_games": null,
+        "over_55_accuracy": null,
+        "winning_streak_accuracy": null,
+        "losing_streak_accuracy": null,
+        "close_game_accuracy": null,
+        "recent_3year_accuracy": null,
+        "selected_candidate": false,
+        "status": "과거 시점별 선발 최근 3경기/휴식일 데이터가 없어 누수 없이 백테스트 불가"
+      },
+      {
+        "model": "not_available",
+        "feature_set": "baseline_plus_bullpen",
+        "accuracy": null,
+        "brier": null,
+        "log_loss": null,
+        "over_55_games": null,
+        "over_55_accuracy": null,
+        "winning_streak_accuracy": null,
+        "losing_streak_accuracy": null,
+        "close_game_accuracy": null,
+        "recent_3year_accuracy": null,
+        "selected_candidate": false,
+        "status": "실제 불펜 이닝/투구 수 로그가 없어 일정 proxy만 존재"
+      },
+      {
+        "model": "not_available",
+        "feature_set": "baseline_plus_starter_bullpen",
+        "accuracy": null,
+        "brier": null,
+        "log_loss": null,
+        "over_55_games": null,
+        "over_55_accuracy": null,
+        "winning_streak_accuracy": null,
+        "losing_streak_accuracy": null,
+        "close_game_accuracy": null,
+        "recent_3year_accuracy": null,
+        "selected_candidate": false,
+        "status": "선발 히스토리와 불펜 사용량 원천 데이터가 모두 필요"
+      }
+    ],
     "recommended_next_steps": [
       "확정 선발 최근 3경기 성적과 휴식일을 과거 시점 스냅샷으로 저장",
       "불펜 최근 3일 실제 투구 수와 전날 선발 이닝 수집",
       "구장별 득점 환경과 라인업 확정 정보를 예측 시점 기준으로 축적",
       "후보 모델은 Brier/Log Loss와 확신 구간 적중률 개선이 확인될 때만 교체"
     ],
+    "recommended_next_modeling_step": "투수별 경기 로그를 수집해 선발 최근 3경기 성적과 실제 불펜 소모량을 날짜 기준 shift(1) 피처로 검증",
     "safe_to_replace_model": false,
     "reason_not_to_replace_if_false": "후보 모델이 정확도와 확률 품질을 동시에 안정적으로 개선했다는 근거가 부족합니다."
   },

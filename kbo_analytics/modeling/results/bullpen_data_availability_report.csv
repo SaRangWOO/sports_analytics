@@ -1,0 +1,7 @@
+﻿data_item,current_source,available_now,collection_method,known_before_game,leakage_risk,expected_effect,implementation_difficulty,next_action
+최근 3일 팀 불펜 등판 수,not_available,no,투수별 등판 로그에서 선발 제외 투수 수 집계,yes,medium,high,high,투수별 box score 수집기 필요
+최근 3일 불펜 총 이닝,not_available,no,팀별 투수 등판 로그에서 불펜 이닝 rolling 집계,yes,medium,high,high,전날 경기까지의 불펜 이닝만 사용하도록 수집
+최근 3일 불펜 투구 수,not_available,no,투수별 투구수 로그 수집,yes,medium,high,high,KBO box score 또는 GameCenter 세부 투구 기록 파싱 검토
+전날 선발 이닝,not_available,no,전날 경기 선발투수 이닝 추출,yes,low,medium,medium,선발 등판 로그 확보 후 불펜 부담 proxy로 사용
+전날 불펜 소모량,games_last_7_days/back_to_back proxy,proxy_only,"현재는 일정 기반 proxy, 실제 불펜 이닝으로 대체 필요",yes,low,high,high,proxy는 유지하되 모델 교체 근거로 사용하지 않음
+핵심 불펜 연투 여부,not_available,no,세이브/홀드 상위 투수의 최근 2~3일 등판 여부 계산,yes,medium,high,high,핵심 불펜 정의와 등판 로그 수집 후 실험

@@ -581,7 +581,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         row["selected_candidate"] = row["model"] == best["name"]
     streak_report = write_streak_feature_experiment_report(results_dir, streak_experiment_rows)
     spread_report = write_model_probability_spread_report(results_dir, probability_spread_rows)
-    payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, spread_report)
+    payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, spread_report, streak_experiment_rows)
     payload["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload["streak_feature_experiment_rows"] = len(streak_report)
     payload.setdefault("diagnostic_reports", {})["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
@@ -821,7 +821,236 @@ def write_data_gap_analysis(results_dir: Path):
     return frame.to_dict(orient="records")
 
 
-def write_model_insight_summary(results_dir: Path, payload: dict, feature_rows: list[dict], segment_rows: list[dict], data_gaps: list[dict]):
+def write_starter_data_availability_report(results_dir: Path, data_dir: Path):
+    pitching_context_path = data_dir / "pitching_context.csv"
+    pitcher_stats_path = data_dir / "pitcher_stats.csv"
+    has_pitching_context = pitching_context_path.exists()
+    has_pitcher_stats = pitcher_stats_path.exists()
+    rows = [
+        {
+            "data_item": "확정 선발투수",
+            "current_source": "pitching_context.csv / KBO GameCenter",
+            "available_now": "partial" if has_pitching_context else "no",
+            "collection_method": "경기 전 GameCenter START_PIT_CK와 선발명 수집",
+            "known_before_game": "yes",
+            "leakage_risk": "low",
+            "expected_effect": "high",
+            "implementation_difficulty": "medium",
+            "next_action": "시점별 confirmed starter 히스토리 저장 후 백테스트 피처로 승격",
+        },
+        {
+            "data_item": "선발 최근 3경기 ERA",
+            "current_source": "not_available",
+            "available_now": "no",
+            "collection_method": "투수별 경기 로그와 등판일 기준 rolling 집계 필요",
+            "known_before_game": "yes",
+            "leakage_risk": "medium",
+            "expected_effect": "high",
+            "implementation_difficulty": "medium",
+            "next_action": "투수별 game log 수집기 추가 전까지 모델 피처화 보류",
+        },
+        {
+            "data_item": "선발 최근 3경기 평균 이닝",
+            "current_source": "not_available",
+            "available_now": "no",
+            "collection_method": "투수별 경기 로그에서 해당 경기 이전 등판만 shift(1) 집계",
+            "known_before_game": "yes",
+            "leakage_risk": "medium",
+            "expected_effect": "high",
+            "implementation_difficulty": "medium",
+            "next_action": "투수별 선발 등판 로그 확보 후 생성",
+        },
+        {
+            "data_item": "선발 최근 3경기 실점/자책점",
+            "current_source": "not_available",
+            "available_now": "no",
+            "collection_method": "투수별 등판 로그의 실점/자책 rolling 집계",
+            "known_before_game": "yes",
+            "leakage_risk": "medium",
+            "expected_effect": "high",
+            "implementation_difficulty": "medium",
+            "next_action": "당일 경기 성적 제외 검증 로직과 함께 수집",
+        },
+        {
+            "data_item": "선발 최근 3경기 WHIP 유사 지표",
+            "current_source": "not_available",
+            "available_now": "no",
+            "collection_method": "최근 등판 피안타/볼넷/이닝 기반 rolling 계산",
+            "known_before_game": "yes",
+            "leakage_risk": "medium",
+            "expected_effect": "high",
+            "implementation_difficulty": "medium",
+            "next_action": "투수별 피안타·볼넷·이닝 로그 확보 후 생성",
+        },
+        {
+            "data_item": "선발 휴식일",
+            "current_source": "not_available",
+            "available_now": "no",
+            "collection_method": "확정/추정 선발명과 이전 등판일 차이 계산",
+            "known_before_game": "yes",
+            "leakage_risk": "low",
+            "expected_effect": "medium",
+            "implementation_difficulty": "medium",
+            "next_action": "선발명 히스토리와 투수 등판 로그를 연결한 뒤 추가",
+        },
+        {
+            "data_item": "선발 시즌 ERA/WHIP",
+            "current_source": "pitcher_stats.csv / pitching_context.csv",
+            "available_now": "partial" if has_pitcher_stats and has_pitching_context else "no",
+            "collection_method": "현재 스냅샷은 표시용으로 사용, 과거 시점별 스냅샷 필요",
+            "known_before_game": "yes",
+            "leakage_risk": "high_without_snapshots",
+            "expected_effect": "medium",
+            "implementation_difficulty": "medium",
+            "next_action": "과거 경기에는 최신 스냅샷을 붙이지 않고 날짜별 누적 기록 저장",
+        },
+    ]
+    pd.DataFrame(rows).to_csv(results_dir / "starter_data_availability_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_bullpen_data_availability_report(results_dir: Path, data_dir: Path):
+    model_training_path = data_dir / "model_training_games.csv"
+    has_team_games = model_training_path.exists()
+    rows = [
+        {
+            "data_item": "최근 3일 팀 불펜 등판 수",
+            "current_source": "not_available",
+            "available_now": "no",
+            "collection_method": "투수별 등판 로그에서 선발 제외 투수 수 집계",
+            "known_before_game": "yes",
+            "leakage_risk": "medium",
+            "expected_effect": "high",
+            "implementation_difficulty": "high",
+            "next_action": "투수별 box score 수집기 필요",
+        },
+        {
+            "data_item": "최근 3일 불펜 총 이닝",
+            "current_source": "not_available",
+            "available_now": "no",
+            "collection_method": "팀별 투수 등판 로그에서 불펜 이닝 rolling 집계",
+            "known_before_game": "yes",
+            "leakage_risk": "medium",
+            "expected_effect": "high",
+            "implementation_difficulty": "high",
+            "next_action": "전날 경기까지의 불펜 이닝만 사용하도록 수집",
+        },
+        {
+            "data_item": "최근 3일 불펜 투구 수",
+            "current_source": "not_available",
+            "available_now": "no",
+            "collection_method": "투수별 투구수 로그 수집",
+            "known_before_game": "yes",
+            "leakage_risk": "medium",
+            "expected_effect": "high",
+            "implementation_difficulty": "high",
+            "next_action": "KBO box score 또는 GameCenter 세부 투구 기록 파싱 검토",
+        },
+        {
+            "data_item": "전날 선발 이닝",
+            "current_source": "not_available",
+            "available_now": "no",
+            "collection_method": "전날 경기 선발투수 이닝 추출",
+            "known_before_game": "yes",
+            "leakage_risk": "low",
+            "expected_effect": "medium",
+            "implementation_difficulty": "medium",
+            "next_action": "선발 등판 로그 확보 후 불펜 부담 proxy로 사용",
+        },
+        {
+            "data_item": "전날 불펜 소모량",
+            "current_source": "games_last_7_days/back_to_back proxy",
+            "available_now": "proxy_only" if has_team_games else "no",
+            "collection_method": "현재는 일정 기반 proxy, 실제 불펜 이닝으로 대체 필요",
+            "known_before_game": "yes",
+            "leakage_risk": "low",
+            "expected_effect": "high",
+            "implementation_difficulty": "high",
+            "next_action": "proxy는 유지하되 모델 교체 근거로 사용하지 않음",
+        },
+        {
+            "data_item": "핵심 불펜 연투 여부",
+            "current_source": "not_available",
+            "available_now": "no",
+            "collection_method": "세이브/홀드 상위 투수의 최근 2~3일 등판 여부 계산",
+            "known_before_game": "yes",
+            "leakage_risk": "medium",
+            "expected_effect": "high",
+            "implementation_difficulty": "high",
+            "next_action": "핵심 불펜 정의와 등판 로그 수집 후 실험",
+        },
+    ]
+    pd.DataFrame(rows).to_csv(results_dir / "bullpen_data_availability_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_pitching_feature_experiment_report(results_dir: Path, streak_rows: list[dict], selected_model: str):
+    def row_from_streak(feature_set: str):
+        candidates = [row for row in streak_rows if row.get("feature_set") == feature_set]
+        if not candidates:
+            return None
+        return max(candidates, key=lambda row: row.get("accuracy") or 0)
+
+    baseline = row_from_streak("compact_baseline")
+    streak = row_from_streak("compact_plus_streak")
+    rows = []
+    for feature_set, source in [("baseline_core", baseline), ("baseline_plus_streak", streak)]:
+        if source:
+            rows.append(
+                {
+                    "model": source["model"],
+                    "feature_set": feature_set,
+                    "accuracy": source["accuracy"],
+                    "brier": source["brier"],
+                    "log_loss": source["log_loss"],
+                    "over_55_games": source["over_55_games"],
+                    "over_55_accuracy": source["over_55_accuracy"],
+                    "winning_streak_accuracy": source["winning_streak_accuracy"],
+                    "losing_streak_accuracy": source["losing_streak_accuracy"],
+                    "close_game_accuracy": source["close_game_accuracy"],
+                    "recent_3year_accuracy": None,
+                    "selected_candidate": source["model"] == selected_model,
+                    "status": "evaluated",
+                }
+            )
+
+    for feature_set, reason in [
+        ("baseline_plus_starter", "과거 시점별 선발 최근 3경기/휴식일 데이터가 없어 누수 없이 백테스트 불가"),
+        ("baseline_plus_bullpen", "실제 불펜 이닝/투구 수 로그가 없어 일정 proxy만 존재"),
+        ("baseline_plus_starter_bullpen", "선발 히스토리와 불펜 사용량 원천 데이터가 모두 필요"),
+    ]:
+        rows.append(
+            {
+                "model": "not_available",
+                "feature_set": feature_set,
+                "accuracy": None,
+                "brier": None,
+                "log_loss": None,
+                "over_55_games": None,
+                "over_55_accuracy": None,
+                "winning_streak_accuracy": None,
+                "losing_streak_accuracy": None,
+                "close_game_accuracy": None,
+                "recent_3year_accuracy": None,
+                "selected_candidate": False,
+                "status": reason,
+            }
+        )
+
+    pd.DataFrame(rows).to_csv(results_dir / "pitching_feature_experiment_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_model_insight_summary(
+    results_dir: Path,
+    payload: dict,
+    feature_rows: list[dict],
+    segment_rows: list[dict],
+    data_gaps: list[dict],
+    starter_availability: list[dict] | None = None,
+    bullpen_availability: list[dict] | None = None,
+    pitching_experiment_rows: list[dict] | None = None,
+):
     sorted_segments = [row for row in segment_rows if row["total_games"]]
     best_segments = sorted(sorted_segments, key=lambda row: row["accuracy"] or 0, reverse=True)[:5]
     worst_segments = sorted(sorted_segments, key=lambda row: row["accuracy"] or 1)[:5]
@@ -844,12 +1073,16 @@ def write_model_insight_summary(results_dir: Path, payload: dict, feature_rows: 
         "best_performing_segments": best_segments,
         "worst_performing_segments": worst_segments,
         "data_gaps": data_gaps,
+        "pitching_data_availability_summary": starter_availability or [],
+        "bullpen_data_availability_summary": bullpen_availability or [],
+        "pitching_feature_experiment_summary": pitching_experiment_rows or [],
         "recommended_next_steps": [
             "확정 선발 최근 3경기 성적과 휴식일을 과거 시점 스냅샷으로 저장",
             "불펜 최근 3일 실제 투구 수와 전날 선발 이닝 수집",
             "구장별 득점 환경과 라인업 확정 정보를 예측 시점 기준으로 축적",
             "후보 모델은 Brier/Log Loss와 확신 구간 적중률 개선이 확인될 때만 교체",
         ],
+        "recommended_next_modeling_step": "투수별 경기 로그를 수집해 선발 최근 3경기 성적과 실제 불펜 소모량을 날짜 기준 shift(1) 피처로 검증",
         "safe_to_replace_model": safe_to_replace,
         "reason_not_to_replace_if_false": "" if safe_to_replace else "후보 모델이 정확도와 확률 품질을 동시에 안정적으로 개선했다는 근거가 부족합니다.",
     }
@@ -892,7 +1125,7 @@ def train_prediction_bundle(best, training_games, prediction_training_cutoff, da
     return {"model_type": best["model_type"], "model": model, "mean": mean, "std": std}
 
 
-def build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, probability_spread_rows):
+def build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, probability_spread_rows, streak_experiment_rows):
     columns = best["columns"]
     probability = best["probability"]
     pred = best["pred"]
@@ -1047,11 +1280,26 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
     seasonal_segments = write_seasonal_performance_report(results_dir, eval_frame, np.asarray(y_eval), np.asarray(probability))
     model_selection_rows = write_model_selection_report(results_dir, candidate_results, probability_spread_rows, best["name"])
     data_gaps = write_data_gap_analysis(results_dir)
-    insight_summary = write_model_insight_summary(results_dir, payload, feature_diagnostics, game_type_segments, data_gaps)
+    starter_availability = write_starter_data_availability_report(results_dir, data_dir)
+    bullpen_availability = write_bullpen_data_availability_report(results_dir, data_dir)
+    pitching_experiment_rows = write_pitching_feature_experiment_report(results_dir, streak_experiment_rows, best["name"])
+    insight_summary = write_model_insight_summary(
+        results_dir,
+        payload,
+        feature_diagnostics,
+        game_type_segments,
+        data_gaps,
+        starter_availability,
+        bullpen_availability,
+        pitching_experiment_rows,
+    )
     payload["diagnostic_reports"] = {
         "feature_diagnostic_report": "modeling/results/feature_diagnostic_report.csv",
         "game_type_performance_report": "modeling/results/game_type_performance_report.csv",
         "data_gap_analysis": "modeling/results/data_gap_analysis.csv",
+        "starter_data_availability_report": "modeling/results/starter_data_availability_report.csv",
+        "bullpen_data_availability_report": "modeling/results/bullpen_data_availability_report.csv",
+        "pitching_feature_experiment_report": "modeling/results/pitching_feature_experiment_report.csv",
         "model_selection_report": "modeling/results/model_selection_report.csv",
         "seasonal_performance_report": "modeling/results/seasonal_performance_report.csv",
         "model_insight_summary": "modeling/results/model_insight_summary.json",
@@ -1062,6 +1310,9 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         "seasonal_segments": len(seasonal_segments),
         "model_selection_rows": len(model_selection_rows),
         "data_gaps": len(data_gaps),
+        "starter_data_availability": len(starter_availability),
+        "bullpen_data_availability": len(bullpen_availability),
+        "pitching_feature_experiment_rows": len(pitching_experiment_rows),
     }
     payload["model_insight_summary"] = insight_summary
     return payload
