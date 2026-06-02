@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-01T12:40:42",
+  "generated_at": "2026-06-02T10:29:17",
   "input_file": "/home/tera/1.project/1.sports_analytics/kbo_analytics/data/official/model_training_games.csv",
   "model_scope": "independent_run_model",
   "notes": [
@@ -176,11 +176,11 @@
     "run_diff_direction_accuracy": 0.5301
   },
   "today_prediction_status": {
-    "reference_date": "2026-06-01",
-    "scheduled_games": 0,
-    "message": "오늘 예정 경기가 없습니다."
+    "reference_date": "2026-06-02",
+    "scheduled_games": 5,
+    "message": "5경기 예정 경기 예측을 생성했습니다."
   },
-  "today_prediction_rows": 0,
+  "today_prediction_rows": 5,
   "error_analysis_summary": {
     "score_bucket_error": [
       {
