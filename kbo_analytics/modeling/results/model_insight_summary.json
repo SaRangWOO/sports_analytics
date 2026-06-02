@@ -481,7 +481,7 @@
     }
   ],
   "pitching_snapshot_collection_status": {
-    "generated_at": "2026-06-02 13:09:00",
+    "generated_at": "2026-06-02 13:21:20",
     "reference_date": "2026-06-02",
     "snapshot_rows_total": 10,
     "snapshot_rows_for_reference_date": 10,
@@ -501,7 +501,7 @@
       "한화"
     ],
     "scheduled_games": 5,
-    "snapshot_file": "data\\official\\pitching_daily_snapshot.csv",
+    "snapshot_file": "data/official/pitching_daily_snapshot.csv",
     "leakage_policy_note": "pitching_daily_snapshot.csv는 예측 시점에 저장된 정보만 누적하며 현재 모델 학습 피처로 사용하지 않습니다."
   },
   "leakage_safe_pitching_data_policy": "투수 스냅샷은 예측 시점에 알고 있던 정보만 누적 저장하며, 현재 운영 모델 학습 피처로 바로 사용하지 않습니다.",
