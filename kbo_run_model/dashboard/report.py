@@ -242,6 +242,28 @@ INTERNAL_PITCHER_CONVERSION_COLUMNS = {
     "blocker": "차단 사유",
 }
 
+STARTER_SOURCE_RESEARCH_COLUMNS = {
+    "source_name": "원천",
+    "source_url": "URL",
+    "date_checked": "확인 날짜",
+    "access_ok": "접근 가능",
+    "games_found": "경기 수",
+    "home_team_found": "홈팀",
+    "away_team_found": "원정팀",
+    "home_starter_found": "홈 선발",
+    "away_starter_found": "원정 선발",
+    "pitcher_id_available": "pitcher_id",
+    "game_id_match_possible": "game_id 매칭",
+    "requires_javascript": "JS 필요",
+    "robots_or_terms_risk": "수집 리스크",
+    "rate_limit_risk": "요청 제한 리스크",
+    "parsing_stability": "파싱 안정성",
+    "implementation_difficulty": "구현 난이도",
+    "viability_status": "판정",
+    "blocker": "차단 사유",
+    "recommendation_rank": "추천 순위",
+}
+
 
 def _format_generated_at(value: str) -> str:
     return value.replace("T", " ")[:16]
@@ -533,9 +555,17 @@ def write_html_report(
     internal_inventory = pd.read_csv(results_dir / "internal_pitcher_data_inventory.csv")
     internal_mapping = pd.read_csv(results_dir / "internal_pitcher_mapping_report.csv")
     internal_conversion = pd.read_csv(results_dir / "internal_pitcher_conversion_check.csv")
+    source_research_path = results_dir / "starter_pitcher_source_research.csv"
+    if source_research_path.exists():
+        source_research = pd.read_csv(source_research_path)
+    else:
+        source_research = pd.DataFrame(columns=list(STARTER_SOURCE_RESEARCH_COLUMNS))
     internal_inventory_table = _table(internal_inventory[list(INTERNAL_PITCHER_INVENTORY_COLUMNS)], INTERNAL_PITCHER_INVENTORY_COLUMNS, limit=20)
     internal_mapping_table = _table(internal_mapping, INTERNAL_PITCHER_MAPPING_COLUMNS)
     internal_conversion_table = _table(internal_conversion, INTERNAL_PITCHER_CONVERSION_COLUMNS)
+    source_research_table = _table(source_research, STARTER_SOURCE_RESEARCH_COLUMNS) if not source_research.empty else '<p class="empty">선발투수 원천 조사가 아직 실행되지 않았습니다.</p>'
+    partial_source_count = int(source_research["viability_status"].eq("partially_viable").sum()) if not source_research.empty else 0
+    manual_source_count = int(source_research["viability_status"].eq("manual_only").sum()) if not source_research.empty else 0
     pitcher_ready = "학습 가능" if summary["pitcher_data_ready_to_train"] else "학습 불가"
     pitcher_collection_status = "투수 데이터 준비 완료" if summary["pitcher_data_ready_to_train"] else "투수 데이터 미수집"
     mapping_train_ready = "학습 가능" if summary["pitcher_data_ready_to_train_after_mapping"] else "학습 불가"
@@ -796,6 +826,19 @@ def write_html_report(
       blocker: {html.escape(str(summary["starter_pitcher_collection_blocker"]))}<br>
       다음 필요 작업: 선발투수 이름과 가능한 pitcher_id를 제공하는 공식 또는 신뢰 가능한 원천을 확보한 뒤 수집 검증을 재실행합니다.
     </p>
+    <h3>선발투수 원천 조사 상태</h3>
+    <p class="note">
+      조사 완료 여부: {"예" if summary["starter_pitcher_source_research_completed"] else "아니오"}<br>
+      조사한 원천 수: {summary["starter_pitcher_sources_checked"]}<br>
+      수집 가능 원천 수: {summary["viable_starter_pitcher_sources"]}<br>
+      부분 가능 원천 수: {partial_source_count}<br>
+      수동 입력 원천 수: {manual_source_count}<br>
+      추천 원천: {html.escape(str(summary["recommended_starter_pitcher_source"] or "없음"))}<br>
+      추천 순위: {summary["recommended_starter_pitcher_source_rank"]}<br>
+      blocker: {html.escape(str(summary["starter_pitcher_source_blocker"]))}<br>
+      다음 권장 작업: {html.escape(str(summary["next_recommended_starter_collection_step"]))}
+    </p>
+    <div class="table-wrap">{source_research_table}</div>
     <h3>내부 투수 데이터 매핑 분석</h3>
     <p class="note">
       발견된 투수/선수 관련 파일 수: {summary["internal_pitcher_candidate_files"]}<br>

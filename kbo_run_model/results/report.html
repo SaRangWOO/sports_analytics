@@ -51,7 +51,7 @@
   <section>
     <h2>기준 정보</h2>
     <div class="summary-grid">
-      <div class="summary-item"><div class="label">생성 시각</div><div class="value">2026-06-04 09:13</div></div>
+      <div class="summary-item"><div class="label">생성 시각</div><div class="value">2026-06-04 13:40</div></div>
       <div class="summary-item"><div class="label">예측 기준일</div><div class="value">2026-06-04</div></div>
       <div class="summary-item"><div class="label">경기 수</div><div class="value">5경기</div></div>
       <div class="summary-item"><div class="label">데이터 기준</div><div class="value">오늘 경기 기준</div></div>
@@ -1933,6 +1933,14 @@
       <td>아니오</td>
     </tr>
     <tr>
+      <td>kbo_analytics/modeling/results/pitching_snapshot_accumulation_report.csv</td>
+      <td>3</td>
+      <td></td>
+      <td>date, game_id, home_team, away_team, home_starter_id, away_starter_id</td>
+      <td>date, game_id, pitcher_id, team, opponent, is_starter, innings_pitched, earned_runs, hits_allowed, walks, strikeouts, home_runs_allowed, pitches</td>
+      <td>아니오</td>
+    </tr>
+    <tr>
       <td>kbo_analytics/modeling/results/player_team_context.csv</td>
       <td>10</td>
       <td>team</td>
@@ -1942,7 +1950,7 @@
     </tr>
     <tr>
       <td>kbo_analytics/modeling/results/pregame_prediction_history.csv</td>
-      <td>1088</td>
+      <td>1113</td>
       <td>game_id, home_team, away_team</td>
       <td>date, home_starter_id, away_starter_id</td>
       <td>date, pitcher_id, team, opponent, is_starter, innings_pitched, earned_runs, hits_allowed, walks, strikeouts, home_runs_allowed, pitches</td>
@@ -2060,9 +2068,153 @@
       blocker: 공식 일정/스코어보드 페이지에서 선발투수 필드 확인 불가<br>
       다음 필요 작업: 선발투수 이름과 가능한 pitcher_id를 제공하는 공식 또는 신뢰 가능한 원천을 확보한 뒤 수집 검증을 재실행합니다.
     </p>
+    <h3>선발투수 원천 조사 상태</h3>
+    <p class="note">
+      조사 완료 여부: 예<br>
+      조사한 원천 수: 5<br>
+      수집 가능 원천 수: 1<br>
+      부분 가능 원천 수: 1<br>
+      수동 입력 원천 수: 1<br>
+      추천 원천: statiz<br>
+      추천 순위: 1<br>
+      blocker: <br>
+      다음 권장 작업: Statiz 승부예측 페이지의 날짜별 s_no 탐색과 팀명 매칭을 collector로 분리 검증합니다.
+    </p>
+    <div class="table-wrap"><table class="dataframe table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>원천</th>
+      <th>URL</th>
+      <th>확인 날짜</th>
+      <th>접근 가능</th>
+      <th>경기 수</th>
+      <th>홈팀</th>
+      <th>원정팀</th>
+      <th>홈 선발</th>
+      <th>원정 선발</th>
+      <th>pitcher_id</th>
+      <th>game_id 매칭</th>
+      <th>JS 필요</th>
+      <th>수집 리스크</th>
+      <th>요청 제한 리스크</th>
+      <th>파싱 안정성</th>
+      <th>구현 난이도</th>
+      <th>판정</th>
+      <th>차단 사유</th>
+      <th>추천 순위</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>statiz</td>
+      <td>https://www.statiz.co.kr/prediction/?s_no=20260281 | https://www.statiz.co.kr/prediction/?s_no=20260282 | https://www.statiz.co.kr/prediction/?s_no=20260283 | https://www.statiz.co.kr/prediction/?s_no=20260284 | https://www.statiz.co.kr/prediction/?s_no=20260285</td>
+      <td>2026-06-02</td>
+      <td>True</td>
+      <td>5</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>high</td>
+      <td>medium</td>
+      <td>medium</td>
+      <td>medium</td>
+      <td>viable</td>
+      <td>NaN</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>manual</td>
+      <td>kbo_run_model/data/starter_pitchers.csv</td>
+      <td>2026-06-02</td>
+      <td>True</td>
+      <td>5</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>none</td>
+      <td>none</td>
+      <td>high</td>
+      <td>low</td>
+      <td>manual_only</td>
+      <td>자동 수집은 아니며 사람이 선발투수명을 입력해야 함</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>daum</td>
+      <td>https://sports.daum.net/schedule/KBO</td>
+      <td>2026-06-02</td>
+      <td>True</td>
+      <td>0</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>high</td>
+      <td>medium</td>
+      <td>low</td>
+      <td>high</td>
+      <td>partially_viable</td>
+      <td>뉴스 기사에서는 일부 선발명을 확인할 수 있으나 일정 페이지 초기 HTML에서 경기별 구조화 데이터 확인 불가</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>kbo</td>
+      <td>https://www.koreabaseball.com/Schedule/ScoreBoard.aspx</td>
+      <td>2026-06-02</td>
+      <td>True</td>
+      <td>5</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>high</td>
+      <td>low</td>
+      <td>medium</td>
+      <td>medium</td>
+      <td>not_viable</td>
+      <td>공식 일정/스코어보드 HTML에서 선발투수 필드 확인 불가</td>
+      <td>99</td>
+    </tr>
+    <tr>
+      <td>naver</td>
+      <td>https://m.sports.naver.com/kbaseball/schedule/index</td>
+      <td>2026-06-02</td>
+      <td>True</td>
+      <td>0</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>high</td>
+      <td>medium</td>
+      <td>low</td>
+      <td>high</td>
+      <td>not_viable</td>
+      <td>초기 HTML에서 2026-06-02 경기와 선발투수명 확인 불가, JavaScript/API 의존 가능성</td>
+      <td>99</td>
+    </tr>
+  </tbody>
+</table></div>
     <h3>내부 투수 데이터 매핑 분석</h3>
     <p class="note">
-      발견된 투수/선수 관련 파일 수: 15<br>
+      발견된 투수/선수 관련 파일 수: 17<br>
       가장 유망한 선발투수 데이터 파일: kbo_analytics/data/manual/confirmed_starters.csv<br>
       가장 유망한 투수 로그 데이터 파일: kbo_analytics/data/weekly/player_game_stats.csv<br>
       starter_pitchers.csv 변환 가능 여부: 아니오<br>
@@ -2197,6 +2349,32 @@
     <tr>
       <td>kbo_analytics/modeling/results/pitching_feature_experiment_report.csv</td>
       <td>5</td>
+      <td>pitcher_summary</td>
+      <td>not_enough_columns</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>kbo_analytics/modeling/results/pitching_snapshot_accumulation_report.csv</td>
+      <td>3</td>
+      <td>pitcher_summary</td>
+      <td>not_enough_columns</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>kbo_analytics/modeling/results/pitching_snapshot_quality_report.csv</td>
+      <td>10</td>
       <td>pitcher_summary</td>
       <td>not_enough_columns</td>
       <td>False</td>

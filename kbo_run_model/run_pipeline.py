@@ -17,6 +17,7 @@ from collectors.pitcher_data_validation import validate_pitcher_data_pipeline
 from collectors.schedule import load_schedule, select_target_games, validate_schedule_selection
 from collectors.schedule_update import build_schedule_status, write_schedule_update_report
 from collectors.starter_pitcher_collector import collect_and_maybe_apply, load_collection_summary
+from collectors.starter_source_research import load_source_research_summary
 from collectors.schema import inspect_starter_schema
 from collectors.search_internal_data import search_internal_pitcher_data
 from dashboard.report import write_html_report
@@ -90,6 +91,27 @@ def _train_win_converter(model: object, train_df: pd.DataFrame, feature_columns:
     converter = LogisticRegression()
     converter.fit(train_games[["expected_run_diff"]], train_games["home_actual_win"])
     return converter
+
+
+def _validate_match_outputs(match_predictions: pd.DataFrame, output_dir: Path) -> dict:
+    csv_path = output_dir / "match_predictions.csv"
+    if match_predictions.empty:
+        return {
+            "dashboard_csv_match": "passed",
+            "winner_probability_consistency": "passed",
+        }
+    saved = pd.read_csv(csv_path)
+    dashboard_csv_match = saved.astype(str).equals(match_predictions.astype(str))
+    winner_expected = np.where(
+        match_predictions["home_win_probability"].ge(match_predictions["away_win_probability"]),
+        match_predictions["home_team"],
+        match_predictions["away_team"],
+    )
+    winner_probability_consistency = bool((match_predictions["predicted_winner"].to_numpy() == winner_expected).all())
+    return {
+        "dashboard_csv_match": "passed" if dashboard_csv_match else "failed",
+        "winner_probability_consistency": "passed" if winner_probability_consistency else "failed",
+    }
 
 
 def _build_match_predictions(
@@ -189,6 +211,7 @@ def run_pipeline(
     if not starter_collection_report_path.exists():
         collect_and_maybe_apply(schedule, DEFAULT_STARTERS, output_dir, apply=False, probe_external=False)
     starter_pitcher_collection = load_collection_summary(starter_collection_report_path)
+    starter_source_research = load_source_research_summary(output_dir / "starter_pitcher_source_research.csv")
     target_games, target_context = select_target_games(schedule, target_date, current_date_kst, allow_past_fallback)
     feature_df, feature_columns = build_feature_matrix(team_games)
     starters, pitcher_logs, starter_data_status = load_starter_inputs(DEFAULT_STARTERS, DEFAULT_PITCHER_LOGS)
@@ -231,6 +254,7 @@ def run_pipeline(
     pd.DataFrame(selected_team_metrics).to_csv(output_dir / "team_bias_metrics.csv", index=False, encoding="utf-8-sig")
     selected_predictions.to_csv(output_dir / "expected_runs_predictions.csv", index=False, encoding="utf-8-sig")
     match_predictions.to_csv(output_dir / "match_predictions.csv", index=False, encoding="utf-8-sig")
+    match_output_validation = _validate_match_outputs(match_predictions, output_dir)
     pd.DataFrame([schedule_check]).to_csv(output_dir / "schedule_selection_check.csv", index=False, encoding="utf-8-sig")
     write_schedule_update_report(schedule_update_status, output_dir / "schedule_update_report.csv")
     error_analysis["game_errors"].to_csv(output_dir / "error_analysis_games.csv", index=False, encoding="utf-8-sig")
@@ -283,6 +307,8 @@ def run_pipeline(
         "schedule_update_blocker": schedule_update_status["schedule_update_blocker"],
         "schedule_update_status": schedule_update_status,
         **starter_pitcher_collection,
+        **starter_source_research,
+        **match_output_validation,
         "schedule_selection_check": schedule_check,
         "train_ratio": train_ratio,
         "training_cutoff": pd.Timestamp(cutoff).strftime("%Y-%m-%d"),
@@ -341,6 +367,7 @@ def run_pipeline(
             "schedule_update_report.csv",
             "starter_pitcher_collection_report.csv",
             "starter_pitcher_validation.csv",
+            "starter_pitcher_source_research.csv",
             "error_analysis_games.csv",
             "win_probability_bucket_metrics.csv",
             "total_runs_error_metrics.csv",

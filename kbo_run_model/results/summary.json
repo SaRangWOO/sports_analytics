@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-04T09:13:08+09:00",
+  "generated_at": "2026-06-04T13:40:21+09:00",
   "input_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\model_training_games.csv",
   "schedule_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\prediction_games.csv",
   "target_context": {
@@ -69,6 +69,15 @@
   "starter_pitcher_id_missing_count": 0,
   "starter_pitcher_data_ready_to_train": false,
   "starter_pitcher_collection_blocker": "공식 일정/스코어보드 페이지에서 선발투수 필드 확인 불가",
+  "starter_pitcher_source_research_completed": true,
+  "starter_pitcher_sources_checked": 5,
+  "viable_starter_pitcher_sources": 1,
+  "recommended_starter_pitcher_source": "statiz",
+  "recommended_starter_pitcher_source_rank": 1,
+  "starter_pitcher_source_blocker": "",
+  "next_recommended_starter_collection_step": "Statiz 승부예측 페이지의 날짜별 s_no 탐색과 팀명 매칭을 collector로 분리 검증합니다.",
+  "dashboard_csv_match": "passed",
+  "winner_probability_consistency": "passed",
   "schedule_selection_check": {
     "target_date": "2026-06-04",
     "selected_target_date": "2026-06-04",
@@ -1289,6 +1298,69 @@
         "ready_to_use": false
       },
       {
+        "file": "kbo_analytics/modeling/results/pitching_snapshot_accumulation_report.csv",
+        "columns": [
+          "snapshot_date",
+          "reference_date",
+          "scheduled_games",
+          "expected_team_rows",
+          "actual_team_rows",
+          "confirmed_starter_count",
+          "estimated_starter_count",
+          "unknown_starter_count",
+          "duplicate_key_count",
+          "quality_status",
+          "safe_for_future_feature_use",
+          "note"
+        ],
+        "normalized_columns": [
+          "snapshot_date",
+          "reference_date",
+          "scheduled_games",
+          "expected_team_rows",
+          "actual_team_rows",
+          "confirmed_starter_count",
+          "estimated_starter_count",
+          "unknown_starter_count",
+          "duplicate_key_count",
+          "quality_status",
+          "safe_for_future_feature_use",
+          "note"
+        ],
+        "matched_terms": [
+          "starter"
+        ],
+        "mapped_v2_columns": [],
+        "missing_starter_mapping_columns": [
+          "date",
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_pitcher_log_columns": [
+          "date",
+          "game_id",
+          "pitcher_id",
+          "team",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "row_count": 3,
+        "sample_only": false,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      },
+      {
         "file": "kbo_analytics/modeling/results/player_team_context.csv",
         "columns": [
           "team",
@@ -1402,7 +1474,7 @@
           "home_runs_allowed",
           "pitches"
         ],
-        "row_count": 1088,
+        "row_count": 1113,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -1772,7 +1844,7 @@
     }
   },
   "internal_pitcher_mapping_completed": true,
-  "internal_pitcher_candidate_files": 15,
+  "internal_pitcher_candidate_files": 17,
   "best_starter_source_file": "kbo_analytics/data/manual/confirmed_starters.csv",
   "best_pitcher_log_source_file": "kbo_analytics/data/weekly/player_game_stats.csv",
   "starter_conversion_possible": false,
@@ -1831,6 +1903,7 @@
     "schedule_update_report.csv",
     "starter_pitcher_collection_report.csv",
     "starter_pitcher_validation.csv",
+    "starter_pitcher_source_research.csv",
     "error_analysis_games.csv",
     "win_probability_bucket_metrics.csv",
     "total_runs_error_metrics.csv",
