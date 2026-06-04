@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-04 11:30:02",
+  "generated_at": "2026-06-04 12:00:03",
   "reference_date": "2026-06-04",
   "snapshot_file": "data/official/pitching_daily_snapshot.csv",
   "total_snapshot_rows": 50,
@@ -16,7 +16,12 @@
   "warnings": [],
   "safe_for_future_feature_use": false,
   "reason_if_not_safe": "누적 기간 부족: 최소 30일 이상 필요",
+  "minimum_required_days": 30,
   "accumulated_snapshot_days": 3,
+  "remaining_days_to_feature_use": 27,
+  "accumulation_progress_pct": 10.0,
+  "earliest_feature_experiment_date": "2026-07-01",
+  "feature_use_gate_status": "blocked_until_minimum_history",
   "first_snapshot_date": "2026-06-02",
   "latest_snapshot_date": "2026-06-04",
   "reference_dates_covered": [

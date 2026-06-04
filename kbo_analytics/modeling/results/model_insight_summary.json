@@ -481,7 +481,7 @@
     }
   ],
   "pitching_snapshot_collection_status": {
-    "generated_at": "2026-06-04 11:30:02",
+    "generated_at": "2026-06-04 12:00:03",
     "reference_date": "2026-06-04",
     "snapshot_rows_total": 50,
     "snapshot_rows_for_reference_date": 10,
@@ -518,7 +518,7 @@
   "safe_to_replace_model": false,
   "reason_not_to_replace_if_false": "후보 모델이 정확도와 확률 품질을 동시에 안정적으로 개선했다는 근거가 부족합니다.",
   "pitching_snapshot_quality_summary": {
-    "generated_at": "2026-06-04 11:30:02",
+    "generated_at": "2026-06-04 12:00:03",
     "reference_date": "2026-06-04",
     "snapshot_file": "data/official/pitching_daily_snapshot.csv",
     "total_snapshot_rows": 50,
@@ -535,7 +535,12 @@
     "warnings": [],
     "safe_for_future_feature_use": false,
     "reason_if_not_safe": "누적 기간 부족: 최소 30일 이상 필요",
+    "minimum_required_days": 30,
     "accumulated_snapshot_days": 3,
+    "remaining_days_to_feature_use": 27,
+    "accumulation_progress_pct": 10.0,
+    "earliest_feature_experiment_date": "2026-07-01",
+    "feature_use_gate_status": "blocked_until_minimum_history",
     "first_snapshot_date": "2026-06-02",
     "latest_snapshot_date": "2026-06-04",
     "reference_dates_covered": [
@@ -560,9 +565,25 @@
     "accumulated_snapshot_days": 3,
     "first_snapshot_date": "2026-06-02",
     "latest_snapshot_date": "2026-06-04",
-    "minimum_days_required": 30
+    "minimum_days_required": 30,
+    "remaining_days_to_feature_use": 27,
+    "accumulation_progress_pct": 10.0
   },
   "safe_to_use_pitching_snapshot_as_features": false,
   "reason_pitching_snapshot_not_used_yet": "누적 기간 부족: 최소 30일 이상 필요",
-  "recommended_next_step_after_30_days": "30일 이상 누적 후 선발 정보 품질, 선발 ERA/WHIP 스냅샷, 불펜 피로 proxy를 별도 후보 모델에서 leakage-safe rolling 피처로 검증합니다."
+  "recommended_next_step_after_30_days": "30일 이상 누적 후 선발 정보 품질, 선발 ERA/WHIP 스냅샷, 불펜 피로 proxy를 별도 후보 모델에서 leakage-safe rolling 피처로 검증합니다.",
+  "pitching_snapshot_accumulation_gate": {
+    "feature_use_gate_status": "blocked_until_minimum_history",
+    "minimum_required_days": 30,
+    "accumulated_snapshot_days": 3,
+    "remaining_days_to_feature_use": 27,
+    "earliest_feature_experiment_date": "2026-07-01"
+  },
+  "pitching_snapshot_monitoring_summary": "투수 스냅샷은 품질 상태 pass, 누적 3/30일입니다.",
+  "earliest_pitching_feature_experiment_plan": {
+    "planned_experiment_name": "baseline_plus_pitching_snapshot",
+    "earliest_feature_experiment_date": "2026-07-01",
+    "plan_file": "modeling/results/pitching_feature_experiment_plan.json"
+  },
+  "reason_pitching_features_still_blocked": "투수 스냅샷은 품질 점검을 통과했지만 누적 기간이 3일로 짧아 모델 피처 사용을 차단합니다. 최소 30일 이상 누적 후 baseline_plus_pitching_snapshot 실험을 진행합니다."
 }
