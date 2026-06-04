@@ -923,8 +923,100 @@ def _quality_result(check_name: str, failed_rows: int, checked_rows: int, severi
     }
 
 
+def write_pitching_feature_experiment_plan(results_dir: Path):
+    plan = {
+        "trigger_condition": "pitching_daily_snapshot.csv가 최소 30일 이상 누적되고 품질 상태가 blocking issue 없이 유지될 때",
+        "required_minimum_days": 30,
+        "candidate_feature_sets": [
+            "baseline_core",
+            "baseline_plus_streak",
+            "baseline_plus_pitching_snapshot",
+            "baseline_plus_streak_pitching_snapshot",
+        ],
+        "expected_features": [
+            "team_starter_info_quality",
+            "opponent_starter_info_quality",
+            "both_starters_confirmed",
+            "team_starter_era_snapshot",
+            "opponent_starter_era_snapshot",
+            "starter_era_gap",
+            "team_starter_whip_snapshot",
+            "opponent_starter_whip_snapshot",
+            "starter_whip_gap",
+            "team_bullpen_fatigue_label_encoded",
+            "opponent_bullpen_fatigue_label_encoded",
+            "bullpen_fatigue_gap",
+        ],
+        "evaluation_metrics": [
+            "accuracy",
+            "brier_score",
+            "log_loss",
+            "over_55_accuracy",
+            "recent_3year_accuracy",
+            "winning_streak_accuracy",
+            "losing_streak_accuracy",
+            "close_game_accuracy",
+        ],
+        "replacement_policy": "새 모델은 전체 accuracy, Brier Score, Log Loss, over_55_accuracy, 최근 3년 성능이 동시에 안정적으로 개선될 때만 운영 모델로 교체한다.",
+        "leakage_policy": "예측 시점 이전에 저장된 스냅샷만 사용하고, 현재 경기 결과나 경기 종료 후 정보는 학습 피처에 포함하지 않는다.",
+        "planned_experiment_name": "baseline_plus_pitching_snapshot",
+    }
+    (results_dir / "pitching_feature_experiment_plan.json").write_text(json.dumps(plan, indent=2, ensure_ascii=False), encoding="utf-8")
+    return plan
+
+
+def write_pitching_snapshot_accumulation_report(frame: pd.DataFrame, results_dir: Path, minimum_required_days: int):
+    rows = []
+    if not frame.empty:
+        work = frame.copy()
+        normalized_source = work["starter_source"].fillna("unknown").replace({"manual": "confirmed"})
+        work["starter_source_normalized"] = normalized_source
+        for (snapshot_date, reference_date), group in work.groupby(["snapshot_date", "reference_date"], sort=True):
+            duplicate_key_count = int(group.duplicated(subset=["snapshot_date", "reference_date", "team", "scheduled_game_id"]).sum())
+            actual_team_rows = int(len(group))
+            scheduled_games = int(actual_team_rows // 2)
+            expected_team_rows = scheduled_games * 2
+            blocking = duplicate_key_count > 0 or actual_team_rows != expected_team_rows or group["starter_info_quality"].isna().any()
+            rows.append(
+                {
+                    "snapshot_date": snapshot_date,
+                    "reference_date": reference_date,
+                    "scheduled_games": scheduled_games,
+                    "expected_team_rows": expected_team_rows,
+                    "actual_team_rows": actual_team_rows,
+                    "confirmed_starter_count": int(group["starter_source_normalized"].eq("confirmed").sum()),
+                    "estimated_starter_count": int(group["starter_source_normalized"].eq("estimated").sum()),
+                    "unknown_starter_count": int(group["starter_source_normalized"].eq("unknown").sum()),
+                    "duplicate_key_count": duplicate_key_count,
+                    "quality_status": "fail" if blocking else "pass",
+                    "safe_for_future_feature_use": False,
+                    "note": "누적 기간 부족: 최소 30일 이상 필요" if len(work["snapshot_date"].dropna().astype(str).unique()) < minimum_required_days else "품질 통과 후 별도 피처 실험 필요",
+                }
+            )
+    report = pd.DataFrame(
+        rows,
+        columns=[
+            "snapshot_date",
+            "reference_date",
+            "scheduled_games",
+            "expected_team_rows",
+            "actual_team_rows",
+            "confirmed_starter_count",
+            "estimated_starter_count",
+            "unknown_starter_count",
+            "duplicate_key_count",
+            "quality_status",
+            "safe_for_future_feature_use",
+            "note",
+        ],
+    )
+    report.to_csv(results_dir / "pitching_snapshot_accumulation_report.csv", index=False, encoding="utf-8-sig")
+    return report
+
+
 def write_pitching_snapshot_quality_reports(frame: pd.DataFrame, scheduled: pd.DataFrame, snapshot_path: Path, results_dir: Path, prediction_date: date, reference_datetime: datetime):
     results_dir.mkdir(parents=True, exist_ok=True)
+    minimum_required_days = 30
     reference_key = prediction_date.isoformat()
     ref_frame = frame[frame["reference_date"].astype(str).eq(reference_key)].copy() if not frame.empty else frame
     actual_team_rows = int(len(ref_frame))
@@ -969,13 +1061,23 @@ def write_pitching_snapshot_quality_reports(frame: pd.DataFrame, scheduled: pd.D
     blocking_issues = [row["check_name"] for row in rows if row["status"] == "fail" and row["severity"] == "blocking"]
     warnings = [row["check_name"] for row in rows if row["status"] == "warning"]
     accumulated_days = len(snapshot_day_values)
-    enough_history = accumulated_days >= 30
+    remaining_days = max(minimum_required_days - accumulated_days, 0)
+    progress_pct = round(min(accumulated_days / minimum_required_days, 1.0) * 100, 1)
+    enough_history = accumulated_days >= minimum_required_days
     safe = not blocking_issues and enough_history
     reason = ""
     if blocking_issues:
         reason = "blocking quality issues: " + ", ".join(blocking_issues)
     elif not enough_history:
-        reason = "누적 기간 부족: 최소 30일 이상 필요"
+        reason = f"누적 기간 부족: 최소 {minimum_required_days}일 이상 필요"
+    feature_gate = "ready_for_experiment" if safe else "blocked_until_minimum_history"
+    if blocking_issues:
+        feature_gate = "blocked_by_quality_issues"
+    experiment_date = ""
+    if snapshot_day_values:
+        experiment_date = (datetime.strptime(snapshot_day_values[0], "%Y-%m-%d").date() + timedelta(days=minimum_required_days - 1)).isoformat()
+    write_pitching_snapshot_accumulation_report(frame, results_dir, minimum_required_days)
+    write_pitching_feature_experiment_plan(results_dir)
     status = {
         "generated_at": reference_datetime.strftime("%Y-%m-%d %H:%M:%S"),
         "reference_date": reference_key,
@@ -994,7 +1096,12 @@ def write_pitching_snapshot_quality_reports(frame: pd.DataFrame, scheduled: pd.D
         "warnings": warnings,
         "safe_for_future_feature_use": safe,
         "reason_if_not_safe": reason,
+        "minimum_required_days": minimum_required_days,
         "accumulated_snapshot_days": accumulated_days,
+        "remaining_days_to_feature_use": remaining_days,
+        "accumulation_progress_pct": progress_pct,
+        "earliest_feature_experiment_date": experiment_date,
+        "feature_use_gate_status": feature_gate,
         "first_snapshot_date": snapshot_day_values[0] if snapshot_day_values else "",
         "latest_snapshot_date": snapshot_day_values[-1] if snapshot_day_values else "",
         "reference_dates_covered": reference_day_values,
@@ -1070,11 +1177,33 @@ def update_pitching_snapshot_diagnostics(results_dir: Path, status_payload: dict
             "accumulated_snapshot_days": quality_status.get("accumulated_snapshot_days", 0),
             "first_snapshot_date": quality_status.get("first_snapshot_date", ""),
             "latest_snapshot_date": quality_status.get("latest_snapshot_date", ""),
-            "minimum_days_required": 30,
+            "minimum_days_required": quality_status.get("minimum_required_days", 30),
+            "remaining_days_to_feature_use": quality_status.get("remaining_days_to_feature_use", 30),
+            "accumulation_progress_pct": quality_status.get("accumulation_progress_pct", 0),
         }
         summary["safe_to_use_pitching_snapshot_as_features"] = bool(quality_status.get("safe_for_future_feature_use", False))
         summary["reason_pitching_snapshot_not_used_yet"] = quality_status.get("reason_if_not_safe") or "현재 운영 모델 피처로 연결하지 않는 정책 유지"
         summary["recommended_next_step_after_30_days"] = "30일 이상 누적 후 선발 정보 품질, 선발 ERA/WHIP 스냅샷, 불펜 피로 proxy를 별도 후보 모델에서 leakage-safe rolling 피처로 검증합니다."
+        summary["pitching_snapshot_accumulation_gate"] = {
+            "feature_use_gate_status": quality_status.get("feature_use_gate_status", "blocked_until_minimum_history"),
+            "minimum_required_days": quality_status.get("minimum_required_days", 30),
+            "accumulated_snapshot_days": quality_status.get("accumulated_snapshot_days", 0),
+            "remaining_days_to_feature_use": quality_status.get("remaining_days_to_feature_use", 30),
+            "earliest_feature_experiment_date": quality_status.get("earliest_feature_experiment_date", ""),
+        }
+        summary["pitching_snapshot_monitoring_summary"] = (
+            f"투수 스냅샷은 품질 상태 {quality_status.get('quality_status', '-')}, "
+            f"누적 {quality_status.get('accumulated_snapshot_days', 0)}/{quality_status.get('minimum_required_days', 30)}일입니다."
+        )
+        summary["earliest_pitching_feature_experiment_plan"] = {
+            "planned_experiment_name": "baseline_plus_pitching_snapshot",
+            "earliest_feature_experiment_date": quality_status.get("earliest_feature_experiment_date", ""),
+            "plan_file": "modeling/results/pitching_feature_experiment_plan.json",
+        }
+        summary["reason_pitching_features_still_blocked"] = (
+            f"투수 스냅샷은 품질 점검을 통과했지만 누적 기간이 {quality_status.get('accumulated_snapshot_days', 0)}일로 짧아 모델 피처 사용을 차단합니다. "
+            "최소 30일 이상 누적 후 baseline_plus_pitching_snapshot 실험을 진행합니다."
+        )
         summary["leakage_safe_pitching_data_policy"] = "투수 스냅샷은 예측 시점에 알고 있던 정보만 누적 저장하며, 현재 운영 모델 학습 피처로 바로 사용하지 않습니다."
         summary["next_step_after_snapshot_accumulation"] = "스냅샷이 충분히 쌓이면 선발 최근 성적, 선발 정보 품질, 불펜 피로 proxy를 날짜 기준 shift(1) 피처로 별도 후보 모델에서 검증합니다."
         summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -2474,6 +2603,8 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     export_pitching_context(pitching_context, DATA_DIR / "pitching_context.csv", generated_at)
     snapshot_status = append_pitching_daily_snapshot(games, pitching_context, DATA_DIR / "pitching_daily_snapshot.csv", RESULTS_DIR, generated_at, reference_datetime or datetime.now())
     update_pitching_snapshot_diagnostics(RESULTS_DIR, snapshot_status)
+    snapshot_quality_path = RESULTS_DIR / "pitching_snapshot_quality_status.json"
+    snapshot_quality = json.loads(snapshot_quality_path.read_text(encoding="utf-8")) if snapshot_quality_path.exists() else {}
     export_lineup_context(lineup_context, DATA_DIR / "lineup_context.csv", generated_at)
     lineup_confirmed_count = sum(1 for values in lineup_context.values() if values.get("lineup_source") == "confirmed")
     lineup_recent_count = sum(1 for values in lineup_context.values() if values.get("lineup_source") == "recent")
@@ -2541,6 +2672,11 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         if prediction_cards
         else "-"
     )
+    snapshot_days = snapshot_quality.get("accumulated_snapshot_days", 0)
+    snapshot_required_days = snapshot_quality.get("minimum_required_days", 30)
+    snapshot_quality_label = snapshot_quality.get("quality_status", "-")
+    snapshot_gate_label = "사용 가능" if snapshot_quality.get("safe_for_future_feature_use") else "차단됨"
+    snapshot_gate_reason = snapshot_quality.get("reason_if_not_safe", "")
     featured_card = prediction_cards[0] if prediction_cards else {}
     featured_matchup = featured_card.get("경기", "-")
     featured_teams = [team.strip() for team in featured_matchup.split(" vs ", 1)]
@@ -2877,6 +3013,11 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <div class="metric">예측 학습 cutoff<strong>{model_payload.get("prediction_training_cutoff", "-")}</strong></div>
       <div class="metric">최신 반영 경기일<strong>{model_payload.get("latest_completed_game_date_used", "-")}</strong></div>
       <div class="metric">이번 주 반영<strong>{model_payload.get("current_week_games_included_for_prediction", "-")}</strong></div>
+    </div>
+    <div class="grid">
+      <div class="metric">투수 스냅샷 누적<strong>{snapshot_days}/{snapshot_required_days}일</strong></div>
+      <div class="metric">스냅샷 품질<strong>{escape(str(snapshot_quality_label))}</strong></div>
+      <div class="metric">모델 사용<strong>{escape(snapshot_gate_label)}</strong><span class="note">{escape(str(snapshot_gate_reason))}</span></div>
     </div>
     <p class="note">모델 상태: 전체 적중률 {model_payload.get("accuracy", "-")}, 55% 이상 예측 경기 적중률 {confidence_rows[1]["적중률"] if len(confidence_rows) > 1 else "-"}입니다. 현재 선택 모델은 단순 정확도 최고 모델이 아니라, Brier Score와 Log Loss를 함께 고려해 확률 품질이 상대적으로 안정적인 모델을 선택합니다. 60% 이상 구간은 평균 예측승률과 실제 승률이 비슷하더라도 표본 수가 작아 강한 정배보다는 참고 신호로 해석합니다.</p>
     <details>

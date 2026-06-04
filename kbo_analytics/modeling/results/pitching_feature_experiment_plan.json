@@ -1,0 +1,37 @@
+{
+  "trigger_condition": "pitching_daily_snapshot.csv가 최소 30일 이상 누적되고 품질 상태가 blocking issue 없이 유지될 때",
+  "required_minimum_days": 30,
+  "candidate_feature_sets": [
+    "baseline_core",
+    "baseline_plus_streak",
+    "baseline_plus_pitching_snapshot",
+    "baseline_plus_streak_pitching_snapshot"
+  ],
+  "expected_features": [
+    "team_starter_info_quality",
+    "opponent_starter_info_quality",
+    "both_starters_confirmed",
+    "team_starter_era_snapshot",
+    "opponent_starter_era_snapshot",
+    "starter_era_gap",
+    "team_starter_whip_snapshot",
+    "opponent_starter_whip_snapshot",
+    "starter_whip_gap",
+    "team_bullpen_fatigue_label_encoded",
+    "opponent_bullpen_fatigue_label_encoded",
+    "bullpen_fatigue_gap"
+  ],
+  "evaluation_metrics": [
+    "accuracy",
+    "brier_score",
+    "log_loss",
+    "over_55_accuracy",
+    "recent_3year_accuracy",
+    "winning_streak_accuracy",
+    "losing_streak_accuracy",
+    "close_game_accuracy"
+  ],
+  "replacement_policy": "새 모델은 전체 accuracy, Brier Score, Log Loss, over_55_accuracy, 최근 3년 성능이 동시에 안정적으로 개선될 때만 운영 모델로 교체한다.",
+  "leakage_policy": "예측 시점 이전에 저장된 스냅샷만 사용하고, 현재 경기 결과나 경기 종료 후 정보는 학습 피처에 포함하지 않는다.",
+  "planned_experiment_name": "baseline_plus_pitching_snapshot"
+}
