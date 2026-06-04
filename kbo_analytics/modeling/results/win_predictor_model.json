@@ -2,9 +2,9 @@
   "available": true,
   "training_cutoff": "2026-05-31",
   "validation_cutoff": "2026-05-31",
-  "prediction_training_cutoff": "2026-06-03",
-  "latest_completed_game_date_used": "2026-06-03",
-  "current_week_games_included_for_prediction": true,
+  "prediction_training_cutoff": "2026-06-01",
+  "latest_completed_game_date_used": "2026-05-31",
+  "current_week_games_included_for_prediction": false,
   "training_start_year": 2016,
   "training_end_year": 2026,
   "train_rows": 11964,
@@ -63,14 +63,14 @@
     },
     {
       "모델": "Streak 피처 RandomForest 실험",
-      "검증 정확도": 0.533,
+      "검증 정확도": 0.532,
       "피처 수": 38,
       "Brier Score": 0.248,
       "Log Loss": 0.689
     },
     {
       "모델": "Streak 피처 RandomForest 시간가중 실험",
-      "검증 정확도": 0.536,
+      "검증 정확도": 0.538,
       "피처 수": 38,
       "Brier Score": 0.248,
       "Log Loss": 0.689
@@ -306,12 +306,12 @@
   },
   "today_probability_distribution": {
     "split": "today",
-    "total_games": 10,
-    "p50": 0.511,
-    "p75": 0.542,
-    "p90": 0.548,
-    "max": 0.548,
-    "over_53": 4,
+    "total_games": 0,
+    "p50": null,
+    "p75": null,
+    "p90": null,
+    "max": null,
+    "over_53": 0,
     "over_55": 0,
     "over_58": 0,
     "over_60": 0
@@ -426,32 +426,32 @@
     {
       "model": "Streak 피처 RandomForest 실험",
       "total_games": 2942,
-      "accuracy": 0.533,
+      "accuracy": 0.532,
       "brier": 0.248,
       "logloss": 0.689,
       "avg_confidence": 0.54,
-      "p75_confidence": 0.557,
-      "p90_confidence": 0.576,
-      "max_confidence": 0.626,
-      "over_55": 961,
-      "over_58": 254,
-      "over_60": 54,
-      "over_55_accuracy": 0.569
+      "p75_confidence": 0.558,
+      "p90_confidence": 0.577,
+      "max_confidence": 0.625,
+      "over_55": 977,
+      "over_58": 252,
+      "over_60": 55,
+      "over_55_accuracy": 0.567
     },
     {
       "model": "Streak 피처 RandomForest 시간가중 실험",
       "total_games": 2942,
-      "accuracy": 0.536,
+      "accuracy": 0.538,
       "brier": 0.248,
       "logloss": 0.689,
-      "avg_confidence": 0.541,
+      "avg_confidence": 0.54,
       "p75_confidence": 0.559,
       "p90_confidence": 0.578,
-      "max_confidence": 0.63,
-      "over_55": 1050,
-      "over_58": 250,
-      "over_60": 47,
-      "over_55_accuracy": 0.555
+      "max_confidence": 0.634,
+      "over_55": 1035,
+      "over_58": 242,
+      "over_60": 46,
+      "over_55_accuracy": 0.564
     },
     {
       "model": "Streak 피처 GradientBoosting 실험",
@@ -918,98 +918,7 @@
       "예측 근거": "삼성 최근 득실차 우위, 삼성 홈 경기"
     }
   ],
-  "today_predictions": [
-    {
-      "경기일": "2026-06-04",
-      "기준팀": "KIA",
-      "상대팀": "롯데",
-      "예측 구단": "KIA",
-      "예측승률": "54.2%",
-      "예측": "승리 예측",
-      "예측 근거": "KIA 최근 10경기 흐름 우위, KIA 홈 경기"
-    },
-    {
-      "경기일": "2026-06-04",
-      "기준팀": "KT",
-      "상대팀": "LG",
-      "예측 구단": "KT",
-      "예측승률": "51.1%",
-      "예측": "승리 예측",
-      "예측 근거": "KT 홈 경기"
-    },
-    {
-      "경기일": "2026-06-04",
-      "기준팀": "LG",
-      "상대팀": "KT",
-      "예측 구단": "KT",
-      "예측승률": "48.9%",
-      "예측": "패배 예측",
-      "예측 근거": "KT 홈 경기"
-    },
-    {
-      "경기일": "2026-06-04",
-      "기준팀": "NC",
-      "상대팀": "삼성",
-      "예측 구단": "삼성",
-      "예측승률": "45.2%",
-      "예측": "패배 예측",
-      "예측 근거": "삼성 홈 경기"
-    },
-    {
-      "경기일": "2026-06-04",
-      "기준팀": "SSG",
-      "상대팀": "키움",
-      "예측 구단": "키움",
-      "예측승률": "49.5%",
-      "예측": "패배 예측",
-      "예측 근거": "키움 최근 득실차 우위"
-    },
-    {
-      "경기일": "2026-06-04",
-      "기준팀": "두산",
-      "상대팀": "한화",
-      "예측 구단": "두산",
-      "예측승률": "50.4%",
-      "예측": "승리 예측",
-      "예측 근거": "두산 홈 경기"
-    },
-    {
-      "경기일": "2026-06-04",
-      "기준팀": "롯데",
-      "상대팀": "KIA",
-      "예측 구단": "KIA",
-      "예측승률": "45.8%",
-      "예측": "패배 예측",
-      "예측 근거": "KIA 최근 10경기 흐름 우위, KIA 홈 경기"
-    },
-    {
-      "경기일": "2026-06-04",
-      "기준팀": "삼성",
-      "상대팀": "NC",
-      "예측 구단": "삼성",
-      "예측승률": "54.8%",
-      "예측": "승리 예측",
-      "예측 근거": "삼성 홈 경기"
-    },
-    {
-      "경기일": "2026-06-04",
-      "기준팀": "키움",
-      "상대팀": "SSG",
-      "예측 구단": "키움",
-      "예측승률": "50.5%",
-      "예측": "승리 예측",
-      "예측 근거": "키움 최근 득실차 우위"
-    },
-    {
-      "경기일": "2026-06-04",
-      "기준팀": "한화",
-      "상대팀": "두산",
-      "예측 구단": "두산",
-      "예측승률": "49.6%",
-      "예측": "패배 예측",
-      "예측 근거": "두산 홈 경기"
-    }
-  ],
+  "today_predictions": [],
   "source_note": "현재 주 경기는 적중/오답 집계에 포함하지 않습니다.",
   "feature_columns": [
     "is_home",
