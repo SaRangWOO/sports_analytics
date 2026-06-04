@@ -540,6 +540,8 @@ def write_html_report(
     pitcher_collection_status = "투수 데이터 준비 완료" if summary["pitcher_data_ready_to_train"] else "투수 데이터 미수집"
     mapping_train_ready = "학습 가능" if summary["pitcher_data_ready_to_train_after_mapping"] else "학습 불가"
     mapping_applied = "적용" if summary["internal_pitcher_conversion_applied"] else "미적용"
+    starter_collection_ready = "학습 가능" if summary["starter_pitcher_data_ready_to_train"] else "학습 불가"
+    starter_source_available = "예" if summary["starter_pitcher_source_available"] else "아니오"
     over_predicted = ", ".join(f"{row['team']}({row['bias']})" for row in summary["team_bias_summary"]["over_predicted_teams"]) or "없음"
     under_predicted = ", ".join(f"{row['team']}({row['bias']})" for row in summary["team_bias_summary"]["under_predicted_teams"]) or "없음"
     target_context = summary["target_context"]
@@ -783,6 +785,17 @@ def write_html_report(
       다음 필요한 작업: 실제 경기별 선발투수 매핑과 투수 등판 로그를 pitcher_id 기준으로 적재한 뒤 재검증합니다.
     </p>
     <div class="table-wrap">{pitcher_validation_table}</div>
+    <h3>선발투수 수집 상태</h3>
+    <p class="note">
+      수집 원천 사용 가능 여부: {starter_source_available}<br>
+      수집 row 수: {summary["starter_pitcher_rows_collected"]}<br>
+      일정 매칭률: {summary["starter_pitcher_schedule_match_rate"]}<br>
+      양쪽 선발 확인 경기 비율: {summary["starter_pitcher_full_match_rate"]}<br>
+      ID 누락 수: {summary["starter_pitcher_id_missing_count"]}<br>
+      학습 가능 여부: {starter_collection_ready}<br>
+      blocker: {html.escape(str(summary["starter_pitcher_collection_blocker"]))}<br>
+      다음 필요 작업: 선발투수 이름과 가능한 pitcher_id를 제공하는 공식 또는 신뢰 가능한 원천을 확보한 뒤 수집 검증을 재실행합니다.
+    </p>
     <h3>내부 투수 데이터 매핑 분석</h3>
     <p class="note">
       발견된 투수/선수 관련 파일 수: {summary["internal_pitcher_candidate_files"]}<br>

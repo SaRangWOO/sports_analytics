@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-06-02T10:30:39+09:00",
+  "generated_at": "2026-06-04T09:13:08+09:00",
   "input_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\model_training_games.csv",
   "schedule_file": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\prediction_games.csv",
   "target_context": {
-    "target_date": "2026-06-02",
-    "selected_target_date": "2026-06-02",
+    "target_date": "2026-06-04",
+    "selected_target_date": "2026-06-04",
     "report_mode": "오늘 경기 기준",
-    "current_date_kst": "2026-06-02",
+    "current_date_kst": "2026-06-04",
     "schedule_latest_date": "2026-06-30",
     "latest_schedule_date": "2026-06-30",
     "schedule_is_stale": false,
@@ -21,9 +21,9 @@
     "game_count": 5,
     "requested_target_date": ""
   },
-  "current_date_kst": "2026-06-02",
+  "current_date_kst": "2026-06-04",
   "schedule_latest_date": "2026-06-30",
-  "selected_target_date": "2026-06-02",
+  "selected_target_date": "2026-06-04",
   "schedule_is_stale": false,
   "stale_schedule_days": 0,
   "has_future_schedule": true,
@@ -33,12 +33,12 @@
   "schedule_update_check_completed": true,
   "schedule_file_latest_date": "2026-06-30",
   "schedule_file_total_games": 405,
-  "schedule_file_future_games": 120,
+  "schedule_file_future_games": 110,
   "schedule_update_needed": false,
   "schedule_update_blocker": "",
   "schedule_update_status": {
     "schedule_path": "C:\\Users\\PCuser\\Documents\\New project\\sports_analytics_kbo_run_pr\\kbo_analytics\\data\\official\\prediction_games.csv",
-    "current_date_kst": "2026-06-02",
+    "current_date_kst": "2026-06-04",
     "total_rows": 810,
     "required_columns_present": true,
     "missing_columns": "",
@@ -46,7 +46,7 @@
     "schedule_min_date": "2026-03-28",
     "schedule_max_date": "2026-06-30",
     "total_games": 405,
-    "future_games": 120,
+    "future_games": 110,
     "today_games": 5,
     "schedule_is_stale": false,
     "stale_schedule_days": 0,
@@ -60,11 +60,20 @@
     "schedule_update_needed": false,
     "schedule_update_blocker": ""
   },
+  "starter_pitcher_collection_completed": true,
+  "starter_pitcher_source_available": false,
+  "starter_pitcher_rows_collected": 0,
+  "starter_pitcher_schedule_match_rate": 0.0,
+  "starter_pitcher_full_match_rate": 0.0,
+  "starter_pitcher_partial_match_count": 0,
+  "starter_pitcher_id_missing_count": 0,
+  "starter_pitcher_data_ready_to_train": false,
+  "starter_pitcher_collection_blocker": "공식 일정/스코어보드 페이지에서 선발투수 필드 확인 불가",
   "schedule_selection_check": {
-    "target_date": "2026-06-02",
-    "selected_target_date": "2026-06-02",
+    "target_date": "2026-06-04",
+    "selected_target_date": "2026-06-04",
     "report_mode": "오늘 경기 기준",
-    "current_date_kst": "2026-06-02",
+    "current_date_kst": "2026-06-04",
     "latest_schedule_date": "2026-06-30",
     "has_today_games": true,
     "has_future_games": true,
@@ -525,6 +534,64 @@
         "ready_to_use": false
       },
       {
+        "file": "kbo_analytics/data/official/lineup_context.csv",
+        "columns": [
+          "date",
+          "game_id",
+          "team",
+          "home_away",
+          "lineup_source",
+          "status_label",
+          "batting_order",
+          "position",
+          "player",
+          "war"
+        ],
+        "normalized_columns": [
+          "date",
+          "game_id",
+          "team",
+          "home_away",
+          "lineup_source",
+          "status_label",
+          "batting_order",
+          "position",
+          "player",
+          "war"
+        ],
+        "matched_terms": [
+          "player"
+        ],
+        "mapped_v2_columns": [
+          "date",
+          "game_id",
+          "team"
+        ],
+        "missing_starter_mapping_columns": [
+          "home_team",
+          "away_team",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_pitcher_log_columns": [
+          "pitcher_id",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "row_count": 90,
+        "sample_only": false,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      },
+      {
         "file": "kbo_analytics/data/official/pitcher_stats.csv",
         "columns": [
           "순위",
@@ -599,7 +666,7 @@
           "is_starter",
           "pitches"
         ],
-        "row_count": 234,
+        "row_count": 238,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -663,6 +730,80 @@
           "pitches"
         ],
         "row_count": 10,
+        "sample_only": false,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      },
+      {
+        "file": "kbo_analytics/data/official/pitching_daily_snapshot.csv",
+        "columns": [
+          "snapshot_date",
+          "snapshot_time",
+          "reference_date",
+          "team",
+          "starter_name",
+          "starter_source",
+          "starter_info_quality",
+          "starter_era",
+          "starter_whip",
+          "bullpen_fatigue_label",
+          "recent_3day_games",
+          "scheduled_game_id",
+          "opponent",
+          "home_away",
+          "data_source",
+          "note"
+        ],
+        "normalized_columns": [
+          "snapshot_date",
+          "snapshot_time",
+          "reference_date",
+          "team",
+          "starter_name",
+          "starter_source",
+          "starter_info_quality",
+          "starter_era",
+          "starter_whip",
+          "bullpen_fatigue_label",
+          "recent_3day_games",
+          "scheduled_game_id",
+          "opponent",
+          "home_away",
+          "data_source",
+          "note"
+        ],
+        "matched_terms": [
+          "starter",
+          "era",
+          "whip"
+        ],
+        "mapped_v2_columns": [
+          "team",
+          "opponent"
+        ],
+        "missing_starter_mapping_columns": [
+          "date",
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_pitcher_log_columns": [
+          "date",
+          "game_id",
+          "pitcher_id",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "row_count": 50,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -1261,7 +1402,64 @@
           "home_runs_allowed",
           "pitches"
         ],
-        "row_count": 923,
+        "row_count": 1088,
+        "sample_only": false,
+        "usable_as_starter_mapping": false,
+        "usable_as_pitcher_logs": false,
+        "ready_to_use": false
+      },
+      {
+        "file": "kbo_analytics/modeling/results/starter_data_availability_report.csv",
+        "columns": [
+          "data_item",
+          "current_source",
+          "available_now",
+          "collection_method",
+          "known_before_game",
+          "leakage_risk",
+          "expected_effect",
+          "implementation_difficulty",
+          "next_action"
+        ],
+        "normalized_columns": [
+          "data_item",
+          "current_source",
+          "available_now",
+          "collection_method",
+          "known_before_game",
+          "leakage_risk",
+          "expected_effect",
+          "implementation_difficulty",
+          "next_action"
+        ],
+        "matched_terms": [
+          "starter"
+        ],
+        "mapped_v2_columns": [],
+        "missing_starter_mapping_columns": [
+          "date",
+          "game_id",
+          "home_team",
+          "away_team",
+          "home_starter_id",
+          "away_starter_id"
+        ],
+        "missing_pitcher_log_columns": [
+          "date",
+          "game_id",
+          "pitcher_id",
+          "team",
+          "opponent",
+          "is_starter",
+          "innings_pitched",
+          "earned_runs",
+          "hits_allowed",
+          "walks",
+          "strikeouts",
+          "home_runs_allowed",
+          "pitches"
+        ],
+        "row_count": 8,
         "sample_only": false,
         "usable_as_starter_mapping": false,
         "usable_as_pitcher_logs": false,
@@ -1574,7 +1772,7 @@
     }
   },
   "internal_pitcher_mapping_completed": true,
-  "internal_pitcher_candidate_files": 12,
+  "internal_pitcher_candidate_files": 15,
   "best_starter_source_file": "kbo_analytics/data/manual/confirmed_starters.csv",
   "best_pitcher_log_source_file": "kbo_analytics/data/weekly/player_game_stats.csv",
   "starter_conversion_possible": false,
@@ -1631,6 +1829,8 @@
     "match_predictions.csv",
     "schedule_selection_check.csv",
     "schedule_update_report.csv",
+    "starter_pitcher_collection_report.csv",
+    "starter_pitcher_validation.csv",
     "error_analysis_games.csv",
     "win_probability_bucket_metrics.csv",
     "total_runs_error_metrics.csv",
