@@ -1,16 +1,72 @@
 {
-  "run_time": "2026-06-04 09:37:29",
-  "reference_date": "2026-06-02",
-  "update_stage": "morning",
-  "games_checked": 0,
-  "teams_checked": 0,
+  "run_time": "2026-06-04 11:00:03",
+  "reference_date": "2026-06-04",
+  "update_stage": "pregame",
+  "games_checked": 5,
+  "teams_checked": 10,
   "starter_status_summary": {
-    "confirmed": 0,
+    "confirmed": 10,
     "estimated": 0,
     "unknown": 0
   },
   "dashboard_updated": true,
-  "github_pushed": false,
-  "games": [],
+  "github_pushed": true,
+  "games": [
+    {
+      "game_id": "20260604HHOB0",
+      "home_team": "두산",
+      "away_team": "한화",
+      "home_starter": "잭로그",
+      "away_starter": "화이트",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
+    },
+    {
+      "game_id": "20260604NCSS0",
+      "home_team": "삼성",
+      "away_team": "NC",
+      "home_starter": "원태인",
+      "away_starter": "구창모",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
+    },
+    {
+      "game_id": "20260604WOSK0",
+      "home_team": "SSG",
+      "away_team": "키움",
+      "home_starter": "최민준",
+      "away_starter": "배동현",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
+    },
+    {
+      "game_id": "20260604LTHT0",
+      "home_team": "KIA",
+      "away_team": "롯데",
+      "home_starter": "시라카와",
+      "away_starter": "박세웅",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
+    },
+    {
+      "game_id": "20260604LGKT0",
+      "home_team": "KT",
+      "away_team": "LG",
+      "home_starter": "사우어",
+      "away_starter": "웰스",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
+    }
+  ],
   "changes": []
 }
