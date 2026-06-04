@@ -63,14 +63,14 @@
     },
     {
       "모델": "Streak 피처 RandomForest 실험",
-      "검증 정확도": 0.53,
+      "검증 정확도": 0.534,
       "피처 수": 38,
       "Brier Score": 0.248,
-      "Log Loss": 0.689
+      "Log Loss": 0.69
     },
     {
       "모델": "Streak 피처 RandomForest 시간가중 실험",
-      "검증 정확도": 0.536,
+      "검증 정확도": 0.534,
       "피처 수": 38,
       "Brier Score": 0.248,
       "Log Loss": 0.689
@@ -482,32 +482,32 @@
     {
       "model": "Streak 피처 RandomForest 실험",
       "total_games": 2942,
-      "accuracy": 0.53,
+      "accuracy": 0.534,
       "brier": 0.248,
-      "logloss": 0.689,
+      "logloss": 0.69,
       "avg_confidence": 0.54,
       "p75_confidence": 0.558,
-      "p90_confidence": 0.577,
-      "max_confidence": 0.626,
-      "over_55": 991,
-      "over_58": 254,
-      "over_60": 62,
-      "over_55_accuracy": 0.571
+      "p90_confidence": 0.576,
+      "max_confidence": 0.629,
+      "over_55": 985,
+      "over_58": 251,
+      "over_60": 58,
+      "over_55_accuracy": 0.57
     },
     {
       "model": "Streak 피처 RandomForest 시간가중 실험",
       "total_games": 2942,
-      "accuracy": 0.536,
+      "accuracy": 0.534,
       "brier": 0.248,
       "logloss": 0.689,
       "avg_confidence": 0.54,
       "p75_confidence": 0.559,
-      "p90_confidence": 0.577,
-      "max_confidence": 0.634,
-      "over_55": 1047,
-      "over_58": 250,
-      "over_60": 48,
-      "over_55_accuracy": 0.557
+      "p90_confidence": 0.578,
+      "max_confidence": 0.632,
+      "over_55": 1034,
+      "over_58": 249,
+      "over_60": 46,
+      "over_55_accuracy": 0.553
     },
     {
       "model": "Streak 피처 GradientBoosting 실험",
@@ -1880,17 +1880,17 @@
       "recent_run_diff_10_gap"
     ],
     "harmful_or_noisy_non_pitching_features": [
-      "winning_streak_after_close_games",
-      "winning_streak_after_close_games",
-      "season_phase",
       "opponent_recent_5_run_std",
       "run_std_gap",
+      "team_recent_5_run_std",
+      "winning_streak_after_close_games",
+      "winning_streak_after_close_games",
+      "team_current_streak_length",
+      "team_current_streak_length",
+      "run_std_gap",
       "season_phase",
-      "opponent_allowed_momentum_3_vs_10",
-      "team_recent_10_run_std",
-      "opponent_recent_5_run_std",
-      "opponent_current_streak_length",
-      "opponent_current_streak_length",
+      "venue_win_rate_gap",
+      "venue_win_rate_gap",
       "venue_win_rate_gap"
     ],
     "recommended_next_non_pitching_step": "유용 신호가 반복 확인된 비투수 피처만 다음 후보 세트에 유지하고, 노이즈 가능성이 있는 피처는 운영 모델 교체 후보에서 제외합니다.",
