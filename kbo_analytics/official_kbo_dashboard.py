@@ -875,7 +875,7 @@ def append_pitching_daily_snapshot(games: pd.DataFrame, context: dict, output_pa
     new_frame = pd.DataFrame(rows, columns=columns)
     if output_path.exists():
         existing = pd.read_csv(output_path)
-        frame = pd.concat([existing, new_frame], ignore_index=True)
+        frame = existing if new_frame.empty else pd.concat([existing, new_frame], ignore_index=True)
     else:
         frame = new_frame
     if not frame.empty:
@@ -887,6 +887,7 @@ def append_pitching_daily_snapshot(games: pd.DataFrame, context: dict, output_pa
 
     ref_frame = frame[frame["reference_date"].astype(str).eq(prediction_date.isoformat())] if not frame.empty else frame
     source_counts = ref_frame["starter_source"].replace({"manual": "confirmed"}).value_counts().to_dict() if not ref_frame.empty else {}
+    quality_status = write_pitching_snapshot_quality_reports(frame, scheduled, output_path, results_dir, prediction_date, reference_datetime)
     status_payload = {
         "generated_at": reference_datetime.strftime("%Y-%m-%d %H:%M:%S"),
         "reference_date": prediction_date.isoformat(),
@@ -896,13 +897,111 @@ def append_pitching_daily_snapshot(games: pd.DataFrame, context: dict, output_pa
         "estimated_starter_count": int(source_counts.get("estimated", 0)),
         "unknown_starter_count": int(source_counts.get("unknown", 0)),
         "teams_with_snapshot": sorted(ref_frame["team"].dropna().astype(str).unique().tolist()) if not ref_frame.empty else [],
-        "scheduled_games": int(len(scheduled) // 2),
+        "scheduled_games": int(len(scheduled) // 2) if not scheduled.empty else int(len(ref_frame) // 2),
         "snapshot_file": str(output_path.relative_to(BASE_DIR)),
         "leakage_policy_note": "pitching_daily_snapshot.csv는 예측 시점에 저장된 정보만 누적하며 현재 모델 학습 피처로 사용하지 않습니다.",
+        "quality_status": quality_status.get("quality_status"),
+        "safe_for_future_feature_use": quality_status.get("safe_for_future_feature_use"),
     }
     results_dir.mkdir(parents=True, exist_ok=True)
     (results_dir / "pitching_snapshot_status.json").write_text(json.dumps(status_payload, indent=2, ensure_ascii=False), encoding="utf-8")
     return status_payload
+
+
+def _quality_result(check_name: str, failed_rows: int, checked_rows: int, severity: str, detail: str, recommended_action: str):
+    failure_rate = round(float(failed_rows) / checked_rows, 4) if checked_rows else 0.0
+    status = "pass" if failed_rows == 0 else ("warning" if severity == "warning" else "fail")
+    return {
+        "check_name": check_name,
+        "status": status,
+        "severity": severity,
+        "checked_rows": int(checked_rows),
+        "failed_rows": int(failed_rows),
+        "failure_rate": failure_rate,
+        "detail": detail,
+        "recommended_action": recommended_action,
+    }
+
+
+def write_pitching_snapshot_quality_reports(frame: pd.DataFrame, scheduled: pd.DataFrame, snapshot_path: Path, results_dir: Path, prediction_date: date, reference_datetime: datetime):
+    results_dir.mkdir(parents=True, exist_ok=True)
+    reference_key = prediction_date.isoformat()
+    ref_frame = frame[frame["reference_date"].astype(str).eq(reference_key)].copy() if not frame.empty else frame
+    actual_team_rows = int(len(ref_frame))
+    expected_team_rows = int(len(scheduled)) if not scheduled.empty else actual_team_rows
+    key_cols = ["snapshot_date", "reference_date", "team", "scheduled_game_id"]
+    duplicate_key_count = int(frame.duplicated(subset=key_cols).sum()) if not frame.empty else 0
+    starter_sources = {"confirmed", "manual", "estimated"}
+    missing_starter = ref_frame[
+        ref_frame["starter_source"].isin(starter_sources)
+        & ref_frame["starter_name"].fillna("").astype(str).str.strip().isin(["", "-"])
+    ] if not ref_frame.empty else ref_frame
+    unknown_count = int((ref_frame["starter_source"].fillna("unknown").replace({"manual": "confirmed"}) == "unknown").sum()) if not ref_frame.empty else 0
+    confirmed_count = int((ref_frame["starter_source"].fillna("unknown").replace({"manual": "confirmed"}) == "confirmed").sum()) if not ref_frame.empty else 0
+    estimated_count = int((ref_frame["starter_source"].fillna("unknown") == "estimated").sum()) if not ref_frame.empty else 0
+    mapping_fail = ref_frame[ref_frame["scheduled_game_id"].fillna("").astype(str).str.strip().eq("")] if not ref_frame.empty else ref_frame
+    freshness_fail = ref_frame[ref_frame["snapshot_date"].astype(str) != reference_datetime.date().isoformat()] if not ref_frame.empty else ref_frame
+    snapshot_dates = pd.to_datetime(frame["snapshot_date"], errors="coerce").dt.date if not frame.empty else pd.Series(dtype=object)
+    reference_dates = pd.to_datetime(frame["reference_date"], errors="coerce").dt.date if not frame.empty else pd.Series(dtype=object)
+    leakage_fail = frame[snapshot_dates > reference_dates] if not frame.empty else frame
+    late_snapshot = ref_frame[
+        pd.to_datetime(ref_frame["snapshot_time"], errors="coerce").dt.hour.fillna(0).astype(int) >= 22
+    ] if not ref_frame.empty else ref_frame
+    quality_missing = ref_frame[ref_frame["starter_info_quality"].isna()] if not ref_frame.empty else ref_frame
+
+    rows = [
+        _quality_result("duplicate_key_check", duplicate_key_count, len(frame), "blocking", "snapshot_date, reference_date, team, scheduled_game_id 조합 중복 검사", "중복 키가 있으면 최신 snapshot_time 기준으로 deduplicate"),
+        _quality_result("missing_starter_name_check", len(missing_starter), actual_team_rows, "blocking", "starter_source가 confirmed/manual/estimated인데 starter_name이 비어 있는 행 검사", "선발명 파싱 또는 추정 로직 점검"),
+        _quality_result("unknown_starter_ratio_check", unknown_count, actual_team_rows, "warning", f"reference_date 기준 unknown 선발 {unknown_count}건", "unknown 비율이 높으면 GameCenter 또는 추정 선발 수집 점검"),
+        _quality_result("confirmed_starter_ratio_check", 0 if confirmed_count else actual_team_rows, actual_team_rows, "warning", f"reference_date 기준 confirmed 선발 {confirmed_count}건", "경기 전 확정 선발 발표 시간 이후 pregame 업데이트 확인"),
+        _quality_result("team_count_check", 0 if actual_team_rows == expected_team_rows else abs(actual_team_rows - expected_team_rows), expected_team_rows, "blocking", "예정 경기 팀 행 수와 스냅샷 행 수 일치 검사", "예정 경기 수와 snapshot 생성 루프 매칭 점검"),
+        _quality_result("scheduled_game_mapping_check", len(mapping_fail), actual_team_rows, "blocking", "scheduled_game_id 비어 있는 행 검사", "일정 수집 game_id 생성 로직 점검"),
+        _quality_result("snapshot_time_freshness_check", len(freshness_fail), actual_team_rows, "warning", "reference_date 스냅샷이 현재 실행일에 생성됐는지 검사", "자동 실행 시점과 reference_date 전달값 확인"),
+        _quality_result("leakage_guard_check", len(leakage_fail), len(frame), "blocking", "snapshot_date가 reference_date보다 미래인 행 검사", "과거 기준일 재실행 산출물을 모델 피처로 사용하지 않도록 보관만 허용"),
+        _quality_result("postgame_snapshot_warning_check", len(late_snapshot), actual_team_rows, "warning", "22시 이후 생성되어 경기 종료 후 수집으로 의심되는 행 검사", "경기 전 업데이트 산출물만 학습 피처 후보로 분리"),
+        _quality_result("starter_info_quality_check", len(quality_missing), actual_team_rows, "blocking", "starter_info_quality 누락 검사", "선발 정보 품질 기본값 저장 로직 점검"),
+    ]
+    pd.DataFrame(rows).to_csv(results_dir / "pitching_snapshot_quality_report.csv", index=False, encoding="utf-8-sig")
+
+    snapshot_day_values = sorted({d.isoformat() for d in snapshot_dates.dropna()}) if not frame.empty else []
+    reference_day_values = sorted({d.isoformat() for d in reference_dates.dropna()}) if not frame.empty else []
+    teams_covered = sorted(frame["team"].dropna().astype(str).unique().tolist()) if not frame.empty else []
+    blocking_issues = [row["check_name"] for row in rows if row["status"] == "fail" and row["severity"] == "blocking"]
+    warnings = [row["check_name"] for row in rows if row["status"] == "warning"]
+    accumulated_days = len(snapshot_day_values)
+    enough_history = accumulated_days >= 30
+    safe = not blocking_issues and enough_history
+    reason = ""
+    if blocking_issues:
+        reason = "blocking quality issues: " + ", ".join(blocking_issues)
+    elif not enough_history:
+        reason = "누적 기간 부족: 최소 30일 이상 필요"
+    status = {
+        "generated_at": reference_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        "reference_date": reference_key,
+        "snapshot_file": str(snapshot_path.relative_to(BASE_DIR)),
+        "total_snapshot_rows": int(len(frame)),
+        "reference_date_rows": actual_team_rows,
+        "scheduled_games": int(len(scheduled) // 2) if not scheduled.empty else int(actual_team_rows // 2),
+        "expected_team_rows": expected_team_rows,
+        "actual_team_rows": actual_team_rows,
+        "duplicate_key_count": duplicate_key_count,
+        "unknown_starter_count": unknown_count,
+        "estimated_starter_count": estimated_count,
+        "confirmed_starter_count": confirmed_count,
+        "quality_status": "pass" if not blocking_issues else "fail",
+        "blocking_issues": blocking_issues,
+        "warnings": warnings,
+        "safe_for_future_feature_use": safe,
+        "reason_if_not_safe": reason,
+        "accumulated_snapshot_days": accumulated_days,
+        "first_snapshot_date": snapshot_day_values[0] if snapshot_day_values else "",
+        "latest_snapshot_date": snapshot_day_values[-1] if snapshot_day_values else "",
+        "reference_dates_covered": reference_day_values,
+        "teams_covered": teams_covered,
+    }
+    (results_dir / "pitching_snapshot_quality_status.json").write_text(json.dumps(status, indent=2, ensure_ascii=False), encoding="utf-8")
+    return status
 
 
 def update_pitching_snapshot_diagnostics(results_dir: Path, status_payload: dict):
@@ -963,7 +1062,19 @@ def update_pitching_snapshot_diagnostics(results_dir: Path, status_payload: dict
     summary_path = results_dir / "model_insight_summary.json"
     if summary_path.exists():
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        quality_path = results_dir / "pitching_snapshot_quality_status.json"
+        quality_status = json.loads(quality_path.read_text(encoding="utf-8")) if quality_path.exists() else {}
         summary["pitching_snapshot_collection_status"] = status_payload
+        summary["pitching_snapshot_quality_summary"] = quality_status
+        summary["pitching_snapshot_accumulation_progress"] = {
+            "accumulated_snapshot_days": quality_status.get("accumulated_snapshot_days", 0),
+            "first_snapshot_date": quality_status.get("first_snapshot_date", ""),
+            "latest_snapshot_date": quality_status.get("latest_snapshot_date", ""),
+            "minimum_days_required": 30,
+        }
+        summary["safe_to_use_pitching_snapshot_as_features"] = bool(quality_status.get("safe_for_future_feature_use", False))
+        summary["reason_pitching_snapshot_not_used_yet"] = quality_status.get("reason_if_not_safe") or "현재 운영 모델 피처로 연결하지 않는 정책 유지"
+        summary["recommended_next_step_after_30_days"] = "30일 이상 누적 후 선발 정보 품질, 선발 ERA/WHIP 스냅샷, 불펜 피로 proxy를 별도 후보 모델에서 leakage-safe rolling 피처로 검증합니다."
         summary["leakage_safe_pitching_data_policy"] = "투수 스냅샷은 예측 시점에 알고 있던 정보만 누적 저장하며, 현재 운영 모델 학습 피처로 바로 사용하지 않습니다."
         summary["next_step_after_snapshot_accumulation"] = "스냅샷이 충분히 쌓이면 선발 최근 성적, 선발 정보 품질, 불펜 피로 proxy를 날짜 기준 shift(1) 피처로 별도 후보 모델에서 검증합니다."
         summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
