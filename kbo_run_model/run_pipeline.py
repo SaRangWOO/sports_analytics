@@ -16,6 +16,7 @@ from collectors.internal_pitcher_mapping import write_internal_pitcher_mapping_o
 from collectors.pitcher_data_validation import validate_pitcher_data_pipeline
 from collectors.schedule import load_schedule, select_target_games, validate_schedule_selection
 from collectors.schedule_update import build_schedule_status, write_schedule_update_report
+from collectors.starter_pitcher_collector import collect_and_maybe_apply, load_collection_summary
 from collectors.schema import inspect_starter_schema
 from collectors.search_internal_data import search_internal_pitcher_data
 from dashboard.report import write_html_report
@@ -184,6 +185,10 @@ def run_pipeline(
     schedule = load_schedule(schedule_path)
     current_date_kst = datetime.now(KST).date()
     schedule_update_status = build_schedule_status(schedule_path, current_date_kst)
+    starter_collection_report_path = output_dir / "starter_pitcher_collection_report.csv"
+    if not starter_collection_report_path.exists():
+        collect_and_maybe_apply(schedule, DEFAULT_STARTERS, output_dir, apply=False, probe_external=False)
+    starter_pitcher_collection = load_collection_summary(starter_collection_report_path)
     target_games, target_context = select_target_games(schedule, target_date, current_date_kst, allow_past_fallback)
     feature_df, feature_columns = build_feature_matrix(team_games)
     starters, pitcher_logs, starter_data_status = load_starter_inputs(DEFAULT_STARTERS, DEFAULT_PITCHER_LOGS)
@@ -277,6 +282,7 @@ def run_pipeline(
         "schedule_update_needed": schedule_update_status["schedule_update_needed"],
         "schedule_update_blocker": schedule_update_status["schedule_update_blocker"],
         "schedule_update_status": schedule_update_status,
+        **starter_pitcher_collection,
         "schedule_selection_check": schedule_check,
         "train_ratio": train_ratio,
         "training_cutoff": pd.Timestamp(cutoff).strftime("%Y-%m-%d"),
@@ -333,6 +339,8 @@ def run_pipeline(
             "match_predictions.csv",
             "schedule_selection_check.csv",
             "schedule_update_report.csv",
+            "starter_pitcher_collection_report.csv",
+            "starter_pitcher_validation.csv",
             "error_analysis_games.csv",
             "win_probability_bucket_metrics.csv",
             "total_runs_error_metrics.csv",
