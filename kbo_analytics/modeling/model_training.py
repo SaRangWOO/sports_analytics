@@ -47,9 +47,63 @@ STREAK_FEATURES = {
     "opponent_vs_losing_streak_flag",
 }
 
+VOLATILITY_FEATURES = {
+    "team_recent_5_run_std",
+    "team_recent_10_run_std",
+    "opponent_recent_5_run_std",
+    "opponent_recent_10_run_std",
+    "run_std_gap",
+    "team_recent_5_allowed_std",
+    "opponent_recent_5_allowed_std",
+    "allowed_std_gap",
+}
+
+CLOSE_BLOWOUT_FEATURES = {
+    "team_recent_5_close_game_rate",
+    "opponent_recent_5_close_game_rate_exact",
+    "close_game_rate_gap",
+    "team_recent_10_blowout_win_rate",
+    "team_recent_10_blowout_loss_rate",
+    "opponent_recent_10_blowout_win_rate",
+    "opponent_recent_10_blowout_loss_rate",
+    "blowout_tendency_gap",
+}
+
+MOMENTUM_FEATURES = {
+    "team_run_momentum_3_vs_10",
+    "opponent_run_momentum_3_vs_10",
+    "run_momentum_gap",
+    "team_allowed_momentum_3_vs_10",
+    "opponent_allowed_momentum_3_vs_10",
+    "allowed_momentum_gap",
+}
+
+VENUE_CONTEXT_FEATURES = {
+    "team_recent_home_win_rate_prior",
+    "team_recent_away_win_rate_prior",
+    "opponent_recent_home_win_rate_prior",
+    "opponent_recent_away_win_rate_prior",
+    "venue_context_win_rate_gap",
+    "team_recent_same_venue_run_diff",
+}
+
+MONTH_PHASE_FEATURES = {
+    "season_phase",
+    "team_month_win_rate_prior",
+    "opponent_month_win_rate_prior",
+    "month_win_rate_gap",
+    "team_month_run_diff_prior",
+    "opponent_month_run_diff_prior",
+    "month_run_diff_gap",
+}
+
 
 def non_streak_columns(columns):
     return [column for column in columns if column not in STREAK_FEATURES]
+
+
+def available_columns(columns: list[str], x: pd.DataFrame):
+    return [column for column in columns if column in x.columns]
 
 
 def align_prediction_matrix(features: pd.DataFrame, feature_columns: list[str], mean: pd.Series, std: pd.Series):
@@ -199,14 +253,96 @@ def streak_experiment_metrics(model_name: str, feature_set: str, frame: pd.DataF
     }
 
 
+def non_pitching_experiment_metrics(model_name: str, feature_set: str, frame: pd.DataFrame, y_true: np.ndarray, probability: np.ndarray, selected_candidate: bool):
+    pred = (probability >= 0.5).astype(int)
+    confidence = np.maximum(probability, 1 - probability)
+    over_55_mask = confidence >= 0.55
+    dates = pd.to_datetime(frame["date"])
+    recent_3year_mask = dates.dt.year >= dates.dt.year.max() - 2
+    winning_mask = frame.get("team_winning_streak_flag", pd.Series(0, index=frame.index)).to_numpy() == 1
+    losing_mask = frame.get("team_losing_streak_flag", pd.Series(0, index=frame.index)).to_numpy() == 1
+    close_mask = frame.get("actual_close_game", pd.Series(0, index=frame.index)).to_numpy() == 1
+    blowout_mask = frame.get("actual_blowout_game", pd.Series(0, index=frame.index)).to_numpy() == 1
+    score = probability_scores(y_true, probability)
+
+    def accuracy_for(mask):
+        return round(float((pred[mask] == y_true[mask]).mean()), 3) if np.asarray(mask).any() else None
+
+    return {
+        "model": model_name,
+        "feature_set": feature_set,
+        "accuracy": round(float((pred == y_true).mean()), 3),
+        "brier": score["Brier Score"],
+        "log_loss": score["Log Loss"],
+        "over_55_games": int(over_55_mask.sum()),
+        "over_55_accuracy": accuracy_for(over_55_mask),
+        "winning_streak_accuracy": accuracy_for(winning_mask),
+        "losing_streak_accuracy": accuracy_for(losing_mask),
+        "close_game_accuracy": accuracy_for(close_mask),
+        "blowout_game_accuracy": accuracy_for(blowout_mask),
+        "recent_3year_accuracy": accuracy_for(recent_3year_mask.to_numpy()),
+        "selected_candidate": selected_candidate,
+    }
+
+
 def write_streak_feature_experiment_report(results_dir: Path, rows: list[dict]):
     pd.DataFrame(rows).to_csv(results_dir / "streak_feature_experiment_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_non_pitching_feature_experiment_report(results_dir: Path, rows: list[dict]):
+    output = results_dir / "non_pitching_feature_experiment_report.csv"
+    pd.DataFrame(rows).to_csv(output, index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_non_pitching_feature_importance_report(results_dir: Path, rows: list[dict]):
+    output = results_dir / "non_pitching_feature_importance_report.csv"
+    pd.DataFrame(rows).to_csv(output, index=False, encoding="utf-8-sig")
     return rows
 
 
 def write_model_probability_spread_report(results_dir: Path, rows: list[dict]):
     output = results_dir / "model_probability_spread_report.csv"
     pd.DataFrame(rows).to_csv(output, index=False, encoding="utf-8-sig")
+    return rows
+
+
+def feature_signal_importance_rows(x_train: pd.DataFrame, y_train: np.ndarray, feature_set: str, repeats: int = 5):
+    rng = np.random.default_rng(42)
+    rows = []
+    for column in x_train.columns:
+        values = x_train[column].to_numpy(dtype=float)
+        signals = []
+        for _ in range(repeats):
+            indices = rng.choice(len(values), size=max(int(len(values) * 0.7), 1), replace=False)
+            sampled_values = values[indices]
+            sampled_target = y_train[indices]
+            if np.std(sampled_values) == 0 or np.std(sampled_target) == 0:
+                signals.append(0.0)
+            else:
+                signals.append(abs(float(np.corrcoef(sampled_values, sampled_target)[0, 1])))
+        mean_signal = float(np.nan_to_num(np.mean(signals)))
+        std_signal = float(np.nan_to_num(np.std(signals)))
+        if mean_signal > 0.08:
+            interpretation = "예측 정확도에 긍정 신호"
+        elif mean_signal < 0.015:
+            interpretation = "기여도 제한적"
+        else:
+            interpretation = "약한 보조 신호"
+        rows.append(
+            {
+                "feature_set": feature_set,
+                "feature": column,
+                "importance_mean": round(mean_signal, 6),
+                "importance_std": round(std_signal, 6),
+                "rank": 0,
+                "interpretation": interpretation,
+            }
+        )
+    rows = sorted(rows, key=lambda row: row["importance_mean"], reverse=True)
+    for rank, row in enumerate(rows, start=1):
+        row["rank"] = rank
     return rows
 
 
@@ -317,6 +453,27 @@ def streak_feature_columns(x: pd.DataFrame):
     return [column for column in columns if column in x.columns]
 
 
+def non_pitching_feature_sets(x: pd.DataFrame):
+    baseline = compact_feature_columns(x)
+    groups = {
+        "baseline_core": baseline,
+        "baseline_plus_streak": baseline + list(STREAK_FEATURES),
+        "baseline_plus_volatility": baseline + list(VOLATILITY_FEATURES),
+        "baseline_plus_close_blowout": baseline + list(CLOSE_BLOWOUT_FEATURES),
+        "baseline_plus_momentum": baseline + list(MOMENTUM_FEATURES),
+        "baseline_plus_venue_context": baseline + list(VENUE_CONTEXT_FEATURES),
+        "baseline_plus_month_phase": baseline + list(MONTH_PHASE_FEATURES),
+        "baseline_plus_all_non_pitching": baseline
+        + list(STREAK_FEATURES)
+        + list(VOLATILITY_FEATURES)
+        + list(CLOSE_BLOWOUT_FEATURES)
+        + list(MOMENTUM_FEATURES)
+        + list(VENUE_CONTEXT_FEATURES)
+        + list(MONTH_PHASE_FEATURES),
+    }
+    return {name: available_columns(list(dict.fromkeys(columns)), x) for name, columns in groups.items()}
+
+
 def compact_sklearn_candidate_specs(recency_weight):
     try:
         from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
@@ -342,6 +499,17 @@ def streak_candidate_specs(recency_weight):
         ("Streak 피처 RandomForest 시간가중 실험", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), recency_weight),
         ("Streak 피처 GradientBoosting 실험", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), None),
         ("Streak 피처 GradientBoosting 시간가중 실험", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), recency_weight),
+    ]
+
+
+def non_pitching_candidate_specs():
+    try:
+        from sklearn.ensemble import HistGradientBoostingClassifier
+    except ImportError:
+        return []
+
+    return [
+        ("비투수 피처 GradientBoosting 실험", HistGradientBoostingClassifier(max_iter=220, learning_rate=0.03, max_leaf_nodes=10, l2_regularization=0.14, random_state=42)),
     ]
 
 
@@ -449,6 +617,8 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     candidate_results = []
     probability_spread_rows = []
     streak_experiment_rows = []
+    non_pitching_experiment_rows = []
+    non_pitching_importance_rows = []
 
     for name, columns in candidate_columns.items():
         x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
@@ -492,6 +662,24 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         candidate_results.append({"모델": name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
         probability_spread_rows.append(model_probability_spread(name, y_test, probability, accuracy, score))
         streak_experiment_rows.append(streak_experiment_metrics(name, "compact_plus_streak", features.iloc[split_index:].copy(), y_test, probability, False))
+
+    for feature_set, columns in non_pitching_feature_sets(x).items():
+        if not columns:
+            continue
+        for name, model in non_pitching_candidate_specs():
+            x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
+            train_scaled, test_scaled, mean, std = standardize_train_test(x_train, x_test)
+            model.fit(train_scaled, y_train)
+            probability = normalize_game_probabilities(features.iloc[split_index:], model.predict_proba(test_scaled)[:, 1])
+            pred = (probability >= 0.5).astype(int)
+            accuracy = round(float((pred == y_test).mean()), 3)
+            score = probability_scores(y_test, probability)
+            candidate_name = f"{name} / {feature_set}"
+            candidate_results.append({"모델": candidate_name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
+            probability_spread_rows.append(model_probability_spread(candidate_name, y_test, probability, accuracy, score))
+            metrics = non_pitching_experiment_metrics(candidate_name, feature_set, features.iloc[split_index:].copy(), y_test, probability, False)
+            non_pitching_experiment_rows.append(metrics)
+        non_pitching_importance_rows.extend(feature_signal_importance_rows(x.iloc[:split_index][columns], y_train, feature_set))
 
     sklearn_candidates = sklearn_candidate_specs(recency_weight)
     for name, model, sample_weight in sklearn_candidates:
@@ -580,11 +768,19 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     for row in streak_experiment_rows:
         row["selected_candidate"] = row["model"] == best["name"]
     streak_report = write_streak_feature_experiment_report(results_dir, streak_experiment_rows)
+    non_pitching_report = write_non_pitching_feature_experiment_report(results_dir, non_pitching_experiment_rows)
+    non_pitching_importance_report = write_non_pitching_feature_importance_report(results_dir, non_pitching_importance_rows)
     spread_report = write_model_probability_spread_report(results_dir, probability_spread_rows)
-    payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, spread_report, streak_experiment_rows)
+    payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, spread_report, streak_experiment_rows, non_pitching_experiment_rows, non_pitching_importance_rows)
     payload["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload["streak_feature_experiment_rows"] = len(streak_report)
+    payload["non_pitching_feature_experiment_report"] = "modeling/results/non_pitching_feature_experiment_report.csv"
+    payload["non_pitching_feature_experiment_rows"] = len(non_pitching_report)
+    payload["non_pitching_feature_importance_report"] = "modeling/results/non_pitching_feature_importance_report.csv"
+    payload["non_pitching_feature_importance_rows"] = len(non_pitching_importance_report)
     payload.setdefault("diagnostic_reports", {})["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
+    payload.setdefault("diagnostic_reports", {})["non_pitching_feature_experiment_report"] = "modeling/results/non_pitching_feature_experiment_report.csv"
+    payload.setdefault("diagnostic_reports", {})["non_pitching_feature_importance_report"] = "modeling/results/non_pitching_feature_importance_report.csv"
     if payload.get("feature_importance"):
         pd.DataFrame(
             [{"feature": feature, "importance": importance} for feature, importance in payload["feature_importance"].items()]
@@ -1076,6 +1272,8 @@ def write_model_insight_summary(
     starter_availability: list[dict] | None = None,
     bullpen_availability: list[dict] | None = None,
     pitching_experiment_rows: list[dict] | None = None,
+    non_pitching_experiment_rows: list[dict] | None = None,
+    non_pitching_importance_rows: list[dict] | None = None,
 ):
     sorted_segments = [row for row in segment_rows if row["total_games"]]
     best_segments = sorted(sorted_segments, key=lambda row: row["accuracy"] or 0, reverse=True)[:5]
@@ -1085,8 +1283,36 @@ def write_model_insight_summary(
     selected = payload.get("selected_model")
     candidate_rows = payload.get("candidate_results", [])
     selected_row = next((row for row in candidate_rows if row["모델"] == selected), {})
-    best_accuracy_row = max(candidate_rows, key=lambda row: row.get("검증 정확도", 0)) if candidate_rows else {}
-    safe_to_replace = bool(best_accuracy_row and best_accuracy_row.get("모델") != selected and best_accuracy_row.get("검증 정확도", 0) > selected_row.get("검증 정확도", 0) + 0.005)
+    non_pitching_experiment_rows = non_pitching_experiment_rows or []
+    non_pitching_importance_rows = non_pitching_importance_rows or []
+    selected_accuracy = selected_row.get("검증 정확도", 0)
+    selected_brier = selected_row.get("Brier Score", 1)
+    selected_log_loss = selected_row.get("Log Loss", 1)
+    baseline_non_pitching = next((row for row in non_pitching_experiment_rows if row.get("feature_set") == "baseline_core"), {})
+
+    def replacement_candidate(row):
+        return bool(
+            row.get("accuracy") is not None
+            and row.get("accuracy", 0) > selected_accuracy + 0.005
+            and row.get("brier", 1) <= selected_brier + 0.001
+            and row.get("log_loss", 1) <= selected_log_loss + 0.001
+            and (row.get("over_55_accuracy") or 0) > (baseline_non_pitching.get("over_55_accuracy") or 0)
+            and (row.get("recent_3year_accuracy") or 0) >= (baseline_non_pitching.get("recent_3year_accuracy") or 0)
+            and (row.get("winning_streak_accuracy") or 0) > (baseline_non_pitching.get("winning_streak_accuracy") or 0)
+            and (row.get("close_game_accuracy") or 0) >= (baseline_non_pitching.get("close_game_accuracy") or 0)
+        )
+
+    safe_to_replace = any(replacement_candidate(row) for row in non_pitching_experiment_rows)
+    useful_non_pitching = [
+        row["feature"]
+        for row in sorted(non_pitching_importance_rows, key=lambda item: item.get("importance_mean", 0), reverse=True)
+        if row.get("importance_mean", 0) > 0.002
+    ][:12]
+    noisy_non_pitching = [
+        row["feature"]
+        for row in sorted(non_pitching_importance_rows, key=lambda item: item.get("importance_mean", 0))
+        if row.get("importance_mean", 0) < 0.015
+    ][:12]
     summary = {
         "current_baseline": {
             "selected_model": selected,
@@ -1102,6 +1328,13 @@ def write_model_insight_summary(
         "pitching_data_availability_summary": starter_availability or [],
         "bullpen_data_availability_summary": bullpen_availability or [],
         "pitching_feature_experiment_summary": pitching_experiment_rows or [],
+        "non_pitching_feature_experiment_summary": non_pitching_experiment_rows,
+        "useful_non_pitching_features": useful_non_pitching,
+        "harmful_or_noisy_non_pitching_features": noisy_non_pitching,
+        "recommended_next_non_pitching_step": (
+            "유용 신호가 반복 확인된 비투수 피처만 다음 후보 세트에 유지하고, "
+            "노이즈 가능성이 있는 피처는 운영 모델 교체 후보에서 제외합니다."
+        ),
         "pitching_snapshot_collection_status": {
             "status": "pending_dashboard_snapshot_step",
             "note": "official_kbo_dashboard.py의 pitching context 생성 이후 현재 실행 기준 스냅샷 상태로 갱신됩니다.",
@@ -1116,7 +1349,7 @@ def write_model_insight_summary(
         ],
         "recommended_next_modeling_step": "투수별 경기 로그를 수집해 선발 최근 3경기 성적과 실제 불펜 소모량을 날짜 기준 shift(1) 피처로 검증",
         "safe_to_replace_model": safe_to_replace,
-        "reason_not_to_replace_if_false": "" if safe_to_replace else "후보 모델이 정확도와 확률 품질을 동시에 안정적으로 개선했다는 근거가 부족합니다.",
+        "reason_not_to_replace_if_false": "" if safe_to_replace else "비투수 피처 후보가 accuracy, Brier Score, Log Loss, over_55_accuracy, 최근 3년 성능, 연승/박빙 구간을 동시에 개선했다는 근거가 부족합니다.",
     }
     (results_dir / "model_insight_summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     return summary
@@ -1157,7 +1390,7 @@ def train_prediction_bundle(best, training_games, prediction_training_cutoff, da
     return {"model_type": best["model_type"], "model": model, "mean": mean, "std": std}
 
 
-def build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, probability_spread_rows, streak_experiment_rows):
+def build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, probability_spread_rows, streak_experiment_rows, non_pitching_experiment_rows, non_pitching_importance_rows):
     columns = best["columns"]
     probability = best["probability"]
     pred = best["pred"]
@@ -1324,6 +1557,8 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         starter_availability,
         bullpen_availability,
         pitching_experiment_rows,
+        non_pitching_experiment_rows,
+        non_pitching_importance_rows,
     )
     payload["diagnostic_reports"] = {
         "feature_diagnostic_report": "modeling/results/feature_diagnostic_report.csv",
@@ -1332,6 +1567,8 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         "starter_data_availability_report": "modeling/results/starter_data_availability_report.csv",
         "bullpen_data_availability_report": "modeling/results/bullpen_data_availability_report.csv",
         "pitching_feature_experiment_report": "modeling/results/pitching_feature_experiment_report.csv",
+        "non_pitching_feature_experiment_report": "modeling/results/non_pitching_feature_experiment_report.csv",
+        "non_pitching_feature_importance_report": "modeling/results/non_pitching_feature_importance_report.csv",
         "model_selection_report": "modeling/results/model_selection_report.csv",
         "seasonal_performance_report": "modeling/results/seasonal_performance_report.csv",
         "model_insight_summary": "modeling/results/model_insight_summary.json",
@@ -1345,6 +1582,8 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         "starter_data_availability": len(starter_availability),
         "bullpen_data_availability": len(bullpen_availability),
         "pitching_feature_experiment_rows": len(pitching_experiment_rows),
+        "non_pitching_feature_experiment_rows": len(non_pitching_experiment_rows),
+        "non_pitching_feature_importance_rows": len(non_pitching_importance_rows),
     }
     payload["model_insight_summary"] = insight_summary
     return payload

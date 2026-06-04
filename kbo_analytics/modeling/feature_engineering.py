@@ -66,6 +66,14 @@ def assign_prior_streak_features(df: pd.DataFrame, group_keys: list[str]) -> pd.
     return df
 
 
+def rolling_group_mean(values: pd.Series, season: pd.Series, team: pd.Series, window: int, default: float) -> pd.Series:
+    return values.groupby([season, team]).rolling(window, min_periods=1).mean().reset_index(level=[0, 1], drop=True).fillna(default)
+
+
+def rolling_group_std(values: pd.Series, season: pd.Series, team: pd.Series, window: int) -> pd.Series:
+    return values.groupby([season, team]).rolling(window, min_periods=2).std().reset_index(level=[0, 1], drop=True).fillna(0.0)
+
+
 def build_features(input_path: str | Path, include_unlabeled: bool = False) -> pd.DataFrame:
     df = pd.read_csv(input_path)
     if include_unlabeled:
@@ -81,6 +89,9 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
 
     df["target_win"] = df["result"].map({"Win": 1, "Loss": 0})
     df["run_diff"] = df["score_team"] - df["score_opp"]
+    df["actual_run_margin"] = df["run_diff"].abs()
+    df["actual_close_game"] = (df["actual_run_margin"] <= 1).astype(int)
+    df["actual_blowout_game"] = (df["actual_run_margin"] >= 5).astype(int)
     df["month"] = df["date"].dt.month
     df["is_home"] = (df["home_away"] == "H").astype(int)
     if "series_id" in df.columns and "team" in df.columns:
@@ -101,6 +112,10 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         shifted_score = grouped["score_team"].shift(1)
         shifted_allowed = grouped["score_opp"].shift(1)
         shifted_diff = grouped["run_diff"].shift(1)
+        shifted_abs_diff = shifted_diff.abs()
+        shifted_close = (shifted_abs_diff <= 1).astype(float)
+        shifted_blowout_win = ((grouped["run_diff"].shift(1) >= 5) & (grouped["target_win"].shift(1) == 1)).astype(float)
+        shifted_blowout_loss = ((grouped["run_diff"].shift(1) <= -5) & (grouped["target_win"].shift(1) == 0)).astype(float)
         prior_games = grouped.cumcount()
         prior_wins = grouped["target_win"].cumsum().shift(1)
         prior_runs = grouped["score_team"].cumsum().shift(1)
@@ -115,23 +130,51 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["season_avg_score_prior"] = add_prior_rate(prior_runs, prior_games, df["score_team"].mean())
         df["season_avg_allowed_prior"] = add_prior_rate(prior_allowed, prior_games, df["score_opp"].mean())
         df["season_avg_run_diff_prior"] = add_prior_rate(prior_run_diff, prior_games, 0.0)
-        df["recent_5_win_rate"] = shifted_win.groupby([df["season"], df["team"]]).rolling(5, min_periods=1).mean().reset_index(level=[0, 1], drop=True).fillna(0.5)
-        df["recent_10_win_rate"] = shifted_win.groupby([df["season"], df["team"]]).rolling(10, min_periods=1).mean().reset_index(level=[0, 1], drop=True).fillna(0.5)
-        df["avg_score_last_5"] = shifted_score.groupby([df["season"], df["team"]]).rolling(5, min_periods=1).mean().reset_index(level=[0, 1], drop=True).fillna(df["score_team"].mean())
-        df["avg_allowed_last_5"] = shifted_allowed.groupby([df["season"], df["team"]]).rolling(5, min_periods=1).mean().reset_index(level=[0, 1], drop=True).fillna(df["score_opp"].mean())
-        df["avg_run_diff_last_5"] = shifted_diff.groupby([df["season"], df["team"]]).rolling(5, min_periods=1).mean().reset_index(level=[0, 1], drop=True).fillna(0)
-        df["avg_run_diff_last_10"] = shifted_diff.groupby([df["season"], df["team"]]).rolling(10, min_periods=1).mean().reset_index(level=[0, 1], drop=True).fillna(0)
+        df["recent_5_win_rate"] = rolling_group_mean(shifted_win, df["season"], df["team"], 5, 0.5)
+        df["recent_10_win_rate"] = rolling_group_mean(shifted_win, df["season"], df["team"], 10, 0.5)
+        df["avg_score_last_3"] = rolling_group_mean(shifted_score, df["season"], df["team"], 3, df["score_team"].mean())
+        df["avg_score_last_5"] = rolling_group_mean(shifted_score, df["season"], df["team"], 5, df["score_team"].mean())
+        df["avg_score_last_10"] = rolling_group_mean(shifted_score, df["season"], df["team"], 10, df["score_team"].mean())
+        df["avg_allowed_last_3"] = rolling_group_mean(shifted_allowed, df["season"], df["team"], 3, df["score_opp"].mean())
+        df["avg_allowed_last_5"] = rolling_group_mean(shifted_allowed, df["season"], df["team"], 5, df["score_opp"].mean())
+        df["avg_allowed_last_10"] = rolling_group_mean(shifted_allowed, df["season"], df["team"], 10, df["score_opp"].mean())
+        df["avg_run_diff_last_5"] = rolling_group_mean(shifted_diff, df["season"], df["team"], 5, 0)
+        df["avg_run_diff_last_10"] = rolling_group_mean(shifted_diff, df["season"], df["team"], 10, 0)
+        df["team_recent_5_run_std"] = rolling_group_std(shifted_score, df["season"], df["team"], 5)
+        df["team_recent_10_run_std"] = rolling_group_std(shifted_score, df["season"], df["team"], 10)
+        df["team_recent_5_allowed_std"] = rolling_group_std(shifted_allowed, df["season"], df["team"], 5)
+        df["team_recent_10_allowed_std"] = rolling_group_std(shifted_allowed, df["season"], df["team"], 10)
+        df["team_recent_5_close_game_rate"] = rolling_group_mean(shifted_close, df["season"], df["team"], 5, 0.0)
+        df["team_recent_10_blowout_win_rate"] = rolling_group_mean(shifted_blowout_win, df["season"], df["team"], 10, 0.0)
+        df["team_recent_10_blowout_loss_rate"] = rolling_group_mean(shifted_blowout_loss, df["season"], df["team"], 10, 0.0)
+        df["team_run_momentum_3_vs_10"] = df["avg_score_last_3"] - df["avg_score_last_10"]
+        df["team_allowed_momentum_3_vs_10"] = df["avg_allowed_last_3"] - df["avg_allowed_last_10"]
         df = assign_prior_streak_features(df, group_keys)
         df["team_winning_streak_flag"] = ((df["team_current_streak_type"] == 1) & (df["team_current_streak_length"] >= 2)).astype(int)
         df["team_losing_streak_flag"] = ((df["team_current_streak_type"] == -1) & (df["team_current_streak_length"] >= 2)).astype(int)
-        shifted_close = (grouped["run_diff"].shift(1).abs() <= 2).astype(float)
-        df["recent_5_close_game_rate"] = shifted_close.groupby([df["season"], df["team"]]).rolling(5, min_periods=1).mean().reset_index(level=[0, 1], drop=True).fillna(0)
+        df["recent_5_close_game_rate"] = df["team_recent_5_close_game_rate"]
         venue_grouped = df.groupby(["season", "team", "home_away"], group_keys=False)
         venue_prior_games = venue_grouped.cumcount()
         venue_prior_wins = venue_grouped["target_win"].cumsum().shift(1)
+        venue_shifted_win = venue_grouped["target_win"].shift(1)
+        venue_shifted_diff = venue_grouped["run_diff"].shift(1)
         venue_first_row = venue_grouped.cumcount() == 0
         venue_prior_wins = venue_prior_wins.mask(venue_first_row, 0)
         df["venue_win_rate_prior"] = add_prior_rate(venue_prior_wins, venue_prior_games, 0.5)
+        df["team_recent_same_venue_win_rate_prior"] = venue_shifted_win.groupby([df["season"], df["team"], df["home_away"]]).rolling(5, min_periods=1).mean().reset_index(level=[0, 1, 2], drop=True).fillna(0.5)
+        df["team_recent_same_venue_run_diff"] = venue_shifted_diff.groupby([df["season"], df["team"], df["home_away"]]).rolling(5, min_periods=1).mean().reset_index(level=[0, 1, 2], drop=True).fillna(0.0)
+        df["team_recent_home_win_rate_prior"] = df["team_recent_same_venue_win_rate_prior"].where(df["home_away"] == "H", 0.5)
+        df["team_recent_away_win_rate_prior"] = df["team_recent_same_venue_win_rate_prior"].where(df["home_away"] == "A", 0.5)
+        month_grouped = df.groupby(["season", "team", "month"], group_keys=False)
+        month_prior_games = month_grouped.cumcount()
+        month_prior_wins = month_grouped["target_win"].cumsum().shift(1)
+        month_prior_diff = month_grouped["run_diff"].cumsum().shift(1)
+        month_first_row = month_grouped.cumcount() == 0
+        month_prior_wins = month_prior_wins.mask(month_first_row, 0)
+        month_prior_diff = month_prior_diff.mask(month_first_row, 0)
+        df["team_month_win_rate_prior"] = add_prior_rate(month_prior_wins, month_prior_games, 0.5)
+        df["team_month_run_diff_prior"] = add_prior_rate(month_prior_diff, month_prior_games, 0.0)
+        df["season_phase"] = pd.cut(df["month"], bins=[0, 4, 7, 12], labels=[0, 1, 2]).astype(int)
         h2h_grouped = df.groupby(["season", "team", "opponent"], group_keys=False)
         h2h_prior_games = h2h_grouped.cumcount()
         h2h_prior_wins = h2h_grouped["target_win"].cumsum().shift(1)
@@ -147,6 +190,15 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
                 "recent_10_win_rate",
                 "avg_run_diff_last_5",
                 "avg_run_diff_last_10",
+                "team_recent_5_run_std",
+                "team_recent_10_run_std",
+                "team_recent_5_allowed_std",
+                "team_recent_10_allowed_std",
+                "team_recent_5_close_game_rate",
+                "team_recent_10_blowout_win_rate",
+                "team_recent_10_blowout_loss_rate",
+                "team_run_momentum_3_vs_10",
+                "team_allowed_momentum_3_vs_10",
                 "season_win_rate_prior",
                 "season_avg_score_prior",
                 "season_avg_allowed_prior",
@@ -157,6 +209,11 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
                 "team_losing_streak_flag",
                 "recent_5_close_game_rate",
                 "venue_win_rate_prior",
+                "team_recent_home_win_rate_prior",
+                "team_recent_away_win_rate_prior",
+                "team_recent_same_venue_run_diff",
+                "team_month_win_rate_prior",
+                "team_month_run_diff_prior",
                 "head_to_head_win_rate_prior",
             ]
         ].rename(
@@ -166,6 +223,15 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
                 "recent_10_win_rate": "opponent_recent_10_win_rate",
                 "avg_run_diff_last_5": "opponent_avg_run_diff_last_5",
                 "avg_run_diff_last_10": "opponent_avg_run_diff_last_10",
+                "team_recent_5_run_std": "opponent_recent_5_run_std",
+                "team_recent_10_run_std": "opponent_recent_10_run_std",
+                "team_recent_5_allowed_std": "opponent_recent_5_allowed_std",
+                "team_recent_10_allowed_std": "opponent_recent_10_allowed_std",
+                "team_recent_5_close_game_rate": "opponent_recent_5_close_game_rate_exact",
+                "team_recent_10_blowout_win_rate": "opponent_recent_10_blowout_win_rate",
+                "team_recent_10_blowout_loss_rate": "opponent_recent_10_blowout_loss_rate",
+                "team_run_momentum_3_vs_10": "opponent_run_momentum_3_vs_10",
+                "team_allowed_momentum_3_vs_10": "opponent_allowed_momentum_3_vs_10",
                 "season_win_rate_prior": "opponent_season_win_rate_prior",
                 "season_avg_score_prior": "opponent_season_avg_score_prior",
                 "season_avg_allowed_prior": "opponent_season_avg_allowed_prior",
@@ -176,6 +242,11 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
                 "team_losing_streak_flag": "opponent_losing_streak_flag",
                 "recent_5_close_game_rate": "opponent_recent_5_close_game_rate",
                 "venue_win_rate_prior": "opponent_venue_win_rate_prior",
+                "team_recent_home_win_rate_prior": "opponent_recent_home_win_rate_prior",
+                "team_recent_away_win_rate_prior": "opponent_recent_away_win_rate_prior",
+                "team_recent_same_venue_run_diff": "opponent_recent_same_venue_run_diff",
+                "team_month_win_rate_prior": "opponent_month_win_rate_prior",
+                "team_month_run_diff_prior": "opponent_month_run_diff_prior",
                 "head_to_head_win_rate_prior": "opponent_head_to_head_win_rate_prior",
             }
         )
@@ -184,6 +255,20 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["opponent_recent_10_win_rate"] = df["opponent_recent_10_win_rate"].fillna(0.5)
         df["opponent_avg_run_diff_last_5"] = df["opponent_avg_run_diff_last_5"].fillna(0)
         df["opponent_avg_run_diff_last_10"] = df["opponent_avg_run_diff_last_10"].fillna(0)
+        for column in [
+            "opponent_recent_5_run_std",
+            "opponent_recent_10_run_std",
+            "opponent_recent_5_allowed_std",
+            "opponent_recent_10_allowed_std",
+            "opponent_recent_5_close_game_rate_exact",
+            "opponent_recent_10_blowout_win_rate",
+            "opponent_recent_10_blowout_loss_rate",
+            "opponent_run_momentum_3_vs_10",
+            "opponent_allowed_momentum_3_vs_10",
+            "opponent_recent_same_venue_run_diff",
+            "opponent_month_run_diff_prior",
+        ]:
+            df[column] = df[column].fillna(0.0)
         df["opponent_season_win_rate_prior"] = df["opponent_season_win_rate_prior"].fillna(0.5)
         df["opponent_season_avg_score_prior"] = df["opponent_season_avg_score_prior"].fillna(df["score_opp"].mean())
         df["opponent_season_avg_allowed_prior"] = df["opponent_season_avg_allowed_prior"].fillna(df["score_team"].mean())
@@ -194,6 +279,9 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["opponent_losing_streak_flag"] = df["opponent_losing_streak_flag"].fillna(0)
         df["opponent_recent_5_close_game_rate"] = df["opponent_recent_5_close_game_rate"].fillna(0)
         df["opponent_venue_win_rate_prior"] = df["opponent_venue_win_rate_prior"].fillna(0.5)
+        df["opponent_recent_home_win_rate_prior"] = df["opponent_recent_home_win_rate_prior"].fillna(0.5)
+        df["opponent_recent_away_win_rate_prior"] = df["opponent_recent_away_win_rate_prior"].fillna(0.5)
+        df["opponent_month_win_rate_prior"] = df["opponent_month_win_rate_prior"].fillna(0.5)
         df["opponent_head_to_head_win_rate_prior"] = df["opponent_head_to_head_win_rate_prior"].fillna(0.5)
         df["season_win_rate_gap"] = df["season_win_rate_prior"] - df["opponent_season_win_rate_prior"]
         df["recent_10_win_rate_gap"] = df["recent_10_win_rate"] - df["opponent_recent_10_win_rate"]
@@ -202,6 +290,20 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["season_avg_allowed_gap"] = df["opponent_season_avg_allowed_prior"] - df["season_avg_allowed_prior"]
         df["season_avg_run_diff_gap"] = df["season_avg_run_diff_prior"] - df["opponent_season_avg_run_diff_prior"]
         df["recent_run_diff_10_gap"] = df["avg_run_diff_last_10"] - df["opponent_avg_run_diff_last_10"]
+        df["run_std_gap"] = df["team_recent_5_run_std"] - df["opponent_recent_5_run_std"]
+        df["allowed_std_gap"] = df["opponent_recent_5_allowed_std"] - df["team_recent_5_allowed_std"]
+        df["close_game_rate_gap"] = df["team_recent_5_close_game_rate"] - df["opponent_recent_5_close_game_rate_exact"]
+        df["blowout_tendency_gap"] = (
+            df["team_recent_10_blowout_win_rate"]
+            - df["team_recent_10_blowout_loss_rate"]
+            - df["opponent_recent_10_blowout_win_rate"]
+            + df["opponent_recent_10_blowout_loss_rate"]
+        )
+        df["run_momentum_gap"] = df["team_run_momentum_3_vs_10"] - df["opponent_run_momentum_3_vs_10"]
+        df["allowed_momentum_gap"] = df["opponent_allowed_momentum_3_vs_10"] - df["team_allowed_momentum_3_vs_10"]
+        df["venue_context_win_rate_gap"] = df["team_recent_same_venue_win_rate_prior"] - df["opponent_venue_win_rate_prior"]
+        df["month_win_rate_gap"] = df["team_month_win_rate_prior"] - df["opponent_month_win_rate_prior"]
+        df["month_run_diff_gap"] = df["team_month_run_diff_prior"] - df["opponent_month_run_diff_prior"]
         df["streak_length_gap"] = (df["team_current_streak_length"] * df["team_current_streak_type"]) - (df["opponent_current_streak_length"] * df["opponent_current_streak_type"])
         df["winning_streak_regression_risk"] = df["team_winning_streak_flag"] * ((df["avg_run_diff_last_5"] < 0.8).astype(int) + (df["recent_5_close_game_rate"] >= 0.6).astype(int))
         df["winning_streak_with_low_run_diff"] = df["team_winning_streak_flag"] * (df["avg_run_diff_last_5"] < 0.8).astype(int)
@@ -233,6 +335,48 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["avg_score_last_5"] = shifted_score.rolling(5, min_periods=1).mean().fillna(df["score_team"].mean())
         df["avg_allowed_last_5"] = shifted_allowed.rolling(5, min_periods=1).mean().fillna(df["score_opp"].mean())
         df["avg_run_diff_last_5"] = shifted_diff.rolling(5, min_periods=1).mean().fillna(0)
+        df["avg_score_last_3"] = shifted_score.rolling(3, min_periods=1).mean().fillna(df["score_team"].mean())
+        df["avg_score_last_10"] = shifted_score.rolling(10, min_periods=1).mean().fillna(df["score_team"].mean())
+        df["avg_allowed_last_3"] = shifted_allowed.rolling(3, min_periods=1).mean().fillna(df["score_opp"].mean())
+        df["avg_allowed_last_10"] = shifted_allowed.rolling(10, min_periods=1).mean().fillna(df["score_opp"].mean())
+        for column in [
+            "team_recent_5_run_std",
+            "team_recent_10_run_std",
+            "opponent_recent_5_run_std",
+            "opponent_recent_10_run_std",
+            "run_std_gap",
+            "team_recent_5_allowed_std",
+            "opponent_recent_5_allowed_std",
+            "allowed_std_gap",
+            "team_recent_5_close_game_rate",
+            "opponent_recent_5_close_game_rate_exact",
+            "close_game_rate_gap",
+            "team_recent_10_blowout_win_rate",
+            "team_recent_10_blowout_loss_rate",
+            "opponent_recent_10_blowout_win_rate",
+            "opponent_recent_10_blowout_loss_rate",
+            "blowout_tendency_gap",
+            "team_run_momentum_3_vs_10",
+            "opponent_run_momentum_3_vs_10",
+            "run_momentum_gap",
+            "team_allowed_momentum_3_vs_10",
+            "opponent_allowed_momentum_3_vs_10",
+            "allowed_momentum_gap",
+            "team_recent_home_win_rate_prior",
+            "team_recent_away_win_rate_prior",
+            "opponent_recent_home_win_rate_prior",
+            "opponent_recent_away_win_rate_prior",
+            "venue_context_win_rate_gap",
+            "team_recent_same_venue_run_diff",
+            "season_phase",
+            "team_month_win_rate_prior",
+            "opponent_month_win_rate_prior",
+            "month_win_rate_gap",
+            "team_month_run_diff_prior",
+            "opponent_month_run_diff_prior",
+            "month_run_diff_gap",
+        ]:
+            df[column] = 0
         df["season_win_rate_prior"] = 0.5
         df["opponent_recent_5_win_rate"] = 0.5
         df["opponent_avg_run_diff_last_5"] = 0
@@ -292,6 +436,9 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
     feature_columns = [
         "date",
         "game_id",
+        "actual_run_margin",
+        "actual_close_game",
+        "actual_blowout_game",
     ]
     if "team" in df.columns:
         feature_columns.append("team")
@@ -305,8 +452,34 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         "recent_10_win_rate",
         "avg_score_last_5",
         "avg_allowed_last_5",
+        "avg_score_last_3",
+        "avg_score_last_10",
+        "avg_allowed_last_3",
+        "avg_allowed_last_10",
         "avg_run_diff_last_5",
         "avg_run_diff_last_10",
+        "team_recent_5_run_std",
+        "team_recent_10_run_std",
+        "opponent_recent_5_run_std",
+        "opponent_recent_10_run_std",
+        "run_std_gap",
+        "team_recent_5_allowed_std",
+        "opponent_recent_5_allowed_std",
+        "allowed_std_gap",
+        "team_recent_5_close_game_rate",
+        "opponent_recent_5_close_game_rate_exact",
+        "close_game_rate_gap",
+        "team_recent_10_blowout_win_rate",
+        "team_recent_10_blowout_loss_rate",
+        "opponent_recent_10_blowout_win_rate",
+        "opponent_recent_10_blowout_loss_rate",
+        "blowout_tendency_gap",
+        "team_run_momentum_3_vs_10",
+        "opponent_run_momentum_3_vs_10",
+        "run_momentum_gap",
+        "team_allowed_momentum_3_vs_10",
+        "opponent_allowed_momentum_3_vs_10",
+        "allowed_momentum_gap",
         "season_win_rate_prior",
         "season_avg_score_prior",
         "season_avg_allowed_prior",
@@ -346,6 +519,19 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         "venue_win_rate_prior",
         "opponent_venue_win_rate_prior",
         "venue_win_rate_gap",
+        "team_recent_home_win_rate_prior",
+        "team_recent_away_win_rate_prior",
+        "opponent_recent_home_win_rate_prior",
+        "opponent_recent_away_win_rate_prior",
+        "venue_context_win_rate_gap",
+        "team_recent_same_venue_run_diff",
+        "season_phase",
+        "team_month_win_rate_prior",
+        "opponent_month_win_rate_prior",
+        "month_win_rate_gap",
+        "team_month_run_diff_prior",
+        "opponent_month_run_diff_prior",
+        "month_run_diff_gap",
         "head_to_head_win_rate_prior",
         "opponent_head_to_head_win_rate_prior",
         "head_to_head_win_rate_gap",
