@@ -1,0 +1,59 @@
+{
+  "current_best_accuracy": 0.544,
+  "current_best_model": "핵심 수치 GradientBoosting 보수 모델",
+  "why_not_replaced": "전체 accuracy만이 아니라 Brier Score, Log Loss, over_55_accuracy, 최근 3년, 연승, 박빙 gate를 동시에 통과하지 못했습니다.",
+  "strongest_new_feature_groups": [
+    "baseline"
+  ],
+  "weakest_new_feature_groups": [
+    "baseline"
+  ],
+  "next_candidate_feature_sets": [
+    "baseline_core",
+    "baseline_plus_selected_non_pitching_only",
+    "baseline_plus_selected_non_pitching_without_noisy_features",
+    "baseline_plus_volatility_momentum_only",
+    "baseline_plus_segment_specific_flags"
+  ],
+  "recommended_model_candidates": [
+    "기존 GradientBoosting 보수 모델",
+    "LogisticRegression 보수 모델",
+    "HistGradientBoosting 보수 모델",
+    "ExtraTrees 보수 모델",
+    "RandomForest 보수 모델"
+  ],
+  "evaluation_gates": [
+    "전체 accuracy 개선",
+    "Brier Score 악화 없음",
+    "Log Loss 악화 없음",
+    "over_55_accuracy 개선",
+    "recent_3year_accuracy 개선 또는 최소 악화 없음",
+    "연승 구간 성능 개선",
+    "박빙 경기 성능 악화 없음",
+    "표본 수 충분성"
+  ],
+  "leakage_policy": "완료 경기의 현재 경기 이전 rolling/expanding 피처만 사용하고 pitching_daily_snapshot.csv는 30일 누적 전까지 차단합니다.",
+  "minimum_acceptance_criteria": "accuracy, Brier Score, Log Loss, over_55_accuracy, 최근 3년 성능, 연승 구간, 박빙 구간 gate를 동시에 통과해야 합니다.",
+  "candidate_features_to_review": [
+    "elo_diff",
+    "recent_run_diff_10_gap",
+    "recent_10_win_rate_gap",
+    "recent_5_win_rate_gap",
+    "opponent_avg_run_diff_last_10",
+    "is_home",
+    "avg_run_diff_last_10",
+    "opponent_recent_10_win_rate",
+    "head_to_head_win_rate_gap",
+    "opponent_avg_run_diff_last_5",
+    "recent_10_win_rate",
+    "avg_run_diff_last_5"
+  ],
+  "candidate_features_to_drop": [
+    "season_win_rate_gap",
+    "season_win_rate_prior",
+    "season_avg_run_diff_gap",
+    "back_to_back",
+    "games_last_7_days",
+    "rest_days"
+  ]
+}

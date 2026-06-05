@@ -285,6 +285,67 @@ def non_pitching_experiment_metrics(model_name: str, feature_set: str, frame: pd
     }
 
 
+def segment_masks_for_feature_review(frame: pd.DataFrame, probability: np.ndarray):
+    confidence = np.maximum(probability, 1 - probability)
+    dates = pd.to_datetime(frame["date"])
+    return {
+        "전체": np.ones(len(frame), dtype=bool),
+        "연승 흐름": frame.get("recent_5_win_rate", pd.Series(0.5, index=frame.index)).to_numpy() >= 0.8,
+        "연패 흐름": frame.get("recent_5_win_rate", pd.Series(0.5, index=frame.index)).to_numpy() <= 0.2,
+        "명시 연승 streak": frame.get("team_winning_streak_flag", pd.Series(0, index=frame.index)).to_numpy() == 1,
+        "명시 연패 streak": frame.get("team_losing_streak_flag", pd.Series(0, index=frame.index)).to_numpy() == 1,
+        "박빙 경기": confidence < 0.53,
+        "대승/대패 경기": frame.get("actual_blowout_game", pd.Series(0, index=frame.index)).to_numpy() == 1,
+        "홈팀 관점": frame.get("is_home", pd.Series(0, index=frame.index)).to_numpy() == 1,
+        "원정팀 관점": frame.get("is_home", pd.Series(0, index=frame.index)).to_numpy() == 0,
+        "득실차 차이 큼": frame.get("season_avg_run_diff_gap", pd.Series(0, index=frame.index)).abs().to_numpy() >= 1.0,
+        "최근 5경기 흐름 차이 큼": frame.get("recent_5_win_rate_gap", pd.Series(0, index=frame.index)).abs().to_numpy() >= 0.2,
+        "강팀 vs 약팀": frame.get("season_win_rate_gap", pd.Series(0, index=frame.index)).abs().to_numpy() >= 0.12,
+        "최근 3년": dates.dt.year >= dates.dt.year.max() - 2,
+        "2026 시즌": dates.dt.year == 2026,
+    }
+
+
+def segment_detail_metrics(feature_set: str, frame: pd.DataFrame, y_true: np.ndarray, probability: np.ndarray):
+    rows = []
+    pred = (probability >= 0.5).astype(int)
+    confidence = np.maximum(probability, 1 - probability)
+    for segment, mask in segment_masks_for_feature_review(frame, probability).items():
+        mask = np.asarray(mask, dtype=bool)
+        if not mask.any():
+            rows.append(
+                {
+                    "feature_set": feature_set,
+                    "segment": segment,
+                    "total_games": 0,
+                    "accuracy": None,
+                    "brier": None,
+                    "log_loss": None,
+                    "over_55_games": 0,
+                    "over_55_accuracy": None,
+                }
+            )
+            continue
+        y_segment = y_true[mask]
+        p_segment = probability[mask]
+        pred_segment = pred[mask]
+        over_55 = confidence[mask] >= 0.55
+        score = probability_scores(y_segment, p_segment)
+        rows.append(
+            {
+                "feature_set": feature_set,
+                "segment": segment,
+                "total_games": int(mask.sum()),
+                "accuracy": round(float((pred_segment == y_segment).mean()), 3),
+                "brier": score["Brier Score"],
+                "log_loss": score["Log Loss"],
+                "over_55_games": int(over_55.sum()),
+                "over_55_accuracy": round(float((pred_segment[over_55] == y_segment[over_55]).mean()), 3) if over_55.any() else None,
+            }
+        )
+    return rows
+
+
 def write_streak_feature_experiment_report(results_dir: Path, rows: list[dict]):
     pd.DataFrame(rows).to_csv(results_dir / "streak_feature_experiment_report.csv", index=False, encoding="utf-8-sig")
     return rows
@@ -300,6 +361,245 @@ def write_non_pitching_feature_importance_report(results_dir: Path, rows: list[d
     output = results_dir / "non_pitching_feature_importance_report.csv"
     pd.DataFrame(rows).to_csv(output, index=False, encoding="utf-8-sig")
     return rows
+
+
+def write_accuracy_gain_decomposition_report(results_dir: Path, experiment_rows: list[dict], segment_rows: list[dict], importance_rows: list[dict]):
+    baseline = next((row for row in experiment_rows if row.get("feature_set") == "baseline_core"), {})
+    segment_by_set = {}
+    for row in segment_rows:
+        segment_by_set.setdefault(row["feature_set"], {})[row["segment"]] = row
+    importance_by_set = {}
+    for row in importance_rows:
+        importance_by_set.setdefault(row["feature_set"], []).append(row)
+
+    comparisons = [
+        ("baseline_core 기준선", "baseline_core"),
+        ("baseline_core vs baseline_plus_volatility", "baseline_plus_volatility"),
+        ("baseline_core vs baseline_plus_close_blowout", "baseline_plus_close_blowout"),
+        ("baseline_core vs baseline_plus_momentum", "baseline_plus_momentum"),
+        ("baseline_core vs baseline_plus_venue_context", "baseline_plus_venue_context"),
+        ("baseline_core vs baseline_plus_month_phase", "baseline_plus_month_phase"),
+        ("baseline_core vs baseline_plus_all_non_pitching", "baseline_plus_all_non_pitching"),
+    ]
+    rows = []
+    for comparison, feature_set in comparisons:
+        candidate = next((row for row in experiment_rows if row.get("feature_set") == feature_set), {})
+        if not candidate:
+            continue
+        improved_segments = []
+        worsened_segments = []
+        for segment, base_segment in segment_by_set.get("baseline_core", {}).items():
+            candidate_segment = segment_by_set.get(feature_set, {}).get(segment)
+            if not candidate_segment or candidate_segment.get("accuracy") is None or base_segment.get("accuracy") is None:
+                continue
+            delta = candidate_segment["accuracy"] - base_segment["accuracy"]
+            if delta >= 0.005:
+                improved_segments.append(f"{segment}({delta:+.3f})")
+            elif delta <= -0.005:
+                worsened_segments.append(f"{segment}({delta:+.3f})")
+        driver_features = [
+            row["feature"]
+            for row in sorted(importance_by_set.get(feature_set, []), key=lambda item: item.get("importance_mean", 0), reverse=True)
+            if row.get("importance_mean", 0) > 0.04
+        ][:8]
+        accuracy_delta = candidate.get("accuracy", 0) - baseline.get("accuracy", 0)
+        brier_delta = candidate.get("brier", 0) - baseline.get("brier", 0)
+        log_loss_delta = candidate.get("log_loss", 0) - baseline.get("log_loss", 0)
+        over_55_delta = (candidate.get("over_55_accuracy") or 0) - (baseline.get("over_55_accuracy") or 0)
+        if accuracy_delta > 0 and brier_delta <= 0.001 and log_loss_delta <= 0.001:
+            interpretation = "정확도 또는 확률 품질 일부 개선 신호가 있으나 교체 gate 전체 통과 여부는 별도 확인 필요"
+        elif accuracy_delta > 0:
+            interpretation = "정확도는 개선됐지만 확률 품질 또는 세그먼트 안정성 확인이 필요"
+        else:
+            interpretation = "전체 정확도 개선 근거가 부족"
+        rows.append(
+            {
+                "comparison": comparison,
+                "baseline_accuracy": baseline.get("accuracy"),
+                "candidate_accuracy": candidate.get("accuracy"),
+                "accuracy_delta": round(float(accuracy_delta), 3),
+                "baseline_brier": baseline.get("brier"),
+                "candidate_brier": candidate.get("brier"),
+                "brier_delta": round(float(brier_delta), 3),
+                "baseline_log_loss": baseline.get("log_loss"),
+                "candidate_log_loss": candidate.get("log_loss"),
+                "log_loss_delta": round(float(log_loss_delta), 3),
+                "baseline_over_55_accuracy": baseline.get("over_55_accuracy"),
+                "candidate_over_55_accuracy": candidate.get("over_55_accuracy"),
+                "over_55_accuracy_delta": round(float(over_55_delta), 3),
+                "improved_segments": ", ".join(improved_segments),
+                "worsened_segments": ", ".join(worsened_segments),
+                "likely_driver_features": ", ".join(driver_features),
+                "interpretation": interpretation,
+            }
+        )
+    pd.DataFrame(rows).to_csv(results_dir / "accuracy_gain_decomposition_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_segment_delta_report(results_dir: Path, segment_rows: list[dict], candidate_feature_set: str):
+    baseline_rows = {row["segment"]: row for row in segment_rows if row["feature_set"] == "baseline_core"}
+    candidate_rows = {row["segment"]: row for row in segment_rows if row["feature_set"] == candidate_feature_set}
+    rows = []
+    for segment, baseline in baseline_rows.items():
+        candidate = candidate_rows.get(segment, {})
+        accuracy_delta = None if candidate.get("accuracy") is None or baseline.get("accuracy") is None else round(float(candidate["accuracy"] - baseline["accuracy"]), 3)
+        brier_delta = None if candidate.get("brier") is None or baseline.get("brier") is None else round(float(candidate["brier"] - baseline["brier"]), 3)
+        over_55_delta = None if candidate.get("over_55_accuracy") is None or baseline.get("over_55_accuracy") is None else round(float(candidate["over_55_accuracy"] - baseline["over_55_accuracy"]), 3)
+        if accuracy_delta is None:
+            interpretation = "표본 부족"
+        elif accuracy_delta >= 0.005:
+            interpretation = "개선"
+        elif accuracy_delta <= -0.005:
+            interpretation = "악화"
+        else:
+            interpretation = "변화 제한적"
+        rows.append(
+            {
+                "segment": segment,
+                "candidate_feature_set": candidate_feature_set,
+                "baseline_total_games": baseline.get("total_games"),
+                "candidate_total_games": candidate.get("total_games"),
+                "baseline_accuracy": baseline.get("accuracy"),
+                "candidate_accuracy": candidate.get("accuracy"),
+                "accuracy_delta": accuracy_delta,
+                "baseline_brier": baseline.get("brier"),
+                "candidate_brier": candidate.get("brier"),
+                "brier_delta": brier_delta,
+                "baseline_over_55_games": baseline.get("over_55_games"),
+                "candidate_over_55_games": candidate.get("over_55_games"),
+                "baseline_over_55_accuracy": baseline.get("over_55_accuracy"),
+                "candidate_over_55_accuracy": candidate.get("over_55_accuracy"),
+                "over_55_accuracy_delta": over_55_delta,
+                "interpretation": interpretation,
+            }
+        )
+    pd.DataFrame(rows).to_csv(results_dir / "segment_delta_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_replacement_gate_failure_report(results_dir: Path, selected_row: dict, baseline_row: dict, candidate_row: dict):
+    gates = [
+        ("전체 accuracy 개선", "candidate accuracy가 현재 선택 모델보다 최소 0.005 초과 개선되어야 함", selected_row.get("검증 정확도"), candidate_row.get("accuracy"), (candidate_row.get("accuracy") or 0) > (selected_row.get("검증 정확도") or 0) + 0.005, "high"),
+        ("Brier Score 악화 없음", "candidate brier가 현재 선택 모델보다 악화되지 않아야 함", selected_row.get("Brier Score"), candidate_row.get("brier"), (candidate_row.get("brier") or 1) <= (selected_row.get("Brier Score") or 1) + 0.001, "high"),
+        ("Log Loss 악화 없음", "candidate log_loss가 현재 선택 모델보다 악화되지 않아야 함", selected_row.get("Log Loss"), candidate_row.get("log_loss"), (candidate_row.get("log_loss") or 1) <= (selected_row.get("Log Loss") or 1) + 0.001, "high"),
+        ("over_55_accuracy 개선", "55% 이상 확신 구간 적중률이 baseline_core보다 개선되어야 함", baseline_row.get("over_55_accuracy"), candidate_row.get("over_55_accuracy"), (candidate_row.get("over_55_accuracy") or 0) > (baseline_row.get("over_55_accuracy") or 0), "medium"),
+        ("recent_3year_accuracy 개선 또는 최소 악화 없음", "최근 3년 성능이 baseline_core보다 악화되지 않아야 함", baseline_row.get("recent_3year_accuracy"), candidate_row.get("recent_3year_accuracy"), (candidate_row.get("recent_3year_accuracy") or 0) >= (baseline_row.get("recent_3year_accuracy") or 0), "medium"),
+        ("연승 구간 성능 개선", "연승 구간 accuracy가 baseline_core보다 개선되어야 함", baseline_row.get("winning_streak_accuracy"), candidate_row.get("winning_streak_accuracy"), (candidate_row.get("winning_streak_accuracy") or 0) > (baseline_row.get("winning_streak_accuracy") or 0), "medium"),
+        ("박빙 경기 성능 악화 없음", "박빙 경기 accuracy가 baseline_core보다 악화되지 않아야 함", baseline_row.get("close_game_accuracy"), candidate_row.get("close_game_accuracy"), (candidate_row.get("close_game_accuracy") or 0) >= (baseline_row.get("close_game_accuracy") or 0), "medium"),
+        ("표본 수 충분성", "over_55_games가 비교 가능한 수준이어야 함", None, candidate_row.get("over_55_games"), (candidate_row.get("over_55_games") or 0) >= 300, "low"),
+    ]
+    rows = []
+    for gate_name, required_condition, baseline_value, candidate_value, passed, severity in gates:
+        if passed:
+            failure_reason = ""
+            next_action = "운영 교체 판단 시 다른 gate와 함께 재확인"
+        else:
+            failure_reason = "요구 조건을 충족하지 못함"
+            next_action = "해당 지표가 개선되는 축소 feature set을 별도 후보로 검증"
+        rows.append(
+            {
+                "gate_name": gate_name,
+                "required_condition": required_condition,
+                "baseline_value": baseline_value,
+                "candidate_value": candidate_value,
+                "passed": bool(passed),
+                "failure_reason": failure_reason,
+                "severity": severity,
+                "next_action": next_action,
+            }
+        )
+    pd.DataFrame(rows).to_csv(results_dir / "replacement_gate_failure_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_non_pitching_feature_decision_report(results_dir: Path, importance_rows: list[dict], segment_delta_rows: list[dict], best_feature_set: str):
+    group_map = {
+        "run_std": "volatility",
+        "allowed_std": "volatility",
+        "close_game": "close_blowout",
+        "blowout": "close_blowout",
+        "momentum": "momentum",
+        "venue": "venue_context",
+        "home_win": "venue_context",
+        "away_win": "venue_context",
+        "month": "month_phase",
+        "season_phase": "month_phase",
+        "streak": "streak",
+    }
+    helped = [row["segment"] for row in segment_delta_rows if (row.get("accuracy_delta") or 0) >= 0.005]
+    hurt = [row["segment"] for row in segment_delta_rows if (row.get("accuracy_delta") or 0) <= -0.005]
+    best_rows = [row for row in importance_rows if row["feature_set"] == best_feature_set]
+    rows = []
+    for row in best_rows:
+        feature = row["feature"]
+        feature_group = "baseline"
+        for token, group in group_map.items():
+            if token in feature:
+                feature_group = group
+                break
+        importance = row.get("importance_mean", 0)
+        if importance > 0.08 and not hurt:
+            keep = "true"
+            reason = "중요도가 높고 세그먼트 악화 신호가 제한적"
+        elif importance > 0.04:
+            keep = "review"
+            reason = "중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요"
+        elif helped and feature_group != "baseline":
+            keep = "segment_only"
+            reason = "특정 세그먼트 개선 후보로만 유지"
+        else:
+            keep = "false"
+            reason = "중요도와 성능 기여 근거가 약함"
+        rows.append(
+            {
+                "feature": feature,
+                "feature_group": feature_group,
+                "importance_rank": row.get("rank"),
+                "importance_mean": importance,
+                "appears_in_best_candidate": True,
+                "segment_helped": ", ".join(helped),
+                "segment_hurt": ", ".join(hurt),
+                "keep_candidate": keep,
+                "reason": reason,
+                "next_action": "다음 실험에서 선택 피처 세트 후보로 검토" if keep in {"true", "review", "segment_only"} else "후보 축소 시 제외",
+            }
+        )
+    pd.DataFrame(rows).to_csv(results_dir / "non_pitching_feature_decision_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_next_model_experiment_plan(results_dir: Path, selected_model: str, selected_accuracy: float, replacement_rows: list[dict], feature_decisions: list[dict]):
+    strongest = [row["feature"] for row in feature_decisions if row.get("keep_candidate") in {"true", "review"}][:12]
+    weakest = [row["feature"] for row in feature_decisions if row.get("keep_candidate") == "false"][:12]
+    plan = {
+        "current_best_accuracy": selected_accuracy,
+        "current_best_model": selected_model,
+        "why_not_replaced": "전체 accuracy만이 아니라 Brier Score, Log Loss, over_55_accuracy, 최근 3년, 연승, 박빙 gate를 동시에 통과하지 못했습니다.",
+        "strongest_new_feature_groups": sorted({row["feature_group"] for row in feature_decisions if row.get("keep_candidate") in {"true", "review"}}),
+        "weakest_new_feature_groups": sorted({row["feature_group"] for row in feature_decisions if row.get("keep_candidate") == "false"}),
+        "next_candidate_feature_sets": [
+            "baseline_core",
+            "baseline_plus_selected_non_pitching_only",
+            "baseline_plus_selected_non_pitching_without_noisy_features",
+            "baseline_plus_volatility_momentum_only",
+            "baseline_plus_segment_specific_flags",
+        ],
+        "recommended_model_candidates": [
+            "기존 GradientBoosting 보수 모델",
+            "LogisticRegression 보수 모델",
+            "HistGradientBoosting 보수 모델",
+            "ExtraTrees 보수 모델",
+            "RandomForest 보수 모델",
+        ],
+        "evaluation_gates": [row["gate_name"] for row in replacement_rows],
+        "leakage_policy": "완료 경기의 현재 경기 이전 rolling/expanding 피처만 사용하고 pitching_daily_snapshot.csv는 30일 누적 전까지 차단합니다.",
+        "minimum_acceptance_criteria": "accuracy, Brier Score, Log Loss, over_55_accuracy, 최근 3년 성능, 연승 구간, 박빙 구간 gate를 동시에 통과해야 합니다.",
+        "candidate_features_to_review": strongest,
+        "candidate_features_to_drop": weakest,
+    }
+    (results_dir / "next_model_experiment_plan.json").write_text(json.dumps(plan, indent=2, ensure_ascii=False), encoding="utf-8")
+    return plan
 
 
 def write_model_probability_spread_report(results_dir: Path, rows: list[dict]):
@@ -619,6 +919,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     streak_experiment_rows = []
     non_pitching_experiment_rows = []
     non_pitching_importance_rows = []
+    non_pitching_segment_rows = []
 
     for name, columns in candidate_columns.items():
         x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
@@ -679,6 +980,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
             probability_spread_rows.append(model_probability_spread(candidate_name, y_test, probability, accuracy, score))
             metrics = non_pitching_experiment_metrics(candidate_name, feature_set, features.iloc[split_index:].copy(), y_test, probability, False)
             non_pitching_experiment_rows.append(metrics)
+            non_pitching_segment_rows.extend(segment_detail_metrics(feature_set, features.iloc[split_index:].copy(), y_test, probability))
         non_pitching_importance_rows.extend(feature_signal_importance_rows(x.iloc[:split_index][columns], y_train, feature_set))
 
     sklearn_candidates = sklearn_candidate_specs(recency_weight)
@@ -770,17 +1072,60 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     streak_report = write_streak_feature_experiment_report(results_dir, streak_experiment_rows)
     non_pitching_report = write_non_pitching_feature_experiment_report(results_dir, non_pitching_experiment_rows)
     non_pitching_importance_report = write_non_pitching_feature_importance_report(results_dir, non_pitching_importance_rows)
+    accuracy_gain_rows = write_accuracy_gain_decomposition_report(results_dir, non_pitching_experiment_rows, non_pitching_segment_rows, non_pitching_importance_rows)
+    baseline_non_pitching = next((row for row in non_pitching_experiment_rows if row.get("feature_set") == "baseline_core"), {})
+    best_non_pitching = max(
+        [row for row in non_pitching_experiment_rows if row.get("feature_set") != "baseline_core"],
+        key=lambda row: (row.get("accuracy") or 0, row.get("over_55_accuracy") or 0),
+    )
+    segment_delta_rows = write_segment_delta_report(results_dir, non_pitching_segment_rows, best_non_pitching["feature_set"])
+    selected_row = next((row for row in candidate_results if row["모델"] == best["name"]), {})
+    replacement_gate_rows = write_replacement_gate_failure_report(results_dir, selected_row, baseline_non_pitching, best_non_pitching)
+    feature_decision_rows = write_non_pitching_feature_decision_report(results_dir, non_pitching_importance_rows, segment_delta_rows, best_non_pitching["feature_set"])
+    next_plan = write_next_model_experiment_plan(results_dir, best["name"], best["accuracy"], replacement_gate_rows, feature_decision_rows)
     spread_report = write_model_probability_spread_report(results_dir, probability_spread_rows)
-    payload = build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, spread_report, streak_experiment_rows, non_pitching_experiment_rows, non_pitching_importance_rows)
+    payload = build_payload(
+        best,
+        candidate_results,
+        features,
+        split_index,
+        y_test,
+        current_games,
+        cutoff,
+        prediction_date,
+        data_dir,
+        results_dir,
+        completed,
+        training_games,
+        spread_report,
+        streak_experiment_rows,
+        non_pitching_experiment_rows,
+        non_pitching_importance_rows,
+        accuracy_gain_rows,
+        replacement_gate_rows,
+        segment_delta_rows,
+        feature_decision_rows,
+        next_plan,
+    )
     payload["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload["streak_feature_experiment_rows"] = len(streak_report)
     payload["non_pitching_feature_experiment_report"] = "modeling/results/non_pitching_feature_experiment_report.csv"
     payload["non_pitching_feature_experiment_rows"] = len(non_pitching_report)
     payload["non_pitching_feature_importance_report"] = "modeling/results/non_pitching_feature_importance_report.csv"
     payload["non_pitching_feature_importance_rows"] = len(non_pitching_importance_report)
+    payload["accuracy_gain_decomposition_report"] = "modeling/results/accuracy_gain_decomposition_report.csv"
+    payload["replacement_gate_failure_report"] = "modeling/results/replacement_gate_failure_report.csv"
+    payload["segment_delta_report"] = "modeling/results/segment_delta_report.csv"
+    payload["non_pitching_feature_decision_report"] = "modeling/results/non_pitching_feature_decision_report.csv"
+    payload["next_model_experiment_plan"] = "modeling/results/next_model_experiment_plan.json"
     payload.setdefault("diagnostic_reports", {})["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_experiment_report"] = "modeling/results/non_pitching_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_importance_report"] = "modeling/results/non_pitching_feature_importance_report.csv"
+    payload.setdefault("diagnostic_reports", {})["accuracy_gain_decomposition_report"] = "modeling/results/accuracy_gain_decomposition_report.csv"
+    payload.setdefault("diagnostic_reports", {})["replacement_gate_failure_report"] = "modeling/results/replacement_gate_failure_report.csv"
+    payload.setdefault("diagnostic_reports", {})["segment_delta_report"] = "modeling/results/segment_delta_report.csv"
+    payload.setdefault("diagnostic_reports", {})["non_pitching_feature_decision_report"] = "modeling/results/non_pitching_feature_decision_report.csv"
+    payload.setdefault("diagnostic_reports", {})["next_model_experiment_plan"] = "modeling/results/next_model_experiment_plan.json"
     if payload.get("feature_importance"):
         pd.DataFrame(
             [{"feature": feature, "importance": importance} for feature, importance in payload["feature_importance"].items()]
@@ -1274,6 +1619,11 @@ def write_model_insight_summary(
     pitching_experiment_rows: list[dict] | None = None,
     non_pitching_experiment_rows: list[dict] | None = None,
     non_pitching_importance_rows: list[dict] | None = None,
+    accuracy_gain_rows: list[dict] | None = None,
+    replacement_gate_rows: list[dict] | None = None,
+    segment_delta_rows: list[dict] | None = None,
+    feature_decision_rows: list[dict] | None = None,
+    next_plan: dict | None = None,
 ):
     sorted_segments = [row for row in segment_rows if row["total_games"]]
     best_segments = sorted(sorted_segments, key=lambda row: row["accuracy"] or 0, reverse=True)[:5]
@@ -1285,6 +1635,11 @@ def write_model_insight_summary(
     selected_row = next((row for row in candidate_rows if row["모델"] == selected), {})
     non_pitching_experiment_rows = non_pitching_experiment_rows or []
     non_pitching_importance_rows = non_pitching_importance_rows or []
+    accuracy_gain_rows = accuracy_gain_rows or []
+    replacement_gate_rows = replacement_gate_rows or []
+    segment_delta_rows = segment_delta_rows or []
+    feature_decision_rows = feature_decision_rows or []
+    next_plan = next_plan or {}
     selected_accuracy = selected_row.get("검증 정확도", 0)
     selected_brier = selected_row.get("Brier Score", 1)
     selected_log_loss = selected_row.get("Log Loss", 1)
@@ -1329,6 +1684,12 @@ def write_model_insight_summary(
         "bullpen_data_availability_summary": bullpen_availability or [],
         "pitching_feature_experiment_summary": pitching_experiment_rows or [],
         "non_pitching_feature_experiment_summary": non_pitching_experiment_rows,
+        "accuracy_gain_decomposition_summary": accuracy_gain_rows,
+        "replacement_gate_failure_summary": replacement_gate_rows,
+        "segment_delta_summary": segment_delta_rows,
+        "useful_non_pitching_feature_decisions": [row for row in feature_decision_rows if row.get("keep_candidate") in {"true", "review"}],
+        "noisy_non_pitching_feature_decisions": [row for row in feature_decision_rows if row.get("keep_candidate") in {"false", "segment_only"}],
+        "next_model_experiment_plan_summary": next_plan,
         "useful_non_pitching_features": useful_non_pitching,
         "harmful_or_noisy_non_pitching_features": noisy_non_pitching,
         "recommended_next_non_pitching_step": (
@@ -1349,7 +1710,7 @@ def write_model_insight_summary(
         ],
         "recommended_next_modeling_step": "투수별 경기 로그를 수집해 선발 최근 3경기 성적과 실제 불펜 소모량을 날짜 기준 shift(1) 피처로 검증",
         "safe_to_replace_model": safe_to_replace,
-        "reason_not_to_replace_if_false": "" if safe_to_replace else "비투수 피처 후보가 accuracy, Brier Score, Log Loss, over_55_accuracy, 최근 3년 성능, 연승/박빙 구간을 동시에 개선했다는 근거가 부족합니다.",
+        "reason_not_to_replace_if_false": "" if safe_to_replace else "전체 accuracy는 일부 후보에서 개선됐지만 운영 교체 최소 개선폭(+0.005 초과)을 넘지 못했고, Brier/Log Loss와 세그먼트 안정성은 추가 검증이 필요해 운영 모델 교체는 보류합니다.",
     }
     (results_dir / "model_insight_summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     return summary
@@ -1390,7 +1751,29 @@ def train_prediction_bundle(best, training_games, prediction_training_cutoff, da
     return {"model_type": best["model_type"], "model": model, "mean": mean, "std": std}
 
 
-def build_payload(best, candidate_results, features, split_index, y_test, current_games, cutoff, prediction_date, data_dir, results_dir, completed, training_games, probability_spread_rows, streak_experiment_rows, non_pitching_experiment_rows, non_pitching_importance_rows):
+def build_payload(
+    best,
+    candidate_results,
+    features,
+    split_index,
+    y_test,
+    current_games,
+    cutoff,
+    prediction_date,
+    data_dir,
+    results_dir,
+    completed,
+    training_games,
+    probability_spread_rows,
+    streak_experiment_rows,
+    non_pitching_experiment_rows,
+    non_pitching_importance_rows,
+    accuracy_gain_rows,
+    replacement_gate_rows,
+    segment_delta_rows,
+    feature_decision_rows,
+    next_plan,
+):
     columns = best["columns"]
     probability = best["probability"]
     pred = best["pred"]
@@ -1559,6 +1942,11 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         pitching_experiment_rows,
         non_pitching_experiment_rows,
         non_pitching_importance_rows,
+        accuracy_gain_rows,
+        replacement_gate_rows,
+        segment_delta_rows,
+        feature_decision_rows,
+        next_plan,
     )
     payload["diagnostic_reports"] = {
         "feature_diagnostic_report": "modeling/results/feature_diagnostic_report.csv",
@@ -1569,6 +1957,11 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         "pitching_feature_experiment_report": "modeling/results/pitching_feature_experiment_report.csv",
         "non_pitching_feature_experiment_report": "modeling/results/non_pitching_feature_experiment_report.csv",
         "non_pitching_feature_importance_report": "modeling/results/non_pitching_feature_importance_report.csv",
+        "accuracy_gain_decomposition_report": "modeling/results/accuracy_gain_decomposition_report.csv",
+        "replacement_gate_failure_report": "modeling/results/replacement_gate_failure_report.csv",
+        "segment_delta_report": "modeling/results/segment_delta_report.csv",
+        "non_pitching_feature_decision_report": "modeling/results/non_pitching_feature_decision_report.csv",
+        "next_model_experiment_plan": "modeling/results/next_model_experiment_plan.json",
         "model_selection_report": "modeling/results/model_selection_report.csv",
         "seasonal_performance_report": "modeling/results/seasonal_performance_report.csv",
         "model_insight_summary": "modeling/results/model_insight_summary.json",
@@ -1584,6 +1977,10 @@ def build_payload(best, candidate_results, features, split_index, y_test, curren
         "pitching_feature_experiment_rows": len(pitching_experiment_rows),
         "non_pitching_feature_experiment_rows": len(non_pitching_experiment_rows),
         "non_pitching_feature_importance_rows": len(non_pitching_importance_rows),
+        "accuracy_gain_decomposition_rows": len(accuracy_gain_rows),
+        "replacement_gate_failure_rows": len(replacement_gate_rows),
+        "segment_delta_rows": len(segment_delta_rows),
+        "non_pitching_feature_decision_rows": len(feature_decision_rows),
     }
     payload["model_insight_summary"] = insight_summary
     return payload

@@ -1,0 +1,15 @@
+﻿segment,candidate_feature_set,baseline_total_games,candidate_total_games,baseline_accuracy,candidate_accuracy,accuracy_delta,baseline_brier,candidate_brier,brier_delta,baseline_over_55_games,candidate_over_55_games,baseline_over_55_accuracy,candidate_over_55_accuracy,over_55_accuracy_delta,interpretation
+전체,baseline_plus_volatility,2942,2942,0.547,0.547,0.0,0.249,0.248,-0.001,1366,1378,0.545,0.554,0.009,변화 제한적
+연승 흐름,baseline_plus_volatility,600,600,0.508,0.497,-0.011,0.252,0.252,0.0,302,300,0.507,0.517,0.01,악화
+연패 흐름,baseline_plus_volatility,582,582,0.564,0.569,0.005,0.244,0.244,0.0,303,303,0.587,0.604,0.017,개선
+명시 연승 streak,baseline_plus_volatility,746,746,0.534,0.535,0.001,0.251,0.25,-0.001,360,363,0.519,0.526,0.007,변화 제한적
+명시 연패 streak,baseline_plus_volatility,744,744,0.581,0.574,-0.007,0.245,0.245,0.0,361,365,0.579,0.584,0.005,악화
+박빙 경기,baseline_plus_volatility,1039,1069,0.557,0.568,0.011,0.248,0.248,0.0,0,0,,,,개선
+대승/대패 경기,baseline_plus_volatility,1022,1022,0.588,0.571,-0.017,0.245,0.246,0.001,496,490,0.569,0.567,-0.002,악화
+홈팀 관점,baseline_plus_volatility,1471,1471,0.546,0.545,-0.001,0.249,0.248,-0.001,683,690,0.545,0.554,0.009,변화 제한적
+원정팀 관점,baseline_plus_volatility,1471,1471,0.549,0.549,0.0,0.249,0.248,-0.001,683,688,0.546,0.555,0.009,변화 제한적
+득실차 차이 큼,baseline_plus_volatility,1228,1228,0.564,0.563,-0.001,0.248,0.248,0.0,674,669,0.54,0.54,0.0,변화 제한적
+최근 5경기 흐름 차이 큼,baseline_plus_volatility,1764,1764,0.528,0.537,0.009,0.25,0.25,0.0,877,875,0.525,0.535,0.01,개선
+강팀 vs 약팀,baseline_plus_volatility,1142,1142,0.556,0.55,-0.006,0.251,0.25,-0.001,620,613,0.498,0.515,0.017,악화
+최근 3년,baseline_plus_volatility,2942,2942,0.547,0.547,0.0,0.249,0.248,-0.001,1366,1378,0.545,0.554,0.009,변화 제한적
+2026 시즌,baseline_plus_volatility,522,522,0.579,0.548,-0.031,0.246,0.247,0.001,266,262,0.571,0.573,0.002,악화
