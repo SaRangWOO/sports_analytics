@@ -1,0 +1,14 @@
+﻿feature_group,feature_set,games,accuracy,brier,log_loss,over_55_games,over_55_accuracy,rolling_accuracy,rolling_brier,rolling_log_loss,delta_vs_baseline_accuracy,delta_vs_baseline_brier,delta_vs_baseline_log_loss,keep_for_future,reason
+baseline_core,baseline_core,261,0.579,0.246,0.685,226,0.575,0.577,0.247,0.687,0.0,0.0,0.0,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+streak,streak_only,261,0.556,0.247,0.687,254,0.551,0.568,0.247,0.687,-0.023,0.001,0.002,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+volatility,volatility_only,261,0.525,0.249,0.691,254,0.559,0.564,0.247,0.688,-0.054,0.003,0.006,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+close_blowout,close_blowout_only,261,0.567,0.246,0.686,240,0.558,0.574,0.247,0.688,-0.012,0.0,0.001,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+momentum,momentum_only,261,0.571,0.247,0.687,252,0.571,0.558,0.247,0.687,-0.008,0.001,0.002,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+venue_context,venue_context_only,261,0.556,0.247,0.687,258,0.558,0.576,0.247,0.688,-0.023,0.001,0.002,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+month_phase,month_phase_only,261,0.575,0.246,0.684,286,0.594,0.578,0.247,0.686,-0.004,0.0,-0.001,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+selected_all,selected_non_pitching_all,261,0.525,0.249,0.691,254,0.559,0.564,0.247,0.688,-0.054,0.003,0.006,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+selected_without_volatility,selected_non_pitching_without_volatility,261,0.579,0.246,0.685,226,0.575,0.577,0.247,0.687,0.0,0.0,0.0,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+selected_without_momentum,selected_non_pitching_without_momentum,261,0.525,0.249,0.691,254,0.559,0.564,0.247,0.688,-0.054,0.003,0.006,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+selected_without_venue_context,selected_non_pitching_without_venue_context,261,0.525,0.249,0.691,254,0.559,0.564,0.247,0.688,-0.054,0.003,0.006,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+selected_without_month_phase,selected_non_pitching_without_month_phase,261,0.525,0.249,0.691,254,0.559,0.564,0.247,0.688,-0.054,0.003,0.006,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+selected_without_close_blowout,selected_non_pitching_without_close_blowout,261,0.525,0.249,0.691,254,0.559,0.564,0.247,0.688,-0.054,0.003,0.006,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족

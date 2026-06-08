@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-06-08T15:37:23.896261",
+  "rejected_candidates": [
+    {
+      "model": "비투수 피처 GradientBoosting 실험 / baseline_plus_volatility",
+      "feature_set": "baseline_plus_volatility",
+      "status": "rejected_for_now",
+      "accuracy": 0.547,
+      "brier": 0.248,
+      "log_loss": 0.69
+    }
+  ],
+  "rejection_reason": "historical signal is not stable in 2026 current-season validation and production gates are not passed",
+  "failed_gates": [
+    "accuracy_delta_greater_than_0_005",
+    "bootstrap_ci_stable",
+    "calibration_not_worse",
+    "current_season_accuracy_delta_not_greater_than_0_005",
+    "current_season_brier_worse",
+    "current_season_evidence_gate",
+    "current_season_log_loss_worse",
+    "rolling_backtest_not_better"
+  ],
+  "reconsideration_condition": "Reconsider after additional 2026 games or after pitching snapshot features become eligible, but only if rolling current-season validation improves and calibration does not worsen."
+}

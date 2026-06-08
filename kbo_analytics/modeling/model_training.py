@@ -733,6 +733,47 @@ def current_season_feature_sets(x: pd.DataFrame, best_non_pitching: dict, featur
     return {name: list(dict.fromkeys(columns)) for name, columns in sets.items() if columns}
 
 
+def group_name_for_feature(feature: str):
+    if feature in STREAK_FEATURES or "streak" in feature:
+        return "streak"
+    if feature in VOLATILITY_FEATURES or "std" in feature:
+        return "volatility"
+    if feature in CLOSE_BLOWOUT_FEATURES or "close_game" in feature or "blowout" in feature:
+        return "close_blowout"
+    if feature in MOMENTUM_FEATURES or "momentum" in feature:
+        return "momentum"
+    if feature in VENUE_CONTEXT_FEATURES or "venue" in feature or "home_win" in feature or "away_win" in feature:
+        return "venue_context"
+    if feature in MONTH_PHASE_FEATURES or "month" in feature or feature == "season_phase":
+        return "month_phase"
+    return "baseline"
+
+
+def current_season_ablation_feature_sets(x: pd.DataFrame, feature_decision_rows: list[dict]):
+    baseline = compact_feature_columns(x)
+    selected = selected_non_pitching_columns(x, feature_decision_rows, True)
+
+    def without_group(group: str):
+        return [feature for feature in selected if feature in baseline or group_name_for_feature(feature) != group]
+
+    groups = {
+        "baseline_core": baseline,
+        "streak_only": baseline + list(STREAK_FEATURES),
+        "volatility_only": baseline + list(VOLATILITY_FEATURES),
+        "close_blowout_only": baseline + list(CLOSE_BLOWOUT_FEATURES),
+        "momentum_only": baseline + list(MOMENTUM_FEATURES),
+        "venue_context_only": baseline + list(VENUE_CONTEXT_FEATURES),
+        "month_phase_only": baseline + list(MONTH_PHASE_FEATURES),
+        "selected_non_pitching_all": selected,
+        "selected_non_pitching_without_volatility": without_group("volatility"),
+        "selected_non_pitching_without_momentum": without_group("momentum"),
+        "selected_non_pitching_without_venue_context": without_group("venue_context"),
+        "selected_non_pitching_without_month_phase": without_group("month_phase"),
+        "selected_non_pitching_without_close_blowout": without_group("close_blowout"),
+    }
+    return {name: available_columns(list(dict.fromkeys(columns)), x) for name, columns in groups.items()}
+
+
 def validation_windows(features: pd.DataFrame, split_index: int):
     dates = pd.to_datetime(features["date"])
     years = sorted(dates.dt.year.unique())
@@ -1153,6 +1194,271 @@ def build_challenger_monitoring_rows(baseline_result: dict | None, challenger_re
     return rows
 
 
+def compare_result_metrics(baseline: dict | None, candidate: dict | None):
+    base = baseline.get("metrics", {}) if baseline else {}
+    cand = candidate.get("metrics", {}) if candidate else {}
+    return {
+        "baseline_accuracy": base.get("accuracy"),
+        "candidate_accuracy": cand.get("accuracy"),
+        "accuracy_delta": round(float((cand.get("accuracy") or 0) - (base.get("accuracy") or 0)), 3),
+        "baseline_brier": base.get("brier"),
+        "candidate_brier": cand.get("brier"),
+        "brier_delta": round(float((cand.get("brier") or 0) - (base.get("brier") or 0)), 3),
+        "baseline_log_loss": base.get("log_loss"),
+        "candidate_log_loss": cand.get("log_loss"),
+        "log_loss_delta": round(float((cand.get("log_loss") or 0) - (base.get("log_loss") or 0)), 3),
+        "baseline_over_55_accuracy": base.get("over_55_accuracy"),
+        "candidate_over_55_accuracy": cand.get("over_55_accuracy"),
+        "over_55_accuracy_delta": round(float((cand.get("over_55_accuracy") or 0) - (base.get("over_55_accuracy") or 0)), 3),
+    }
+
+
+def rolling_periods(dates: pd.Series, season_mask: np.ndarray):
+    season_dates = sorted(pd.to_datetime(dates[season_mask]).drop_duplicates())
+    if not season_dates:
+        return []
+    first = season_dates[0]
+    last = season_dates[-1]
+    periods = []
+    month_periods = pd.to_datetime(dates[season_mask]).dt.to_period("M").drop_duplicates().sort_values()
+    for period in month_periods:
+        start = period.to_timestamp()
+        end = start + pd.offsets.MonthEnd(1)
+        periods.append((str(period), start, min(end, last)))
+    start = first
+    while start <= last:
+        end = min(start + pd.Timedelta(days=13), last)
+        periods.append((f"rolling_14d_{start.date().isoformat()}", start, end))
+        start += pd.Timedelta(days=7)
+    return periods
+
+
+def period_result(features: pd.DataFrame, x: pd.DataFrame, y: np.ndarray, columns: list[str], dates: pd.Series, start: pd.Timestamp, end: pd.Timestamp):
+    train_mask = (dates < start).to_numpy()
+    test_mask = ((dates >= start) & (dates <= end)).to_numpy()
+    return predict_feature_window(features, x, y, columns, train_mask, test_mask, max_iter=70)
+
+
+def aggregate_period_metrics(period_rows: list[dict], feature_set: str):
+    rows = [row for row in period_rows if row.get("feature_set") == feature_set and row.get("games")]
+    games = sum(int(row["games"]) for row in rows)
+    if games == 0:
+        return {"accuracy": None, "brier": None, "log_loss": None}
+    return {
+        "accuracy": round(sum((row.get("accuracy") or 0) * row["games"] for row in rows) / games, 3),
+        "brier": round(sum((row.get("brier") or 0) * row["games"] for row in rows) / games, 3),
+        "log_loss": round(sum((row.get("log_loss") or 0) * row["games"] for row in rows) / games, 3),
+    }
+
+
+def write_current_season_degradation_report(results_dir: Path, baseline_result: dict | None, candidate_result: dict | None, rolling_rows: list[dict], candidate_feature_set: str):
+    metrics = compare_result_metrics(baseline_result, candidate_result)
+    baseline_roll = aggregate_rolling_rows(rolling_rows, "current_operational_feature_set")
+    candidate_roll = aggregate_rolling_rows(rolling_rows, candidate_feature_set)
+    degraded = []
+    for metric in ["winning_streak_accuracy", "losing_streak_accuracy", "close_game_accuracy"]:
+        base_value = baseline_result.get("metrics", {}).get(metric) if baseline_result else None
+        cand_value = candidate_result.get("metrics", {}).get(metric) if candidate_result else None
+        if base_value is not None and cand_value is not None and cand_value < base_value:
+            degraded.append(metric)
+    rows = [
+        {
+            "comparison": "current_operational_feature_set_vs_best_non_pitching_candidate",
+            "feature_set": candidate_feature_set,
+            **metrics,
+            "degraded_segments": "|".join(degraded),
+            "suspected_feature_groups": "volatility|momentum|venue_context|month_phase|close_blowout|streak",
+            "interpretation": f"2026 기준 후보 accuracy delta는 {metrics['accuracy_delta']}, rolling delta는 {round(float((candidate_roll.get('accuracy') or 0) - (baseline_roll.get('accuracy') or 0)), 3)}로 운영 후보 안정성이 없습니다.",
+            "recommended_action": "운영 모델 교체 금지. feature group 단위로 2026 저하 원인을 분리하고 모니터링 후보로만 유지.",
+        }
+    ]
+    pd.DataFrame(rows).to_csv(results_dir / "current_season_degradation_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_current_season_feature_group_ablation_report(results_dir: Path, features: pd.DataFrame, x: pd.DataFrame, y: np.ndarray, dates: pd.Series, season_mask: np.ndarray, train_before_season: np.ndarray, feature_decision_rows: list[dict]):
+    feature_sets = current_season_ablation_feature_sets(x, feature_decision_rows)
+    baseline = predict_feature_window(features, x, y, feature_sets["baseline_core"], train_before_season, season_mask, max_iter=140)
+    baseline_metrics = baseline["metrics"] if baseline else {}
+    period_rows = []
+    periods = rolling_periods(dates, season_mask)
+    rows = []
+    for feature_group, columns in feature_sets.items():
+        result = predict_feature_window(features, x, y, columns, train_before_season, season_mask, max_iter=140)
+        metrics = result["metrics"] if result else {}
+        for _, start, end in periods:
+            period = period_result(features, x, y, columns, dates, start, end)
+            if period:
+                period_rows.append({"feature_set": feature_group, "games": current_season_game_count(period["frame"]), **period["metrics"]})
+        rolling = aggregate_period_metrics(period_rows, feature_group)
+        delta_accuracy = round(float((metrics.get("accuracy") or 0) - (baseline_metrics.get("accuracy") or 0)), 3)
+        delta_brier = round(float((metrics.get("brier") or 0) - (baseline_metrics.get("brier") or 0)), 3)
+        delta_log_loss = round(float((metrics.get("log_loss") or 0) - (baseline_metrics.get("log_loss") or 0)), 3)
+        keep = bool(delta_accuracy > 0.005 and delta_brier <= 0.001 and delta_log_loss <= 0.001)
+        rows.append(
+            {
+                "feature_group": feature_group.replace("_only", "").replace("selected_non_pitching_", "selected_"),
+                "feature_set": feature_group,
+                "games": current_season_game_count(result["frame"]) if result else 0,
+                "accuracy": metrics.get("accuracy"),
+                "brier": metrics.get("brier"),
+                "log_loss": metrics.get("log_loss"),
+                "over_55_games": metrics.get("over_55_games"),
+                "over_55_accuracy": metrics.get("over_55_accuracy"),
+                "rolling_accuracy": rolling.get("accuracy"),
+                "rolling_brier": rolling.get("brier"),
+                "rolling_log_loss": rolling.get("log_loss"),
+                "delta_vs_baseline_accuracy": delta_accuracy,
+                "delta_vs_baseline_brier": delta_brier,
+                "delta_vs_baseline_log_loss": delta_log_loss,
+                "keep_for_future": keep,
+                "reason": "2026 기준 baseline보다 안정 개선" if keep else "2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족",
+            }
+        )
+    pd.DataFrame(rows).to_csv(results_dir / "current_season_feature_group_ablation_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_current_season_drift_report(results_dir: Path, features: pd.DataFrame, x: pd.DataFrame, y: np.ndarray, dates: pd.Series, baseline_columns: list[str], candidate_columns: list[str], season_mask: np.ndarray):
+    rows = []
+    for period, start, end in rolling_periods(dates, season_mask):
+        baseline = period_result(features, x, y, baseline_columns, dates, start, end)
+        candidate = period_result(features, x, y, candidate_columns, dates, start, end)
+        metrics = compare_result_metrics(baseline, candidate)
+        games = current_season_game_count(baseline["frame"]) if baseline else 0
+        rows.append(
+            {
+                "period": period,
+                "start_date": start.date().isoformat(),
+                "end_date": end.date().isoformat(),
+                "games": games,
+                "production_accuracy": metrics["baseline_accuracy"],
+                "candidate_accuracy": metrics["candidate_accuracy"],
+                "accuracy_delta": metrics["accuracy_delta"],
+                "production_brier": metrics["baseline_brier"],
+                "candidate_brier": metrics["candidate_brier"],
+                "brier_delta": metrics["brier_delta"],
+                "production_log_loss": metrics["baseline_log_loss"],
+                "candidate_log_loss": metrics["candidate_log_loss"],
+                "log_loss_delta": metrics["log_loss_delta"],
+                "production_over_55_accuracy": metrics["baseline_over_55_accuracy"],
+                "candidate_over_55_accuracy": metrics["candidate_over_55_accuracy"],
+                "interpretation": "후보 우위 구간" if metrics["accuracy_delta"] > 0 else "후보 저하 또는 동률 구간",
+            }
+        )
+    pd.DataFrame(rows).to_csv(results_dir / "current_season_drift_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_current_season_false_signal_report(results_dir: Path, baseline_result: dict | None, candidate_result: dict | None, columns: list[str]):
+    rows = []
+    if baseline_result is None or candidate_result is None:
+        pd.DataFrame(rows).to_csv(results_dir / "current_season_false_signal_report.csv", index=False, encoding="utf-8-sig")
+        return rows
+    frame = candidate_result["frame"].reset_index(drop=True)
+    y_true = np.asarray(candidate_result["y_true"])
+    base_prob = np.asarray(baseline_result["probability"])
+    cand_prob = np.asarray(candidate_result["probability"])
+    base_pred = (base_prob >= 0.5).astype(int)
+    cand_pred = (cand_prob >= 0.5).astype(int)
+    focus = [
+        feature for feature in columns
+        if group_name_for_feature(feature) in {"volatility", "close_blowout", "momentum", "venue_context", "month_phase", "streak"}
+        and feature in frame.columns
+    ]
+    for feature in focus:
+        values = pd.to_numeric(frame[feature], errors="coerce").fillna(0)
+        threshold = values.abs().quantile(0.75)
+        mask = values.abs() >= threshold
+        if not mask.any():
+            continue
+        high_games = int(mask.sum())
+        base_acc = round(float((base_pred[mask] == y_true[mask]).mean()), 3)
+        cand_acc = round(float((cand_pred[mask] == y_true[mask]).mean()), 3)
+        wrong = int((cand_pred[mask] != y_true[mask]).sum())
+        rows.append(
+            {
+                "feature": feature,
+                "feature_group": group_name_for_feature(feature),
+                "high_signal_definition": f"abs({feature}) >= p75({round(float(threshold), 4)})",
+                "high_signal_games": high_games,
+                "production_accuracy_when_high": base_acc,
+                "candidate_accuracy_when_high": cand_acc,
+                "accuracy_delta_when_high": round(cand_acc - base_acc, 3),
+                "candidate_wrong_games": wrong,
+                "common_failure_pattern": "high_signal_candidate_underperforms" if cand_acc < base_acc else "no_clear_false_signal",
+                "interpretation": "2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성" if cand_acc < base_acc else "2026 high-signal 구간에서 명확한 악화는 제한적",
+                "recommended_action": "remove_from_candidate_or_monitor_only" if cand_acc < base_acc else "monitor_only",
+            }
+        )
+    pd.DataFrame(rows).to_csv(results_dir / "current_season_false_signal_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def update_non_pitching_feature_decisions_for_current_season(results_dir: Path, feature_decision_rows: list[dict], ablation_rows: list[dict], false_signal_rows: list[dict]):
+    ablation_by_group = {}
+    for row in ablation_rows:
+        group = str(row.get("feature_group", "")).replace("selected_without_", "").replace("selected_all", "selected")
+        ablation_by_group[group] = row
+    false_by_feature = {row["feature"]: row for row in false_signal_rows}
+    updated = []
+    for row in feature_decision_rows:
+        item = dict(row)
+        group = item.get("feature_group", "baseline")
+        group_row = ablation_by_group.get(group, {})
+        false_row = false_by_feature.get(item.get("feature"), {})
+        accuracy_delta = group_row.get("delta_vs_baseline_accuracy")
+        if false_row and (false_row.get("accuracy_delta_when_high") or 0) < 0:
+            effect = "negative_high_signal"
+            risk = "high"
+            recommendation = "remove_from_candidate"
+        elif accuracy_delta is not None and accuracy_delta < -0.005:
+            effect = "negative_group_delta"
+            risk = "high"
+            recommendation = "remove_from_candidate"
+        elif accuracy_delta is not None and accuracy_delta > 0.005:
+            effect = "positive_but_gate_required"
+            risk = "medium"
+            recommendation = "reconsider_after_more_2026_games"
+        elif item.get("keep_candidate") == "segment_only":
+            effect = "segment_limited"
+            risk = "medium"
+            recommendation = "segment_only"
+        elif group == "baseline":
+            effect = "baseline"
+            risk = "low"
+            recommendation = "keep_baseline"
+        else:
+            effect = "unstable_or_neutral"
+            risk = "medium"
+            recommendation = "monitor_only"
+        item["current_season_effect"] = effect
+        item["current_season_risk"] = risk
+        item["production_recommendation"] = recommendation
+        updated.append(item)
+    pd.DataFrame(updated).to_csv(results_dir / "non_pitching_feature_decision_report.csv", index=False, encoding="utf-8-sig")
+    return updated
+
+
+def write_rejected_candidate_models(results_dir: Path, best_non_pitching: dict, production_gate_audit: dict, current_season_gate: dict):
+    rejected = {
+        "generated_at": pd.Timestamp.now().isoformat(),
+        "rejected_candidates": [
+            {
+                "model": best_non_pitching.get("model"),
+                "feature_set": best_non_pitching.get("feature_set"),
+                "status": "rejected_for_now",
+                "accuracy": best_non_pitching.get("accuracy"),
+                "brier": best_non_pitching.get("brier"),
+                "log_loss": best_non_pitching.get("log_loss"),
+            }
+        ],
+        "rejection_reason": "historical signal is not stable in 2026 current-season validation and production gates are not passed",
+        "failed_gates": sorted(set((production_gate_audit.get("failed_gates") or []) + (current_season_gate.get("failed_reasons") or []))),
+        "reconsideration_condition": "Reconsider after additional 2026 games or after pitching snapshot features become eligible, but only if rolling current-season validation improves and calibration does not worsen.",
+    }
+    (results_dir / "rejected_candidate_models.json").write_text(json.dumps(rejected, indent=2, ensure_ascii=False), encoding="utf-8")
+    return rejected
 def write_current_season_validation_reports(results_dir: Path, features: pd.DataFrame, x: pd.DataFrame, y: np.ndarray, best: dict, best_non_pitching: dict, feature_decision_rows: list[dict], selected_row: dict):
     dates = pd.to_datetime(features["date"])
     season = 2026 if (dates.dt.year == 2026).any() else int(dates.dt.year.max())
@@ -1278,6 +1584,24 @@ def write_current_season_validation_reports(results_dir: Path, features: pd.Data
 
     challenger_rows = build_challenger_monitoring_rows(prediction_results.get("current_operational_feature_set"), prediction_results.get("best_non_pitching_candidate"))
     pd.DataFrame(challenger_rows).to_csv(results_dir / "challenger_model_monitoring_report.csv", index=False, encoding="utf-8-sig")
+    degradation_rows = write_current_season_degradation_report(
+        results_dir,
+        prediction_results.get("current_operational_feature_set"),
+        prediction_results.get("best_non_pitching_candidate"),
+        rolling_rows,
+        "best_non_pitching_candidate",
+    )
+    ablation_rows = write_current_season_feature_group_ablation_report(results_dir, features, x, y, dates, season_mask, train_before_season, feature_decision_rows)
+    baseline_columns = feature_sets.get("current_operational_feature_set", compact_feature_columns(x))
+    candidate_columns = feature_sets.get("best_non_pitching_candidate", baseline_columns)
+    drift_rows = write_current_season_drift_report(results_dir, features, x, y, dates, baseline_columns, candidate_columns, season_mask)
+    false_signal_rows = write_current_season_false_signal_report(
+        results_dir,
+        prediction_results.get("current_operational_feature_set"),
+        prediction_results.get("best_non_pitching_candidate"),
+        candidate_columns,
+    )
+    revised_feature_decision_rows = update_non_pitching_feature_decisions_for_current_season(results_dir, feature_decision_rows, ablation_rows, false_signal_rows)
     current_season_gate = {
         "season": season,
         "completed_games": current_season_game_count(features.loc[season_mask]),
@@ -1313,6 +1637,11 @@ def write_current_season_validation_reports(results_dir: Path, features: pd.Data
         "stability_rows": stability_rows,
         "feature_selection_rows": selection_rows,
         "challenger_rows": challenger_rows,
+        "degradation_rows": degradation_rows,
+        "ablation_rows": ablation_rows,
+        "drift_rows": drift_rows,
+        "false_signal_rows": false_signal_rows,
+        "revised_feature_decision_rows": revised_feature_decision_rows,
         "current_season_evidence_gate": current_season_gate,
     }
 
@@ -1819,7 +2148,9 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     calibration_rows = write_model_calibration_diagnostics_report(results_dir, baseline_for_bootstrap, candidate_for_bootstrap)
     leakage_audit_rows = write_non_pitching_feature_leakage_audit(results_dir)
     current_season_bundle = write_current_season_validation_reports(results_dir, features, x, y, best, best_non_pitching, feature_decision_rows, selected_row)
+    feature_decision_rows = current_season_bundle.get("revised_feature_decision_rows", feature_decision_rows)
     production_gate_audit = write_production_model_gate_audit(results_dir, selected_row, best_non_pitching, bootstrap_rows, calibration_rows, current_season_bundle.get("current_season_evidence_gate"))
+    rejected_candidates = write_rejected_candidate_models(results_dir, best_non_pitching, production_gate_audit, current_season_bundle.get("current_season_evidence_gate", {}))
     spread_report = write_model_probability_spread_report(results_dir, probability_spread_rows)
     payload = build_payload(
         best,
@@ -1871,6 +2202,11 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload["current_season_candidate_stability_report"] = "modeling/results/current_season_candidate_stability_report.csv"
     payload["current_season_feature_selection_report"] = "modeling/results/current_season_feature_selection_report.csv"
     payload["challenger_model_monitoring_report"] = "modeling/results/challenger_model_monitoring_report.csv"
+    payload["current_season_degradation_report"] = "modeling/results/current_season_degradation_report.csv"
+    payload["current_season_feature_group_ablation_report"] = "modeling/results/current_season_feature_group_ablation_report.csv"
+    payload["current_season_drift_report"] = "modeling/results/current_season_drift_report.csv"
+    payload["current_season_false_signal_report"] = "modeling/results/current_season_false_signal_report.csv"
+    payload["rejected_candidate_models"] = "modeling/results/rejected_candidate_models.json"
     payload.setdefault("diagnostic_reports", {})["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_experiment_report"] = "modeling/results/non_pitching_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_importance_report"] = "modeling/results/non_pitching_feature_importance_report.csv"
@@ -1889,6 +2225,11 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload.setdefault("diagnostic_reports", {})["current_season_candidate_stability_report"] = "modeling/results/current_season_candidate_stability_report.csv"
     payload.setdefault("diagnostic_reports", {})["current_season_feature_selection_report"] = "modeling/results/current_season_feature_selection_report.csv"
     payload.setdefault("diagnostic_reports", {})["challenger_model_monitoring_report"] = "modeling/results/challenger_model_monitoring_report.csv"
+    payload.setdefault("diagnostic_reports", {})["current_season_degradation_report"] = "modeling/results/current_season_degradation_report.csv"
+    payload.setdefault("diagnostic_reports", {})["current_season_feature_group_ablation_report"] = "modeling/results/current_season_feature_group_ablation_report.csv"
+    payload.setdefault("diagnostic_reports", {})["current_season_drift_report"] = "modeling/results/current_season_drift_report.csv"
+    payload.setdefault("diagnostic_reports", {})["current_season_false_signal_report"] = "modeling/results/current_season_false_signal_report.csv"
+    payload.setdefault("diagnostic_reports", {})["rejected_candidate_models"] = "modeling/results/rejected_candidate_models.json"
     if payload.get("feature_importance"):
         pd.DataFrame(
             [{"feature": feature, "importance": importance} for feature, importance in payload["feature_importance"].items()]
@@ -2487,6 +2828,25 @@ def write_model_insight_summary(
         "current_season_candidate_stability_summary": current_season_bundle.get("stability_rows", []),
         "current_season_feature_selection_summary": current_season_bundle.get("feature_selection_rows", []),
         "current_season_evidence_gate": current_season_bundle.get("current_season_evidence_gate", {}),
+        "current_season_degradation_summary": current_season_bundle.get("degradation_rows", []),
+        "harmful_2026_feature_groups": [
+            row.get("feature_group")
+            for row in current_season_bundle.get("ablation_rows", [])
+            if (row.get("delta_vs_baseline_accuracy") or 0) < -0.005
+        ],
+        "unstable_2026_feature_groups": [
+            row.get("feature_group")
+            for row in current_season_bundle.get("ablation_rows", [])
+            if not row.get("keep_for_future") and (row.get("delta_vs_baseline_accuracy") or 0) >= -0.005
+        ],
+        "useful_2026_feature_groups": [
+            row.get("feature_group")
+            for row in current_season_bundle.get("ablation_rows", [])
+            if row.get("keep_for_future")
+        ],
+        "current_season_drift_summary": current_season_bundle.get("drift_rows", []),
+        "false_signal_summary": current_season_bundle.get("false_signal_rows", []),
+        "revised_non_pitching_feature_policy": "2026 current-season에서 악화된 비투수 feature group은 운영 후보에서 제거하거나 monitor_only로 낮추고, 전체 gate를 통과하기 전까지 생산 모델에는 반영하지 않습니다.",
         "best_candidate_stability_assessment": "개선폭이 작고 bootstrap/calibration/시간창 검증이 충분하지 않아 안정 개선으로 확정하지 않습니다.",
         "useful_non_pitching_features": useful_non_pitching,
         "harmful_or_noisy_non_pitching_features": noisy_non_pitching,
@@ -2508,7 +2868,7 @@ def write_model_insight_summary(
         ],
         "recommended_next_modeling_step": "현재 시즌 후보 검증과 기존 robust gate를 모두 통과한 뒤에만 운영 교체를 검토하고, 투수 스냅샷은 30일 이상 누적 후 별도 실험합니다.",
         "safe_to_replace_model": safe_to_replace,
-        "reason_not_to_replace_if_false": "" if safe_to_replace else "최고 비투수 후보의 accuracy 개선폭이 운영 교체 기준(+0.005 초과), bootstrap/calibration 안정성, current-season evidence gate를 모두 충족하지 못해 운영 모델은 유지합니다.",
+        "reason_not_to_replace_if_false": "" if safe_to_replace else "historical improvement가 작고, current-season validation과 rolling backtest가 실패했으며, production gates를 통과하지 못해 운영 모델은 유지합니다.",
     }
     (results_dir / "model_insight_summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     return summary
@@ -2780,6 +3140,11 @@ def build_payload(
         "current_season_candidate_stability_report": "modeling/results/current_season_candidate_stability_report.csv",
         "current_season_feature_selection_report": "modeling/results/current_season_feature_selection_report.csv",
         "challenger_model_monitoring_report": "modeling/results/challenger_model_monitoring_report.csv",
+        "current_season_degradation_report": "modeling/results/current_season_degradation_report.csv",
+        "current_season_feature_group_ablation_report": "modeling/results/current_season_feature_group_ablation_report.csv",
+        "current_season_drift_report": "modeling/results/current_season_drift_report.csv",
+        "current_season_false_signal_report": "modeling/results/current_season_false_signal_report.csv",
+        "rejected_candidate_models": "modeling/results/rejected_candidate_models.json",
     }
     payload["diagnostic_report_rows"] = {
         "feature_diagnostics": len(feature_diagnostics),
@@ -2804,6 +3169,10 @@ def build_payload(
         "current_season_rolling_backtest_rows": len(current_season_bundle.get("rolling_rows", [])),
         "current_season_feature_selection_rows": len(current_season_bundle.get("feature_selection_rows", [])),
         "challenger_model_monitoring_rows": len(current_season_bundle.get("challenger_rows", [])),
+        "current_season_degradation_rows": len(current_season_bundle.get("degradation_rows", [])),
+        "current_season_feature_group_ablation_rows": len(current_season_bundle.get("ablation_rows", [])),
+        "current_season_drift_rows": len(current_season_bundle.get("drift_rows", [])),
+        "current_season_false_signal_rows": len(current_season_bundle.get("false_signal_rows", [])),
     }
     payload["model_insight_summary"] = insight_summary
     return payload
