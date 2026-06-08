@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-06-08T09:41:12.675579",
-  "current_operational_model": "핵심 수치 GradientBoosting 보수 모델",
-  "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_volatility",
-  "current_operational_accuracy": 0.544,
-  "best_candidate_accuracy": 0.547,
-  "accuracy_delta": 0.003,
+  "generated_at": "2026-06-08T11:06:27.366310",
+  "current_operational_model": "GradientBoosting 보수 시간가중 모델",
+  "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_streak",
+  "current_operational_accuracy": 0.545,
+  "best_candidate_accuracy": 0.541,
+  "accuracy_delta": -0.004,
   "required_accuracy_delta": 0.005,
   "gates": [
     {
       "gate_name": "accuracy_delta_greater_than_0_005",
       "required_condition": "accuracy delta > 0.005",
-      "baseline_value": 0.544,
-      "candidate_value": 0.547,
+      "baseline_value": 0.545,
+      "candidate_value": 0.541,
       "passed": false,
       "severity": "high",
       "explanation": "개선폭이 운영 교체 최소 기준을 넘어야 함"
@@ -20,7 +20,7 @@
       "gate_name": "brier_not_worse",
       "required_condition": "candidate brier <= current brier + 0.001",
       "baseline_value": 0.248,
-      "candidate_value": 0.248,
+      "candidate_value": 0.249,
       "passed": true,
       "severity": "high",
       "explanation": "확률 품질 악화 방지"
@@ -28,7 +28,7 @@
     {
       "gate_name": "log_loss_not_worse",
       "required_condition": "candidate log_loss <= current log_loss + 0.001",
-      "baseline_value": 0.689,
+      "baseline_value": 0.69,
       "candidate_value": 0.69,
       "passed": true,
       "severity": "high",
@@ -38,7 +38,7 @@
       "gate_name": "over_55_accuracy_improved",
       "required_condition": "candidate over_55_accuracy improves",
       "baseline_value": null,
-      "candidate_value": 0.554,
+      "candidate_value": 0.559,
       "passed": true,
       "severity": "medium",
       "explanation": "확신 구간 성능은 별도 bootstrap으로 재확인"
@@ -47,7 +47,7 @@
       "gate_name": "recent_3year_accuracy_not_worse",
       "required_condition": "recent 3 year accuracy not worse",
       "baseline_value": null,
-      "candidate_value": 0.547,
+      "candidate_value": 0.541,
       "passed": true,
       "severity": "medium",
       "explanation": "최근 시즌 안정성 확인"
@@ -56,7 +56,7 @@
       "gate_name": "winning_streak_accuracy_improved",
       "required_condition": "winning streak accuracy improves",
       "baseline_value": null,
-      "candidate_value": 0.535,
+      "candidate_value": 0.531,
       "passed": true,
       "severity": "medium",
       "explanation": "기존 약점 세그먼트 개선 필요"
@@ -65,7 +65,7 @@
       "gate_name": "close_game_accuracy_not_worse",
       "required_condition": "close game accuracy not worse",
       "baseline_value": null,
-      "candidate_value": 0.518,
+      "candidate_value": 0.517,
       "passed": true,
       "severity": "medium",
       "explanation": "박빙 경기 악화 방지"
@@ -82,9 +82,9 @@
     {
       "gate_name": "calibration_not_worse",
       "required_condition": "candidate calibration error not worse",
-      "baseline_value": 0.023,
-      "candidate_value": 0.04,
-      "passed": false,
+      "baseline_value": 0.027,
+      "candidate_value": 0.03,
+      "passed": true,
       "severity": "high",
       "explanation": "확률 보정 악화 방지"
     },
@@ -105,12 +105,12 @@
     "recent_3year_accuracy_not_worse",
     "winning_streak_accuracy_improved",
     "close_game_accuracy_not_worse",
+    "calibration_not_worse",
     "no_data_leakage_detected"
   ],
   "failed_gates": [
     "accuracy_delta_greater_than_0_005",
-    "bootstrap_ci_stable",
-    "calibration_not_worse"
+    "bootstrap_ci_stable"
   ],
   "safe_to_replace_model": false,
   "final_decision": "keep_current_operational_model",
