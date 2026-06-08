@@ -1,0 +1,9 @@
+﻿comparison,metric,baseline_mean,candidate_mean,mean_delta,ci_lower_95,ci_upper_95,statistically_stable,bootstrap_iterations,interpretation
+핵심 수치 GradientBoosting 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,accuracy,0.544,0.547,0.003,-0.007,0.013,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,brier,0.248,0.248,-0.0,-0.001,0.0,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,log_loss,0.689,0.69,-0.001,-0.002,0.001,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,over_55_accuracy,0.556,0.554,-0.002,-0.015,0.01,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,recent_3year_accuracy,0.543,0.546,0.003,-0.008,0.013,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,winning_streak_accuracy,0.498,0.496,-0.002,-0.024,0.021,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,losing_streak_accuracy,0.564,0.569,0.005,-0.015,0.024,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,close_game_accuracy,0.542,0.568,0.027,-0.006,0.059,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
