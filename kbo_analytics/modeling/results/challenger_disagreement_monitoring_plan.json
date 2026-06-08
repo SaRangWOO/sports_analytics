@@ -1,0 +1,43 @@
+{
+  "generated_at": "2026-06-08T17:02:16.045405",
+  "objective": "Monitor the rejected_for_now non-pitching candidate offline without using it for production decisions.",
+  "production_model": "핵심 수치 GradientBoosting 보수 모델",
+  "candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_volatility",
+  "candidate_status": "rejected_for_now",
+  "monitoring_mode": "offline_only",
+  "dashboard_usage_policy": "Do not display candidate picks in the main dashboard unless production gates pass.",
+  "metrics_to_track": [
+    "production_accuracy",
+    "candidate_accuracy",
+    "agreement_rate",
+    "production_accuracy_when_agree",
+    "production_accuracy_when_disagree",
+    "candidate_accuracy_when_disagree",
+    "disagreement_game_count",
+    "production_brier",
+    "candidate_brier",
+    "production_log_loss",
+    "candidate_log_loss",
+    "over_55_accuracy_delta"
+  ],
+  "disagreement_metrics": [
+    "agreement_rate",
+    "disagreement_game_count",
+    "production_accuracy_when_disagree",
+    "candidate_accuracy_when_disagree",
+    "candidate_wrong_when_production_correct",
+    "candidate_correct_when_production_wrong"
+  ],
+  "minimum_monitoring_games": 50,
+  "promotion_blockers": [
+    "accuracy_delta_greater_than_0_005",
+    "bootstrap_ci_stable",
+    "calibration_not_worse",
+    "current_season_accuracy_delta_not_greater_than_0_005",
+    "current_season_brier_worse",
+    "current_season_evidence_gate",
+    "current_season_log_loss_worse",
+    "rolling_backtest_not_better"
+  ],
+  "reconsideration_policy": "Use at least 50 additional completed games before reconsideration, and only reconsider if current-season rolling validation improves while Brier, Log Loss, bootstrap stability, and calibration gates do not worsen."
+}

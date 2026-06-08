@@ -2912,7 +2912,7 @@
   ],
   "recommended_next_modeling_step": "현재 시즌 후보 검증과 기존 robust gate를 모두 통과한 뒤에만 운영 교체를 검토하고, 투수 스냅샷은 30일 이상 누적 후 별도 실험합니다.",
   "safe_to_replace_model": false,
-  "reason_not_to_replace_if_false": "historical improvement가 작고, current-season validation과 rolling backtest가 실패했으며, production gates를 통과하지 못해 운영 모델은 유지합니다.",
+  "reason_not_to_replace_if_false": "historical improvement was small, current-season validation failed, rolling backtest failed, and production gates are not passed.",
   "pitching_snapshot_quality_summary": {
     "generated_at": "2026-06-08 15:24:03",
     "reference_date": "2026-06-02",
@@ -2986,5 +2986,33 @@
     "earliest_feature_experiment_date": "2026-07-01",
     "plan_file": "modeling/results/pitching_feature_experiment_plan.json"
   },
-  "reason_pitching_features_still_blocked": "투수 스냅샷은 품질 점검을 통과했지만 누적 기간이 6일로 짧아 모델 피처 사용을 차단합니다. 최소 30일 이상 누적 후 baseline_plus_pitching_snapshot 실험을 진행합니다."
+  "reason_pitching_features_still_blocked": "투수 스냅샷은 품질 점검을 통과했지만 누적 기간이 6일로 짧아 모델 피처 사용을 차단합니다. 최소 30일 이상 누적 후 baseline_plus_pitching_snapshot 실험을 진행합니다.",
+  "current_season_candidate_decision_summary": {
+    "candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_volatility",
+    "candidate_status": "rejected_for_now",
+    "decision": "do_not_replace_production_model",
+    "current_season_accuracy_delta": -0.054,
+    "rolling_backtest_accuracy_delta": -0.031,
+    "current_season_evidence_gate": false
+  },
+  "rejected_candidate_policy": "Rejected_for_now candidates may be monitored offline, but they must not affect production predictions, dashboard picks, confidence thresholds, or model replacement decisions.",
+  "challenger_monitoring_plan_summary": {
+    "monitoring_mode": "offline_only",
+    "minimum_monitoring_games": 50,
+    "dashboard_usage_policy": "Do not display candidate picks in the main dashboard unless production gates pass."
+  },
+  "prediction_outcome_audit_plan_summary": {
+    "implementation_status": "plan_only_not_wired_to_production",
+    "output_file_planned": "kbo_analytics/modeling/results/prediction_outcome_audit_log.csv",
+    "audit_frequency": "daily_after_games_complete"
+  },
+  "next_strategic_modeling_steps": [
+    "Keep production model unchanged.",
+    "Monitor daily pipeline health.",
+    "Accumulate pitching snapshots until minimum history gate passes.",
+    "Track production prediction outcomes after completed games.",
+    "Use disagreement monitoring for rejected_for_now candidates only offline.",
+    "Revisit pitching snapshot feature experiments only after the gate passes.",
+    "Do not add broad feature groups without segment-level evidence."
+  ]
 }
