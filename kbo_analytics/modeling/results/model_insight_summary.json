@@ -3301,5 +3301,189 @@
       "interpretation": "승패 방향 정보와 시장별 추천을 분리해 표시하는 정책 평가입니다."
     }
   ],
-  "dashboard_display_policy_note": "The recommendation policy improves interpretability and usefulness, but it does not change the underlying model probabilities or production model."
+  "dashboard_display_policy_note": "The recommendation policy improves interpretability and usefulness, but it does not change the underlying model probabilities or production model.",
+  "recommendation_outcome_audit_summary": {
+    "audited_completed_games": 78,
+    "pending_games": 92,
+    "note": "추천 등급은 완료 경기 결과로 사후 평가하며, 사전 피처나 모델 확률에는 연결하지 않습니다."
+  },
+  "recommendation_grade_performance_summary": [
+    {
+      "grade": "A",
+      "recommendation_strength": "강추천",
+      "games": 0,
+      "correct": 0,
+      "accuracy": NaN,
+      "avg_probability": NaN,
+      "brier": NaN,
+      "log_loss": NaN,
+      "top_pick_games": 0,
+      "top_pick_accuracy": NaN,
+      "top_tier_games": 0,
+      "top_tier_accuracy": NaN,
+      "interpretation": "충분한 표본에서 C/D보다 나은지 확인해야 하는 추천 구간입니다."
+    },
+    {
+      "grade": "B",
+      "recommendation_strength": "추천",
+      "games": 0,
+      "correct": 0,
+      "accuracy": NaN,
+      "avg_probability": NaN,
+      "brier": NaN,
+      "log_loss": NaN,
+      "top_pick_games": 0,
+      "top_pick_accuracy": NaN,
+      "top_tier_games": 0,
+      "top_tier_accuracy": NaN,
+      "interpretation": "충분한 표본에서 C/D보다 나은지 확인해야 하는 추천 구간입니다."
+    },
+    {
+      "grade": "C",
+      "recommendation_strength": "약우세",
+      "games": 52,
+      "correct": 33,
+      "accuracy": 0.635,
+      "avg_probability": 0.542,
+      "brier": 0.24,
+      "log_loss": 0.672,
+      "top_pick_games": 16,
+      "top_pick_accuracy": 0.75,
+      "top_tier_games": 31,
+      "top_tier_accuracy": 0.71,
+      "interpretation": "방향성 참고 구간이며, 유의미한 적중률 개선 전까지 강한 추천으로 보지 않습니다."
+    },
+    {
+      "grade": "D",
+      "recommendation_strength": "관망",
+      "games": 26,
+      "correct": 15,
+      "accuracy": 0.577,
+      "avg_probability": 0.508,
+      "brier": 0.25,
+      "log_loss": 0.694,
+      "top_pick_games": 0,
+      "top_pick_accuracy": NaN,
+      "top_tier_games": 0,
+      "top_tier_accuracy": NaN,
+      "interpretation": "D/E 등급은 실행 가능한 추천으로 해석하지 않습니다."
+    },
+    {
+      "grade": "E",
+      "recommendation_strength": "정보 부족",
+      "games": 0,
+      "correct": 0,
+      "accuracy": NaN,
+      "avg_probability": NaN,
+      "brier": NaN,
+      "log_loss": NaN,
+      "top_pick_games": 0,
+      "top_pick_accuracy": NaN,
+      "top_tier_games": 0,
+      "top_tier_accuracy": NaN,
+      "interpretation": "D/E 등급은 실행 가능한 추천으로 해석하지 않습니다."
+    }
+  ],
+  "market_recommendation_performance_summary": [
+    {
+      "market_type": "win_pick",
+      "recommendation_label": "승패 관망",
+      "games": 26,
+      "correct": 15,
+      "accuracy": 0.577,
+      "avg_probability": 0.508,
+      "interpretation": "승패 추천만 실제 승패 결과로 평가합니다."
+    },
+    {
+      "market_type": "win_pick",
+      "recommendation_label": "승패 약우세",
+      "games": 52,
+      "correct": 33,
+      "accuracy": 0.635,
+      "avg_probability": 0.542,
+      "interpretation": "승패 추천만 실제 승패 결과로 평가합니다."
+    },
+    {
+      "market_type": "handicap",
+      "recommendation_label": "not_available",
+      "games": 0,
+      "correct": 0,
+      "accuracy": NaN,
+      "avg_probability": NaN,
+      "interpretation": "유효한 핸디캡 라인이 없어 평가하지 않습니다."
+    },
+    {
+      "market_type": "over_under",
+      "recommendation_label": "not_available",
+      "games": 0,
+      "correct": 0,
+      "accuracy": NaN,
+      "avg_probability": NaN,
+      "interpretation": "유효한 오버/언더 기준 라인이 없어 평가하지 않습니다."
+    }
+  ],
+  "daily_top_pick_performance_summary": [
+    {
+      "date": "2026-06-03",
+      "top_pick_game": "NC vs 삼성",
+      "top_pick_team": "삼성",
+      "top_pick_probability": 0.557,
+      "top_pick_grade": "C등급",
+      "actual_winner": "NC",
+      "result": "incorrect",
+      "all_games_max_probability": 0.557,
+      "day_confidence_summary": "4 completed audited games",
+      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
+    },
+    {
+      "date": "2026-06-04",
+      "top_pick_game": "NC vs 삼성",
+      "top_pick_team": "삼성",
+      "top_pick_probability": 0.548,
+      "top_pick_grade": "C등급",
+      "actual_winner": "NC",
+      "result": "incorrect",
+      "all_games_max_probability": 0.548,
+      "day_confidence_summary": "5 completed audited games",
+      "interpretation": "TOP PICK이 일반 예측보다 낫지 않아 '상대 우세 1순위' 표현을 검토합니다."
+    },
+    {
+      "date": "2026-06-05",
+      "top_pick_game": "키움 vs 두산",
+      "top_pick_team": "두산",
+      "top_pick_probability": 0.55,
+      "top_pick_grade": "C등급",
+      "actual_winner": "두산",
+      "result": "correct",
+      "all_games_max_probability": 0.55,
+      "day_confidence_summary": "5 completed audited games",
+      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
+    },
+    {
+      "date": "2026-06-06",
+      "top_pick_game": "키움 vs 두산",
+      "top_pick_team": "두산",
+      "top_pick_probability": 0.546,
+      "top_pick_grade": "C등급",
+      "actual_winner": "두산",
+      "result": "correct",
+      "all_games_max_probability": 0.546,
+      "day_confidence_summary": "5 completed audited games",
+      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
+    },
+    {
+      "date": "2026-06-07",
+      "top_pick_game": "한화 vs 롯데",
+      "top_pick_team": "한화",
+      "top_pick_probability": 0.542,
+      "top_pick_grade": "C등급",
+      "actual_winner": "한화",
+      "result": "correct",
+      "all_games_max_probability": 0.542,
+      "day_confidence_summary": "5 completed audited games",
+      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
+    }
+  ],
+  "recommendation_policy_risk_note": "The display policy improves interpretability, but recommendation labels must be validated against completed-game outcomes before being treated as actionable.",
+  "recommended_recommendation_policy_next_step": "누적 감사 표본이 충분해질 때까지 A/B/C/D/E 등급별 적중률과 TOP PICK 성능을 모니터링하고, 성과가 확인되지 않으면 TOP PICK 문구를 상대 우세 1순위로 낮춥니다."
 }

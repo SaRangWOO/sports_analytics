@@ -1632,6 +1632,16 @@ def append_pregame_prediction_history(prediction_cards: list[dict], status_paylo
                 "home_team": card.get("home_team", ""),
                 "predicted_team": card.get("예측 구단", ""),
                 "win_probability": round(current_probability, 4),
+                "predicted_edge_label": card.get("predicted_edge_label", ""),
+                "recommendation_strength": card.get("recommendation_strength", ""),
+                "recommendation_grade": card.get("recommendation_grade", ""),
+                "win_pick_recommendation": card.get("win_pick_recommendation", ""),
+                "handicap_recommendation": card.get("handicap_recommendation", ""),
+                "over_under_recommendation": card.get("over_under_recommendation", ""),
+                "daily_rank": card.get("daily_rank", ""),
+                "daily_edge_percentile": card.get("daily_edge_percentile", ""),
+                "is_daily_top_pick": card.get("is_daily_top_pick", ""),
+                "is_daily_top_tier": card.get("is_daily_top_tier", ""),
                 "starter_status": next((game.get("game_starter_status") for game in status_payload.get("games", []) if game.get("game_id") == game_id), ""),
                 "lineup_status": lineup_status,
                 "previous_predicted_team": previous_team or "",
@@ -1705,6 +1715,285 @@ def export_daily_recommendation_summary(prediction_cards: list[dict], generated_
     }
     (RESULTS_DIR / "daily_recommendation_summary.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     return payload
+
+
+def confidence_bucket(probability: float) -> str:
+    if probability >= 0.58:
+        return "58% 이상"
+    if probability >= 0.55:
+        return "55~58%"
+    if probability >= 0.52:
+        return "52~55%"
+    return "52% 미만"
+
+
+def binary_brier(values: pd.Series, outcomes: pd.Series):
+    if values.empty:
+        return None
+    return round(float(((values.astype(float) - outcomes.astype(float)) ** 2).mean()), 3)
+
+
+def binary_log_loss(values: pd.Series, outcomes: pd.Series):
+    if values.empty or outcomes.nunique() < 2:
+        return None
+    clipped = values.astype(float).clip(1e-6, 1 - 1e-6)
+    y = outcomes.astype(float)
+    return round(float(-(y * np.log(clipped) + (1 - y) * np.log(1 - clipped)).mean()), 3)
+
+
+def completed_game_lookup(games: pd.DataFrame) -> dict:
+    final_games = games[games["status"].eq("Final")].copy()
+    if final_games.empty:
+        return {}
+    final_games["base_game_id"] = final_games["game_id"].astype(str).str.split("_").str[0]
+    lookup = {}
+    for game_id, group in final_games.groupby("base_game_id"):
+        if len(group) < 2:
+            continue
+        away = group[group["home_away"].eq("A")]
+        home = group[group["home_away"].eq("H")]
+        if away.empty or home.empty:
+            continue
+        away_row = away.iloc[0]
+        home_row = home.iloc[0]
+        away_score = int(away_row["score_team"])
+        home_score = int(home_row["score_team"])
+        lookup[str(game_id)] = {
+            "away_team": away_row["team"],
+            "home_team": home_row["team"],
+            "actual_away_score": away_score,
+            "actual_home_score": home_score,
+            "actual_winner": home_row["team"] if home_score > away_score else away_row["team"],
+        }
+    return lookup
+
+
+def ensure_recommendation_columns(history: pd.DataFrame) -> pd.DataFrame:
+    history = history.copy()
+    history["predicted_probability"] = history["win_probability"].astype(float)
+    history["prediction_date"] = history["reference_date"]
+    history["game_date"] = history["reference_date"]
+    history["predicted_edge_label"] = history.apply(
+        lambda row: row.get("predicted_edge_label") if pd.notna(row.get("predicted_edge_label")) else predicted_edge_label(row["predicted_team"], float(row["predicted_probability"])),
+        axis=1,
+    )
+    history["recommendation_strength"] = history.apply(
+        lambda row: row.get("recommendation_strength") if pd.notna(row.get("recommendation_strength")) else recommendation_strength(float(row["predicted_probability"])),
+        axis=1,
+    )
+    history["recommendation_grade"] = history.apply(
+        lambda row: row.get("recommendation_grade") if pd.notna(row.get("recommendation_grade")) else recommendation_grade(row["recommendation_strength"]),
+        axis=1,
+    )
+    history["win_pick_recommendation"] = history.apply(
+        lambda row: row.get("win_pick_recommendation") if pd.notna(row.get("win_pick_recommendation")) else f'승패 {row["recommendation_strength"]}',
+        axis=1,
+    )
+    for column, default in [("handicap_recommendation", "핸디캡 관망"), ("over_under_recommendation", "오버/언더 관망")]:
+        if column not in history.columns:
+            history[column] = default
+        history[column] = history[column].fillna(default)
+    history["daily_rank"] = history.groupby("prediction_date")["predicted_probability"].rank(method="first", ascending=False).astype(int)
+    history["daily_edge_percentile"] = history.groupby("prediction_date")["predicted_probability"].rank(method="max", pct=True)
+    daily_counts = history.groupby("prediction_date")["game_id"].transform("count")
+    history["daily_edge_percentile"] = np.where(daily_counts <= 1, 1.0, history["daily_edge_percentile"])
+    history["is_daily_top_pick"] = history["daily_rank"].eq(1)
+    top_tier_cutoff = np.ceil(daily_counts * 0.30).astype(int).clip(lower=1)
+    history["is_daily_top_tier"] = history["daily_rank"] <= top_tier_cutoff
+    return history
+
+
+def summarize_recommendation_grade_performance(audit_df: pd.DataFrame):
+    rows = []
+    expected = [
+        ("A등급", "강추천"),
+        ("B등급", "추천"),
+        ("C등급", "약우세"),
+        ("D등급", "관망"),
+        ("E등급", "정보 부족"),
+    ]
+    for grade, strength in expected:
+        group = audit_df[audit_df["recommendation_grade"].astype(str).str.startswith(grade)]
+        correct = group["win_pick_result"].eq("correct")
+        top_pick = group["is_daily_top_pick"].astype(bool) if not group.empty else pd.Series(dtype=bool)
+        top_tier = group["is_daily_top_tier"].astype(bool) if not group.empty else pd.Series(dtype=bool)
+        interpretation = "D/E 등급은 실행 가능한 추천으로 해석하지 않습니다."
+        if grade in {"A등급", "B등급"}:
+            interpretation = "충분한 표본에서 C/D보다 나은지 확인해야 하는 추천 구간입니다."
+        elif grade == "C등급":
+            interpretation = "방향성 참고 구간이며, 유의미한 적중률 개선 전까지 강한 추천으로 보지 않습니다."
+        rows.append({
+            "grade": grade.replace("등급", ""),
+            "recommendation_strength": strength,
+            "games": int(len(group)),
+            "correct": int(correct.sum()) if len(group) else 0,
+            "accuracy": round(float(correct.mean()), 3) if len(group) else None,
+            "avg_probability": round(float(group["predicted_probability"].mean()), 3) if len(group) else None,
+            "brier": binary_brier(group["predicted_probability"], correct.astype(int)) if len(group) else None,
+            "log_loss": binary_log_loss(group["predicted_probability"], correct.astype(int)) if len(group) else None,
+            "top_pick_games": int(top_pick.sum()) if len(group) else 0,
+            "top_pick_accuracy": round(float(correct[top_pick].mean()), 3) if len(group) and top_pick.any() else None,
+            "top_tier_games": int(top_tier.sum()) if len(group) else 0,
+            "top_tier_accuracy": round(float(correct[top_tier].mean()), 3) if len(group) and top_tier.any() else None,
+            "interpretation": interpretation,
+        })
+    return rows
+
+
+def export_recommendation_outcome_audit(games: pd.DataFrame, production_model_name: str):
+    history_path = RESULTS_DIR / "pregame_prediction_history.csv"
+    if history_path.exists():
+        history = pd.read_csv(history_path)
+    else:
+        history = pd.DataFrame()
+    completed_lookup = completed_game_lookup(games)
+    audit_rows = []
+    pending_rows = []
+    if not history.empty:
+        history = history.drop_duplicates(subset=["game_id"], keep="last")
+        history = ensure_recommendation_columns(history)
+        for row in history.to_dict(orient="records"):
+            game_id = str(row.get("game_id", ""))
+            final = completed_lookup.get(game_id)
+            common = {
+                "prediction_date": row.get("prediction_date"),
+                "game_date": row.get("game_date"),
+                "game_id": game_id,
+                "away_team": row.get("away_team"),
+                "home_team": row.get("home_team"),
+                "predicted_winner": row.get("predicted_team"),
+                "predicted_probability": row.get("predicted_probability"),
+                "recommendation_strength": row.get("recommendation_strength"),
+                "recommendation_grade": row.get("recommendation_grade"),
+            }
+            if not final:
+                pending_rows.append({**common, "status": "pending", "reason": "final result not available"})
+                continue
+            actual_winner = final["actual_winner"]
+            correct = row.get("predicted_team") == actual_winner
+            audit_rows.append({
+                **common,
+                "predicted_edge_label": row.get("predicted_edge_label"),
+                "win_pick_recommendation": row.get("win_pick_recommendation"),
+                "handicap_recommendation": row.get("handicap_recommendation"),
+                "over_under_recommendation": row.get("over_under_recommendation"),
+                "daily_rank": row.get("daily_rank"),
+                "daily_edge_percentile": row.get("daily_edge_percentile"),
+                "is_daily_top_pick": bool(row.get("is_daily_top_pick")),
+                "is_daily_top_tier": bool(row.get("is_daily_top_tier")),
+                "actual_winner": actual_winner,
+                "actual_away_score": final["actual_away_score"],
+                "actual_home_score": final["actual_home_score"],
+                "win_pick_result": "correct" if correct else "incorrect",
+                "confidence_bucket": confidence_bucket(float(row.get("predicted_probability", 0))),
+                "market_policy_result": "win_pick_evaluated;handicap_not_available;over_under_not_available",
+                "production_model_name": production_model_name,
+                "note": "Post-game audit only. Results are not used as pre-game features.",
+            })
+    audit_df = pd.DataFrame(audit_rows)
+    pending_df = pd.DataFrame(pending_rows)
+    audit_columns = [
+        "prediction_date", "game_date", "game_id", "away_team", "home_team", "predicted_winner",
+        "predicted_probability", "predicted_edge_label", "recommendation_strength", "recommendation_grade",
+        "win_pick_recommendation", "handicap_recommendation", "over_under_recommendation", "daily_rank",
+        "daily_edge_percentile", "is_daily_top_pick", "is_daily_top_tier", "actual_winner",
+        "actual_away_score", "actual_home_score", "win_pick_result", "confidence_bucket",
+        "market_policy_result", "production_model_name", "note",
+    ]
+    pending_columns = [
+        "prediction_date", "game_date", "game_id", "away_team", "home_team", "predicted_winner",
+        "predicted_probability", "recommendation_strength", "recommendation_grade", "status", "reason",
+    ]
+    audit_df = audit_df.reindex(columns=audit_columns)
+    pending_df = pending_df.reindex(columns=pending_columns)
+    grade_rows = summarize_recommendation_grade_performance(audit_df) if not audit_df.empty else summarize_recommendation_grade_performance(pd.DataFrame(columns=audit_columns))
+    market_rows = [
+        {
+            "market_type": "win_pick",
+            "recommendation_label": label,
+            "games": int(len(group)),
+            "correct": int(group["win_pick_result"].eq("correct").sum()),
+            "accuracy": round(float(group["win_pick_result"].eq("correct").mean()), 3) if len(group) else None,
+            "avg_probability": round(float(group["predicted_probability"].mean()), 3) if len(group) else None,
+            "interpretation": "승패 추천만 실제 승패 결과로 평가합니다.",
+        }
+        for label, group in audit_df.groupby("win_pick_recommendation", dropna=False)
+    ] if not audit_df.empty else []
+    market_rows.extend([
+        {"market_type": "handicap", "recommendation_label": "not_available", "games": 0, "correct": 0, "accuracy": None, "avg_probability": None, "interpretation": "유효한 핸디캡 라인이 없어 평가하지 않습니다."},
+        {"market_type": "over_under", "recommendation_label": "not_available", "games": 0, "correct": 0, "accuracy": None, "avg_probability": None, "interpretation": "유효한 오버/언더 기준 라인이 없어 평가하지 않습니다."},
+    ])
+    top_rows = []
+    if not audit_df.empty:
+        for day, group in audit_df.groupby("prediction_date"):
+            top = group.sort_values("daily_rank").iloc[0]
+            top_correct = top["win_pick_result"] == "correct"
+            normal = group[~group["is_daily_top_pick"].astype(bool)]
+            normal_accuracy = normal["win_pick_result"].eq("correct").mean() if not normal.empty else None
+            interpretation = "TOP PICK은 상대 순위 라벨입니다."
+            if normal_accuracy is not None and not top_correct and normal_accuracy >= 0.5:
+                interpretation = "TOP PICK이 일반 예측보다 낫지 않아 '상대 우세 1순위' 표현을 검토합니다."
+            top_rows.append({
+                "date": day,
+                "top_pick_game": f'{top["away_team"]} vs {top["home_team"]}',
+                "top_pick_team": top["predicted_winner"],
+                "top_pick_probability": top["predicted_probability"],
+                "top_pick_grade": top["recommendation_grade"],
+                "actual_winner": top["actual_winner"],
+                "result": top["win_pick_result"],
+                "all_games_max_probability": group["predicted_probability"].max(),
+                "day_confidence_summary": f'{len(group)} completed audited games',
+                "interpretation": interpretation,
+            })
+    audit_df.to_csv(RESULTS_DIR / "recommendation_outcome_audit_log.csv", index=False, encoding="utf-8-sig")
+    pending_df.to_csv(RESULTS_DIR / "recommendation_outcome_pending_report.csv", index=False, encoding="utf-8-sig")
+    pd.DataFrame(grade_rows).to_csv(RESULTS_DIR / "recommendation_grade_performance_report.csv", index=False, encoding="utf-8-sig")
+    pd.DataFrame(market_rows).to_csv(RESULTS_DIR / "market_recommendation_performance_report.csv", index=False, encoding="utf-8-sig")
+    pd.DataFrame(top_rows).to_csv(RESULTS_DIR / "daily_top_pick_performance_report.csv", index=False, encoding="utf-8-sig")
+    return {
+        "audited_completed_games": int(len(audit_df)),
+        "pending_games": int(len(pending_df)),
+        "grade_performance_snapshot": grade_rows,
+        "top_pick_performance_snapshot": top_rows[-5:],
+        "market_performance_snapshot": market_rows,
+    }
+
+
+def merge_recommendation_audit_into_daily_summary(summary_payload: dict, audit_payload: dict):
+    updated = dict(summary_payload)
+    updated.update({
+        "audited_completed_games": audit_payload.get("audited_completed_games", 0),
+        "pending_games": audit_payload.get("pending_games", 0),
+        "grade_performance_snapshot": audit_payload.get("grade_performance_snapshot", []),
+        "top_pick_performance_snapshot": audit_payload.get("top_pick_performance_snapshot", []),
+        "recommendation_policy_warning": "Daily TOP PICK is a relative ranking label and should not be interpreted as a strong recommendation unless the recommendation grade is A or B.",
+    })
+    (RESULTS_DIR / "daily_recommendation_summary.json").write_text(json.dumps(updated, ensure_ascii=False, indent=2), encoding="utf-8")
+    return updated
+
+
+def update_recommendation_audit_insight_summary(audit_payload: dict):
+    summary_path = RESULTS_DIR / "model_insight_summary.json"
+    if summary_path.exists():
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    else:
+        summary = {}
+    summary.update({
+        "recommendation_outcome_audit_summary": {
+            "audited_completed_games": audit_payload.get("audited_completed_games", 0),
+            "pending_games": audit_payload.get("pending_games", 0),
+            "note": "추천 등급은 완료 경기 결과로 사후 평가하며, 사전 피처나 모델 확률에는 연결하지 않습니다.",
+        },
+        "recommendation_grade_performance_summary": audit_payload.get("grade_performance_snapshot", []),
+        "market_recommendation_performance_summary": audit_payload.get("market_performance_snapshot", []),
+        "daily_top_pick_performance_summary": audit_payload.get("top_pick_performance_snapshot", []),
+        "recommendation_policy_risk_note": "The display policy improves interpretability, but recommendation labels must be validated against completed-game outcomes before being treated as actionable.",
+        "recommended_recommendation_policy_next_step": "누적 감사 표본이 충분해질 때까지 A/B/C/D/E 등급별 적중률과 TOP PICK 성능을 모니터링하고, 성과가 확인되지 않으면 TOP PICK 문구를 상대 우세 1순위로 낮춥니다.",
+        "safe_to_replace_model": False,
+        "safe_to_use_pitching_snapshot_as_features": False,
+    })
+    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    return summary
 
 
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date):
@@ -2722,6 +3011,9 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     prediction_cards = append_pregame_prediction_history(prediction_cards, status_payload, lineup_context, reference_datetime or datetime.now(), update_stage)
     summary = today_summary(prediction_cards)
     daily_recommendation_summary = export_daily_recommendation_summary(prediction_cards, reference_datetime or datetime.now(), generated_at)
+    recommendation_audit_summary = export_recommendation_outcome_audit(games, model_payload.get("selected_model", "unknown"))
+    daily_recommendation_summary = merge_recommendation_audit_into_daily_summary(daily_recommendation_summary, recommendation_audit_summary)
+    update_recommendation_audit_insight_summary(recommendation_audit_summary)
 
     def prediction_tone(row):
         strength = str(row.get("recommendation_strength", "관망"))
@@ -2736,7 +3028,9 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
 
     def recommendation_label(row):
         if row.get("is_daily_top_pick"):
-            return "오늘 TOP PICK"
+            if float(row.get("confidence_value", 0)) >= 0.55:
+                return "오늘 TOP PICK"
+            return "오늘 모델 기준 최상위 우세 후보"
         return str(row.get("recommendation_strength", "관망"))
 
     def model_summary(row):
