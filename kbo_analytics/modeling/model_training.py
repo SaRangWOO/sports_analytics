@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.metrics import brier_score_loss, log_loss
 
 from .feature_engineering import build_features
 from .game_level_features import (
@@ -1712,6 +1713,81 @@ def confidence_bucket_policy(y_true: np.ndarray, probability: np.ndarray):
     }
 
 
+def recommendation_grade(confidence: float, daily_top_tier: bool = False, risk_flag: bool = False, info_missing: bool = False):
+    if info_missing:
+        return "E등급 / 정보 부족"
+    if risk_flag or confidence < 0.52:
+        return "D등급 / 관망"
+    if confidence >= 0.58 and not risk_flag:
+        return "A등급 / 강추천"
+    if confidence >= 0.55 and daily_top_tier and not risk_flag:
+        return "B등급 / 추천"
+    return "C등급 / 약우세"
+
+
+def safe_log_loss(y_true: np.ndarray, probability: np.ndarray):
+    if len(np.unique(y_true)) < 2:
+        return None
+    return round(float(log_loss(y_true, probability)), 3)
+
+
+def write_recommendation_policy_backtest_report(results_dir: Path, y_true, probability, eval_frame: pd.DataFrame, confidence_threshold: float):
+    y_true = np.asarray(y_true)
+    probability = np.asarray(probability)
+    confidence = np.maximum(probability, 1 - probability)
+    pred = (probability >= 0.5).astype(int)
+    dates = pd.to_datetime(eval_frame.get("date", pd.Series([None] * len(probability)))).dt.strftime("%Y-%m-%d")
+    frame = pd.DataFrame({"date": dates, "y_true": y_true, "probability": probability, "confidence": confidence, "pred": pred})
+    frame["daily_rank"] = frame.groupby("date")["confidence"].rank(method="first", ascending=False)
+    frame["daily_pct"] = frame.groupby("date")["confidence"].rank(method="max", pct=True)
+    frame["daily_top_tier"] = frame["daily_pct"] >= 0.70
+
+    policies = []
+    policies.append(("current_policy", np.where(frame["confidence"] >= confidence_threshold, "추천", "관망"), 0, 0))
+    policies.append(("absolute_threshold_policy", np.select(
+        [frame["confidence"] >= 0.58, frame["confidence"] >= 0.55, frame["confidence"] >= 0.52],
+        ["A등급 / 강추천", "B등급 / 추천", "C등급 / 약우세"],
+        default="D등급 / 관망",
+    ), int((frame["confidence"] >= 0.60).sum()), 0))
+    policies.append(("daily_top_pick_policy", np.where(frame["daily_rank"] == 1, "오늘 TOP PICK", "일반"), 0, 0))
+    policies.append(("daily_top_30_percent_policy", np.where(frame["daily_top_tier"], "상대적 우세 후보", "일반"), 0, 0))
+    policies.append(("grade_policy_v1", [
+        recommendation_grade(float(row.confidence), bool(row.daily_top_tier))
+        for row in frame.itertuples()
+    ], 0, 0))
+    policies.append(("conservative_market_policy", [
+        recommendation_grade(float(row.confidence), bool(row.daily_top_tier))
+        for row in frame.itertuples()
+    ], int((frame["confidence"] >= 0.60).sum()), 0))
+
+    rows = []
+    for policy_name, labels, handicap_count, over_under_count in policies:
+        frame["grade"] = labels
+        for grade, group in frame.groupby("grade", dropna=False):
+            group_y = group["y_true"].to_numpy()
+            group_prob = group["probability"].to_numpy()
+            group_pred = group["pred"].to_numpy()
+            over55 = group["confidence"] >= 0.55
+            rows.append({
+                "policy_name": policy_name,
+                "grade": str(grade),
+                "games": int(len(group)),
+                "accuracy": round(float((group_pred == group_y).mean()), 3) if len(group) else None,
+                "brier": round(float(brier_score_loss(group_y, group_prob)), 3) if len(group) else None,
+                "log_loss": safe_log_loss(group_y, group_prob),
+                "avg_probability": round(float(group["confidence"].mean()), 3) if len(group) else None,
+                "over_55_games": int(over55.sum()),
+                "over_55_accuracy": round(float((group.loc[over55, "pred"] == group.loc[over55, "y_true"]).mean()), 3) if over55.any() else None,
+                "win_pick_accuracy": round(float((group_pred == group_y).mean()), 3) if len(group) else None,
+                "handicap_pick_count": handicap_count if policy_name == "conservative_market_policy" and grade in {"A등급 / 강추천", "B등급 / 추천"} else 0,
+                "over_under_pick_count": over_under_count,
+                "interpretation": "승패 방향 정보와 시장별 추천을 분리해 표시하는 정책 평가입니다.",
+            })
+    report_path = results_dir / "recommendation_policy_backtest_report.csv"
+    pd.DataFrame(rows).to_csv(report_path, index=False, encoding="utf-8-sig")
+    return rows
+
+
 def write_probability_distribution_report(results_dir: Path, backtest_probability, today_probability):
     rows = []
     for split, values in [("backtest", backtest_probability), ("today", today_probability)]:
@@ -2854,6 +2930,22 @@ def write_model_insight_summary(
             "유용 신호가 반복 확인된 비투수 피처만 다음 후보 세트에 유지하고, "
             "노이즈 가능성이 있는 피처는 운영 모델 교체 후보에서 제외합니다."
         ),
+        "recommendation_policy_summary": "승패 방향, 추천 강도, 핸디캡/오버언더 판단을 분리해 표시합니다. 이 정책은 해석성과 활용도를 높이지만 모델 확률이나 운영 모델은 변경하지 않습니다.",
+        "daily_ranking_policy_summary": "기준일별 예측 승률 우위 순위를 계산해 오늘 TOP PICK과 상대적 우세 후보를 표시합니다. 모든 경기가 낮은 확률이어도 가장 높은 상대 우세 경기는 별도로 설명합니다.",
+        "recommendation_grade_policy": {
+            "A등급 / 강추천": "pick_probability >= 0.58이고 주요 위험 신호가 없을 때",
+            "B등급 / 추천": "pick_probability >= 0.55이고 일일 상위권이며 주요 위험 신호가 없을 때",
+            "C등급 / 약우세": "pick_probability >= 0.52이고 방향성은 있으나 강추천은 아닌 경우",
+            "D등급 / 관망": "pick_probability < 0.52이거나 위험 신호가 강한 경우",
+            "E등급 / 정보 부족": "선발, 일정 매핑 등 핵심 정보가 부족한 경우",
+        },
+        "market_recommendation_policy": {
+            "win_pick": "승패 방향은 약우세까지 표시하되 추천 강도와 분리합니다.",
+            "handicap": "핸디캡은 보수적으로 유지하며 충분한 우위가 없으면 관망으로 표시합니다.",
+            "over_under": "오버/언더는 명확한 총점 우위가 없으면 관망으로 표시합니다.",
+        },
+        "recommendation_policy_backtest_summary": payload.get("recommendation_policy_backtest_summary", []),
+        "dashboard_display_policy_note": "The recommendation policy improves interpretability and usefulness, but it does not change the underlying model probabilities or production model.",
         "pitching_snapshot_collection_status": {
             "status": "pending_dashboard_snapshot_step",
             "note": "official_kbo_dashboard.py의 pitching context 생성 이후 현재 실행 기준 스냅샷 상태로 갱신됩니다.",
@@ -3037,6 +3129,10 @@ def build_payload(
     distribution_rows = write_probability_distribution_report(results_dir, probability, today_probability_values)
     today_distribution = next((row for row in distribution_rows if row["split"] == "today"), {})
     policy = confidence_bucket_policy(y_eval, probability)
+    confidence_threshold = float(policy["confidence_thresholds"].get("top_20_percent_confidence", 0.58))
+    recommendation_policy_rows = write_recommendation_policy_backtest_report(
+        results_dir, y_eval, probability, best["test_frame"].copy(), confidence_threshold
+    )
     selected_spread = next((row for row in probability_spread_rows if row["model"] == best["name"]), {})
     high_confidence_summary = {
         "selected_model": best["name"],
@@ -3065,6 +3161,7 @@ def build_payload(
         "calibration_table": calibration_table(y_eval, probability),
         "confidence_thresholds": policy["confidence_thresholds"],
         "confidence_bucket_performance": policy["confidence_bucket_performance"],
+        "recommendation_policy_backtest_summary": recommendation_policy_rows,
         "today_probability_distribution": today_distribution,
         "confidence_policy_note": "예측승률 자체는 보정하지 않고, 백테스트 상위 확신 구간과 정보 품질을 표시용 신뢰도 판단에 사용합니다.",
         "model_probability_spread_report": probability_spread_rows,

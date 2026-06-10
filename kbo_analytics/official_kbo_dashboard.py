@@ -536,6 +536,46 @@ def prediction_tier(confidence: float):
     return {"우세": "우세", "신뢰도": "주의", "판단": "과신 주의"}
 
 
+def predicted_edge_label(team: str, confidence: float) -> str:
+    if confidence >= 0.58:
+        edge = "우세"
+    elif confidence >= 0.53:
+        edge = "약우세"
+    else:
+        edge = "박빙 우세"
+    return f"{team} {edge}"
+
+
+def recommendation_strength(confidence: float, daily_top_tier: bool = False, info_missing: bool = False, risk_flag: bool = False) -> str:
+    if info_missing:
+        return "정보 부족"
+    if risk_flag or confidence < 0.52:
+        return "관망"
+    if confidence >= 0.58 and not risk_flag:
+        return "강추천"
+    if confidence >= 0.55 and daily_top_tier and not risk_flag:
+        return "추천"
+    return "약우세"
+
+
+def recommendation_grade(strength: str) -> str:
+    return {
+        "강추천": "A등급",
+        "추천": "B등급",
+        "약우세": "C등급",
+        "관망": "D등급",
+        "정보 부족": "E등급",
+    }.get(strength, "D등급")
+
+
+def trust_label_from_confidence(confidence: float) -> str:
+    if confidence >= 0.58:
+        return "높음"
+    if confidence >= 0.55:
+        return "보통"
+    return "낮음"
+
+
 def parse_innings(value):
     if pd.isna(value):
         return 0.0
@@ -1472,7 +1512,6 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
         key = "|".join(sorted([row["기준팀"], row["상대팀"]]))
         if key in cards and confidence <= cards[key]["confidence_value"]:
             continue
-        tier = prediction_tier(confidence)
         pick_context = pitching_context.get(row["예측 구단"], {})
         pick_lineup = lineup_context.get(row["예측 구단"], {})
         game_status = status_lookup.get(key, {})
@@ -1491,13 +1530,17 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             return f'{team}: {context.get("선발명", "-")} · {source_label}{era_text}{whip_text}'
 
         matchup = f'{row["기준팀"]} vs {row["상대팀"]}'
+        tier = prediction_tier(confidence)
+        info_missing = "미확인" in status_label
+        risk_flag = "과신" in tier["판단"] or "위험" in tier["판단"]
         cards[key] = {
             "game_id": game_status.get("game_id", key),
             "home_team": home_team,
             "away_team": away_team,
             "경기": matchup,
             "예측 구단": row["예측 구단"],
-            "추천": f'{row["예측 구단"]} {tier["우세"]}',
+            "추천": predicted_edge_label(row["예측 구단"], confidence),
+            "predicted_edge_label": predicted_edge_label(row["예측 구단"], confidence),
             "예측승률": f"{confidence:.1%}",
             "신뢰도": tier["신뢰도"],
             "핵심 근거": row.get("예측 근거", ""),
@@ -1506,9 +1549,33 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             "선발 상태": status_label,
             "라인업 신호": f'{pick_lineup.get("status_label", "라인업 정보 미확인")} · 선발 WAR 합 {pick_lineup.get("lineup_war", "-")} · {pick_lineup.get("lineup_preview", "-")}',
             "판단": tier["판단"],
+            "info_missing": info_missing,
+            "risk_flag": risk_flag,
             "confidence_value": confidence,
         }
-    return sorted(cards.values(), key=lambda row: row["confidence_value"], reverse=True)
+    ranked_cards = sorted(cards.values(), key=lambda row: row["confidence_value"], reverse=True)
+    total = len(ranked_cards)
+    top_tier_count = max(1, int(np.ceil(total * 0.30))) if total else 0
+    for index, card in enumerate(ranked_cards, start=1):
+        percentile = 1.0 if total <= 1 else 1 - ((index - 1) / (total - 1))
+        is_top_pick = index == 1
+        is_top_tier = index <= top_tier_count
+        strength = recommendation_strength(
+            float(card["confidence_value"]),
+            daily_top_tier=is_top_tier,
+            info_missing=bool(card.get("info_missing")),
+            risk_flag=bool(card.get("risk_flag")),
+        )
+        card["daily_rank"] = index
+        card["daily_edge_percentile"] = round(percentile, 3)
+        card["is_daily_top_pick"] = is_top_pick
+        card["is_daily_top_tier"] = is_top_tier
+        card["recommendation_strength"] = strength
+        card["recommendation_grade"] = recommendation_grade(strength)
+        card["win_pick_recommendation"] = f"승패 {strength}"
+        card["handicap_recommendation"] = "핸디캡 후보" if float(card["confidence_value"]) >= 0.60 and strength in {"강추천", "추천"} else "핸디캡 관망"
+        card["over_under_recommendation"] = "오버/언더 관망"
+    return ranked_cards
 
 
 def prediction_change_summary(current_probability: float, previous_probability, current_team: str, previous_team) -> str:
@@ -1591,13 +1658,13 @@ def today_summary(prediction_cards: list[dict]):
             "top_pick": "-",
         }
     top = prediction_cards[0]
-    possible_games = sum(1 for row in prediction_cards if row["판단"] == "예측 가능")
-    close_games = sum(1 for row in prediction_cards if row["판단"] in {"참고", "참고만"})
-    strong_games = sum(1 for row in prediction_cards if row["판단"] == "과신 주의")
+    possible_games = sum(1 for row in prediction_cards if row.get("recommendation_strength") in {"강추천", "추천", "약우세"})
+    close_games = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "관망")
+    strong_games = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "강추천")
     if strong_games:
-        headline = f'{top["추천"]}가 가장 높은 예측이지만, 60% 이상 구간은 과신 경향이 있어 참고 지표로 봐야 합니다.'
+        headline = f'오늘의 최상위 우세 후보는 {top["추천"]}({top["예측승률"]})입니다. 핸디캡과 오버/언더는 별도 기준으로 보수적으로 해석합니다.'
     elif possible_games:
-        headline = f'오늘은 강한 정배보다 약우세 경기 중심입니다. 가장 높은 예측은 {top["추천"]}({top["예측승률"]})입니다.'
+        headline = f'오늘은 강한 추천 경기는 없지만, 상대적으로 가장 우세한 경기는 {top["추천"]}({top["예측승률"]})입니다.'
     else:
         headline = f'오늘은 대부분 박빙입니다. 가장 높은 예측도 {top["추천"]}({top["예측승률"]}) 수준입니다.'
     return {
@@ -1606,6 +1673,38 @@ def today_summary(prediction_cards: list[dict]):
         "close_games": close_games,
         "top_pick": f'{top["추천"]} · {top["예측승률"]}',
     }
+
+
+def export_daily_recommendation_summary(prediction_cards: list[dict], generated_at: datetime, reference_date: date):
+    top = prediction_cards[0] if prediction_cards else {}
+    strong_count = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "강추천")
+    recommend_count = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "추천")
+    weak_count = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "약우세")
+    watch_count = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "관망")
+    no_info_count = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "정보 부족")
+    if not prediction_cards:
+        message = "오늘 예정 경기가 없거나 표시할 예측이 없습니다."
+    elif strong_count:
+        message = f'오늘 TOP PICK은 {top.get("추천", "-")}입니다. 핸디캡과 오버/언더는 별도 보수 기준으로 확인해야 합니다.'
+    else:
+        message = f'오늘은 강한 추천 경기는 없지만, 상대적으로 {top.get("예측 구단", "-")}가 가장 높은 우세 후보입니다. 핸디캡과 오버/언더는 관망이 적절합니다.'
+    payload = {
+        "generated_at": generated_at.isoformat(),
+        "reference_date": reference_date.isoformat(),
+        "total_games": len(prediction_cards),
+        "strong_recommendation_count": strong_count,
+        "recommendation_count": recommend_count,
+        "weak_edge_count": weak_count,
+        "watch_count": watch_count,
+        "no_info_count": no_info_count,
+        "top_pick": top.get("예측 구단") if top else None,
+        "top_pick_probability": top.get("예측승률") if top else None,
+        "day_confidence_summary": "승패 방향과 시장별 추천을 분리해 표시합니다.",
+        "strong_recommendation_available": bool(strong_count),
+        "message": message,
+    }
+    (RESULTS_DIR / "daily_recommendation_summary.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return payload
 
 
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date):
@@ -2622,51 +2721,37 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context, status_payload, lineup_context)
     prediction_cards = append_pregame_prediction_history(prediction_cards, status_payload, lineup_context, reference_datetime or datetime.now(), update_stage)
     summary = today_summary(prediction_cards)
-    confidence_threshold = float((model_payload.get("confidence_thresholds") or {}).get("top_20_percent_confidence", 0.58))
-    recommendation_enabled = bool((model_payload.get("confidence_thresholds") or {}).get("recommendation_enabled", False))
+    daily_recommendation_summary = export_daily_recommendation_summary(prediction_cards, reference_datetime or datetime.now(), generated_at)
 
     def prediction_tone(row):
-        decision = str(row.get("판단", ""))
-        confidence = float(row.get("confidence_value", 0))
-        if recommendation_enabled and confidence >= confidence_threshold:
+        strength = str(row.get("recommendation_strength", "관망"))
+        if strength in {"강추천", "추천"}:
             return "tone-good"
-        if "과신" in decision or "위험" in decision:
+        if strength in {"위험", "정보 부족"}:
             return "tone-risk"
         return "tone-watch"
 
     def trust_level(row):
-        confidence = float(row.get("confidence_value", 0))
-        if recommendation_enabled and confidence >= confidence_threshold:
-            return "높음"
-        if confidence >= 0.56:
-            return "보통"
-        return "낮음"
+        return trust_label_from_confidence(float(row.get("confidence_value", 0)))
 
     def recommendation_label(row):
-        decision = str(row.get("판단", ""))
-        starter_status = str(row.get("선발 상태", ""))
-        if "미확인" in starter_status:
-            return "정보 부족"
-        if "과신" in decision or "위험" in decision:
-            return "위험"
-        if recommendation_enabled and float(row.get("confidence_value", 0)) >= confidence_threshold:
-            return "추천"
-        return "관망"
+        if row.get("is_daily_top_pick"):
+            return "오늘 TOP PICK"
+        return str(row.get("recommendation_strength", "관망"))
 
     def model_summary(row):
         team = row.get("예측 구단", "-")
-        trust = trust_level(row)
-        recommendation = recommendation_label(row)
-        if recommendation == "추천":
-            return f"예측 우세: {team} · 승률 우위가 있고 신뢰도는 {trust}입니다."
-        if recommendation == "관망":
-            return f"예측 우세: {team} · 승률 우위는 있으나 신뢰도는 {trust}이라 관망이 적절합니다."
-        if recommendation == "정보 부족":
+        strength = str(row.get("recommendation_strength", "관망"))
+        if strength == "정보 부족":
             return f"예측 우세: {team} · 선발 정보 확인 전까지 보수적으로 해석해야 합니다."
-        return f"예측 우세: {team} · 확률이 높더라도 표본과 변동성을 함께 봐야 합니다."
+        base = f"예측 우세: {team} · 승률 우위는 있으나 절대 신뢰도는 {trust_level(row)}이라 {strength}로 분류합니다."
+        if row.get("is_daily_top_pick"):
+            base += " 오늘 경기 중 상대적으로 가장 높은 우세 후보입니다."
+        base += " 핸디캡과 오버/언더는 관망이 적절합니다."
+        return base
 
-    high_confidence_games = sum(1 for row in prediction_cards if recommendation_label(row) == "추천")
-    watch_games = sum(1 for row in prediction_cards if recommendation_label(row) == "관망")
+    high_confidence_games = daily_recommendation_summary["strong_recommendation_count"] + daily_recommendation_summary["recommendation_count"]
+    watch_games = daily_recommendation_summary["watch_count"]
     average_confidence = (
         f'{sum(float(row.get("confidence_value", 0)) for row in prediction_cards) / len(prediction_cards):.1%}'
         if prediction_cards
@@ -2728,14 +2813,19 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             <div class="confidence-label"><span>신뢰도 {escape(trust_level(row))}</span><span>{escape(row["예측승률"])}</span></div>
             <div class="confidence-track"><span style="width:{float(row.get("confidence_value", 0)) * 100:.0f}%"></span></div>
           </div>
-          <div class="badges"><span class="badge-trust">승패 추천</span><span>핸디캡 관망</span><span>오버/언더 관망</span></div>
+          <div class="badges">
+            <span class="badge-trust">{escape(row.get("win_pick_recommendation", "승패 관망"))}</span>
+            <span>{escape(row.get("handicap_recommendation", "핸디캡 관망"))}</span>
+            <span>{escape(row.get("over_under_recommendation", "오버/언더 관망"))}</span>
+            {f'<span class="badge-trust">상대적 우세 후보</span>' if row.get("is_daily_top_tier") and not row.get("is_daily_top_pick") else ''}
+          </div>
           <div class="judgement-box">
             <span class="small-label">모델 판단 요약</span>
             <p>{escape(model_summary(row))}</p>
           </div>
           <p class="reason-text">{escape(row["핵심 근거"])}</p>
           <div class="signal-list">
-            <p><strong>판단 상태</strong> · {escape(row["판단"])} / 표시 등급 {escape(trust_level(row))}</p>
+            <p><strong>판단 상태</strong> · {escape(row.get("recommendation_grade", ""))} / {escape(row.get("recommendation_strength", ""))} / 표시 신뢰도 {escape(trust_level(row))}</p>
             <p>{escape(row["선발 상태"])}</p>
             <p>{escape(row.get("예측 변화", "이전 예측 없음"))}</p>
             <p>{escape(row["선발 매치업"])}</p>
