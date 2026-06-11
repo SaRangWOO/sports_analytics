@@ -1,11 +1,11 @@
 ﻿check_name,status,severity,checked_rows,failed_rows,failure_rate,detail,recommended_action
-duplicate_key_check,pass,blocking,172,0,0.0,"snapshot_date, reference_date, team, scheduled_game_id 조합 중복 검사",중복 키가 있으면 최신 snapshot_time 기준으로 deduplicate
-missing_starter_name_check,pass,blocking,12,0,0.0,starter_source가 confirmed/manual/estimated인데 starter_name이 비어 있는 행 검사,선발명 파싱 또는 추정 로직 점검
-unknown_starter_ratio_check,pass,warning,12,0,0.0,reference_date 기준 unknown 선발 0건,unknown 비율이 높으면 GameCenter 또는 추정 선발 수집 점검
-confirmed_starter_ratio_check,pass,warning,12,0,0.0,reference_date 기준 confirmed 선발 12건,경기 전 확정 선발 발표 시간 이후 pregame 업데이트 확인
-team_count_check,fail,blocking,10,2,0.2,예정 경기 팀 행 수와 스냅샷 행 수 일치 검사,예정 경기 수와 snapshot 생성 루프 매칭 점검
-scheduled_game_mapping_check,pass,blocking,12,0,0.0,scheduled_game_id 비어 있는 행 검사,일정 수집 game_id 생성 로직 점검
-snapshot_time_freshness_check,pass,warning,12,0,0.0,reference_date 스냅샷이 현재 실행일에 생성됐는지 검사,자동 실행 시점과 reference_date 전달값 확인
-leakage_guard_check,pass,blocking,172,0,0.0,snapshot_date가 reference_date보다 미래인 행 검사,과거 기준일 재실행 산출물을 모델 피처로 사용하지 않도록 보관만 허용
-postgame_snapshot_warning_check,pass,warning,12,0,0.0,22시 이후 생성되어 경기 종료 후 수집으로 의심되는 행 검사,경기 전 업데이트 산출물만 학습 피처 후보로 분리
-starter_info_quality_check,pass,blocking,12,0,0.0,starter_info_quality 누락 검사,선발 정보 품질 기본값 저장 로직 점검
+duplicate_key_check,pass,blocking,180,0,0.0,"snapshot_date, reference_date, team, scheduled_game_id 조합 중복 검사",중복 키가 있으면 최신 snapshot_time 기준으로 deduplicate
+missing_starter_name_check,pass,blocking,20,0,0.0,starter_source가 confirmed/manual/estimated인데 starter_name이 비어 있는 행 검사,선발명 파싱 또는 추정 로직 점검
+unknown_starter_ratio_check,pass,warning,20,0,0.0,reference_date 기준 unknown 선발 0건,unknown 비율이 높으면 GameCenter 또는 추정 선발 수집 점검
+confirmed_starter_ratio_check,pass,warning,20,0,0.0,reference_date 기준 confirmed 선발 20건,경기 전 확정 선발 발표 시간 이후 pregame 업데이트 확인
+team_count_check,fail,blocking,10,10,1.0,예정 경기 팀 행 수와 스냅샷 행 수 일치 검사,예정 경기 수와 snapshot 생성 루프 매칭 점검
+scheduled_game_mapping_check,pass,blocking,20,0,0.0,scheduled_game_id 비어 있는 행 검사,일정 수집 game_id 생성 로직 점검
+snapshot_time_freshness_check,pass,warning,20,0,0.0,reference_date 스냅샷이 현재 실행일에 생성됐는지 검사,자동 실행 시점과 reference_date 전달값 확인
+leakage_guard_check,pass,blocking,180,0,0.0,snapshot_date가 reference_date보다 미래인 행 검사,과거 기준일 재실행 산출물을 모델 피처로 사용하지 않도록 보관만 허용
+postgame_snapshot_warning_check,pass,warning,20,0,0.0,22시 이후 생성되어 경기 종료 후 수집으로 의심되는 행 검사,경기 전 업데이트 산출물만 학습 피처 후보로 분리
+starter_info_quality_check,pass,blocking,20,0,0.0,starter_info_quality 누락 검사,선발 정보 품질 기본값 저장 로직 점검
