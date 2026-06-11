@@ -17,23 +17,23 @@ season_win_rate_gap,baseline,15,0.041705,True,"연패 흐름, 대승/대패 경�
 season_avg_run_diff_gap,baseline,16,0.030804,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
 streak_length_gap,streak,17,0.026934,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
 season_win_rate_prior,baseline,18,0.026686,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-opponent_current_streak_type,streak,19,0.025381,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-losing_streak_with_negative_run_diff,streak,20,0.022196,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-losing_streak_low_scoring_offense,streak,21,0.022043,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_winning_streak_flag,streak,22,0.021291,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_losing_streak_flag,streak,23,0.020302,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_vs_losing_streak_flag,streak,24,0.020085,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-winning_streak_bullpen_fatigue_proxy,streak,25,0.016201,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-team_winning_streak_flag,streak,26,0.015943,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-losing_streak_allowed_runs_spike,streak,27,0.015264,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-team_losing_streak_flag,streak,28,0.014577,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-team_current_streak_type,streak,29,0.01029,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_current_streak_type,streak,19,0.024688,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+losing_streak_low_scoring_offense,streak,20,0.021673,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_vs_losing_streak_flag,streak,21,0.021466,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_losing_streak_flag,streak,22,0.021384,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+winning_streak_bullpen_fatigue_proxy,streak,23,0.02119,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+losing_streak_allowed_runs_spike,streak,24,0.020002,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+losing_streak_with_negative_run_diff,streak,25,0.019345,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_winning_streak_flag,streak,26,0.018544,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_winning_streak_flag,streak,27,0.016337,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_losing_streak_flag,streak,28,0.015601,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_current_streak_type,streak,29,0.012391,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
 games_last_7_days,baseline,30,0.009553,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-back_to_back,baseline,31,0.007636,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-rest_days,baseline,32,0.007566,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-winning_streak_with_low_run_diff,streak,33,0.006307,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-winning_streak_after_close_games,close_blowout,34,0.00575,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-winning_streak_regression_risk,streak,35,0.005241,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-team_current_streak_length,streak,36,0.004968,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_current_streak_length,streak,37,0.00483,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+winning_streak_regression_risk,streak,31,0.008873,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_current_streak_length,streak,32,0.008182,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+winning_streak_after_close_games,close_blowout,33,0.008159,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+back_to_back,baseline,34,0.007636,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
+rest_days,baseline,35,0.007566,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
+winning_streak_with_low_run_diff,streak,36,0.006826,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_current_streak_length,streak,37,0.005982,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
 venue_win_rate_gap,venue_context,38,0.004341,True,"연패 흐름, 대승/대패 경기, 득실차 차이 큼",연승 흐름,segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
