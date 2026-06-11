@@ -319,8 +319,10 @@ def load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, ro
         with engine.begin() as connection:
             for table_name, dataframe in tables.items():
                 dataframe.to_sql(table_name, connection, if_exists="replace", index=False)
+        return {"status": "success", "warning": ""}
     except Exception as exc:
         print(f"[Warn] PostgreSQL 적재를 건너뜁니다: {exc}")
+        return {"status": "skipped", "warning": str(exc)}
 
 
 def align_prediction_matrix(features: pd.DataFrame, feature_columns: list[str], mean: pd.Series, std: pd.Series):
@@ -2135,6 +2137,228 @@ def export_recommendation_label_calibration_reports(generated_at: datetime):
     }
 
 
+def _load_json_file(path: Path):
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _file_modified_at(path: Path):
+    if not path.exists():
+        return ""
+    return datetime.fromtimestamp(path.stat().st_mtime).isoformat(timespec="seconds")
+
+
+def _display_path(path: Path):
+    try:
+        return str(path.resolve().relative_to(BASE_DIR.parent))
+    except ValueError:
+        return str(path)
+
+
+def _health_check(check_name: str, passed: bool, severity: str, detail: str, recommended_action: str):
+    return {
+        "check_name": check_name,
+        "status": "pass" if passed else ("warning" if severity == "warning" else "fail"),
+        "severity": severity,
+        "detail": detail,
+        "recommended_action": recommended_action,
+    }
+
+
+def export_daily_pipeline_health_status(reference_date: date, generated_at: datetime, scheduled_games: int, db_status: dict | None):
+    latest_html = DASHBOARD_DIR / "latest.html"
+    docs_latest_html = PUBLIC_DIR / "latest.html"
+    today_predictions = RUN_MODEL_RESULTS / "today_expected_runs_predictions.csv"
+    validation_predictions = RUN_MODEL_RESULTS / "expected_runs_predictions.csv"
+    recommendation_summary = RESULTS_DIR / "daily_recommendation_summary.json"
+    recommendation_audit = RESULTS_DIR / "recommendation_outcome_audit_log.csv"
+    recommendation_pending = RESULTS_DIR / "recommendation_outcome_pending_report.csv"
+    recommendation_label_calibration = RESULTS_DIR / "recommendation_label_calibration_report.csv"
+    pitching_snapshot = DATA_DIR / "pitching_daily_snapshot.csv"
+    pitching_quality_path = RESULTS_DIR / "pitching_snapshot_quality_status.json"
+    model_path = RESULTS_DIR / "win_predictor_model.json"
+    gate_path = RESULTS_DIR / "production_model_gate_audit.json"
+    insight_path = RESULTS_DIR / "model_insight_summary.json"
+
+    today_rows = pd.read_csv(today_predictions) if today_predictions.exists() else pd.DataFrame()
+    validation_rows = pd.read_csv(validation_predictions) if validation_predictions.exists() else pd.DataFrame()
+    audit_rows = pd.read_csv(recommendation_audit) if recommendation_audit.exists() else pd.DataFrame()
+    pending_rows = pd.read_csv(recommendation_pending) if recommendation_pending.exists() else pd.DataFrame()
+    snapshot_rows = pd.read_csv(pitching_snapshot) if pitching_snapshot.exists() else pd.DataFrame()
+    pitching_quality = _load_json_file(pitching_quality_path)
+    model_payload = _load_json_file(model_path)
+    gate_payload = _load_json_file(gate_path)
+    insight_payload = _load_json_file(insight_path)
+    reference_key = reference_date.isoformat()
+
+    today_reference_ok = True
+    if not today_rows.empty and "date" in today_rows.columns:
+        today_reference_ok = today_rows["date"].astype(str).eq(reference_key).all()
+    validation_only_ok = {"actual_winner", "prediction_result", "home_actual_runs", "away_actual_runs"}.issubset(validation_rows.columns)
+    split_ok = today_predictions != validation_predictions and today_reference_ok and validation_only_ok
+    snapshot_ref_rows = 0
+    if not snapshot_rows.empty and "reference_date" in snapshot_rows.columns:
+        snapshot_ref_rows = int(snapshot_rows["reference_date"].astype(str).eq(reference_key).sum())
+
+    safe_to_replace = bool(gate_payload.get("safe_to_replace_model", insight_payload.get("safe_to_replace_model", False)))
+    safe_pitching_features = bool(
+        pitching_quality.get("safe_for_future_feature_use", insight_payload.get("safe_to_use_pitching_snapshot_as_features", False))
+    )
+    production_gate_status = "pass" if safe_to_replace else "blocked"
+    db_status = db_status or {"status": "unknown", "warning": ""}
+    db_load_status = str(db_status.get("status", "unknown"))
+    db_load_warning = str(db_status.get("warning", ""))
+
+    checks = [
+        _health_check("latest_html_exists_check", latest_html.exists(), "blocking", str(latest_html), "latest.html 생성 경로 확인"),
+        _health_check("docs_latest_html_exists_check", docs_latest_html.exists(), "blocking", str(docs_latest_html), "docs/latest.html 배포 복사 확인"),
+        _health_check(
+            "latest_html_freshness_check",
+            latest_html.exists() and datetime.fromtimestamp(latest_html.stat().st_mtime).date() == generated_at.date(),
+            "warning",
+            f"latest_html_modified_at={_file_modified_at(latest_html)}",
+            "자동 실행 시 latest.html 수정 시간이 실행일과 일치하는지 확인",
+        ),
+        _health_check(
+            "today_expected_runs_predictions_exists_check",
+            today_predictions.exists() or scheduled_games == 0,
+            "blocking",
+            f"scheduled_games={scheduled_games}, file={today_predictions}",
+            "예정 경기일에는 today_expected_runs_predictions.csv 생성 확인",
+        ),
+        _health_check(
+            "today_expected_runs_predictions_reference_date_check",
+            today_reference_ok,
+            "blocking",
+            f"reference_date={reference_key}, rows={len(today_rows)}",
+            "today 파일은 기준일 예정 경기만 포함해야 함",
+        ),
+        _health_check(
+            "expected_runs_predictions_validation_only_check",
+            validation_only_ok,
+            "blocking",
+            "expected_runs_predictions.csv는 actual/result 컬럼이 있는 검증용 파일이어야 함",
+            "검증용과 오늘 예측용 산출물 분리 유지",
+        ),
+        _health_check("run_model_today_validation_split_check", split_ok, "blocking", "today/validation 파일 분리 검사", "run_model today/validation 분리 구조 유지"),
+        _health_check("daily_recommendation_summary_exists_check", recommendation_summary.exists(), "warning", str(recommendation_summary), "추천 요약 생성 확인"),
+        _health_check("recommendation_outcome_audit_exists_check", recommendation_audit.exists(), "warning", str(recommendation_audit), "추천 사후 감사 로그 생성 확인"),
+        _health_check("recommendation_label_calibration_exists_check", recommendation_label_calibration.exists(), "warning", str(recommendation_label_calibration), "추천 라벨 보정 리포트 생성 확인"),
+        _health_check("pitching_snapshot_exists_check", pitching_snapshot.exists(), "warning", str(pitching_snapshot), "투수 스냅샷 누적 파일 확인"),
+        _health_check(
+            "pitching_snapshot_reference_date_rows_check",
+            snapshot_ref_rows == scheduled_games * 2 if scheduled_games > 0 else True,
+            "warning",
+            f"reference_date_rows={snapshot_ref_rows}, expected_team_rows={scheduled_games * 2}",
+            "예정 경기일에는 경기당 양 팀 스냅샷 행 확인",
+        ),
+        _health_check(
+            "pitching_snapshot_quality_check",
+            pitching_quality.get("quality_status") in {"pass", "warning"},
+            "warning",
+            f"quality_status={pitching_quality.get('quality_status', 'missing')}",
+            "pitching_snapshot_quality_status.json 품질 상태 확인",
+        ),
+        _health_check(
+            "pitching_snapshot_feature_gate_check",
+            safe_pitching_features is False,
+            "blocking",
+            f"safe_to_use_pitching_snapshot_as_features={safe_pitching_features}",
+            "최소 누적 기간 전까지 투수 스냅샷 피처 사용 차단",
+        ),
+        _health_check("safe_to_replace_model_check", safe_to_replace is False, "blocking", f"safe_to_replace_model={safe_to_replace}", "생산 모델 교체 게이트 유지"),
+        _health_check("production_gate_status_check", production_gate_status == "blocked", "blocking", f"production_gate_status={production_gate_status}", "생산 게이트가 명확히 통과하기 전까지 교체 차단"),
+        _health_check(
+            "db_load_status_check",
+            db_load_status == "success",
+            "warning",
+            f"db_load_status={db_load_status}",
+            "DB 적재 실패는 HTML/CSV/JSON 생성 성공 시 비차단 warning으로 기록",
+        ),
+        _health_check(
+            "scheduled_games_prediction_row_consistency_check",
+            len(today_rows) == scheduled_games,
+            "blocking" if scheduled_games > 0 else "warning",
+            f"scheduled_games={scheduled_games}, today_prediction_rows={len(today_rows)}",
+            "예정 경기 수와 today prediction 행 수 일치 확인",
+        ),
+    ]
+    report = pd.DataFrame(checks, columns=["check_name", "status", "severity", "detail", "recommended_action"])
+    report.to_csv(RESULTS_DIR / "daily_pipeline_health_report.csv", index=False, encoding="utf-8-sig")
+
+    blocking_issues = report[(report["status"] == "fail") & (report["severity"] == "blocking")]["check_name"].tolist()
+    warnings = report[report["status"].eq("warning")]["check_name"].tolist()
+    overall_status = "fail" if blocking_issues else ("warning" if warnings or db_load_status != "success" else "pass")
+    status = {
+        "generated_at": generated_at.isoformat(timespec="seconds"),
+        "reference_date": reference_key,
+        "overall_status": overall_status,
+        "blocking_issues": blocking_issues,
+        "warnings": warnings,
+        "latest_html_path": _display_path(latest_html),
+        "latest_html_exists": latest_html.exists(),
+        "latest_html_modified_at": _file_modified_at(latest_html),
+        "docs_latest_html_path": _display_path(docs_latest_html),
+        "docs_latest_html_exists": docs_latest_html.exists(),
+        "docs_latest_html_modified_at": _file_modified_at(docs_latest_html),
+        "scheduled_games": int(scheduled_games),
+        "today_expected_runs_prediction_file": _display_path(today_predictions),
+        "today_expected_runs_prediction_rows": int(len(today_rows)),
+        "validation_expected_runs_prediction_file": _display_path(validation_predictions),
+        "validation_expected_runs_prediction_rows": int(len(validation_rows)),
+        "run_model_today_validation_split_ok": bool(split_ok),
+        "recommendation_summary_file": _display_path(recommendation_summary),
+        "recommendation_summary_exists": recommendation_summary.exists(),
+        "recommendation_audit_log_file": _display_path(recommendation_audit),
+        "recommendation_audit_completed_rows": int(len(audit_rows)),
+        "recommendation_audit_pending_rows": int(len(pending_rows)),
+        "pitching_snapshot_file": _display_path(pitching_snapshot),
+        "pitching_snapshot_exists": pitching_snapshot.exists(),
+        "pitching_snapshot_rows_total": int(len(snapshot_rows)),
+        "pitching_snapshot_rows_for_reference_date": int(snapshot_ref_rows),
+        "pitching_snapshot_quality_status": pitching_quality.get("quality_status", "missing"),
+        "pitching_snapshot_accumulated_days": int(pitching_quality.get("accumulated_snapshot_days", 0) or 0),
+        "safe_to_use_pitching_snapshot_as_features": safe_pitching_features,
+        "safe_to_replace_model": safe_to_replace,
+        "production_model_name": model_payload.get("selected_model", gate_payload.get("current_operational_model", "")),
+        "production_model_accuracy": model_payload.get("accuracy", gate_payload.get("current_operational_accuracy", "")),
+        "production_gate_status": production_gate_status,
+        "db_load_status": db_load_status,
+        "db_load_warning": db_load_warning,
+        "http_check_targets": ["http://127.0.0.1:8501/latest.html", "http://192.168.11.23:8501/latest.html"],
+        "health_policy_note": "Daily pipeline health checks validate artifact generation and data separation only. They do not change model predictions or production model selection.",
+    }
+    (RESULTS_DIR / "daily_pipeline_health_status.json").write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
+    update_daily_pipeline_health_insight_summary(status)
+    return status
+
+
+def update_daily_pipeline_health_insight_summary(status: dict):
+    summary_path = RESULTS_DIR / "model_insight_summary.json"
+    summary = _load_json_file(summary_path)
+    summary.update(
+        {
+            "daily_pipeline_health_summary": {
+                "overall_status": status.get("overall_status"),
+                "blocking_issues": status.get("blocking_issues", []),
+                "warnings": status.get("warnings", []),
+                "scheduled_games": status.get("scheduled_games"),
+                "today_expected_runs_prediction_rows": status.get("today_expected_runs_prediction_rows"),
+            },
+            "latest_pipeline_health_status": status,
+            "operational_monitoring_note": "Daily pipeline health checks are used to validate artifact generation and data separation. They do not change model predictions or production model selection.",
+            "next_operational_watch_items": [
+                "today_expected_runs_predictions.csv 기준일/행 수 일치",
+                "expected_runs_predictions.csv 검증용 분리 유지",
+                "투수 스냅샷 30일 누적 게이트 유지",
+                "PostgreSQL 적재 실패는 HTML/CSV/JSON 생성 성공 여부와 분리해서 감시",
+            ],
+        }
+    )
+    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date):
     training_games = training_games.copy()
     training_games["date"] = pd.to_datetime(training_games["date"])
@@ -3079,7 +3303,7 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
     return f"{slug}.html"
 
 
-def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, generated_at: date, team_pages: dict[str, str] | None = None, reference_datetime: datetime | None = None, update_stage: str = "morning"):
+def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, generated_at: date, team_pages: dict[str, str] | None = None, reference_datetime: datetime | None = None, update_stage: str = "morning", db_status: dict | None = None):
     DASHBOARD_DIR.mkdir(parents=True, exist_ok=True)
     team_data = {}
     team_pages = team_pages or {}
@@ -3636,6 +3860,7 @@ renderTeam(document.querySelector('.team-button').dataset.team);
         ),
         encoding="utf-8",
     )
+    export_daily_pipeline_health_status(generated_at, reference_datetime or datetime.now(), len(prediction_cards), db_status)
 
 
 def main():
@@ -3653,10 +3878,10 @@ def main():
     hitters, pitchers = fetch_player_stats()
     rosters = fetch_registered_rosters()
     export_sources(standings, vs_table, games, hitters, pitchers, rosters)
-    load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, rosters)
+    db_status = load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, rosters)
     model_payload = run_model_evaluation(training_games, games, previous_sunday(ref_date), ref_date, DATA_DIR, RESULTS_DIR)
     team_pages = build_team_analysis_pages(standings, vs_table, games, hitters, pitchers, rosters, ref_date)
-    build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, ref_date, team_pages, reference_datetime, args.update_stage)
+    build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, ref_date, team_pages, reference_datetime, args.update_stage, db_status)
     print(
         f"[Success] official KBO dashboard generated: teams={len(standings)}, "
         f"current_game_rows={len(games)}, training_game_rows={len(training_games)}"

@@ -3762,5 +3762,65 @@
     "market_data_limitations": "Handicap and over/under labels are not evaluated because valid market line data is not available. The system does not invent betting lines.",
     "final_policy_recommendation": "rename_top_pick"
   },
-  "recommended_display_policy_next_step": "The recommendation display policy does not change model probabilities or production model selection. Labels are calibrated only for user interpretation."
+  "recommended_display_policy_next_step": "The recommendation display policy does not change model probabilities or production model selection. Labels are calibrated only for user interpretation.",
+  "daily_pipeline_health_summary": {
+    "overall_status": "warning",
+    "blocking_issues": [],
+    "warnings": [
+      "db_load_status_check"
+    ],
+    "scheduled_games": 0,
+    "today_expected_runs_prediction_rows": 0
+  },
+  "latest_pipeline_health_status": {
+    "generated_at": "2026-06-11T17:54:59",
+    "reference_date": "2026-06-02",
+    "overall_status": "warning",
+    "blocking_issues": [],
+    "warnings": [
+      "db_load_status_check"
+    ],
+    "latest_html_path": "kbo_analytics\\dashboard\\latest.html",
+    "latest_html_exists": true,
+    "latest_html_modified_at": "2026-06-11T17:54:56",
+    "docs_latest_html_path": "docs\\latest.html",
+    "docs_latest_html_exists": true,
+    "docs_latest_html_modified_at": "2026-06-11T17:54:56",
+    "scheduled_games": 0,
+    "today_expected_runs_prediction_file": "kbo_analytics\\run_model\\results\\today_expected_runs_predictions.csv",
+    "today_expected_runs_prediction_rows": 0,
+    "validation_expected_runs_prediction_file": "kbo_analytics\\run_model\\results\\expected_runs_predictions.csv",
+    "validation_expected_runs_prediction_rows": 1443,
+    "run_model_today_validation_split_ok": true,
+    "recommendation_summary_file": "kbo_analytics\\modeling\\results\\daily_recommendation_summary.json",
+    "recommendation_summary_exists": true,
+    "recommendation_audit_log_file": "kbo_analytics\\modeling\\results\\recommendation_outcome_audit_log.csv",
+    "recommendation_audit_completed_rows": 78,
+    "recommendation_audit_pending_rows": 92,
+    "pitching_snapshot_file": "kbo_analytics\\data\\official\\pitching_daily_snapshot.csv",
+    "pitching_snapshot_exists": true,
+    "pitching_snapshot_rows_total": 120,
+    "pitching_snapshot_rows_for_reference_date": 20,
+    "pitching_snapshot_quality_status": "pass",
+    "pitching_snapshot_accumulated_days": 6,
+    "safe_to_use_pitching_snapshot_as_features": false,
+    "safe_to_replace_model": false,
+    "production_model_name": "GradientBoosting 보수 시간가중 모델",
+    "production_model_accuracy": 0.545,
+    "production_gate_status": "blocked",
+    "db_load_status": "skipped",
+    "db_load_warning": "PostgreSQL connection refused in local/server environment; HTML/CSV/JSON generation succeeded.",
+    "http_check_targets": [
+      "http://127.0.0.1:8501/latest.html",
+      "http://192.168.11.23:8501/latest.html"
+    ],
+    "health_policy_note": "Daily pipeline health checks validate artifact generation and data separation only. They do not change model predictions or production model selection."
+  },
+  "operational_monitoring_note": "Daily pipeline health checks are used to validate artifact generation and data separation. They do not change model predictions or production model selection.",
+  "next_operational_watch_items": [
+    "today_expected_runs_predictions.csv 기준일/행 수 일치",
+    "expected_runs_predictions.csv 검증용 분리 유지",
+    "투수 스냅샷 30일 누적 게이트 유지",
+    "PostgreSQL 적재 실패는 HTML/CSV/JSON 생성 성공 여부와 분리해서 감시"
+  ]
 }
