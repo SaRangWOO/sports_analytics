@@ -1959,7 +1959,9 @@ def export_recommendation_outcome_audit(games: pd.DataFrame, production_model_na
     }
 
 
-def merge_recommendation_audit_into_daily_summary(summary_payload: dict, audit_payload: dict):
+def merge_recommendation_audit_into_daily_summary(summary_payload: dict, audit_payload: dict, calibration_payload: dict | None = None):
+    calibration_payload = calibration_payload or {}
+    risk_summary = calibration_payload.get("risk_summary", {})
     updated = dict(summary_payload)
     updated.update({
         "audited_completed_games": audit_payload.get("audited_completed_games", 0),
@@ -1967,12 +1969,18 @@ def merge_recommendation_audit_into_daily_summary(summary_payload: dict, audit_p
         "grade_performance_snapshot": audit_payload.get("grade_performance_snapshot", []),
         "top_pick_performance_snapshot": audit_payload.get("top_pick_performance_snapshot", []),
         "recommendation_policy_warning": "Daily TOP PICK is a relative ranking label and should not be interpreted as a strong recommendation unless the recommendation grade is A or B.",
+        "label_calibration_status": risk_summary.get("final_policy_recommendation", "monitor_more_games"),
+        "top_pick_wording_status": risk_summary.get("top_pick_wording_recommendation", "오늘 모델 기준 상대 우세 1순위"),
+        "actionability_warning": risk_summary.get("actionability_warning", "Recommendation labels require completed-game validation."),
+        "completed_games_used_for_label_calibration": risk_summary.get("audited_completed_games", audit_payload.get("audited_completed_games", 0)),
+        "pending_games_for_future_calibration": risk_summary.get("pending_games", audit_payload.get("pending_games", 0)),
     })
     (RESULTS_DIR / "daily_recommendation_summary.json").write_text(json.dumps(updated, ensure_ascii=False, indent=2), encoding="utf-8")
     return updated
 
 
-def update_recommendation_audit_insight_summary(audit_payload: dict):
+def update_recommendation_audit_insight_summary(audit_payload: dict, calibration_payload: dict | None = None):
+    calibration_payload = calibration_payload or {}
     summary_path = RESULTS_DIR / "model_insight_summary.json"
     if summary_path.exists():
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
@@ -1989,11 +1997,142 @@ def update_recommendation_audit_insight_summary(audit_payload: dict):
         "daily_top_pick_performance_summary": audit_payload.get("top_pick_performance_snapshot", []),
         "recommendation_policy_risk_note": "The display policy improves interpretability, but recommendation labels must be validated against completed-game outcomes before being treated as actionable.",
         "recommended_recommendation_policy_next_step": "누적 감사 표본이 충분해질 때까지 A/B/C/D/E 등급별 적중률과 TOP PICK 성능을 모니터링하고, 성과가 확인되지 않으면 TOP PICK 문구를 상대 우세 1순위로 낮춥니다.",
+        "recommendation_label_calibration_summary": calibration_payload.get("label_calibration_rows", []),
+        "recommendation_wording_decision_summary": calibration_payload.get("wording_decision_rows", []),
+        "recommendation_policy_risk_summary": calibration_payload.get("risk_summary", {}),
+        "recommended_display_policy_next_step": "The recommendation display policy does not change model probabilities or production model selection. Labels are calibrated only for user interpretation.",
         "safe_to_replace_model": False,
         "safe_to_use_pitching_snapshot_as_features": False,
     })
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     return summary
+
+
+def label_calibration_action(label_type: str, label: str, games: int, accuracy, avg_probability, baseline_accuracy: float | None):
+    if label_type == "market_label" and label in {"handicap:not_available", "over_under:not_available"}:
+        return False, "no valid market line data", "not_available", "유효한 기준 라인이 없어 평가하지 않습니다."
+    if games < 30:
+        return False, "sample size below 30", "monitor_more_games", "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
+    if accuracy is None:
+        return False, "accuracy unavailable", "monitor_more_games", "정확도 산출이 불가능해 추가 표본이 필요합니다."
+    expected = avg_probability if avg_probability is not None else baseline_accuracy
+    if label == "강추천" and baseline_accuracy is not None and accuracy <= baseline_accuracy + 0.02:
+        return False, "strong label does not clearly outperform baseline", "soften_wording", "강추천 라벨은 더 강한 성과 근거가 필요합니다."
+    if label == "추천" and baseline_accuracy is not None and accuracy <= baseline_accuracy:
+        return False, "recommendation does not outperform weaker labels", "soften_wording", "추천 라벨은 약우세 대비 우위가 확인될 때까지 완화합니다."
+    if label == "약우세":
+        return bool(accuracy > 0.5), "directional reference only", "keep", "약우세는 실행 추천이 아니라 방향성 참고로 유지합니다."
+    if label == "오늘 TOP PICK" and baseline_accuracy is not None and accuracy <= baseline_accuracy:
+        return False, "top pick does not outperform normal picks", "rename", "상대 순위 라벨로 낮춰 표현합니다."
+    if expected is not None and accuracy + 0.02 < expected:
+        return False, "accuracy below expected probability", "soften_wording", "평균 확률 대비 실제 성과가 낮아 표현 완화가 필요합니다."
+    return True, "supported by completed-game audit so far", "keep", "현재 표본에서는 라벨 유지가 가능합니다."
+
+
+def make_calibration_row(label_type: str, label: str, group: pd.DataFrame, baseline_accuracy: float | None):
+    games = int(len(group))
+    if games:
+        correct = group["win_pick_result"].eq("correct")
+        accuracy = round(float(correct.mean()), 3)
+        avg_probability = round(float(group["predicted_probability"].mean()), 3)
+        brier = binary_brier(group["predicted_probability"], correct.astype(int))
+        log_loss_value = binary_log_loss(group["predicted_probability"], correct.astype(int))
+    else:
+        correct = pd.Series(dtype=bool)
+        accuracy = None
+        avg_probability = None
+        brier = None
+        log_loss_value = None
+    supported, warning, action, interpretation = label_calibration_action(label_type, label, games, accuracy, avg_probability, baseline_accuracy)
+    expected_accuracy = avg_probability
+    return {
+        "label_type": label_type,
+        "label": label,
+        "games": games,
+        "correct": int(correct.sum()) if games else 0,
+        "accuracy": accuracy,
+        "avg_probability": avg_probability,
+        "expected_accuracy": expected_accuracy,
+        "accuracy_minus_expected": round(float(accuracy - expected_accuracy), 3) if accuracy is not None and expected_accuracy is not None else None,
+        "brier": brier,
+        "log_loss": log_loss_value,
+        "supported_by_results": supported,
+        "sample_warning": warning,
+        "recommended_label_action": action,
+        "interpretation": interpretation,
+    }
+
+
+def export_recommendation_label_calibration_reports(generated_at: datetime):
+    audit_path = RESULTS_DIR / "recommendation_outcome_audit_log.csv"
+    pending_path = RESULTS_DIR / "recommendation_outcome_pending_report.csv"
+    audit = pd.read_csv(audit_path) if audit_path.exists() else pd.DataFrame()
+    pending = pd.read_csv(pending_path) if pending_path.exists() else pd.DataFrame()
+    baseline_accuracy = float(audit["win_pick_result"].eq("correct").mean()) if not audit.empty else None
+    rows = []
+    if audit.empty:
+        rows.append(make_calibration_row("recommendation_strength", "no_audited_games", audit, baseline_accuracy))
+    else:
+        for label, group in audit.groupby("recommendation_strength", dropna=False):
+            rows.append(make_calibration_row("recommendation_strength", str(label), group, baseline_accuracy))
+        for label, group in audit.groupby("recommendation_grade", dropna=False):
+            rows.append(make_calibration_row("recommendation_grade", str(label), group, baseline_accuracy))
+        daily_labels = audit.assign(
+            daily_rank_label=np.where(audit["is_daily_top_pick"].astype(bool), "오늘 TOP PICK", "일반 예측")
+        )
+        for label, group in daily_labels.groupby("daily_rank_label", dropna=False):
+            rows.append(make_calibration_row("daily_rank_label", str(label), group, baseline_accuracy))
+        rows.append(make_calibration_row("market_label", "win_pick", audit, baseline_accuracy))
+    for label in ["handicap:not_available", "over_under:not_available"]:
+        rows.append(make_calibration_row("market_label", label, pd.DataFrame(columns=audit.columns), baseline_accuracy))
+
+    calibration_report = pd.DataFrame(rows)
+    calibration_report.to_csv(RESULTS_DIR / "recommendation_label_calibration_report.csv", index=False, encoding="utf-8-sig")
+
+    top_rows = calibration_report[(calibration_report["label_type"] == "daily_rank_label") & (calibration_report["label"] == "오늘 TOP PICK")]
+    top_action = top_rows.iloc[0]["recommended_label_action"] if not top_rows.empty else "monitor_more_games"
+    top_under_55 = bool((audit[audit["is_daily_top_pick"].astype(bool)]["predicted_probability"] < 0.55).any()) if not audit.empty else False
+    proposed_top_pick = "오늘 모델 기준 상대 우세 1순위" if top_action in {"rename", "monitor_more_games"} or top_under_55 else "오늘 TOP PICK"
+    wording_rows = [
+        {"current_wording": "오늘 TOP PICK", "proposed_wording": proposed_top_pick, "reason": "상대 순위 라벨이며 55% 미만 TOP PICK이 존재하거나 표본이 부족하면 강한 추천처럼 보이면 안 됩니다.", "evidence_source": "recommendation_label_calibration_report.csv", "risk_level": "medium", "action_required": top_action in {"rename", "monitor_more_games"} or top_under_55, "implementation_status": "guarded_in_dashboard"},
+        {"current_wording": "오늘 모델 기준 상대 우세 1순위", "proposed_wording": "오늘 모델 기준 상대 우세 1순위", "reason": "상대 랭킹 의미가 명확합니다.", "evidence_source": "wording policy", "risk_level": "low", "action_required": False, "implementation_status": "allowed"},
+        {"current_wording": "강추천", "proposed_wording": "강추천", "reason": "완료 경기 표본이 충분하고 추천/약우세보다 우월할 때만 유지합니다.", "evidence_source": "recommendation_label_calibration_report.csv", "risk_level": "high", "action_required": bool(((calibration_report["label"] == "강추천") & (calibration_report["recommended_label_action"].isin(["soften_wording", "monitor_more_games"]))).any()), "implementation_status": "monitor_before_strengthening"},
+        {"current_wording": "추천", "proposed_wording": "추천", "reason": "약우세보다 나은 완료 경기 성과가 필요합니다.", "evidence_source": "recommendation_label_calibration_report.csv", "risk_level": "medium", "action_required": bool(((calibration_report["label"] == "추천") & (calibration_report["recommended_label_action"].isin(["soften_wording", "monitor_more_games"]))).any()), "implementation_status": "monitor"},
+        {"current_wording": "약우세", "proposed_wording": "약우세", "reason": "52~55% 방향성 edge는 실행 추천이 아닌 참고 신호입니다.", "evidence_source": "recommendation_outcome_audit_log.csv", "risk_level": "low", "action_required": False, "implementation_status": "keep"},
+        {"current_wording": "관망", "proposed_wording": "관망", "reason": "비실행 구간 표현으로 적절합니다.", "evidence_source": "wording policy", "risk_level": "low", "action_required": False, "implementation_status": "keep"},
+        {"current_wording": "정보 부족", "proposed_wording": "정보 부족", "reason": "핵심 입력 누락 시 사용합니다.", "evidence_source": "wording policy", "risk_level": "low", "action_required": False, "implementation_status": "keep"},
+        {"current_wording": "핸디캡 관망", "proposed_wording": "핸디캡 관망", "reason": "유효한 시장 라인이 없어 평가하지 않습니다.", "evidence_source": "market_recommendation_performance_report.csv", "risk_level": "low", "action_required": False, "implementation_status": "keep_not_available"},
+        {"current_wording": "오버/언더 관망", "proposed_wording": "오버/언더 관망", "reason": "유효한 오버/언더 라인이 없어 평가하지 않습니다.", "evidence_source": "market_recommendation_performance_report.csv", "risk_level": "low", "action_required": False, "implementation_status": "keep_not_available"},
+    ]
+    wording_report = pd.DataFrame(wording_rows)
+    wording_report.to_csv(RESULTS_DIR / "recommendation_wording_decision_report.csv", index=False, encoding="utf-8-sig")
+
+    actionable = calibration_report[calibration_report["recommended_label_action"].isin(["keep", "strengthen_wording"])]
+    weak = calibration_report.sort_values(["accuracy"], na_position="first").head(1)
+    insufficient = calibration_report[calibration_report["games"] < 30]["label"].dropna().astype(str).tolist()
+    label_actions = calibration_report[["label_type", "label", "recommended_label_action", "interpretation"]].to_dict(orient="records")
+    final_policy = "rename_top_pick" if proposed_top_pick != "오늘 TOP PICK" else ("monitor_more_games" if insufficient else "current_labels_acceptable")
+    risk_summary = {
+        "generated_at": generated_at.isoformat(),
+        "audited_completed_games": int(len(audit)),
+        "pending_games": int(len(pending)),
+        "strongest_supported_label": actionable.sort_values("accuracy", ascending=False).iloc[0]["label"] if not actionable.empty else None,
+        "weakest_supported_label": weak.iloc[0]["label"] if not weak.empty else None,
+        "top_pick_label_risk": "relative_rank_label_not_strong_pick" if proposed_top_pick != "오늘 TOP PICK" else "monitor_sample",
+        "top_pick_wording_recommendation": proposed_top_pick,
+        "actionability_warning": "Recommendation labels are interpretive until enough completed-game outcomes support them.",
+        "label_change_recommendations": label_actions,
+        "insufficient_sample_warnings": insufficient,
+        "market_data_limitations": "Handicap and over/under labels are not evaluated because valid market line data is not available. The system does not invent betting lines.",
+        "recommendation_policy_note": "The recommendation display policy does not change model probabilities or production model selection. Labels are calibrated only for user interpretation.",
+        "final_policy_recommendation": final_policy,
+    }
+    (RESULTS_DIR / "recommendation_policy_risk_summary.json").write_text(json.dumps(risk_summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {
+        "label_calibration_rows": calibration_report.to_dict(orient="records"),
+        "wording_decision_rows": wording_report.to_dict(orient="records"),
+        "risk_summary": risk_summary,
+    }
 
 
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date):
@@ -3012,8 +3151,11 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     summary = today_summary(prediction_cards)
     daily_recommendation_summary = export_daily_recommendation_summary(prediction_cards, reference_datetime or datetime.now(), generated_at)
     recommendation_audit_summary = export_recommendation_outcome_audit(games, model_payload.get("selected_model", "unknown"))
-    daily_recommendation_summary = merge_recommendation_audit_into_daily_summary(daily_recommendation_summary, recommendation_audit_summary)
-    update_recommendation_audit_insight_summary(recommendation_audit_summary)
+    recommendation_calibration_summary = export_recommendation_label_calibration_reports(reference_datetime or datetime.now())
+    daily_recommendation_summary = merge_recommendation_audit_into_daily_summary(
+        daily_recommendation_summary, recommendation_audit_summary, recommendation_calibration_summary
+    )
+    update_recommendation_audit_insight_summary(recommendation_audit_summary, recommendation_calibration_summary)
 
     def prediction_tone(row):
         strength = str(row.get("recommendation_strength", "관망"))
@@ -3030,7 +3172,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         if row.get("is_daily_top_pick"):
             if float(row.get("confidence_value", 0)) >= 0.55:
                 return "오늘 TOP PICK"
-            return "오늘 모델 기준 최상위 우세 후보"
+            return "오늘 모델 기준 상대 우세 1순위"
         return str(row.get("recommendation_strength", "관망"))
 
     def model_summary(row):

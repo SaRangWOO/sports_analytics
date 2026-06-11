@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-10T14:45:01.305430",
+  "generated_at": "2026-06-11T16:47:27.866667",
   "reference_date": "2026-06-02",
   "total_games": 0,
   "strong_recommendation_count": 0,
@@ -20,14 +20,14 @@
       "recommendation_strength": "강추천",
       "games": 0,
       "correct": 0,
-      "accuracy": NaN,
-      "avg_probability": NaN,
-      "brier": NaN,
-      "log_loss": NaN,
+      "accuracy": null,
+      "avg_probability": null,
+      "brier": null,
+      "log_loss": null,
       "top_pick_games": 0,
-      "top_pick_accuracy": NaN,
+      "top_pick_accuracy": null,
       "top_tier_games": 0,
-      "top_tier_accuracy": NaN,
+      "top_tier_accuracy": null,
       "interpretation": "충분한 표본에서 C/D보다 나은지 확인해야 하는 추천 구간입니다."
     },
     {
@@ -35,14 +35,14 @@
       "recommendation_strength": "추천",
       "games": 0,
       "correct": 0,
-      "accuracy": NaN,
-      "avg_probability": NaN,
-      "brier": NaN,
-      "log_loss": NaN,
+      "accuracy": null,
+      "avg_probability": null,
+      "brier": null,
+      "log_loss": null,
       "top_pick_games": 0,
-      "top_pick_accuracy": NaN,
+      "top_pick_accuracy": null,
       "top_tier_games": 0,
-      "top_tier_accuracy": NaN,
+      "top_tier_accuracy": null,
       "interpretation": "충분한 표본에서 C/D보다 나은지 확인해야 하는 추천 구간입니다."
     },
     {
@@ -70,9 +70,9 @@
       "brier": 0.25,
       "log_loss": 0.694,
       "top_pick_games": 0,
-      "top_pick_accuracy": NaN,
+      "top_pick_accuracy": null,
       "top_tier_games": 0,
-      "top_tier_accuracy": NaN,
+      "top_tier_accuracy": null,
       "interpretation": "D/E 등급은 실행 가능한 추천으로 해석하지 않습니다."
     },
     {
@@ -80,14 +80,14 @@
       "recommendation_strength": "정보 부족",
       "games": 0,
       "correct": 0,
-      "accuracy": NaN,
-      "avg_probability": NaN,
-      "brier": NaN,
-      "log_loss": NaN,
+      "accuracy": null,
+      "avg_probability": null,
+      "brier": null,
+      "log_loss": null,
       "top_pick_games": 0,
-      "top_pick_accuracy": NaN,
+      "top_pick_accuracy": null,
       "top_tier_games": 0,
-      "top_tier_accuracy": NaN,
+      "top_tier_accuracy": null,
       "interpretation": "D/E 등급은 실행 가능한 추천으로 해석하지 않습니다."
     }
   ],
@@ -153,5 +153,10 @@
       "interpretation": "TOP PICK은 상대 순위 라벨입니다."
     }
   ],
-  "recommendation_policy_warning": "Daily TOP PICK is a relative ranking label and should not be interpreted as a strong recommendation unless the recommendation grade is A or B."
+  "recommendation_policy_warning": "Daily TOP PICK is a relative ranking label and should not be interpreted as a strong recommendation unless the recommendation grade is A or B.",
+  "label_calibration_status": "rename_top_pick",
+  "top_pick_wording_status": "오늘 모델 기준 상대 우세 1순위",
+  "actionability_warning": "Recommendation labels are interpretive until enough completed-game outcomes support them.",
+  "completed_games_used_for_label_calibration": 78,
+  "pending_games_for_future_calibration": 92
 }
