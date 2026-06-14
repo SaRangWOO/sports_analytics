@@ -1,9 +1,9 @@
 ﻿gate_name,required_condition,baseline_value,candidate_value,passed,failure_reason,severity,next_action
-전체 accuracy 개선,candidate accuracy가 현재 선택 모델보다 최소 0.005 초과 개선되어야 함,0.545,0.541,False,요구 조건을 충족하지 못함,high,해당 지표가 개선되는 축소 feature set을 별도 후보로 검증
-Brier Score 악화 없음,candidate brier가 현재 선택 모델보다 악화되지 않아야 함,0.248,0.249,True,,high,운영 교체 판단 시 다른 gate와 함께 재확인
-Log Loss 악화 없음,candidate log_loss가 현재 선택 모델보다 악화되지 않아야 함,0.69,0.69,True,,high,운영 교체 판단 시 다른 gate와 함께 재확인
-over_55_accuracy 개선,55% 이상 확신 구간 적중률이 baseline_core보다 개선되어야 함,0.553,0.559,True,,medium,운영 교체 판단 시 다른 gate와 함께 재확인
-recent_3year_accuracy 개선 또는 최소 악화 없음,최근 3년 성능이 baseline_core보다 악화되지 않아야 함,0.539,0.541,True,,medium,운영 교체 판단 시 다른 gate와 함께 재확인
-연승 구간 성능 개선,연승 구간 accuracy가 baseline_core보다 개선되어야 함,0.528,0.531,True,,medium,운영 교체 판단 시 다른 gate와 함께 재확인
-박빙 경기 성능 악화 없음,박빙 경기 accuracy가 baseline_core보다 악화되지 않아야 함,0.508,0.517,True,,medium,운영 교체 판단 시 다른 gate와 함께 재확인
-표본 수 충분성,over_55_games가 비교 가능한 수준이어야 함,,1360.0,True,,low,운영 교체 판단 시 다른 gate와 함께 재확인
+전체 accuracy 개선,candidate accuracy가 현재 선택 모델보다 최소 0.005 초과 개선되어야 함,0.542,0.544,False,요구 조건을 충족하지 못함,high,해당 지표가 개선되는 축소 feature set을 별도 후보로 검증
+Brier Score 악화 없음,candidate brier가 현재 선택 모델보다 악화되지 않아야 함,0.247,0.248,True,,high,운영 교체 판단 시 다른 gate와 함께 재확인
+Log Loss 악화 없음,candidate log_loss가 현재 선택 모델보다 악화되지 않아야 함,0.688,0.689,True,,high,운영 교체 판단 시 다른 gate와 함께 재확인
+over_55_accuracy 개선,55% 이상 확신 구간 적중률이 baseline_core보다 개선되어야 함,0.573,0.576,True,,medium,운영 교체 판단 시 다른 gate와 함께 재확인
+recent_3year_accuracy 개선 또는 최소 악화 없음,최근 3년 성능이 baseline_core보다 악화되지 않아야 함,0.543,0.544,True,,medium,운영 교체 판단 시 다른 gate와 함께 재확인
+연승 구간 성능 개선,연승 구간 accuracy가 baseline_core보다 개선되어야 함,0.528,0.524,False,요구 조건을 충족하지 못함,medium,해당 지표가 개선되는 축소 feature set을 별도 후보로 검증
+박빙 경기 성능 악화 없음,박빙 경기 accuracy가 baseline_core보다 악화되지 않아야 함,0.523,0.523,True,,medium,운영 교체 판단 시 다른 gate와 함께 재확인
+표본 수 충분성,over_55_games가 비교 가능한 수준이어야 함,,1176.0,True,,low,운영 교체 판단 시 다른 gate와 함께 재확인
