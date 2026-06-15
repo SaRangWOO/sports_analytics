@@ -1798,6 +1798,495 @@ def write_probability_distribution_report(results_dir: Path, backtest_probabilit
     return rows
 
 
+def performance_feature_sets(x: pd.DataFrame, production_columns: list[str]):
+    baseline = compact_feature_columns(x)
+    selected_non_pitching = list(
+        dict.fromkeys(
+            baseline
+            + list(STREAK_FEATURES)
+            + list(CLOSE_BLOWOUT_FEATURES)
+            + list(MOMENTUM_FEATURES)
+            + [feature for feature in VENUE_CONTEXT_FEATURES if feature != "venue_context_win_rate_gap"]
+            + list(MONTH_PHASE_FEATURES)
+        )
+    )
+    without_false_signal = [
+        column
+        for column in selected_non_pitching
+        if column not in VOLATILITY_FEATURES and column not in {"venue_win_rate_gap", "venue_context_win_rate_gap"}
+    ]
+    sets = {
+        "baseline_core": baseline,
+        "baseline_plus_streak": baseline + list(STREAK_FEATURES),
+        "baseline_plus_selected_non_pitching_only": selected_non_pitching,
+        "baseline_without_false_signal_features": without_false_signal,
+        "baseline_plus_momentum_only": baseline + list(MOMENTUM_FEATURES),
+        "baseline_plus_recent_form_only": [
+            column
+            for column in baseline + list(MOMENTUM_FEATURES)
+            if "recent" in column or "run_diff" in column or column in {"is_home", "rest_days"}
+        ],
+        "baseline_plus_venue_context_without_venue_win_rate_gap": baseline
+        + [feature for feature in VENUE_CONTEXT_FEATURES if feature != "venue_context_win_rate_gap"],
+        "production_feature_set": production_columns,
+    }
+    return {name: available_columns(list(dict.fromkeys(columns)), x) for name, columns in sets.items()}
+
+
+def performance_challenger_model_specs(train_size: int):
+    specs = []
+    try:
+        from sklearn.ensemble import ExtraTreesClassifier, HistGradientBoostingClassifier, RandomForestClassifier
+        from sklearn.linear_model import LogisticRegression
+    except ImportError:
+        return specs, ["sklearn classifiers unavailable"]
+
+    specs.extend(
+        [
+            ("LogisticRegression conservative model", "LogisticRegression", LogisticRegression(C=0.35, class_weight="balanced", max_iter=1500, random_state=42)),
+            ("GradientBoosting conservative model", "GradientBoosting", HistGradientBoostingClassifier(max_iter=60, learning_rate=0.05, max_leaf_nodes=10, l2_regularization=0.14, random_state=42)),
+            ("HistGradientBoosting model", "HistGradientBoosting", HistGradientBoostingClassifier(max_iter=50, learning_rate=0.06, max_leaf_nodes=15, l2_regularization=0.08, random_state=42)),
+            ("RandomForest model", "RandomForest", RandomForestClassifier(n_estimators=60, max_depth=6, min_samples_leaf=10, class_weight="balanced_subsample", random_state=42, n_jobs=-1)),
+            ("ExtraTrees model", "ExtraTrees", ExtraTreesClassifier(n_estimators=60, max_depth=6, min_samples_leaf=10, class_weight="balanced", random_state=42, n_jobs=-1)),
+        ]
+    )
+    skipped = [
+        "calibrated LogisticRegression: skipped because full dashboard validation must stay under runtime budget",
+        "calibrated GradientBoosting: skipped because full dashboard validation must stay under runtime budget",
+    ]
+    return specs, skipped
+
+
+def should_run_performance_candidate(family: str, feature_set: str):
+    if family == "GradientBoosting":
+        return True
+    if family == "LogisticRegression":
+        return feature_set in {"baseline_core", "baseline_without_false_signal_features", "production_feature_set"}
+    if family == "HistGradientBoosting":
+        return feature_set in {"baseline_core", "baseline_without_false_signal_features"}
+    if family in {"RandomForest", "ExtraTrees"}:
+        return feature_set == "baseline_core"
+    return False
+
+
+def game_key_series(frame: pd.DataFrame):
+    if "game_id" in frame.columns:
+        return frame["game_id"].astype(str).str.replace(r"_[^_]+$", "", regex=True)
+    return pd.Series(np.arange(len(frame)) // 2, index=frame.index).astype(str)
+
+
+def game_pick_frame(frame: pd.DataFrame, probability: np.ndarray, model_name: str, feature_set: str):
+    work = frame.copy().reset_index(drop=True)
+    work["_probability"] = np.asarray(probability, dtype=float)
+    work["_confidence"] = np.maximum(work["_probability"], 1 - work["_probability"])
+    work["_game_key"] = game_key_series(work)
+    rows = []
+    for key, group in work.groupby("_game_key", sort=False):
+        pick = group.sort_values("_probability", ascending=False).iloc[0]
+        actual_rows = group[group["target_win"] == 1]
+        actual_winner = actual_rows.iloc[0]["team"] if not actual_rows.empty else ""
+        home_rows = group[group.get("is_home", 0) == 1]
+        away_rows = group[group.get("is_home", 0) == 0]
+        home_team = home_rows.iloc[0]["team"] if not home_rows.empty else group.iloc[0]["team"]
+        away_team = away_rows.iloc[0]["team"] if not away_rows.empty else group.iloc[0]["opponent"]
+        rows.append(
+            {
+                "date": pd.to_datetime(pick["date"]).date().isoformat(),
+                "game_id": key,
+                "away_team": away_team,
+                "home_team": home_team,
+                "model_name": model_name,
+                "feature_set": feature_set,
+                "pick": pick["team"],
+                "pick_probability": round(float(pick["_probability"]), 6),
+                "pick_confidence": round(float(pick["_confidence"]), 6),
+                "actual_winner": actual_winner,
+                "correct": bool(pick["team"] == actual_winner),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def daily_top_accuracy(picks: pd.DataFrame, n: int, min_probability: float | None = None):
+    selected = []
+    for _, group in picks.groupby("date", sort=False):
+        candidates = group.sort_values("pick_confidence", ascending=False).head(n)
+        if min_probability is not None:
+            candidates = candidates[candidates["pick_confidence"] >= min_probability]
+        selected.append(candidates)
+    if not selected:
+        return None, 0
+    frame = pd.concat(selected, ignore_index=True)
+    if frame.empty:
+        return None, 0
+    return round(float(frame["correct"].mean()), 3), int(len(frame))
+
+
+def practical_pick_day_coverage(picks: pd.DataFrame, mask: pd.Series):
+    total_days = picks["date"].nunique()
+    if total_days == 0:
+        return 0.0
+    return round(float(picks[mask]["date"].nunique() / total_days), 3)
+
+
+def pick_metrics_from_games(picks: pd.DataFrame, probability: np.ndarray | None = None, y_true: np.ndarray | None = None):
+    if picks.empty:
+        return {"accuracy": None, "picked_games": 0, "coverage_rate": 0, "daily_top1_accuracy": None, "daily_top2_accuracy": None}
+    top1_accuracy, top1_games = daily_top_accuracy(picks, 1)
+    top2_accuracy, top2_games = daily_top_accuracy(picks, 2)
+    payload = {
+        "accuracy": round(float(picks["correct"].mean()), 3),
+        "picked_games": int(len(picks)),
+        "coverage_rate": 1.0,
+        "daily_top1_games": top1_games,
+        "daily_top1_accuracy": top1_accuracy,
+        "daily_top2_games": top2_games,
+        "daily_top2_accuracy": top2_accuracy,
+    }
+    if probability is not None and y_true is not None and len(probability):
+        payload["brier"] = round(float(brier_score_loss(y_true, probability)), 3)
+        payload["log_loss"] = safe_log_loss(y_true, probability)
+    return payload
+
+
+def consensus_pick_frame(model_pick_frames: dict[str, pd.DataFrame]):
+    aligned = {}
+    for name, picks in model_pick_frames.items():
+        if picks.empty:
+            continue
+        aligned[name] = picks.set_index("game_id")
+    if not aligned:
+        return pd.DataFrame()
+    base_name = next(iter(aligned))
+    base = aligned[base_name].reset_index()
+    rows = []
+    for _, row in base.iterrows():
+        game_id = row["game_id"]
+        votes = {}
+        for name, frame in aligned.items():
+            if game_id in frame.index:
+                votes[name] = frame.loc[game_id]["pick"]
+        counts = pd.Series(list(votes.values())).value_counts() if votes else pd.Series(dtype=int)
+        consensus_pick = counts.index[0] if not counts.empty else ""
+        agreement = int(counts.iloc[0]) if not counts.empty else 0
+        disagreement = max(len(votes) - agreement, 0)
+        if agreement >= 4:
+            strength = "strong_consensus"
+        elif agreement == 3:
+            strength = "moderate_consensus"
+        else:
+            strength = "disagreement"
+        actual_winner = row.get("actual_winner", "")
+        rows.append(
+            {
+                "date": row["date"],
+                "game_id": game_id,
+                "away_team": row["away_team"],
+                "home_team": row["home_team"],
+                "production_pick": votes.get("production", ""),
+                "challenger_pick": votes.get("challenger", ""),
+                "logistic_pick": votes.get("logistic", ""),
+                "gradient_boosting_pick": votes.get("gradient_boosting", ""),
+                "random_forest_pick": votes.get("random_forest", ""),
+                "extra_trees_pick": votes.get("extra_trees", ""),
+                "ensemble_pick": consensus_pick,
+                "model_agreement_count": agreement,
+                "model_disagreement_count": disagreement,
+                "consensus_strength": strength,
+                "actual_winner": actual_winner,
+                "consensus_result": "correct" if consensus_pick == actual_winner else "miss",
+                "interpretation": "4개 이상 모델 일치" if strength == "strong_consensus" else ("3개 모델 일치" if strength == "moderate_consensus" else "모델 간 의견 분산"),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def strategy_row(strategy_name: str, model_name: str, feature_set: str, picks: pd.DataFrame, mask: pd.Series, all_game_accuracy, brier, log_loss_value, rolling_accuracy):
+    selected = picks[mask].copy()
+    picked_games = int(len(selected))
+    pick_accuracy = round(float(selected["correct"].mean()), 3) if picked_games else None
+    top1_accuracy, top1_games = daily_top_accuracy(selected, 1) if picked_games else (None, 0)
+    top2_accuracy, top2_games = daily_top_accuracy(selected, 2) if picked_games else (None, 0)
+    season_mask = pd.to_datetime(selected["date"]).dt.year == 2026 if picked_games else pd.Series(dtype=bool)
+    season_selected = selected[season_mask] if picked_games else selected
+    season_top1_accuracy, _ = daily_top_accuracy(season_selected, 1) if not season_selected.empty else (None, 0)
+    season_top2_accuracy, _ = daily_top_accuracy(season_selected, 2) if not season_selected.empty else (None, 0)
+    return {
+        "strategy_name": strategy_name,
+        "model_name": model_name,
+        "feature_set": feature_set,
+        "games_total": int(len(picks)),
+        "picked_games": picked_games,
+        "coverage_rate": practical_pick_day_coverage(picks, mask),
+        "pick_accuracy": pick_accuracy,
+        "all_game_accuracy": all_game_accuracy,
+        "daily_top1_games": top1_games,
+        "daily_top1_accuracy": top1_accuracy,
+        "daily_top2_games": top2_games,
+        "daily_top2_accuracy": top2_accuracy,
+        "avg_pick_probability": round(float(selected["pick_confidence"].mean()), 3) if picked_games else None,
+        "brier": brier,
+        "log_loss": log_loss_value,
+        "2026_pick_accuracy": round(float(season_selected["correct"].mean()), 3) if not season_selected.empty else None,
+        "2026_daily_top1_accuracy": season_top1_accuracy,
+        "2026_daily_top2_accuracy": season_top2_accuracy,
+        "rolling_pick_accuracy": rolling_accuracy,
+        "interpretation": "실전 선택픽 성능 개선 후보" if pick_accuracy is not None and all_game_accuracy is not None and pick_accuracy > all_game_accuracy else "전체 경기 대비 선택픽 우위가 제한적",
+    }
+
+
+def write_performance_challenger_reports(results_dir: Path, features: pd.DataFrame, x: pd.DataFrame, y: np.ndarray, split_index: int, best: dict, best_non_pitching: dict, current_season_bundle: dict):
+    eval_frame = features.iloc[split_index:].copy()
+    y_eval = y[split_index:]
+    feature_sets = performance_feature_sets(x, best["columns"])
+    train_x = x.iloc[:split_index]
+    test_x = x.iloc[split_index:]
+    specs, skipped = performance_challenger_model_specs(len(train_x))
+    model_results = []
+    model_pick_frames = {}
+
+    production_picks = game_pick_frame(best["test_frame"].copy(), np.asarray(best["probability"]), "current production model", "production_feature_set")
+    model_results.append(
+        {
+            "name": "current production model",
+            "family": best.get("model_type", "production"),
+            "feature_set": "production_feature_set",
+            "probability": np.asarray(best["probability"]),
+            "y_true": np.asarray(best.get("y_test", y_eval)),
+            "frame": best["test_frame"].copy(),
+            "picks": production_picks,
+            "brier": best["score"].get("Brier Score"),
+            "log_loss": best["score"].get("Log Loss"),
+        }
+    )
+    model_pick_frames["production"] = production_picks
+
+    for feature_set, columns in feature_sets.items():
+        if not columns:
+            skipped.append(f"{feature_set}: no available columns")
+            continue
+        for name, family, model in specs:
+            if not should_run_performance_candidate(family, feature_set):
+                skipped.append(f"{name} / {feature_set}: skipped to keep full dashboard validation within runtime budget")
+                continue
+            x_train, x_test = train_x[columns], test_x[columns]
+            train_scaled, test_scaled, _, _ = standardize_train_test(x_train, x_test)
+            try:
+                model.fit(train_scaled, y[:split_index])
+                probability = normalize_game_probabilities(eval_frame, model.predict_proba(test_scaled)[:, 1])
+            except Exception as exc:
+                skipped.append(f"{name} / {feature_set}: {exc.__class__.__name__}")
+                continue
+            picks = game_pick_frame(eval_frame, probability, name, feature_set)
+            score = probability_scores(y_eval, probability)
+            model_results.append(
+                {
+                    "name": name,
+                    "family": family,
+                    "feature_set": feature_set,
+                    "probability": probability,
+                    "y_true": y_eval,
+                    "frame": eval_frame.copy(),
+                    "picks": picks,
+                    "brier": score["Brier Score"],
+                    "log_loss": score["Log Loss"],
+                }
+            )
+            key = None
+            if family == "LogisticRegression" and "logistic" not in model_pick_frames:
+                key = "logistic"
+            elif family in {"GradientBoosting", "HistGradientBoosting", "CalibratedGradientBoosting"} and "gradient_boosting" not in model_pick_frames:
+                key = "gradient_boosting"
+            elif family == "RandomForest" and "random_forest" not in model_pick_frames:
+                key = "random_forest"
+            elif family == "ExtraTrees" and "extra_trees" not in model_pick_frames:
+                key = "extra_trees"
+            if key:
+                model_pick_frames[key] = picks
+
+    valid_results = [result for result in model_results if not result["picks"].empty]
+    if valid_results:
+        best_challenger = max(valid_results, key=lambda result: (pick_metrics_from_games(result["picks"])["daily_top1_accuracy"] or 0, pick_metrics_from_games(result["picks"])["accuracy"] or 0))
+        model_pick_frames["challenger"] = best_challenger["picks"]
+    else:
+        best_challenger = {}
+
+    if valid_results:
+        probabilities = np.vstack([result["probability"] for result in valid_results if len(result["probability"]) == len(y_eval)])
+        avg_probability = normalize_game_probabilities(eval_frame, probabilities.mean(axis=0))
+        avg_picks = game_pick_frame(eval_frame, avg_probability, "probability average ensemble", "ensemble")
+        model_results.append({"name": "probability average ensemble", "family": "EnsembleAverage", "feature_set": "ensemble", "probability": avg_probability, "y_true": y_eval, "frame": eval_frame.copy(), "picks": avg_picks, "brier": round(float(brier_score_loss(y_eval, avg_probability)), 3), "log_loss": safe_log_loss(y_eval, avg_probability)})
+        model_pick_frames["ensemble"] = avg_picks
+
+    consensus = consensus_pick_frame(model_pick_frames)
+    consensus.to_csv(results_dir / "model_consensus_pick_report.csv", index=False, encoding="utf-8-sig")
+    consensus_accuracy = round(float((consensus["consensus_result"] == "correct").mean()), 3) if not consensus.empty else None
+    consensus_strong_accuracy = round(float((consensus.loc[consensus["consensus_strength"] == "strong_consensus", "consensus_result"] == "correct").mean()), 3) if not consensus.empty and (consensus["consensus_strength"] == "strong_consensus").any() else None
+
+    rolling_lookup = {row.get("feature_set"): aggregate_rolling_rows(current_season_bundle.get("rolling_rows", []), row.get("feature_set")).get("accuracy") for row in current_season_bundle.get("performance_rows", [])}
+    challenger_rows = []
+    for result in model_results:
+        picks = result["picks"]
+        metrics = pick_metrics_from_games(picks, result["probability"], result["y_true"])
+        confidence = np.maximum(result["probability"], 1 - result["probability"])
+        over_55_mask = confidence >= 0.55
+        season_mask = pd.to_datetime(result["frame"]["date"]).dt.year == 2026
+        season_probability = result["probability"][season_mask.to_numpy()]
+        season_y = result["y_true"][season_mask.to_numpy()]
+        season_accuracy = round(float(((season_probability >= 0.5).astype(int) == season_y).mean()), 3) if len(season_y) else None
+        selected = bool(best_challenger and result["name"] == best_challenger.get("name") and result["feature_set"] == best_challenger.get("feature_set"))
+        challenger_rows.append(
+            {
+                "challenger_name": result["name"],
+                "model_family": result["family"],
+                "feature_set": result["feature_set"],
+                "training_scope": "chronological holdout; report-only offline monitoring",
+                "accuracy": metrics.get("accuracy"),
+                "brier": result["brier"],
+                "log_loss": result["log_loss"],
+                "over_55_accuracy": round(float(((result["probability"][over_55_mask] >= 0.5).astype(int) == result["y_true"][over_55_mask]).mean()), 3) if over_55_mask.any() else None,
+                "current_season_accuracy": season_accuracy,
+                "rolling_accuracy": rolling_lookup.get(result["feature_set"]),
+                "daily_top1_accuracy": metrics.get("daily_top1_accuracy"),
+                "daily_top2_accuracy": metrics.get("daily_top2_accuracy"),
+                "consensus_pick_accuracy": consensus_accuracy,
+                "picked_games": metrics.get("picked_games"),
+                "coverage_rate": metrics.get("coverage_rate"),
+                "strengths": "daily selected pick candidate" if selected else "offline comparison candidate",
+                "weaknesses": "not promoted; requires rolling and calibration monitoring",
+                "selected_as_performance_challenger": selected,
+                "reason": "best daily top1/all-game balance among report-only challengers" if selected else "kept for benchmark comparison",
+            }
+        )
+    pd.DataFrame(challenger_rows).to_csv(results_dir / "performance_challenger_model_report.csv", index=False, encoding="utf-8-sig")
+
+    strategy_rows = []
+    for result in model_results:
+        picks = result["picks"].copy()
+        if picks.empty:
+            continue
+        all_accuracy = round(float(picks["correct"].mean()), 3)
+        rolling_accuracy = rolling_lookup.get(result["feature_set"])
+        thresholds = {
+            "all_games": picks["pick_confidence"] >= 0,
+            "probability_ge_52": picks["pick_confidence"] >= 0.52,
+            "probability_ge_53": picks["pick_confidence"] >= 0.53,
+            "probability_ge_54": picks["pick_confidence"] >= 0.54,
+            "probability_ge_55": picks["pick_confidence"] >= 0.55,
+            "daily_top1": picks.index.isin(picks.sort_values("pick_confidence", ascending=False).groupby(picks["date"]).head(1).index),
+            "daily_top2": picks.index.isin(picks.sort_values("pick_confidence", ascending=False).groupby(picks["date"]).head(2).index),
+            "daily_top1_if_probability_ge_52": picks.index.isin(picks.sort_values("pick_confidence", ascending=False).groupby(picks["date"]).head(1).index) & (picks["pick_confidence"] >= 0.52),
+            "daily_top1_if_probability_ge_53": picks.index.isin(picks.sort_values("pick_confidence", ascending=False).groupby(picks["date"]).head(1).index) & (picks["pick_confidence"] >= 0.53),
+            "avoid_false_signal_features": pd.Series(result["feature_set"] == "baseline_without_false_signal_features", index=picks.index),
+            "avoid_high_volatility_false_signal": pd.Series(not any(feature in result["feature_set"] for feature in ["volatility"]), index=picks.index),
+            "avoid_venue_gap_false_signal": pd.Series("venue_win_rate_gap" not in result["feature_set"], index=picks.index),
+        }
+        for strategy_name, mask in thresholds.items():
+            strategy_rows.append(strategy_row(strategy_name, result["name"], result["feature_set"], picks, mask, all_accuracy, result["brier"], result["log_loss"], rolling_accuracy))
+    if not consensus.empty:
+        consensus_picks = consensus.rename(columns={"ensemble_pick": "pick", "consensus_result": "result"}).copy()
+        consensus_picks["correct"] = consensus_picks["result"] == "correct"
+        consensus_picks["pick_confidence"] = consensus_picks["model_agreement_count"] / (consensus_picks["model_agreement_count"] + consensus_picks["model_disagreement_count"]).replace(0, 1)
+        for strategy_name, mask in {
+            "model_consensus_only": consensus_picks["consensus_strength"].isin(["strong_consensus", "moderate_consensus"]),
+            "model_consensus_daily_top1": consensus_picks.index.isin(consensus_picks.sort_values("pick_confidence", ascending=False).groupby(consensus_picks["date"]).head(1).index),
+            "production_vs_challenger_agreement_only": consensus_picks["production_pick"] == consensus_picks["challenger_pick"],
+        }.items():
+            strategy_rows.append(strategy_row(strategy_name, "model consensus", "consensus", consensus_picks, mask, consensus_accuracy, None, None, None))
+    strategy_report = pd.DataFrame(strategy_rows)
+    strategy_report.to_csv(results_dir / "selective_pick_strategy_backtest_report.csv", index=False, encoding="utf-8-sig")
+
+    daily_rows = []
+    if best_challenger:
+        challenger_picks = best_challenger["picks"]
+        production_by_date = production_picks.sort_values("pick_confidence", ascending=False).groupby("date")
+        challenger_by_date = challenger_picks.sort_values("pick_confidence", ascending=False).groupby("date")
+        for date_value, group in challenger_by_date:
+            top1 = group.head(1)
+            top2 = group.head(2)
+            prod_top1 = production_by_date.get_group(date_value).head(1) if date_value in production_by_date.groups else pd.DataFrame()
+            row_top1 = top1.iloc[0]
+            daily_rows.append(
+                {
+                    "date": date_value,
+                    "scheduled_games": int(len(group)),
+                    "strategy_name": "best_performance_challenger_daily_top2",
+                    "model_name": best_challenger["name"],
+                    "top1_game": f"{row_top1['away_team']} vs {row_top1['home_team']}",
+                    "top1_pick": row_top1["pick"],
+                    "top1_probability": round(float(row_top1["pick_confidence"]), 3),
+                    "top1_result": "correct" if row_top1["correct"] else "miss",
+                    "top2_picks": "|".join(top2["pick"].astype(str)),
+                    "top2_results": "|".join(np.where(top2["correct"], "correct", "miss")),
+                    "daily_pick_accuracy": round(float(top2["correct"].mean()), 3) if not top2.empty else None,
+                    "production_top1_pick": prod_top1.iloc[0]["pick"] if not prod_top1.empty else "",
+                    "production_top1_result": "correct" if not prod_top1.empty and bool(prod_top1.iloc[0]["correct"]) else ("miss" if not prod_top1.empty else ""),
+                    "challenger_top1_pick": row_top1["pick"],
+                    "challenger_top1_result": "correct" if row_top1["correct"] else "miss",
+                    "interpretation": "daily selected pick monitoring; not production model replacement",
+                }
+            )
+    pd.DataFrame(daily_rows).to_csv(results_dir / "daily_pick_performance_report.csv", index=False, encoding="utf-8-sig")
+
+    def best_strategy(name_filter: str):
+        if strategy_report.empty:
+            return {}
+        subset = strategy_report[strategy_report["strategy_name"].str.contains(name_filter, regex=False)]
+        subset = subset[subset["picked_games"] > 0]
+        if subset.empty:
+            return {}
+        return subset.sort_values(["pick_accuracy", "coverage_rate"], ascending=False).iloc[0].to_dict()
+
+    best_all_game = best_strategy("all_games")
+    best_selective = strategy_report[strategy_report["picked_games"] > 0].sort_values(["pick_accuracy", "coverage_rate"], ascending=False).iloc[0].to_dict() if not strategy_report.empty and (strategy_report["picked_games"] > 0).any() else {}
+    best_top1 = best_strategy("daily_top1")
+    best_top2 = best_strategy("daily_top2")
+    best_consensus = best_strategy("consensus")
+    current_season_best = strategy_report[strategy_report["2026_pick_accuracy"].notna()].sort_values(["2026_pick_accuracy", "coverage_rate"], ascending=False).iloc[0].to_dict() if not strategy_report.empty and strategy_report["2026_pick_accuracy"].notna().any() else {}
+    summary = {
+        "generated_at": pd.Timestamp.now().isoformat(),
+        "project_goal": "Improve actual KBO prediction success, especially for daily selected picks, while keeping the production model unchanged until a challenger proves stable.",
+        "production_model_accuracy": pick_metrics_from_games(production_picks).get("accuracy"),
+        "best_all_game_candidate": best_all_game,
+        "best_selective_pick_strategy": best_selective,
+        "best_daily_top1_strategy": best_top1,
+        "best_daily_top2_strategy": best_top2,
+        "best_consensus_strategy": best_consensus,
+        "current_season_best_strategy": current_season_best,
+        "recommended_performance_challenger": {
+            "model_name": best_challenger.get("name"),
+            "feature_set": best_challenger.get("feature_set"),
+            "status": "offline_monitoring_only",
+        },
+        "performance_improvement_summary": "Selective daily pick and consensus strategies are compared for actual hit rate; production model remains unchanged.",
+        "practical_pick_policy": "Monitor daily top1/top2 and strong consensus picks. C-grade weak picks remain directional unless audited accuracy improves.",
+        "limitations": ["No betting odds or market lines are used.", "Handicap and over/under are not evaluated.", "pitching_daily_snapshot.csv is not used as model features."],
+        "next_experiment": "Track the selected performance challenger on future completed games before any promotion decision.",
+        "performance_challenger_promotion_criteria": {
+            "daily_top1_accuracy_delta_required": 0.03,
+            "daily_top2_accuracy_delta_required": 0.02,
+            "current_season_rolling_pick_accuracy_improves": True,
+            "brier_and_log_loss_not_materially_worse": True,
+            "minimum_game_day_coverage": 0.6,
+            "no_leakage_detected": True,
+            "not_driven_by_one_small_segment_only": True,
+            "note": "This is monitoring promotion criteria, not production model replacement approval.",
+        },
+        "skipped_candidates": skipped,
+        "report_only": True,
+        "safe_to_replace_model": False,
+        "safe_to_use_pitching_snapshot_as_features": False,
+    }
+    (results_dir / "performance_target_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {
+        "performance_challenger_rows": challenger_rows,
+        "selective_pick_strategy_rows": strategy_rows,
+        "daily_pick_rows": daily_rows,
+        "consensus_rows": consensus.to_dict(orient="records") if not consensus.empty else [],
+        "performance_target_summary": summary,
+    }
+
+
 def sklearn_candidate_specs(recency_weight):
     try:
         from sklearn.calibration import CalibratedClassifierCV
@@ -2227,6 +2716,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     feature_decision_rows = current_season_bundle.get("revised_feature_decision_rows", feature_decision_rows)
     production_gate_audit = write_production_model_gate_audit(results_dir, selected_row, best_non_pitching, bootstrap_rows, calibration_rows, current_season_bundle.get("current_season_evidence_gate"))
     rejected_candidates = write_rejected_candidate_models(results_dir, best_non_pitching, production_gate_audit, current_season_bundle.get("current_season_evidence_gate", {}))
+    performance_bundle = write_performance_challenger_reports(results_dir, features, x, y, split_index, best, best_non_pitching, current_season_bundle)
     spread_report = write_model_probability_spread_report(results_dir, probability_spread_rows)
     payload = build_payload(
         best,
@@ -2256,6 +2746,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         production_gate_audit,
         leakage_audit_rows,
         current_season_bundle,
+        performance_bundle,
     )
     payload["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload["streak_feature_experiment_rows"] = len(streak_report)
@@ -2283,6 +2774,11 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload["current_season_drift_report"] = "modeling/results/current_season_drift_report.csv"
     payload["current_season_false_signal_report"] = "modeling/results/current_season_false_signal_report.csv"
     payload["rejected_candidate_models"] = "modeling/results/rejected_candidate_models.json"
+    payload["selective_pick_strategy_backtest_report"] = "modeling/results/selective_pick_strategy_backtest_report.csv"
+    payload["performance_challenger_model_report"] = "modeling/results/performance_challenger_model_report.csv"
+    payload["daily_pick_performance_report"] = "modeling/results/daily_pick_performance_report.csv"
+    payload["model_consensus_pick_report"] = "modeling/results/model_consensus_pick_report.csv"
+    payload["performance_target_summary"] = "modeling/results/performance_target_summary.json"
     payload.setdefault("diagnostic_reports", {})["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_experiment_report"] = "modeling/results/non_pitching_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_importance_report"] = "modeling/results/non_pitching_feature_importance_report.csv"
@@ -2810,6 +3306,7 @@ def write_model_insight_summary(
     production_gate_audit: dict | None = None,
     leakage_audit_rows: list[dict] | None = None,
     current_season_bundle: dict | None = None,
+    performance_bundle: dict | None = None,
 ):
     sorted_segments = [row for row in segment_rows if row["total_games"]]
     best_segments = sorted(sorted_segments, key=lambda row: row["accuracy"] or 0, reverse=True)[:5]
@@ -2832,6 +3329,7 @@ def write_model_insight_summary(
     production_gate_audit = production_gate_audit or {}
     leakage_audit_rows = leakage_audit_rows or []
     current_season_bundle = current_season_bundle or {}
+    performance_bundle = performance_bundle or {}
     selected_accuracy = selected_row.get("검증 정확도", 0)
     selected_brier = selected_row.get("Brier Score", 1)
     selected_log_loss = selected_row.get("Log Loss", 1)
@@ -2922,6 +3420,18 @@ def write_model_insight_summary(
         ],
         "current_season_drift_summary": current_season_bundle.get("drift_rows", []),
         "false_signal_summary": current_season_bundle.get("false_signal_rows", []),
+        "performance_challenger_summary": performance_bundle.get("performance_challenger_rows", []),
+        "selective_pick_strategy_summary": performance_bundle.get("selective_pick_strategy_rows", []),
+        "daily_pick_strategy_summary": performance_bundle.get("daily_pick_rows", []),
+        "consensus_model_summary": performance_bundle.get("consensus_rows", []),
+        "practical_prediction_strategy": {
+            "daily_top1": "monitor if it improves over production by at least 0.03 and covers most game days",
+            "daily_top2": "monitor if it improves over production by at least 0.02",
+            "consensus_only": "prefer strong or moderate consensus if backtest accuracy exceeds all-game baseline",
+            "c_grade_weak_picks": "directional only; not treated as strong recommendations",
+            "next_strategy_to_monitor": performance_bundle.get("performance_target_summary", {}).get("recommended_performance_challenger", {}),
+        },
+        "next_performance_experiment_step": "Monitor the report-only performance challenger on future completed games before any production model promotion.",
         "revised_non_pitching_feature_policy": "2026 current-season에서 악화된 비투수 feature group은 운영 후보에서 제거하거나 monitor_only로 낮추고, 전체 gate를 통과하기 전까지 생산 모델에는 반영하지 않습니다.",
         "best_candidate_stability_assessment": "개선폭이 작고 bootstrap/calibration/시간창 검증이 충분하지 않아 안정 개선으로 확정하지 않습니다.",
         "useful_non_pitching_features": useful_non_pitching,
@@ -3029,6 +3539,7 @@ def build_payload(
     production_gate_audit,
     leakage_audit_rows,
     current_season_bundle,
+    performance_bundle,
 ):
     columns = best["columns"]
     probability = best["probability"]
@@ -3214,6 +3725,7 @@ def build_payload(
         production_gate_audit,
         leakage_audit_rows,
         current_season_bundle,
+        performance_bundle,
     )
     payload["diagnostic_reports"] = {
         "feature_diagnostic_report": "modeling/results/feature_diagnostic_report.csv",
@@ -3242,6 +3754,11 @@ def build_payload(
         "current_season_drift_report": "modeling/results/current_season_drift_report.csv",
         "current_season_false_signal_report": "modeling/results/current_season_false_signal_report.csv",
         "rejected_candidate_models": "modeling/results/rejected_candidate_models.json",
+        "selective_pick_strategy_backtest_report": "modeling/results/selective_pick_strategy_backtest_report.csv",
+        "performance_challenger_model_report": "modeling/results/performance_challenger_model_report.csv",
+        "daily_pick_performance_report": "modeling/results/daily_pick_performance_report.csv",
+        "model_consensus_pick_report": "modeling/results/model_consensus_pick_report.csv",
+        "performance_target_summary": "modeling/results/performance_target_summary.json",
     }
     payload["diagnostic_report_rows"] = {
         "feature_diagnostics": len(feature_diagnostics),
@@ -3270,6 +3787,10 @@ def build_payload(
         "current_season_feature_group_ablation_rows": len(current_season_bundle.get("ablation_rows", [])),
         "current_season_drift_rows": len(current_season_bundle.get("drift_rows", [])),
         "current_season_false_signal_rows": len(current_season_bundle.get("false_signal_rows", [])),
+        "performance_challenger_rows": len(performance_bundle.get("performance_challenger_rows", [])),
+        "selective_pick_strategy_rows": len(performance_bundle.get("selective_pick_strategy_rows", [])),
+        "daily_pick_rows": len(performance_bundle.get("daily_pick_rows", [])),
+        "consensus_pick_rows": len(performance_bundle.get("consensus_rows", [])),
     }
     payload["model_insight_summary"] = insight_summary
     return payload
