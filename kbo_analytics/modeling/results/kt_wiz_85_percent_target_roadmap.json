@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-06-16T15:56:48.238517",
+  "target_precision": 0.85,
+  "current_best_segment": "rolling:rolling_agreement_probability_ge_52",
+  "current_best_segment_games": 77,
+  "current_best_segment_precision": 0.571,
+  "current_gap_to_target": 0.279,
+  "why_current_model_is_insufficient": "85% is not currently achieved. Current best is only 57.1%. Model tuning alone is unlikely to reach 85% without better pregame information.",
+  "required_new_information": [
+    "confirmed starters",
+    "starter rest and recent form",
+    "bullpen usage",
+    "confirmed lineup",
+    "key hitter/catcher status",
+    "stadium/travel/weather context"
+  ],
+  "next_feature_groups_to_test": [
+    "starting_pitcher_confirmed",
+    "starting_pitcher_rest_days",
+    "bullpen_usage_last_3_days",
+    "lineup_confirmed",
+    "opponent_starting_pitcher_hand"
+  ],
+  "minimum_sample_size_policy": {
+    "tiny": "games < 20; never actionable",
+    "small": "20 <= games < 50; only exploratory even if high accuracy",
+    "medium": "50 <= games < 100; actionable only with leakage audit pass",
+    "large": "games >= 100; preferred for promotion monitoring"
+  },
+  "promotion_policy": "A future 85% segment must be medium or large, leakage-safe, repeated in rolling validation, and report-only before production consideration.",
+  "stop_conditions": [
+    "segment accuracy falls below production baseline",
+    "coverage collapses to tiny sample",
+    "timestamped pregame source cannot be verified",
+    "Brier/log loss materially worsen"
+  ],
+  "next_experiment_plan": "Build timestamped KT pregame feature store for starters, bullpen, and lineup, then rerun KT selective precision report."
+}

@@ -113,6 +113,7 @@
   "recommended_kt_prediction_policy": "use_kt_consensus_as_experimental_note",
   "kt_85_percent_target_summary": {
     "target_accuracy": 0.85,
+    "target_precision": 0.85,
     "target_met": false,
     "best_precision_candidate": {
       "scope": "rolling",
@@ -124,7 +125,16 @@
       "target_accuracy": 0.85,
       "target_85_met": false,
       "sample_quality": "usable",
-      "interpretation": "85% target not met; keep improving model and data"
+      "interpretation": "85% target not met; current model/pregame data are insufficient",
+      "segment_name": "rolling:rolling_agreement_probability_ge_52",
+      "games": 77,
+      "precision": 0.571,
+      "correct": 44,
+      "target_precision": 0.85,
+      "gap_to_target": 0.279,
+      "meets_target": false,
+      "sample_size_bucket": "medium",
+      "statistically_actionable": true
     },
     "current_gap": 0.279,
     "status": "not_met"
@@ -234,5 +244,31 @@
   ],
   "safe_to_replace_model": false,
   "safe_to_use_pitching_snapshot_as_features": false,
-  "report_only": true
+  "report_only": true,
+  "kt_prediction_cutoff_policy": {
+    "default_cutoff": "before first pitch",
+    "preferred_cutoff": "after official starting lineup is available",
+    "strict_rule": "Any information published after the chosen cutoff cannot be used as a feature.",
+    "forbidden_post_game_features": "Post-game statistics are forbidden as model features.",
+    "evaluation_only_fields": [
+      "final_score",
+      "actual_winner",
+      "actual_close_game",
+      "actual_blowout_game"
+    ]
+  },
+  "pregame_feature_store_plan": {
+    "source_registry": "modeling/results/kt_wiz_pregame_feature_source_registry.json",
+    "feature_schema": "modeling/results/kt_wiz_pregame_feature_schema.csv",
+    "availability_audit": "modeling/results/kt_wiz_pregame_data_availability_audit.csv",
+    "target_roadmap": "modeling/results/kt_wiz_85_percent_target_roadmap.json",
+    "next_required_sources": [
+      "confirmed starters",
+      "starter rest and recent form",
+      "bullpen usage",
+      "confirmed lineup",
+      "key hitter/catcher status",
+      "stadium/travel/weather context"
+    ]
+  }
 }

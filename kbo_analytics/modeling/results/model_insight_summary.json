@@ -42205,5 +42205,35 @@
     },
     "current_gap": 0.279,
     "status": "not_met"
+  },
+  "kt_85_percent_precision_target_status": {
+    "target_precision": 0.85,
+    "status": "not_met",
+    "current_best_segment": "rolling:rolling_agreement_probability_ge_52",
+    "current_best_precision": 0.571,
+    "current_gap_to_target": 0.279,
+    "safe_to_replace_model": false,
+    "report_only": true
+  },
+  "kt_pregame_feature_store_plan": {
+    "source_registry": "modeling/results/kt_wiz_pregame_feature_source_registry.json",
+    "feature_schema": "modeling/results/kt_wiz_pregame_feature_schema.csv",
+    "availability_audit": "modeling/results/kt_wiz_pregame_data_availability_audit.csv",
+    "target_roadmap": "modeling/results/kt_wiz_85_percent_target_roadmap.json",
+    "next_required_sources": [
+      "confirmed starters",
+      "starter rest and recent form",
+      "bullpen usage",
+      "confirmed lineup",
+      "key hitter/catcher status",
+      "stadium/travel/weather context"
+    ]
+  },
+  "kt_next_information_source_experiment": "Build timestamped KT pregame feature store for starters, bullpen, and lineup, then rerun KT selective precision report.",
+  "kt_minimum_sample_size_guardrail": {
+    "tiny": "games < 20; never actionable",
+    "small": "20 <= games < 50; only exploratory even if high accuracy",
+    "medium": "50 <= games < 100; actionable only with leakage audit pass",
+    "large": "games >= 100; preferred for promotion monitoring"
   }
 }

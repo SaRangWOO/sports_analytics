@@ -1,0 +1,72 @@
+{
+  "generated_at": "2026-06-16T15:56:48.225683",
+  "team": "KT Wiz",
+  "project_goal": "Raise KT Wiz selected-pick precision toward 85% using leakage-safe pregame information.",
+  "target_precision": 0.85,
+  "current_best_precision": 0.571,
+  "current_gap_to_target": 0.279,
+  "prediction_cutoff_policy": {
+    "default_cutoff": "before first pitch",
+    "preferred_cutoff": "after official starting lineup is available",
+    "strict_rule": "Any information published after the chosen cutoff cannot be used as a feature.",
+    "forbidden_post_game_features": "Post-game statistics are forbidden as model features.",
+    "evaluation_only_fields": [
+      "final_score",
+      "actual_winner",
+      "actual_close_game",
+      "actual_blowout_game"
+    ]
+  },
+  "candidate_sources": [
+    "starting_pitcher_confirmed",
+    "starting_pitcher_rest_days",
+    "starting_pitcher_recent_form",
+    "starting_pitcher_vs_opponent_history",
+    "bullpen_usage_last_1_day",
+    "bullpen_usage_last_3_days",
+    "bullpen_usage_last_5_days",
+    "bullpen_high_leverage_usage",
+    "lineup_confirmed",
+    "batting_order_stability",
+    "key_hitter_absence",
+    "catcher_starting_status",
+    "opponent_starting_pitcher_hand",
+    "kt_vs_pitcher_type_history",
+    "stadium_context",
+    "travel_rest_context",
+    "weather_context_if_available",
+    "doubleheader_or_rescheduled_context"
+  ],
+  "allowed_before_game_features": [
+    "starter rest days",
+    "starter prior form",
+    "bullpen usage through previous completed games",
+    "stadium context",
+    "travel/rest context"
+  ],
+  "allowed_game_day_before_cutoff_features": [
+    "confirmed starter",
+    "confirmed lineup",
+    "catcher status",
+    "key hitter availability",
+    "weather if timestamped before cutoff"
+  ],
+  "forbidden_post_game_features": [
+    "final score",
+    "actual winner",
+    "actual close game",
+    "actual blowout game",
+    "same-game pitcher line",
+    "same-game hitter box score"
+  ],
+  "evaluation_only_fields": [
+    "target_win",
+    "score_team",
+    "score_opp",
+    "run_diff",
+    "actual_close_game",
+    "actual_blowout_game"
+  ],
+  "leakage_risk_notes": "Every game-day source needs a timestamp before the prediction cutoff. Same-day post-game records are forbidden as features.",
+  "implementation_status": "plan_created_initial_schema_and_audit"
+}

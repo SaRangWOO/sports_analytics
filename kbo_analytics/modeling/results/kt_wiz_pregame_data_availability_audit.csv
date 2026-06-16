@@ -1,0 +1,34 @@
+﻿source_group,feature_name,required_for_85_target_experiment,currently_available,historical_backfill_possible,live_collection_needed,estimated_coverage,blocking_issue,priority,interpretation
+starting_pitcher_confirmed,kt_probable_starter_known,True,False,True,False,medium,,P0,Required for next serious KT 85% experiment
+starting_pitcher_confirmed,kt_confirmed_starter_known,True,False,False,True,low,timestamped pregame source required,P0,Required for next serious KT 85% experiment
+starting_pitcher_rest_days,kt_starting_pitcher_rest_days,True,False,True,False,medium,,P0,Required for next serious KT 85% experiment
+starting_pitcher_recent_form,kt_starting_pitcher_last_3_game_era,True,False,True,False,medium,,P0,Required for next serious KT 85% experiment
+starting_pitcher_recent_form,kt_starting_pitcher_last_3_game_innings,True,False,True,False,medium,,P0,Required for next serious KT 85% experiment
+starting_pitcher_recent_form,kt_starting_pitcher_last_3_game_pitch_count,True,False,True,False,medium,,P0,Required for next serious KT 85% experiment
+starting_pitcher_vs_opponent_history,kt_starting_pitcher_vs_opponent_prior_era,False,False,True,False,medium,,P1,Useful supporting context
+starting_pitcher_confirmed,opponent_probable_starter_known,True,False,True,False,medium,,P0,Required for next serious KT 85% experiment
+starting_pitcher_confirmed,opponent_confirmed_starter_known,True,False,False,True,low,timestamped pregame source required,P0,Required for next serious KT 85% experiment
+starting_pitcher_rest_days,opponent_starting_pitcher_rest_days,True,False,True,False,medium,,P0,Required for next serious KT 85% experiment
+opponent_starting_pitcher_hand,opponent_starting_pitcher_hand,False,False,True,False,medium,,P1,Useful supporting context
+kt_vs_pitcher_type_history,kt_vs_left_handed_starter_prior_win_rate,False,False,True,False,medium,,P1,Useful supporting context
+kt_vs_pitcher_type_history,kt_vs_right_handed_starter_prior_win_rate,False,False,True,False,medium,,P1,Useful supporting context
+bullpen_usage_last_1_day,kt_bullpen_innings_last_1,True,False,True,False,medium,,P0,Required for next serious KT 85% experiment
+bullpen_usage_last_3_days,kt_bullpen_innings_last_3,True,False,True,False,medium,,P0,Required for next serious KT 85% experiment
+bullpen_usage_last_5_days,kt_bullpen_innings_last_5,False,False,True,False,medium,,P1,Useful supporting context
+bullpen_usage_last_1_day,opponent_bullpen_innings_last_1,True,False,True,False,medium,,P0,Required for next serious KT 85% experiment
+bullpen_usage_last_3_days,opponent_bullpen_innings_last_3,True,False,True,False,medium,,P0,Required for next serious KT 85% experiment
+bullpen_usage_last_5_days,opponent_bullpen_innings_last_5,False,False,True,False,medium,,P1,Useful supporting context
+bullpen_high_leverage_usage,kt_closer_used_yesterday,False,False,True,False,medium,,P1,Useful supporting context
+bullpen_high_leverage_usage,opponent_closer_used_yesterday,False,False,True,False,medium,,P1,Useful supporting context
+lineup_confirmed,kt_lineup_confirmed,True,False,False,True,low,timestamped pregame source required,P0,Required for next serious KT 85% experiment
+lineup_confirmed,opponent_lineup_confirmed,True,False,False,True,low,timestamped pregame source required,P0,Required for next serious KT 85% experiment
+batting_order_stability,kt_top_order_stability_score,False,False,False,True,low,timestamped pregame source required,P1,Useful supporting context
+key_hitter_absence,kt_cleanup_hitter_available,False,False,False,True,low,timestamped pregame source required,P1,Useful supporting context
+catcher_starting_status,kt_primary_catcher_starting,False,False,False,True,low,timestamped pregame source required,P1,Useful supporting context
+stadium_context,stadium_name,False,True,True,False,high,,P1,Useful supporting context
+stadium_context,kt_stadium_prior_win_rate,False,False,True,False,medium,,P1,Useful supporting context
+stadium_context,kt_vs_opponent_at_stadium_prior_win_rate,False,False,True,False,medium,,P1,Useful supporting context
+travel_rest_context,kt_rest_days_before_game,False,True,True,False,high,,P1,Useful supporting context
+travel_rest_context,opponent_rest_days_before_game,False,False,True,False,medium,,P1,Useful supporting context
+travel_rest_context,kt_travel_after_away_series,False,False,True,False,medium,,P1,Useful supporting context
+travel_rest_context,opponent_travel_after_away_series,False,False,True,False,medium,,P1,Useful supporting context

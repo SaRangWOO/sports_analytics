@@ -1,13 +1,13 @@
-﻿scope,strategy_name,picked_games,minimum_games_required,coverage_rate,accuracy,target_accuracy,target_85_met,sample_quality,interpretation
-holdout,all_kt_games,294,20,1.0,0.524,0.85,False,usable,85% target not met; keep improving model and data
-holdout,current_season_2026,58,10,0.197,0.517,0.85,False,usable,85% target not met; keep improving model and data
-holdout,model_and_production_agree,187,20,0.636,0.54,0.85,False,usable,85% target not met; keep improving model and data
-holdout,agreement_probability_ge_52,137,20,0.466,0.533,0.85,False,usable,85% target not met; keep improving model and data
-holdout,probability_ge_55,95,20,0.323,0.495,0.85,False,usable,85% target not met; keep improving model and data
-holdout,home_games,148,20,0.503,0.547,0.85,False,usable,85% target not met; keep improving model and data
-holdout,away_games,146,20,0.497,0.5,0.85,False,usable,85% target not met; keep improving model and data
-holdout,actual_close_games_evaluation_only,78,20,0.265,0.551,0.85,False,usable,85% target not met; keep improving model and data
-rolling,all_recent_rolling_games,160,20,1.0,0.531,0.85,False,usable,85% target not met; keep improving model and data
-rolling,rolling_model_and_production_agree,101,20,0.631,0.564,0.85,False,usable,85% target not met; keep improving model and data
-rolling,rolling_agreement_probability_ge_52,77,20,0.481,0.571,0.85,False,usable,85% target not met; keep improving model and data
-rolling,rolling_probability_ge_55,35,20,0.219,0.457,0.85,False,usable,85% target not met; keep improving model and data
+﻿scope,strategy_name,picked_games,minimum_games_required,coverage_rate,accuracy,target_accuracy,target_85_met,sample_quality,interpretation,segment_name,games,precision,correct,target_precision,gap_to_target,meets_target,sample_size_bucket,statistically_actionable
+holdout,all_kt_games,294,20,1.0,0.524,0.85,False,usable,85% target not met; current model/pregame data are insufficient,holdout:all_kt_games,294,0.524,154,0.85,0.326,False,large,True
+holdout,current_season_2026,58,10,0.197,0.517,0.85,False,usable,85% target not met; current model/pregame data are insufficient,holdout:current_season_2026,58,0.517,30,0.85,0.333,False,medium,True
+holdout,model_and_production_agree,187,20,0.636,0.54,0.85,False,usable,85% target not met; current model/pregame data are insufficient,holdout:model_and_production_agree,187,0.54,101,0.85,0.31,False,large,True
+holdout,agreement_probability_ge_52,137,20,0.466,0.533,0.85,False,usable,85% target not met; current model/pregame data are insufficient,holdout:agreement_probability_ge_52,137,0.533,73,0.85,0.317,False,large,True
+holdout,probability_ge_55,95,20,0.323,0.495,0.85,False,usable,85% target not met; current model/pregame data are insufficient,holdout:probability_ge_55,95,0.495,47,0.85,0.355,False,medium,True
+holdout,home_games,148,20,0.503,0.547,0.85,False,usable,85% target not met; current model/pregame data are insufficient,holdout:home_games,148,0.547,81,0.85,0.303,False,large,True
+holdout,away_games,146,20,0.497,0.5,0.85,False,usable,85% target not met; current model/pregame data are insufficient,holdout:away_games,146,0.5,73,0.85,0.35,False,large,True
+holdout,actual_close_games_evaluation_only,78,20,0.265,0.551,0.85,False,usable,85% target not met; current model/pregame data are insufficient,holdout:actual_close_games_evaluation_only,78,0.551,43,0.85,0.299,False,medium,True
+rolling,all_recent_rolling_games,160,20,1.0,0.531,0.85,False,usable,85% target not met; current model/pregame data are insufficient,rolling:all_recent_rolling_games,160,0.531,85,0.85,0.319,False,large,True
+rolling,rolling_model_and_production_agree,101,20,0.631,0.564,0.85,False,usable,85% target not met; current model/pregame data are insufficient,rolling:rolling_model_and_production_agree,101,0.564,57,0.85,0.286,False,large,True
+rolling,rolling_agreement_probability_ge_52,77,20,0.481,0.571,0.85,False,usable,85% target not met; current model/pregame data are insufficient,rolling:rolling_agreement_probability_ge_52,77,0.571,44,0.85,0.279,False,medium,True
+rolling,rolling_probability_ge_55,35,20,0.219,0.457,0.85,False,usable,85% target not met; current model/pregame data are insufficient,rolling:rolling_probability_ge_55,35,0.457,16,0.85,0.393,False,small,False

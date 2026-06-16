@@ -2828,22 +2828,51 @@ def write_kt_precision_target_report(results_dir: Path, prediction_rows: list[di
     rolling = pd.DataFrame(rolling_rows)
     rows = []
 
+    def sample_bucket(games: int):
+        if games < 20:
+            return "tiny"
+        if games < 50:
+            return "small"
+        if games < 100:
+            return "medium"
+        return "large"
+
+    def actionable(games: int, precision: float | None):
+        bucket = sample_bucket(games)
+        if bucket == "tiny":
+            return False
+        if bucket == "small":
+            return bool(precision is not None and precision >= 0.9)
+        return True
+
     def add_row(scope, strategy, frame, mask, min_games=20):
         subset = frame[mask].copy() if not frame.empty else frame
         picked = int(len(subset))
         accuracy = round(float(subset["correct"].astype(bool).mean()), 3) if picked else None
+        correct = int(subset["correct"].astype(bool).sum()) if picked else 0
+        bucket = sample_bucket(picked)
+        is_actionable = actionable(picked, accuracy)
         rows.append(
             {
+                "segment_name": f"{scope}:{strategy}",
                 "scope": scope,
                 "strategy_name": strategy,
+                "games": picked,
+                "correct": correct,
+                "precision": accuracy,
                 "picked_games": picked,
                 "minimum_games_required": min_games,
                 "coverage_rate": round(float(picked / len(frame)), 3) if len(frame) else 0,
                 "accuracy": accuracy,
                 "target_accuracy": 0.85,
+                "target_precision": 0.85,
+                "gap_to_target": round(0.85 - accuracy, 3) if accuracy is not None else None,
+                "meets_target": bool(picked >= min_games and accuracy is not None and accuracy >= 0.85),
                 "target_85_met": bool(picked >= min_games and accuracy is not None and accuracy >= 0.85),
+                "sample_size_bucket": bucket,
+                "statistically_actionable": is_actionable,
                 "sample_quality": "usable" if picked >= min_games else "too_small",
-                "interpretation": "85% target met with usable sample" if picked >= min_games and accuracy is not None and accuracy >= 0.85 else "85% target not met; keep improving model and data",
+                "interpretation": "85% target met with usable sample" if picked >= min_games and accuracy is not None and accuracy >= 0.85 else "85% target not met; current model/pregame data are insufficient",
             }
         )
 
@@ -2875,6 +2904,164 @@ def write_kt_precision_target_report(results_dir: Path, prediction_rows: list[di
     return rows
 
 
+def kt_prediction_cutoff_policy():
+    return {
+        "default_cutoff": "before first pitch",
+        "preferred_cutoff": "after official starting lineup is available",
+        "strict_rule": "Any information published after the chosen cutoff cannot be used as a feature.",
+        "forbidden_post_game_features": "Post-game statistics are forbidden as model features.",
+        "evaluation_only_fields": ["final_score", "actual_winner", "actual_close_game", "actual_blowout_game"],
+    }
+
+
+def kt_pregame_source_groups():
+    return [
+        "starting_pitcher_confirmed",
+        "starting_pitcher_rest_days",
+        "starting_pitcher_recent_form",
+        "starting_pitcher_vs_opponent_history",
+        "bullpen_usage_last_1_day",
+        "bullpen_usage_last_3_days",
+        "bullpen_usage_last_5_days",
+        "bullpen_high_leverage_usage",
+        "lineup_confirmed",
+        "batting_order_stability",
+        "key_hitter_absence",
+        "catcher_starting_status",
+        "opponent_starting_pitcher_hand",
+        "kt_vs_pitcher_type_history",
+        "stadium_context",
+        "travel_rest_context",
+        "weather_context_if_available",
+        "doubleheader_or_rescheduled_context",
+    ]
+
+
+def kt_pregame_schema_rows():
+    rows = [
+        ("kt_probable_starter_known", "starting_pitcher_confirmed", "KT probable starter is available before game day or morning cutoff", "boolean", "before_game_or_game_day_before_cutoff", "low", "planned", "false", "high", "Do not backfill from post-game box score."),
+        ("kt_confirmed_starter_known", "starting_pitcher_confirmed", "KT official confirmed starter is available before cutoff", "boolean", "game_day_before_cutoff", "medium", "planned", "false", "high", "Use only timestamped pregame source."),
+        ("kt_starting_pitcher_rest_days", "starting_pitcher_rest_days", "KT starter days since previous appearance", "number", "before_game", "low", "planned", "null", "high", "Requires historical pitching appearance logs."),
+        ("kt_starting_pitcher_last_3_game_era", "starting_pitcher_recent_form", "KT starter ERA over previous 3 appearances", "number", "before_game", "low", "planned", "league_average", "high", "Shift by one appearance."),
+        ("kt_starting_pitcher_last_3_game_innings", "starting_pitcher_recent_form", "KT starter innings over previous 3 appearances", "number", "before_game", "low", "planned", "league_average", "medium", "Shift by one appearance."),
+        ("kt_starting_pitcher_last_3_game_pitch_count", "starting_pitcher_recent_form", "KT starter pitch count over previous 3 appearances", "number", "before_game", "low", "planned", "null", "medium", "Needs pitch-count source."),
+        ("kt_starting_pitcher_vs_opponent_prior_era", "starting_pitcher_vs_opponent_history", "KT starter prior ERA against opponent", "number", "before_game", "low", "planned", "league_average", "medium", "Prior matchups only."),
+        ("opponent_probable_starter_known", "starting_pitcher_confirmed", "Opponent probable starter is available", "boolean", "before_game_or_game_day_before_cutoff", "low", "planned", "false", "high", "No post-game source."),
+        ("opponent_confirmed_starter_known", "starting_pitcher_confirmed", "Opponent confirmed starter is available before cutoff", "boolean", "game_day_before_cutoff", "medium", "planned", "false", "high", "Timestamp required."),
+        ("opponent_starting_pitcher_rest_days", "starting_pitcher_rest_days", "Opponent starter rest days", "number", "before_game", "low", "planned", "null", "high", "Historical appearance logs."),
+        ("opponent_starting_pitcher_hand", "opponent_starting_pitcher_hand", "Opponent starter throwing hand", "category", "before_game_or_game_day_before_cutoff", "low", "planned", "unknown", "high", "Roster/static source acceptable."),
+        ("kt_vs_left_handed_starter_prior_win_rate", "kt_vs_pitcher_type_history", "KT prior win rate against left-handed starters", "number", "before_game", "low", "planned", "0.5", "medium", "Prior games only."),
+        ("kt_vs_right_handed_starter_prior_win_rate", "kt_vs_pitcher_type_history", "KT prior win rate against right-handed starters", "number", "before_game", "low", "planned", "0.5", "medium", "Prior games only."),
+        ("kt_bullpen_innings_last_1", "bullpen_usage_last_1_day", "KT bullpen innings yesterday", "number", "before_game", "low", "planned", "0", "high", "Completed prior games only."),
+        ("kt_bullpen_innings_last_3", "bullpen_usage_last_3_days", "KT bullpen innings last 3 days", "number", "before_game", "low", "planned", "0", "high", "Completed prior games only."),
+        ("kt_bullpen_innings_last_5", "bullpen_usage_last_5_days", "KT bullpen innings last 5 days", "number", "before_game", "low", "planned", "0", "medium", "Completed prior games only."),
+        ("opponent_bullpen_innings_last_1", "bullpen_usage_last_1_day", "Opponent bullpen innings yesterday", "number", "before_game", "low", "planned", "0", "high", "Completed prior games only."),
+        ("opponent_bullpen_innings_last_3", "bullpen_usage_last_3_days", "Opponent bullpen innings last 3 days", "number", "before_game", "low", "planned", "0", "high", "Completed prior games only."),
+        ("opponent_bullpen_innings_last_5", "bullpen_usage_last_5_days", "Opponent bullpen innings last 5 days", "number", "before_game", "low", "planned", "0", "medium", "Completed prior games only."),
+        ("kt_closer_used_yesterday", "bullpen_high_leverage_usage", "KT closer appeared yesterday", "boolean", "before_game", "low", "planned", "false", "medium", "Prior completed game only."),
+        ("opponent_closer_used_yesterday", "bullpen_high_leverage_usage", "Opponent closer appeared yesterday", "boolean", "before_game", "low", "planned", "false", "medium", "Prior completed game only."),
+        ("kt_lineup_confirmed", "lineup_confirmed", "KT official lineup is available before cutoff", "boolean", "game_day_before_cutoff", "medium", "planned", "false", "high", "Only if source timestamp is before cutoff."),
+        ("opponent_lineup_confirmed", "lineup_confirmed", "Opponent official lineup is available before cutoff", "boolean", "game_day_before_cutoff", "medium", "planned", "false", "high", "Only if source timestamp is before cutoff."),
+        ("kt_top_order_stability_score", "batting_order_stability", "Similarity of KT top order to recent games", "number", "game_day_before_cutoff", "medium", "planned", "null", "medium", "Needs confirmed lineup."),
+        ("kt_cleanup_hitter_available", "key_hitter_absence", "KT cleanup hitter availability flag", "boolean", "game_day_before_cutoff", "medium", "planned", "unknown", "medium", "Needs lineup/injury source."),
+        ("kt_primary_catcher_starting", "catcher_starting_status", "KT primary catcher starts", "boolean", "game_day_before_cutoff", "medium", "planned", "unknown", "medium", "Needs lineup source."),
+        ("stadium_name", "stadium_context", "Game stadium", "category", "before_game", "low", "available", "unknown", "medium", "Schedule source."),
+        ("kt_stadium_prior_win_rate", "stadium_context", "KT prior win rate at stadium", "number", "before_game", "low", "planned", "0.5", "medium", "Prior games only."),
+        ("kt_vs_opponent_at_stadium_prior_win_rate", "stadium_context", "KT prior win rate versus opponent at stadium", "number", "before_game", "low", "planned", "0.5", "medium", "Prior games only."),
+        ("kt_rest_days_before_game", "travel_rest_context", "KT rest days before game", "number", "before_game", "low", "available", "1", "medium", "Existing schedule-derived feature."),
+        ("opponent_rest_days_before_game", "travel_rest_context", "Opponent rest days before game", "number", "before_game", "low", "planned", "1", "medium", "Schedule-derived."),
+        ("kt_travel_after_away_series", "travel_rest_context", "KT travel after away series", "boolean", "before_game", "low", "planned", "false", "low", "Schedule-derived."),
+        ("opponent_travel_after_away_series", "travel_rest_context", "Opponent travel after away series", "boolean", "before_game", "low", "planned", "false", "low", "Schedule-derived."),
+    ]
+    return [
+        {
+            "feature_name": feature_name,
+            "feature_group": group,
+            "description": description,
+            "data_type": data_type,
+            "allowed_timing": timing,
+            "leakage_risk": leakage_risk,
+            "current_implementation_status": status,
+            "missing_value_policy": missing_policy,
+            "expected_impact": impact,
+            "notes": notes,
+        }
+        for feature_name, group, description, data_type, timing, leakage_risk, status, missing_policy, impact, notes in rows
+    ]
+
+
+def write_kt_pregame_feature_store_plan(results_dir: Path, precision_rows: list[dict]):
+    best = max(
+        [row for row in precision_rows if row.get("statistically_actionable")],
+        key=lambda row: (row.get("precision") or 0, row.get("games") or 0),
+        default={},
+    )
+    current_precision = best.get("precision", 0.571)
+    registry = {
+        "generated_at": pd.Timestamp.now().isoformat(),
+        "team": "KT Wiz",
+        "project_goal": "Raise KT Wiz selected-pick precision toward 85% using leakage-safe pregame information.",
+        "target_precision": 0.85,
+        "current_best_precision": current_precision,
+        "current_gap_to_target": round(0.85 - float(current_precision or 0), 3),
+        "prediction_cutoff_policy": kt_prediction_cutoff_policy(),
+        "candidate_sources": kt_pregame_source_groups(),
+        "allowed_before_game_features": ["starter rest days", "starter prior form", "bullpen usage through previous completed games", "stadium context", "travel/rest context"],
+        "allowed_game_day_before_cutoff_features": ["confirmed starter", "confirmed lineup", "catcher status", "key hitter availability", "weather if timestamped before cutoff"],
+        "forbidden_post_game_features": ["final score", "actual winner", "actual close game", "actual blowout game", "same-game pitcher line", "same-game hitter box score"],
+        "evaluation_only_fields": ["target_win", "score_team", "score_opp", "run_diff", "actual_close_game", "actual_blowout_game"],
+        "leakage_risk_notes": "Every game-day source needs a timestamp before the prediction cutoff. Same-day post-game records are forbidden as features.",
+        "implementation_status": "plan_created_initial_schema_and_audit",
+    }
+    (results_dir / "kt_wiz_pregame_feature_source_registry.json").write_text(json.dumps(registry, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    schema_rows = kt_pregame_schema_rows()
+    pd.DataFrame(schema_rows).to_csv(results_dir / "kt_wiz_pregame_feature_schema.csv", index=False, encoding="utf-8-sig")
+    source_groups = kt_pregame_source_groups()
+    audit_rows = []
+    for row in schema_rows:
+        group = row["feature_group"]
+        priority = "P0" if group in {"starting_pitcher_confirmed", "starting_pitcher_rest_days", "starting_pitcher_recent_form", "bullpen_usage_last_1_day", "bullpen_usage_last_3_days", "lineup_confirmed"} else ("P1" if group in source_groups else "P2")
+        currently_available = row["current_implementation_status"] == "available"
+        audit_rows.append(
+            {
+                "source_group": group,
+                "feature_name": row["feature_name"],
+                "required_for_85_target_experiment": priority == "P0",
+                "currently_available": currently_available,
+                "historical_backfill_possible": row["allowed_timing"] != "game_day_before_cutoff",
+                "live_collection_needed": row["allowed_timing"] == "game_day_before_cutoff",
+                "estimated_coverage": "low" if row["allowed_timing"] == "game_day_before_cutoff" else ("medium" if not currently_available else "high"),
+                "blocking_issue": "timestamped pregame source required" if row["allowed_timing"] == "game_day_before_cutoff" else "",
+                "priority": priority,
+                "interpretation": "Required for next serious KT 85% experiment" if priority == "P0" else "Useful supporting context",
+            }
+        )
+    pd.DataFrame(audit_rows).to_csv(results_dir / "kt_wiz_pregame_data_availability_audit.csv", index=False, encoding="utf-8-sig")
+    roadmap = {
+        "generated_at": pd.Timestamp.now().isoformat(),
+        "target_precision": 0.85,
+        "current_best_segment": best.get("segment_name", "rolling:rolling_agreement_probability_ge_52"),
+        "current_best_segment_games": best.get("games", 77),
+        "current_best_segment_precision": current_precision,
+        "current_gap_to_target": round(0.85 - float(current_precision or 0), 3),
+        "why_current_model_is_insufficient": "85% is not currently achieved. Current best is only 57.1%. Model tuning alone is unlikely to reach 85% without better pregame information.",
+        "required_new_information": ["confirmed starters", "starter rest and recent form", "bullpen usage", "confirmed lineup", "key hitter/catcher status", "stadium/travel/weather context"],
+        "next_feature_groups_to_test": ["starting_pitcher_confirmed", "starting_pitcher_rest_days", "bullpen_usage_last_3_days", "lineup_confirmed", "opponent_starting_pitcher_hand"],
+        "minimum_sample_size_policy": {
+            "tiny": "games < 20; never actionable",
+            "small": "20 <= games < 50; only exploratory even if high accuracy",
+            "medium": "50 <= games < 100; actionable only with leakage audit pass",
+            "large": "games >= 100; preferred for promotion monitoring",
+        },
+        "promotion_policy": "A future 85% segment must be medium or large, leakage-safe, repeated in rolling validation, and report-only before production consideration.",
+        "stop_conditions": ["segment accuracy falls below production baseline", "coverage collapses to tiny sample", "timestamped pregame source cannot be verified", "Brier/log loss materially worsen"],
+        "next_experiment_plan": "Build timestamped KT pregame feature store for starters, bullpen, and lineup, then rerun KT selective precision report.",
+    }
+    (results_dir / "kt_wiz_85_percent_target_roadmap.json").write_text(json.dumps(roadmap, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"registry": registry, "schema_rows": schema_rows, "audit_rows": audit_rows, "roadmap": roadmap}
+
+
 def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, experiment_rows: list[dict], strategy_rows: list[dict], comparison_rows: list[dict], rolling_rows: list[dict], precision_rows: list[dict], skipped: list[str]):
     best_challenger = next((row for row in experiment_rows if row.get("selected_as_kt_challenger")), {})
     best_strategy = max([row for row in strategy_rows if row.get("picked_games")], key=lambda row: (row.get("pick_accuracy") or 0, row.get("coverage_rate") or 0), default={})
@@ -2886,6 +3073,7 @@ def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, exper
         key=lambda row: (row.get("accuracy") or 0, row.get("picked_games") or 0),
         default={},
     )
+    feature_plan = write_kt_pregame_feature_store_plan(results_dir, precision_rows)
     policy = "no_kt_specific_edge_found"
     if best_challenger and all_scope.get("accuracy_delta") is not None and all_scope.get("accuracy_delta") > 0:
         policy = "kt_strategy_promising_for_offline_monitoring"
@@ -2906,6 +3094,7 @@ def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, exper
         "agreement_strategy_summary": agreement_scope,
         "disagreement_strategy_summary": disagreement_scope,
         "recommended_kt_prediction_policy": policy,
+        "kt_prediction_cutoff_policy": kt_prediction_cutoff_policy(),
         "kt_85_percent_target_summary": {
             "target_accuracy": 0.85,
             "target_met": any(row.get("target_85_met") for row in precision_rows),
@@ -2931,6 +3120,13 @@ def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, exper
         "next_experiment": "Monitor future KT games and test whether consensus-only KT notes keep outperforming production on completed games.",
         "rolling_backtest_rows": len(rolling_rows),
         "precision_target_rows": len(precision_rows),
+        "pregame_feature_store_plan": {
+            "source_registry": "modeling/results/kt_wiz_pregame_feature_source_registry.json",
+            "feature_schema": "modeling/results/kt_wiz_pregame_feature_schema.csv",
+            "availability_audit": "modeling/results/kt_wiz_pregame_data_availability_audit.csv",
+            "target_roadmap": "modeling/results/kt_wiz_85_percent_target_roadmap.json",
+            "next_required_sources": feature_plan["roadmap"].get("required_new_information", []),
+        },
         "skipped_candidates": skipped,
         "safe_to_replace_model": False,
         "safe_to_use_pitching_snapshot_as_features": False,
