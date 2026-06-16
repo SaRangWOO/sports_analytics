@@ -2514,6 +2514,8 @@ def kt_prediction_rows(frame: pd.DataFrame, probability: np.ndarray, model_name:
                 "correct": bool(predicted_winner == actual_winner),
                 "brier": round(float((float(prob) - float(row["target_win"])) ** 2), 3),
                 "log_loss": kt_safe_log_loss([int(row["target_win"])], [float(prob)]),
+                "actual_close_game": bool(row.get("actual_close_game", 0)),
+                "actual_blowout_game": bool(row.get("actual_blowout_game", 0)),
                 "recommendation_grade": grade,
                 "production_predicted_winner": production_predicted_winner,
                 "production_predicted_probability": round(max(float(production_probability), 1 - float(production_probability)), 3) if production_probability is not None else None,
@@ -2657,7 +2659,8 @@ def write_kt_wiz_challenger_reports(results_dir: Path, features: pd.DataFrame, b
 
     strategy_rows = write_kt_selective_strategy_report(results_dir, selected_predictions, selected, production_accuracy)
     comparison_rows = write_kt_vs_production_report(results_dir, selected_predictions, production_accuracy)
-    summary = write_kt_performance_summary(results_dir, dataset_summary, experiment_rows, strategy_rows, comparison_rows, rolling_rows, skipped)
+    precision_rows = write_kt_precision_target_report(results_dir, selected_predictions, rolling_rows)
+    summary = write_kt_performance_summary(results_dir, dataset_summary, experiment_rows, strategy_rows, comparison_rows, rolling_rows, precision_rows, skipped)
     return summary
 
 
@@ -2770,7 +2773,7 @@ def write_kt_vs_production_report(results_dir: Path, prediction_rows: list[dict]
         "current_season_kt_games": frame["date"].dt.year == 2026,
         "kt_home_games": frame["is_home"].astype(bool),
         "kt_away_games": ~frame["is_home"].astype(bool),
-        "kt_close_games": frame["brier"] <= 0.25,
+        "kt_close_games": frame["actual_close_game"].fillna(False).astype(bool) if "actual_close_game" in frame.columns else pd.Series(False, index=frame.index),
         "kt_high_confidence_games": frame["predicted_probability"] >= 0.55,
         "kt_model_and_production_agree": agreement_mask,
         "kt_model_disagrees_with_production": frame["model_agrees_with_production"].eq(False),
@@ -2820,12 +2823,69 @@ def write_kt_vs_production_report(results_dir: Path, prediction_rows: list[dict]
     return rows
 
 
-def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, experiment_rows: list[dict], strategy_rows: list[dict], comparison_rows: list[dict], rolling_rows: list[dict], skipped: list[str]):
+def write_kt_precision_target_report(results_dir: Path, prediction_rows: list[dict], rolling_rows: list[dict]):
+    holdout = pd.DataFrame(prediction_rows)
+    rolling = pd.DataFrame(rolling_rows)
+    rows = []
+
+    def add_row(scope, strategy, frame, mask, min_games=20):
+        subset = frame[mask].copy() if not frame.empty else frame
+        picked = int(len(subset))
+        accuracy = round(float(subset["correct"].astype(bool).mean()), 3) if picked else None
+        rows.append(
+            {
+                "scope": scope,
+                "strategy_name": strategy,
+                "picked_games": picked,
+                "minimum_games_required": min_games,
+                "coverage_rate": round(float(picked / len(frame)), 3) if len(frame) else 0,
+                "accuracy": accuracy,
+                "target_accuracy": 0.85,
+                "target_85_met": bool(picked >= min_games and accuracy is not None and accuracy >= 0.85),
+                "sample_quality": "usable" if picked >= min_games else "too_small",
+                "interpretation": "85% target met with usable sample" if picked >= min_games and accuracy is not None and accuracy >= 0.85 else "85% target not met; keep improving model and data",
+            }
+        )
+
+    if not holdout.empty:
+        holdout["prediction_date"] = pd.to_datetime(holdout["prediction_date"])
+        holdout["correct"] = holdout["correct"].astype(bool)
+        agreement = holdout["model_agrees_with_production"].where(holdout["model_agrees_with_production"].notna(), False).astype(bool)
+        add_row("holdout", "all_kt_games", holdout, pd.Series(True, index=holdout.index))
+        add_row("holdout", "current_season_2026", holdout, holdout["prediction_date"].dt.year == 2026, min_games=10)
+        add_row("holdout", "model_and_production_agree", holdout, agreement)
+        add_row("holdout", "agreement_probability_ge_52", holdout, agreement & (holdout["predicted_probability"] >= 0.52))
+        add_row("holdout", "probability_ge_55", holdout, holdout["predicted_probability"] >= 0.55)
+        add_row("holdout", "home_games", holdout, holdout["is_home"].astype(bool))
+        add_row("holdout", "away_games", holdout, ~holdout["is_home"].astype(bool))
+        if "actual_close_game" in holdout.columns:
+            add_row("holdout", "actual_close_games_evaluation_only", holdout, holdout["actual_close_game"].fillna(False).astype(bool))
+
+    if not rolling.empty:
+        rolling["prediction_date"] = pd.to_datetime(rolling["prediction_date"])
+        rolling["correct"] = rolling["correct"].astype(bool)
+        agreement = rolling["model_agrees_with_production"].where(rolling["model_agrees_with_production"].notna(), False).astype(bool)
+        add_row("rolling", "all_recent_rolling_games", rolling, pd.Series(True, index=rolling.index))
+        add_row("rolling", "rolling_model_and_production_agree", rolling, agreement)
+        add_row("rolling", "rolling_agreement_probability_ge_52", rolling, agreement & (rolling["predicted_probability"] >= 0.52))
+        add_row("rolling", "rolling_probability_ge_55", rolling, rolling["predicted_probability"] >= 0.55)
+
+    report = pd.DataFrame(rows)
+    report.to_csv(results_dir / "kt_wiz_precision_target_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, experiment_rows: list[dict], strategy_rows: list[dict], comparison_rows: list[dict], rolling_rows: list[dict], precision_rows: list[dict], skipped: list[str]):
     best_challenger = next((row for row in experiment_rows if row.get("selected_as_kt_challenger")), {})
     best_strategy = max([row for row in strategy_rows if row.get("picked_games")], key=lambda row: (row.get("pick_accuracy") or 0, row.get("coverage_rate") or 0), default={})
     all_scope = next((row for row in comparison_rows if row.get("comparison_scope") == "all_kt_games"), {})
     agreement_scope = next((row for row in comparison_rows if row.get("comparison_scope") == "kt_model_and_production_agree"), {})
     disagreement_scope = next((row for row in comparison_rows if row.get("comparison_scope") == "kt_model_disagrees_with_production"), {})
+    best_precision = max(
+        [row for row in precision_rows if row.get("picked_games", 0) >= row.get("minimum_games_required", 20)],
+        key=lambda row: (row.get("accuracy") or 0, row.get("picked_games") or 0),
+        default={},
+    )
     policy = "no_kt_specific_edge_found"
     if best_challenger and all_scope.get("accuracy_delta") is not None and all_scope.get("accuracy_delta") > 0:
         policy = "kt_strategy_promising_for_offline_monitoring"
@@ -2846,6 +2906,13 @@ def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, exper
         "agreement_strategy_summary": agreement_scope,
         "disagreement_strategy_summary": disagreement_scope,
         "recommended_kt_prediction_policy": policy,
+        "kt_85_percent_target_summary": {
+            "target_accuracy": 0.85,
+            "target_met": any(row.get("target_85_met") for row in precision_rows),
+            "best_precision_candidate": best_precision,
+            "current_gap": round(0.85 - float(best_precision.get("accuracy", 0)), 3) if best_precision else None,
+            "status": "not_met",
+        },
         "leakage_audit_summary": {
             "allowed_feature_columns": dataset_summary.get("available_features", []),
             "excluded_columns": dataset_summary.get("excluded_leakage_columns", []),
@@ -2863,6 +2930,7 @@ def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, exper
         ],
         "next_experiment": "Monitor future KT games and test whether consensus-only KT notes keep outperforming production on completed games.",
         "rolling_backtest_rows": len(rolling_rows),
+        "precision_target_rows": len(precision_rows),
         "skipped_candidates": skipped,
         "safe_to_replace_model": False,
         "safe_to_use_pitching_snapshot_as_features": False,
@@ -3371,6 +3439,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload["kt_wiz_rolling_backtest_report"] = "modeling/results/kt_wiz_rolling_backtest_report.csv"
     payload["kt_wiz_selective_pick_strategy_report"] = "modeling/results/kt_wiz_selective_pick_strategy_report.csv"
     payload["kt_wiz_vs_production_comparison_report"] = "modeling/results/kt_wiz_vs_production_comparison_report.csv"
+    payload["kt_wiz_precision_target_report"] = "modeling/results/kt_wiz_precision_target_report.csv"
     payload["kt_wiz_performance_summary"] = "modeling/results/kt_wiz_performance_summary.json"
     payload.setdefault("diagnostic_reports", {})["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_experiment_report"] = "modeling/results/non_pitching_feature_experiment_report.csv"
@@ -3400,6 +3469,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload.setdefault("diagnostic_reports", {})["kt_wiz_rolling_backtest_report"] = "modeling/results/kt_wiz_rolling_backtest_report.csv"
     payload.setdefault("diagnostic_reports", {})["kt_wiz_selective_pick_strategy_report"] = "modeling/results/kt_wiz_selective_pick_strategy_report.csv"
     payload.setdefault("diagnostic_reports", {})["kt_wiz_vs_production_comparison_report"] = "modeling/results/kt_wiz_vs_production_comparison_report.csv"
+    payload.setdefault("diagnostic_reports", {})["kt_wiz_precision_target_report"] = "modeling/results/kt_wiz_precision_target_report.csv"
     payload.setdefault("diagnostic_reports", {})["kt_wiz_performance_summary"] = "modeling/results/kt_wiz_performance_summary.json"
     if payload.get("feature_importance"):
         pd.DataFrame(
@@ -4036,6 +4106,7 @@ def write_model_insight_summary(
         "kt_wiz_focused_experiment_summary": kt_wiz_summary.get("best_kt_challenger", {}),
         "kt_wiz_vs_production_summary": kt_wiz_summary.get("kt_vs_production_summary", {}),
         "kt_wiz_selective_pick_summary": kt_wiz_summary.get("best_kt_selective_strategy", {}),
+        "kt_wiz_85_percent_target_summary": kt_wiz_summary.get("kt_85_percent_target_summary", {}),
         "kt_wiz_prediction_policy": kt_wiz_summary.get("recommended_kt_prediction_policy", "no_kt_specific_edge_found"),
         "next_team_focused_experiment_step": kt_wiz_summary.get("next_experiment", "Continue team-focused offline monitoring before any production use."),
         "revised_non_pitching_feature_policy": "2026 current-season에서 악화된 비투수 feature group은 운영 후보에서 제거하거나 monitor_only로 낮추고, 전체 gate를 통과하기 전까지 생산 모델에는 반영하지 않습니다.",

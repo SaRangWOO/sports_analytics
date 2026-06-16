@@ -1,0 +1,13 @@
+﻿scope,strategy_name,picked_games,minimum_games_required,coverage_rate,accuracy,target_accuracy,target_85_met,sample_quality,interpretation
+holdout,all_kt_games,294,20,1.0,0.524,0.85,False,usable,85% target not met; keep improving model and data
+holdout,current_season_2026,58,10,0.197,0.517,0.85,False,usable,85% target not met; keep improving model and data
+holdout,model_and_production_agree,187,20,0.636,0.54,0.85,False,usable,85% target not met; keep improving model and data
+holdout,agreement_probability_ge_52,137,20,0.466,0.533,0.85,False,usable,85% target not met; keep improving model and data
+holdout,probability_ge_55,95,20,0.323,0.495,0.85,False,usable,85% target not met; keep improving model and data
+holdout,home_games,148,20,0.503,0.547,0.85,False,usable,85% target not met; keep improving model and data
+holdout,away_games,146,20,0.497,0.5,0.85,False,usable,85% target not met; keep improving model and data
+holdout,actual_close_games_evaluation_only,78,20,0.265,0.551,0.85,False,usable,85% target not met; keep improving model and data
+rolling,all_recent_rolling_games,160,20,1.0,0.531,0.85,False,usable,85% target not met; keep improving model and data
+rolling,rolling_model_and_production_agree,101,20,0.631,0.564,0.85,False,usable,85% target not met; keep improving model and data
+rolling,rolling_agreement_probability_ge_52,77,20,0.481,0.571,0.85,False,usable,85% target not met; keep improving model and data
+rolling,rolling_probability_ge_55,35,20,0.219,0.457,0.85,False,usable,85% target not met; keep improving model and data

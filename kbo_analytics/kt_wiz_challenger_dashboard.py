@@ -52,15 +52,18 @@ def build_dashboard(reference_date: date):
     strategies = load_csv(RESULTS_DIR / "kt_wiz_selective_pick_strategy_report.csv")
     comparison = load_csv(RESULTS_DIR / "kt_wiz_vs_production_comparison_report.csv")
     rolling = load_csv(RESULTS_DIR / "kt_wiz_rolling_backtest_report.csv")
+    precision = load_csv(RESULTS_DIR / "kt_wiz_precision_target_report.csv")
 
     best = summary.get("best_kt_challenger", {})
     policy = summary.get("recommended_kt_prediction_policy", "no_kt_specific_edge_found")
+    target = summary.get("kt_85_percent_target_summary", {})
     cards = [
         metric_card("KT 분석 경기", summary.get("total_games_analyzed")),
         metric_card("2026 KT 경기", summary.get("current_season_games_analyzed")),
         metric_card("추천 정책", policy),
         metric_card("실험 후보", best.get("model_name", "not_available")),
         metric_card("후보 정확도", best.get("accuracy", "not_available")),
+        metric_card("85% 목표", "달성" if target.get("target_met") else "미달"),
         metric_card("운영 반영", "미반영"),
     ]
 
@@ -118,6 +121,11 @@ def build_dashboard(reference_date: date):
     <section>
       <h2>Selective Pick Strategy</h2>
       {render_table(strategies.sort_values(["pick_accuracy", "coverage_rate"], ascending=False) if not strategies.empty else strategies, ["strategy_name", "picked_games", "coverage_rate", "pick_accuracy", "avg_probability", "current_season_pick_accuracy", "interpretation"], 20)}
+    </section>
+    <section>
+      <h2>85% Precision Target</h2>
+      <p class="muted">목표: KT 경기 선택픽 적중률 85% 이상. 현재는 미달 구간을 명확히 추적합니다.</p>
+      {render_table(precision.sort_values(["accuracy", "picked_games"], ascending=False) if not precision.empty else precision, ["scope", "strategy_name", "picked_games", "minimum_games_required", "coverage_rate", "accuracy", "target_85_met", "sample_quality", "interpretation"], 20)}
     </section>
     <section>
       <h2>Rolling Backtest</h2>
