@@ -1,0 +1,151 @@
+from __future__ import annotations
+
+import argparse
+import json
+from datetime import date
+from html import escape
+from pathlib import Path
+
+import pandas as pd
+
+
+BASE_DIR = Path(__file__).resolve().parent
+RESULTS_DIR = BASE_DIR / "modeling" / "results"
+DASHBOARD_DIR = BASE_DIR / "dashboard"
+
+
+def load_json(path: Path):
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_csv(path: Path, limit: int | None = None):
+    if not path.exists():
+        return pd.DataFrame()
+    frame = pd.read_csv(path)
+    return frame.head(limit) if limit else frame
+
+
+def render_table(frame: pd.DataFrame, columns: list[str] | None = None, limit: int = 20):
+    if frame.empty:
+        return "<p class='muted'>데이터가 아직 생성되지 않았습니다.</p>"
+    view = frame.copy()
+    if columns:
+        view = view[[column for column in columns if column in view.columns]]
+    view = view.head(limit)
+    header = "".join(f"<th>{escape(str(column))}</th>" for column in view.columns)
+    rows = []
+    for _, row in view.iterrows():
+        rows.append("<tr>" + "".join(f"<td>{escape(str(value))}</td>" for value in row.tolist()) + "</tr>")
+    return f"<table><thead><tr>{header}</tr></thead><tbody>{''.join(rows)}</tbody></table>"
+
+
+def metric_card(label: str, value):
+    return f"<div class='metric'><span>{escape(label)}</span><strong>{escape(str(value))}</strong></div>"
+
+
+def build_dashboard(reference_date: date):
+    summary = load_json(RESULTS_DIR / "kt_wiz_performance_summary.json")
+    dataset = load_json(RESULTS_DIR / "kt_wiz_dataset_summary.json")
+    experiments = load_csv(RESULTS_DIR / "kt_wiz_model_experiment_report.csv")
+    strategies = load_csv(RESULTS_DIR / "kt_wiz_selective_pick_strategy_report.csv")
+    comparison = load_csv(RESULTS_DIR / "kt_wiz_vs_production_comparison_report.csv")
+    rolling = load_csv(RESULTS_DIR / "kt_wiz_rolling_backtest_report.csv")
+
+    best = summary.get("best_kt_challenger", {})
+    policy = summary.get("recommended_kt_prediction_policy", "no_kt_specific_edge_found")
+    cards = [
+        metric_card("KT 분석 경기", summary.get("total_games_analyzed")),
+        metric_card("2026 KT 경기", summary.get("current_season_games_analyzed")),
+        metric_card("추천 정책", policy),
+        metric_card("실험 후보", best.get("model_name", "not_available")),
+        metric_card("후보 정확도", best.get("accuracy", "not_available")),
+        metric_card("운영 반영", "미반영"),
+    ]
+
+    html = f"""<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KT Wiz Focused Challenger Dashboard</title>
+  <style>
+    body {{ margin: 0; font-family: Arial, "Malgun Gothic", sans-serif; background: #f5f7fb; color: #18202f; }}
+    header {{ background: #111827; color: white; padding: 28px 32px; }}
+    main {{ max-width: 1180px; margin: 0 auto; padding: 24px; }}
+    h1 {{ margin: 0 0 8px; font-size: 28px; }}
+    h2 {{ margin-top: 32px; font-size: 20px; }}
+    .label {{ display: inline-block; padding: 6px 10px; background: #f59e0b; color: #111827; font-weight: 700; border-radius: 4px; }}
+    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 20px 0; }}
+    .metric {{ background: white; border: 1px solid #d8dee9; border-radius: 6px; padding: 14px; }}
+    .metric span {{ display: block; color: #5b6472; font-size: 12px; margin-bottom: 8px; }}
+    .metric strong {{ font-size: 18px; }}
+    section {{ background: white; border: 1px solid #d8dee9; border-radius: 6px; padding: 18px; margin-bottom: 18px; }}
+    table {{ border-collapse: collapse; width: 100%; font-size: 13px; }}
+    th, td {{ border-bottom: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; vertical-align: top; }}
+    th {{ background: #f3f4f6; color: #374151; }}
+    .muted {{ color: #667085; }}
+    .note {{ background: #fff7ed; border: 1px solid #fed7aa; padding: 12px; border-radius: 6px; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>KT Wiz Focused Challenger Dashboard</h1>
+    <div class="label">Experimental / Offline Monitoring Only</div>
+    <p>운영 예측에는 아직 미반영. 전체 모델과 KT 특화 모델이 같은 방향일 때만 참고합니다.</p>
+  </header>
+  <main>
+    <div class="grid">{''.join(cards)}</div>
+    <section>
+      <h2>KT Dataset Summary</h2>
+      <p class="muted">기준일: {escape(reference_date.isoformat())}</p>
+      <div class="grid">
+        {metric_card("시즌", dataset.get("seasons_covered"))}
+        {metric_card("KT 승률", dataset.get("kt_win_rate"))}
+        {metric_card("홈 경기", dataset.get("home_games"))}
+        {metric_card("원정 경기", dataset.get("away_games"))}
+      </div>
+    </section>
+    <section>
+      <h2>Best KT Challenger</h2>
+      {render_table(pd.DataFrame([best]) if best else pd.DataFrame(), limit=1)}
+    </section>
+    <section>
+      <h2>KT vs Production Comparison</h2>
+      {render_table(comparison, ["comparison_scope", "games", "production_accuracy", "kt_challenger_accuracy", "accuracy_delta", "agreement_games", "agreement_accuracy", "interpretation"], 20)}
+    </section>
+    <section>
+      <h2>Selective Pick Strategy</h2>
+      {render_table(strategies.sort_values(["pick_accuracy", "coverage_rate"], ascending=False) if not strategies.empty else strategies, ["strategy_name", "picked_games", "coverage_rate", "pick_accuracy", "avg_probability", "current_season_pick_accuracy", "interpretation"], 20)}
+    </section>
+    <section>
+      <h2>Rolling Backtest</h2>
+      {render_table(rolling.sort_values("prediction_date", ascending=False) if not rolling.empty else rolling, ["prediction_date", "opponent", "is_home", "train_games_before_date", "predicted_winner", "predicted_probability", "actual_winner", "correct", "production_predicted_winner", "model_agrees_with_production"], 30)}
+    </section>
+    <section>
+      <h2>Limitations & Leakage Audit</h2>
+      <div class="note">현재는 포트폴리오 검증용 실험 모델입니다. KT 특화 실험 후보: offline monitoring. 메인 예측과 운영 모델을 대체하지 않습니다.</div>
+      <p>{escape(str(summary.get("leakage_audit_summary", {})))}</p>
+      <p>{escape(str(summary.get("limitations", [])))}</p>
+    </section>
+  </main>
+</body>
+</html>"""
+    DASHBOARD_DIR.mkdir(parents=True, exist_ok=True)
+    output = DASHBOARD_DIR / "kt_wiz_challenger.html"
+    output.write_text(html, encoding="utf-8")
+    return output
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Build the KT Wiz offline challenger dashboard.")
+    parser.add_argument("--reference-date", default=date.today().isoformat())
+    parser.add_argument("--training-start-year", default="2016")
+    args = parser.parse_args()
+    output = build_dashboard(date.fromisoformat(args.reference_date))
+    print(f"[Success] KT Wiz challenger dashboard generated: {output}")
+
+
+if __name__ == "__main__":
+    main()

@@ -2287,6 +2287,591 @@ def write_performance_challenger_reports(results_dir: Path, features: pd.DataFra
     }
 
 
+KT_ALIASES = {"KT", "KT Wiz", "kt", "kt wiz", "케이티", "케이티 위즈"}
+
+
+def is_kt_team(value):
+    return str(value).strip().lower() in {alias.lower() for alias in KT_ALIASES}
+
+
+def kt_actual_game_key(frame: pd.DataFrame):
+    if "game_id" in frame.columns:
+        return frame["game_id"].astype(str).str.replace(r"_[^_]+$", "", regex=True)
+    return pd.Series(np.arange(len(frame)), index=frame.index).astype(str)
+
+
+def kt_feature_frame(features: pd.DataFrame):
+    kt_rows = features[features["team"].apply(is_kt_team)].copy()
+    kt_rows = kt_rows[kt_rows["target_win"].notna()].copy()
+    kt_rows["_actual_game_id"] = kt_actual_game_key(kt_rows)
+    kt_rows = kt_rows.drop_duplicates("_actual_game_id", keep="first").sort_values(["date", "_actual_game_id"]).reset_index(drop=True)
+    kt_rows["date"] = pd.to_datetime(kt_rows["date"])
+    if "season" not in kt_rows.columns:
+        kt_rows["season"] = kt_rows["date"].dt.year
+    kt_rows["kt_is_home"] = kt_rows["is_home"].astype(float)
+    kt_rows["kt_recent_5_win_rate"] = kt_rows["recent_5_win_rate"]
+    kt_rows["kt_recent_10_win_rate"] = kt_rows["recent_10_win_rate"]
+    kt_rows["kt_recent_5_run_diff"] = kt_rows["avg_run_diff_last_5"]
+    kt_rows["kt_recent_10_run_diff"] = kt_rows["avg_run_diff_last_10"]
+    kt_rows["kt_recent_5_runs_scored"] = kt_rows["avg_score_last_5"]
+    kt_rows["kt_recent_10_runs_scored"] = kt_rows["avg_score_last_10"]
+    kt_rows["kt_recent_5_runs_allowed"] = kt_rows["avg_allowed_last_5"]
+    kt_rows["kt_recent_10_runs_allowed"] = kt_rows["avg_allowed_last_10"]
+    kt_rows["kt_home_win_rate_prior"] = kt_rows.get("team_recent_home_win_rate_prior", 0.5)
+    kt_rows["kt_away_win_rate_prior"] = kt_rows.get("team_recent_away_win_rate_prior", 0.5)
+    kt_rows["kt_vs_opponent_recent_win_rate"] = kt_rows.get("head_to_head_win_rate_prior", 0.5)
+    kt_rows["kt_vs_opponent_run_diff_prior"] = kt_rows.get("season_avg_run_diff_prior", 0.0) - kt_rows.get("opponent_season_avg_run_diff_prior", 0.0)
+    kt_rows["kt_close_game_win_rate_prior"] = kt_rows.get("recent_5_close_game_rate", 0.0)
+    kt_rows["kt_blowout_game_rate_prior"] = kt_rows.get("team_recent_10_blowout_win_rate", 0.0) + kt_rows.get("team_recent_10_blowout_loss_rate", 0.0)
+    kt_rows["kt_after_win_win_rate_prior"] = 0.5
+    kt_rows["kt_after_loss_win_rate_prior"] = 0.5
+    for _, indexes in kt_rows.groupby("season", sort=False).groups.items():
+        prior_after_win = []
+        prior_after_loss = []
+        win_context_results = []
+        loss_context_results = []
+        previous_result = None
+        for idx in indexes:
+            prior_after_win.append(float(np.mean(win_context_results)) if win_context_results else 0.5)
+            prior_after_loss.append(float(np.mean(loss_context_results)) if loss_context_results else 0.5)
+            if previous_result == 1:
+                win_context_results.append(float(kt_rows.loc[idx, "target_win"]))
+            elif previous_result == 0:
+                loss_context_results.append(float(kt_rows.loc[idx, "target_win"]))
+            previous_result = int(kt_rows.loc[idx, "target_win"])
+        kt_rows.loc[list(indexes), "kt_after_win_win_rate_prior"] = prior_after_win
+        kt_rows.loc[list(indexes), "kt_after_loss_win_rate_prior"] = prior_after_loss
+    kt_rows["kt_rest_days"] = kt_rows["rest_days"]
+    kt_rows["kt_games_last_7_days"] = kt_rows.get("games_last_7_days", 0)
+    kt_rows["kt_games_last_14_days"] = (
+        kt_rows.groupby("season")["date"]
+        .transform(lambda dates: dates.apply(lambda value: int(((dates < value) & (dates >= value - pd.Timedelta(days=14))).sum())))
+    )
+    kt_rows["kt_current_streak_length"] = kt_rows.get("team_current_streak_length", 0)
+    kt_rows["kt_month_win_rate_prior"] = kt_rows.get("team_month_win_rate_prior", 0.5)
+    kt_rows["kt_season_phase"] = kt_rows.get("season_phase", 0)
+    kt_rows["opponent_recent_5_win_rate"] = kt_rows.get("opponent_recent_5_win_rate", 0.5)
+    kt_rows["opponent_recent_10_win_rate"] = kt_rows.get("opponent_recent_10_win_rate", 0.5)
+    kt_rows["opponent_recent_5_run_diff"] = kt_rows.get("opponent_avg_run_diff_last_5", 0.0)
+    kt_rows["opponent_recent_10_run_diff"] = kt_rows.get("opponent_avg_run_diff_last_10", 0.0)
+    kt_rows["opponent_games_last_7_days"] = kt_rows.get("opponent_games_last_7_days", kt_rows.get("games_last_7_days", 0))
+    return kt_rows
+
+
+def kt_feature_sets(kt_rows: pd.DataFrame, production_columns: list[str]):
+    kt_form = [
+        "kt_is_home",
+        "kt_recent_5_win_rate",
+        "kt_recent_10_win_rate",
+        "kt_recent_5_run_diff",
+        "kt_recent_10_run_diff",
+        "kt_recent_5_runs_scored",
+        "kt_recent_10_runs_scored",
+        "kt_recent_5_runs_allowed",
+        "kt_recent_10_runs_allowed",
+        "kt_rest_days",
+        "kt_games_last_7_days",
+        "kt_current_streak_length",
+    ]
+    opponent = [
+        "opponent_recent_5_win_rate",
+        "opponent_recent_10_win_rate",
+        "opponent_recent_5_run_diff",
+        "opponent_recent_10_run_diff",
+        "opponent_games_last_7_days",
+        "kt_vs_opponent_recent_win_rate",
+        "kt_vs_opponent_run_diff_prior",
+    ]
+    home_away = ["kt_is_home", "kt_home_win_rate_prior", "kt_away_win_rate_prior", "kt_rest_days", "kt_games_last_7_days"]
+    recent = ["kt_recent_5_win_rate", "kt_recent_5_run_diff", "kt_recent_5_runs_scored", "kt_recent_5_runs_allowed", "opponent_recent_5_win_rate", "opponent_recent_5_run_diff"]
+    without_false = [column for column in kt_form + opponent + home_away if "streak" not in column and "blowout" not in column]
+    all_safe = list(dict.fromkeys(kt_form + opponent + home_away + recent + ["kt_close_game_win_rate_prior", "kt_blowout_game_rate_prior", "kt_after_win_win_rate_prior", "kt_after_loss_win_rate_prior", "kt_month_win_rate_prior", "kt_season_phase", "kt_games_last_14_days"]))
+    sets = {
+        "production_features_on_kt_games": [column for column in production_columns if column in kt_rows.columns],
+        "kt_team_form_features": kt_form,
+        "kt_team_form_plus_opponent_context": kt_form + opponent,
+        "kt_home_away_context": home_away,
+        "kt_recent_form_only": recent,
+        "kt_without_false_signal_features": without_false,
+        "kt_all_non_pitching_safe_features": all_safe,
+    }
+    return {name: [column for column in dict.fromkeys(columns) if column in kt_rows.columns] for name, columns in sets.items()}
+
+
+def kt_model_specs(train_size: int):
+    specs = []
+    skipped = []
+    try:
+        from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier, HistGradientBoostingClassifier, RandomForestClassifier
+        from sklearn.linear_model import LogisticRegression
+    except ImportError:
+        return specs, ["sklearn classifiers unavailable"]
+    specs.extend(
+        [
+            ("LogisticRegression", LogisticRegression(C=0.45, class_weight="balanced", max_iter=1000, random_state=42)),
+            ("GradientBoostingClassifier", GradientBoostingClassifier(n_estimators=40, learning_rate=0.06, max_depth=2, random_state=42)),
+            ("HistGradientBoostingClassifier", HistGradientBoostingClassifier(max_iter=40, learning_rate=0.06, max_leaf_nodes=8, l2_regularization=0.12, random_state=42)),
+            ("RandomForestClassifier", RandomForestClassifier(n_estimators=50, max_depth=5, min_samples_leaf=6, class_weight="balanced_subsample", random_state=42, n_jobs=-1)),
+            ("ExtraTreesClassifier", ExtraTreesClassifier(n_estimators=50, max_depth=5, min_samples_leaf=6, class_weight="balanced", random_state=42, n_jobs=-1)),
+        ]
+    )
+    skipped.extend(
+        [
+            "LogisticRegression with calibration: skipped to keep official dashboard runtime bounded",
+            "GradientBoostingClassifier with calibration: skipped to keep official dashboard runtime bounded",
+            "simple soft-voting ensemble: represented by comparison of individual model consensus in reports",
+        ]
+    )
+    return specs, skipped
+
+
+def should_run_kt_candidate(model_name: str, feature_set: str):
+    if model_name == "LogisticRegression":
+        return True
+    if model_name in {"GradientBoostingClassifier", "HistGradientBoostingClassifier"}:
+        return feature_set in {"kt_team_form_plus_opponent_context", "kt_without_false_signal_features", "kt_all_non_pitching_safe_features"}
+    if model_name in {"RandomForestClassifier", "ExtraTreesClassifier"}:
+        return feature_set in {"kt_team_form_features", "kt_without_false_signal_features"}
+    return False
+
+
+def kt_safe_log_loss(y_true, probability):
+    values = np.unique(np.asarray(y_true, dtype=int))
+    if len(values) < 2:
+        return None
+    return safe_log_loss(np.asarray(y_true), np.asarray(probability))
+
+
+def kt_metrics(frame: pd.DataFrame, probability: np.ndarray):
+    y_true = frame["target_win"].to_numpy(dtype=int)
+    pred = (probability >= 0.5).astype(int)
+    confidence = np.maximum(probability, 1 - probability)
+    payload = {
+        "accuracy": round(float((pred == y_true).mean()), 3) if len(y_true) else None,
+        "brier": round(float(brier_score_loss(y_true, probability)), 3) if len(y_true) else None,
+        "log_loss": kt_safe_log_loss(y_true, probability),
+    }
+    for threshold in [0.52, 0.53, 0.54, 0.55]:
+        mask = confidence >= threshold
+        payload[f"over_{int(threshold * 100)}_games"] = int(mask.sum())
+        payload[f"over_{int(threshold * 100)}_accuracy"] = round(float((pred[mask] == y_true[mask]).mean()), 3) if mask.any() else None
+    home_mask = frame["kt_is_home"].to_numpy(dtype=float) == 1
+    away_mask = ~home_mask
+    close_mask = frame.get("actual_close_game", pd.Series(0, index=frame.index)).to_numpy(dtype=int) == 1
+    current_mask = pd.to_datetime(frame["date"]).dt.year.to_numpy() == 2026
+    payload["home_accuracy"] = round(float((pred[home_mask] == y_true[home_mask]).mean()), 3) if home_mask.any() else None
+    payload["away_accuracy"] = round(float((pred[away_mask] == y_true[away_mask]).mean()), 3) if away_mask.any() else None
+    payload["close_game_accuracy"] = round(float((pred[close_mask] == y_true[close_mask]).mean()), 3) if close_mask.any() else None
+    payload["current_season_accuracy"] = round(float((pred[current_mask] == y_true[current_mask]).mean()), 3) if current_mask.any() else None
+    return payload
+
+
+def kt_production_baseline(kt_rows: pd.DataFrame, best: dict):
+    frame = best.get("test_frame", pd.DataFrame()).copy()
+    if frame.empty:
+        return pd.DataFrame()
+    frame = frame[frame["team"].apply(is_kt_team)].copy()
+    if frame.empty:
+        return pd.DataFrame()
+    frame["_actual_game_id"] = kt_actual_game_key(frame)
+    prob = pd.Series(best["probability"], index=best["test_frame"].index).loc[frame.index].to_numpy(dtype=float)
+    frame["production_probability"] = prob
+    frame["production_predicted_winner"] = np.where(prob >= 0.5, "KT", frame["opponent"])
+    frame["production_correct"] = (prob >= 0.5).astype(int) == frame["target_win"].astype(int)
+    return frame[["_actual_game_id", "production_probability", "production_predicted_winner", "production_correct"]].drop_duplicates("_actual_game_id", keep="first")
+
+
+def kt_prediction_rows(frame: pd.DataFrame, probability: np.ndarray, model_name: str, feature_set: str, production_lookup: pd.DataFrame):
+    rows = []
+    prod = production_lookup.set_index("_actual_game_id") if not production_lookup.empty else pd.DataFrame()
+    for (_, row), prob in zip(frame.iterrows(), probability):
+        predicted_winner = "KT" if prob >= 0.5 else row["opponent"]
+        actual_winner = "KT" if int(row["target_win"]) == 1 else row["opponent"]
+        production_row = prod.loc[row["_actual_game_id"]] if not prod.empty and row["_actual_game_id"] in prod.index else {}
+        production_probability = production_row.get("production_probability") if isinstance(production_row, pd.Series) else None
+        production_predicted_winner = production_row.get("production_predicted_winner") if isinstance(production_row, pd.Series) else None
+        production_correct = production_row.get("production_correct") if isinstance(production_row, pd.Series) else None
+        confidence = max(float(prob), 1 - float(prob))
+        if confidence >= 0.55:
+            grade = "B등급 / 추천"
+        elif confidence >= 0.52:
+            grade = "C등급 / 약우세"
+        else:
+            grade = "D등급 / 관망"
+        rows.append(
+            {
+                "prediction_date": pd.to_datetime(row["date"]).date().isoformat(),
+                "season": int(row["season"]),
+                "opponent": row["opponent"],
+                "is_home": bool(row["kt_is_home"]),
+                "train_games_before_date": None,
+                "model_name": model_name,
+                "feature_set": feature_set,
+                "predicted_winner": predicted_winner,
+                "predicted_probability": round(confidence, 3),
+                "kt_probability": round(float(prob), 6),
+                "actual_winner": actual_winner,
+                "correct": bool(predicted_winner == actual_winner),
+                "brier": round(float((float(prob) - float(row["target_win"])) ** 2), 3),
+                "log_loss": kt_safe_log_loss([int(row["target_win"])], [float(prob)]),
+                "recommendation_grade": grade,
+                "production_predicted_winner": production_predicted_winner,
+                "production_predicted_probability": round(max(float(production_probability), 1 - float(production_probability)), 3) if production_probability is not None else None,
+                "production_correct": bool(production_correct) if production_correct is not None else None,
+                "model_agrees_with_production": bool(predicted_winner == production_predicted_winner) if production_predicted_winner else None,
+                "interpretation": "KT focused offline monitoring row; not a production pick.",
+            }
+        )
+    return rows
+
+
+def write_kt_dataset_summary(results_dir: Path, kt_rows: pd.DataFrame, all_features: pd.DataFrame, feature_sets: dict):
+    seasons = sorted(int(value) for value in kt_rows["season"].dropna().unique())
+    summary = {
+        "generated_at": pd.Timestamp.now().isoformat(),
+        "team": "KT Wiz",
+        "aliases_used": sorted(KT_ALIASES),
+        "total_kt_games": int(len(kt_rows)),
+        "seasons_covered": seasons,
+        "games_by_season": {str(int(season)): int(count) for season, count in kt_rows.groupby("season").size().items()},
+        "home_games": int((kt_rows["kt_is_home"] == 1).sum()),
+        "away_games": int((kt_rows["kt_is_home"] == 0).sum()),
+        "kt_wins": int(kt_rows["target_win"].sum()),
+        "kt_losses": int((1 - kt_rows["target_win"]).sum()),
+        "kt_win_rate": round(float(kt_rows["target_win"].mean()), 3) if len(kt_rows) else None,
+        "completed_games_used": int(len(kt_rows)),
+        "excluded_games": int(len(all_features[all_features["team"].apply(is_kt_team)]) - len(kt_rows)),
+        "available_features": sorted(set(sum(feature_sets.values(), []))),
+        "excluded_leakage_columns": ["target_win", "score_team", "score_opp", "run_diff", "actual_run_margin", "actual_close_game", "actual_blowout_game", "game_id", "date"],
+        "data_limitations": [
+            "KT-only sample is smaller than the full KBO model sample.",
+            "Scheduled future games are excluded from training and validation.",
+            "pitching_daily_snapshot.csv is not used as model features.",
+        ],
+    }
+    (results_dir / "kt_wiz_dataset_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    return summary
+
+
+def kt_train_predict(train_frame: pd.DataFrame, test_frame: pd.DataFrame, columns: list[str], model):
+    x_train, x_test = train_frame[columns], test_frame[columns]
+    train_scaled, test_scaled, _, _ = standardize_train_test(x_train, x_test)
+    model.fit(train_scaled, train_frame["target_win"].to_numpy(dtype=int))
+    return model.predict_proba(test_scaled)[:, 1]
+
+
+def write_kt_wiz_challenger_reports(results_dir: Path, features: pd.DataFrame, best: dict):
+    kt_rows = kt_feature_frame(features)
+    if len(kt_rows) < 40:
+        empty_summary = {
+            "generated_at": pd.Timestamp.now().isoformat(),
+            "project_goal": "KT Wiz focused prediction improvement through offline monitoring.",
+            "team": "KT Wiz",
+            "total_games_analyzed": int(len(kt_rows)),
+            "limitations": ["Not enough completed KT games for a stable challenger experiment."],
+            "safe_to_replace_model": False,
+        }
+        (results_dir / "kt_wiz_performance_summary.json").write_text(json.dumps(empty_summary, ensure_ascii=False, indent=2), encoding="utf-8")
+        return empty_summary
+    feature_sets = kt_feature_sets(kt_rows, best["columns"])
+    dataset_summary = write_kt_dataset_summary(results_dir, kt_rows, features, feature_sets)
+    split = chronological_split_index(kt_rows["date"])
+    train_frame = kt_rows.iloc[:split].copy()
+    test_frame = kt_rows.iloc[split:].copy()
+    specs, skipped = kt_model_specs(len(train_frame))
+    production_lookup = kt_production_baseline(kt_rows, best)
+    experiment_rows = []
+    prediction_sets = {}
+
+    prod_eval = test_frame.merge(production_lookup, on="_actual_game_id", how="left")
+    if prod_eval["production_probability"].notna().any():
+        prod_prob = prod_eval["production_probability"].fillna(0.5).to_numpy(dtype=float)
+        prod_metrics = kt_metrics(prod_eval, prod_prob)
+        experiment_rows.append(
+            {
+                "model_name": "production model baseline on KT games",
+                "feature_set": "production_features_on_kt_games",
+                "training_scope": "existing production holdout predictions filtered to KT games",
+                "kt_games": int(len(kt_rows)),
+                "train_games": None,
+                "test_games": int(len(prod_eval)),
+                **prod_metrics,
+                "rolling_accuracy": None,
+                "selected_as_kt_challenger": False,
+                "interpretation": "Production baseline comparison only; no KT model promotion.",
+            }
+        )
+        prediction_sets["production"] = kt_prediction_rows(prod_eval, prod_prob, "production model baseline on KT games", "production_features_on_kt_games", production_lookup)
+
+    for feature_set, columns in feature_sets.items():
+        if feature_set == "production_features_on_kt_games" or not columns:
+            continue
+        for model_name, model in specs:
+            if not should_run_kt_candidate(model_name, feature_set):
+                skipped.append(f"{model_name} / {feature_set}: skipped to keep runtime bounded")
+                continue
+            try:
+                probability = kt_train_predict(train_frame, test_frame, columns, model)
+            except Exception as exc:
+                skipped.append(f"{model_name} / {feature_set}: {exc.__class__.__name__}")
+                continue
+            metrics = kt_metrics(test_frame, probability)
+            prediction_key = f"{model_name}::{feature_set}"
+            prediction_sets[prediction_key] = kt_prediction_rows(test_frame, probability, model_name, feature_set, production_lookup)
+            experiment_rows.append(
+                {
+                    "model_name": model_name,
+                    "feature_set": feature_set,
+                    "training_scope": "KT-only chronological holdout; offline monitoring only",
+                    "kt_games": int(len(kt_rows)),
+                    "train_games": int(len(train_frame)),
+                    "test_games": int(len(test_frame)),
+                    **metrics,
+                    "rolling_accuracy": None,
+                    "selected_as_kt_challenger": False,
+                    "interpretation": "KT-specific challenger candidate; not production.",
+                }
+            )
+
+    production_accuracy = next((row.get("accuracy") for row in experiment_rows if row["model_name"].startswith("production")), None)
+    candidates = [row for row in experiment_rows if not row["model_name"].startswith("production") and row.get("accuracy") is not None]
+    selected = {}
+    if candidates:
+        selected = max(candidates, key=lambda row: (row.get("accuracy") or 0, row.get("over_52_accuracy") or 0, -(row.get("brier") or 1)))
+        selected["selected_as_kt_challenger"] = bool(production_accuracy is None or (selected.get("accuracy") or 0) > production_accuracy)
+        for row in experiment_rows:
+            if row["model_name"] == selected["model_name"] and row["feature_set"] == selected["feature_set"]:
+                row["selected_as_kt_challenger"] = selected["selected_as_kt_challenger"]
+                row["interpretation"] = "Selected for KT offline monitoring only." if selected["selected_as_kt_challenger"] else "Best KT candidate but not better than production baseline."
+    pd.DataFrame(experiment_rows).to_csv(results_dir / "kt_wiz_model_experiment_report.csv", index=False, encoding="utf-8-sig")
+
+    selected_key = f"{selected.get('model_name')}::{selected.get('feature_set')}" if selected else ""
+    selected_predictions = prediction_sets.get(selected_key, [])
+    rolling_rows = write_kt_rolling_report(results_dir, kt_rows, feature_sets.get(selected.get("feature_set", ""), []), selected.get("model_name", ""), selected.get("feature_set", ""), production_lookup)
+    if rolling_rows:
+        rolling_accuracy = round(float(pd.DataFrame(rolling_rows)["correct"].mean()), 3)
+        for row in experiment_rows:
+            if row["model_name"] == selected.get("model_name") and row["feature_set"] == selected.get("feature_set"):
+                row["rolling_accuracy"] = rolling_accuracy
+        pd.DataFrame(experiment_rows).to_csv(results_dir / "kt_wiz_model_experiment_report.csv", index=False, encoding="utf-8-sig")
+
+    strategy_rows = write_kt_selective_strategy_report(results_dir, selected_predictions, selected, production_accuracy)
+    comparison_rows = write_kt_vs_production_report(results_dir, selected_predictions, production_accuracy)
+    summary = write_kt_performance_summary(results_dir, dataset_summary, experiment_rows, strategy_rows, comparison_rows, rolling_rows, skipped)
+    return summary
+
+
+def write_kt_rolling_report(results_dir: Path, kt_rows: pd.DataFrame, columns: list[str], model_name: str, feature_set: str, production_lookup: pd.DataFrame):
+    rows = []
+    if not columns or not model_name:
+        pd.DataFrame(rows).to_csv(results_dir / "kt_wiz_rolling_backtest_report.csv", index=False, encoding="utf-8-sig")
+        return rows
+    try:
+        from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier, HistGradientBoostingClassifier, RandomForestClassifier
+        from sklearn.linear_model import LogisticRegression
+    except ImportError:
+        pd.DataFrame(rows).to_csv(results_dir / "kt_wiz_rolling_backtest_report.csv", index=False, encoding="utf-8-sig")
+        return rows
+    model_by_name = {
+        "LogisticRegression": LogisticRegression(C=0.45, class_weight="balanced", max_iter=1000, random_state=42),
+        "GradientBoostingClassifier": GradientBoostingClassifier(n_estimators=80, learning_rate=0.05, max_depth=2, random_state=42),
+        "HistGradientBoostingClassifier": HistGradientBoostingClassifier(max_iter=80, learning_rate=0.05, max_leaf_nodes=8, l2_regularization=0.12, random_state=42),
+        "RandomForestClassifier": RandomForestClassifier(n_estimators=120, max_depth=5, min_samples_leaf=6, class_weight="balanced_subsample", random_state=42, n_jobs=-1),
+        "ExtraTreesClassifier": ExtraTreesClassifier(n_estimators=120, max_depth=5, min_samples_leaf=6, class_weight="balanced", random_state=42, n_jobs=-1),
+    }
+    base_model = model_by_name.get(model_name, LogisticRegression(C=0.45, class_weight="balanced", max_iter=1000, random_state=42))
+    from sklearn.base import clone
+    prod = production_lookup.set_index("_actual_game_id") if not production_lookup.empty else pd.DataFrame()
+    minimum_history = max(40, len(kt_rows) - 160)
+    for idx, row in kt_rows.iterrows():
+        train = kt_rows[kt_rows["date"] < row["date"]].copy()
+        if len(train) < minimum_history:
+            continue
+        test = kt_rows.iloc[[idx]].copy()
+        probability = kt_train_predict(train, test, columns, clone(base_model))
+        pred_rows = kt_prediction_rows(test, probability, model_name, feature_set, production_lookup)
+        item = pred_rows[0]
+        item["train_games_before_date"] = int(len(train))
+        if not prod.empty and row["_actual_game_id"] in prod.index:
+            prod_row = prod.loc[row["_actual_game_id"]]
+            item["production_predicted_winner"] = prod_row.get("production_predicted_winner")
+            item["production_predicted_probability"] = round(max(float(prod_row.get("production_probability")), 1 - float(prod_row.get("production_probability"))), 3)
+            item["production_correct"] = bool(prod_row.get("production_correct"))
+            item["model_agrees_with_production"] = bool(item["predicted_winner"] == item["production_predicted_winner"])
+        item["interpretation"] = "KT rolling backtest uses only KT games before this date."
+        rows.append(item)
+    pd.DataFrame(rows).to_csv(results_dir / "kt_wiz_rolling_backtest_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_kt_selective_strategy_report(results_dir: Path, prediction_rows: list[dict], selected: dict, production_accuracy):
+    frame = pd.DataFrame(prediction_rows)
+    rows = []
+    if frame.empty:
+        pd.DataFrame(rows).to_csv(results_dir / "kt_wiz_selective_pick_strategy_report.csv", index=False, encoding="utf-8-sig")
+        return rows
+    frame["date"] = pd.to_datetime(frame["prediction_date"])
+    frame["is_home"] = frame["is_home"].astype(bool)
+    frame["correct_bool"] = frame["correct"].astype(bool)
+    frame["production_correct_bool"] = frame["production_correct"].where(frame["production_correct"].notna(), False).astype(bool)
+    agreement_mask = frame["model_agrees_with_production"].where(frame["model_agrees_with_production"].notna(), False).astype(bool)
+    masks = {
+        "all_kt_games": pd.Series(True, index=frame.index),
+        "kt_probability_ge_52": frame["predicted_probability"] >= 0.52,
+        "kt_probability_ge_53": frame["predicted_probability"] >= 0.53,
+        "kt_probability_ge_54": frame["predicted_probability"] >= 0.54,
+        "kt_probability_ge_55": frame["predicted_probability"] >= 0.55,
+        "kt_home_only": frame["is_home"],
+        "kt_away_only": ~frame["is_home"],
+        "kt_after_loss_games": frame["recommendation_grade"].notna() & (frame["actual_winner"].shift(1) != "KT"),
+        "kt_after_win_games": frame["recommendation_grade"].notna() & (frame["actual_winner"].shift(1) == "KT"),
+        "kt_model_and_production_agree": agreement_mask,
+        "kt_model_disagrees_with_production": frame["model_agrees_with_production"].eq(False),
+        "kt_consensus_only": agreement_mask & (frame["predicted_probability"] >= 0.52) & frame["production_predicted_probability"].notna(),
+    }
+    for strategy, mask in masks.items():
+        subset = frame[mask].copy()
+        y_true = (subset["actual_winner"] == "KT").astype(int).to_numpy()
+        prob = subset["kt_probability"].to_numpy(dtype=float) if not subset.empty else np.array([])
+        rows.append(
+            {
+                "strategy_name": strategy,
+                "model_name": selected.get("model_name"),
+                "feature_set": selected.get("feature_set"),
+                "kt_games_total": int(len(frame)),
+                "picked_games": int(len(subset)),
+                "coverage_rate": round(float(len(subset) / len(frame)), 3) if len(frame) else 0,
+                "pick_accuracy": round(float(subset["correct_bool"].mean()), 3) if not subset.empty else None,
+                "avg_probability": round(float(subset["predicted_probability"].mean()), 3) if not subset.empty else None,
+                "brier": round(float(brier_score_loss(y_true, prob)), 3) if len(np.unique(y_true)) > 1 else None,
+                "log_loss": kt_safe_log_loss(y_true, prob) if len(subset) else None,
+                "home_pick_accuracy": round(float(subset[subset["is_home"]]["correct_bool"].mean()), 3) if subset["is_home"].any() else None,
+                "away_pick_accuracy": round(float(subset[~subset["is_home"]]["correct_bool"].mean()), 3) if (~subset["is_home"]).any() else None,
+                "current_season_pick_accuracy": round(float(subset[pd.to_datetime(subset["date"]).dt.year == 2026]["correct_bool"].mean()), 3) if not subset[pd.to_datetime(subset["date"]).dt.year == 2026].empty else None,
+                "interpretation": "KT strategy improves over production baseline" if production_accuracy is not None and not subset.empty and subset["correct_bool"].mean() > production_accuracy else "KT strategy needs more monitoring",
+            }
+        )
+    pd.DataFrame(rows).to_csv(results_dir / "kt_wiz_selective_pick_strategy_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_kt_vs_production_report(results_dir: Path, prediction_rows: list[dict], production_accuracy):
+    frame = pd.DataFrame(prediction_rows)
+    rows = []
+    if frame.empty:
+        pd.DataFrame(rows).to_csv(results_dir / "kt_wiz_vs_production_comparison_report.csv", index=False, encoding="utf-8-sig")
+        return rows
+    frame["date"] = pd.to_datetime(frame["prediction_date"])
+    frame["correct_bool"] = frame["correct"].astype(bool)
+    frame["production_correct_bool"] = frame["production_correct"].where(frame["production_correct"].notna(), False).astype(bool)
+    agreement_mask = frame["model_agrees_with_production"].where(frame["model_agrees_with_production"].notna(), False).astype(bool)
+    scopes = {
+        "all_kt_games": pd.Series(True, index=frame.index),
+        "current_season_kt_games": frame["date"].dt.year == 2026,
+        "kt_home_games": frame["is_home"].astype(bool),
+        "kt_away_games": ~frame["is_home"].astype(bool),
+        "kt_close_games": frame["brier"] <= 0.25,
+        "kt_high_confidence_games": frame["predicted_probability"] >= 0.55,
+        "kt_model_and_production_agree": agreement_mask,
+        "kt_model_disagrees_with_production": frame["model_agrees_with_production"].eq(False),
+    }
+    for scope, mask in scopes.items():
+        subset = frame[mask].copy()
+        if subset.empty:
+            rows.append({"comparison_scope": scope, "games": 0})
+            continue
+        y_true = (subset["actual_winner"] == "KT").astype(int).to_numpy()
+        kt_prob = subset["kt_probability"].to_numpy(dtype=float)
+        prod_prob = subset["production_predicted_probability"].fillna(0.5).to_numpy(dtype=float)
+        subset_agreement = subset["model_agrees_with_production"].where(subset["model_agrees_with_production"].notna(), False).astype(bool)
+        agreement = subset[subset_agreement]
+        disagreement = subset[subset["model_agrees_with_production"].eq(False)]
+        kt_accuracy = round(float(subset["correct_bool"].mean()), 3)
+        prod_accuracy = round(float(subset["production_correct_bool"].mean()), 3) if subset["production_correct"].notna().any() else production_accuracy
+        rows.append(
+            {
+                "comparison_scope": scope,
+                "games": int(len(subset)),
+                "production_accuracy": prod_accuracy,
+                "kt_challenger_accuracy": kt_accuracy,
+                "accuracy_delta": round(float(kt_accuracy - prod_accuracy), 3) if prod_accuracy is not None else None,
+                "production_brier": round(float(brier_score_loss(y_true, prod_prob)), 3) if len(np.unique(y_true)) > 1 else None,
+                "kt_challenger_brier": round(float(brier_score_loss(y_true, kt_prob)), 3) if len(np.unique(y_true)) > 1 else None,
+                "brier_delta": None,
+                "production_log_loss": kt_safe_log_loss(y_true, prod_prob),
+                "kt_challenger_log_loss": kt_safe_log_loss(y_true, kt_prob),
+                "log_loss_delta": None,
+                "production_top_pick_accuracy": prod_accuracy,
+                "kt_challenger_pick_accuracy": kt_accuracy,
+                "agreement_games": int(len(agreement)),
+                "agreement_accuracy": round(float(agreement["correct_bool"].mean()), 3) if not agreement.empty else None,
+                "disagreement_games": int(len(disagreement)),
+                "production_accuracy_when_disagree": round(float(disagreement["production_correct_bool"].mean()), 3) if not disagreement.empty else None,
+                "kt_accuracy_when_disagree": round(float(disagreement["correct_bool"].mean()), 3) if not disagreement.empty else None,
+                "interpretation": "KT challenger outperforms production in this scope" if prod_accuracy is not None and kt_accuracy > prod_accuracy else "No confirmed KT-specific edge in this scope",
+            }
+        )
+    for row in rows:
+        if row.get("production_brier") is not None and row.get("kt_challenger_brier") is not None:
+            row["brier_delta"] = round(float(row["kt_challenger_brier"] - row["production_brier"]), 3)
+        if row.get("production_log_loss") is not None and row.get("kt_challenger_log_loss") is not None:
+            row["log_loss_delta"] = round(float(row["kt_challenger_log_loss"] - row["production_log_loss"]), 3)
+    pd.DataFrame(rows).to_csv(results_dir / "kt_wiz_vs_production_comparison_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, experiment_rows: list[dict], strategy_rows: list[dict], comparison_rows: list[dict], rolling_rows: list[dict], skipped: list[str]):
+    best_challenger = next((row for row in experiment_rows if row.get("selected_as_kt_challenger")), {})
+    best_strategy = max([row for row in strategy_rows if row.get("picked_games")], key=lambda row: (row.get("pick_accuracy") or 0, row.get("coverage_rate") or 0), default={})
+    all_scope = next((row for row in comparison_rows if row.get("comparison_scope") == "all_kt_games"), {})
+    agreement_scope = next((row for row in comparison_rows if row.get("comparison_scope") == "kt_model_and_production_agree"), {})
+    disagreement_scope = next((row for row in comparison_rows if row.get("comparison_scope") == "kt_model_disagrees_with_production"), {})
+    policy = "no_kt_specific_edge_found"
+    if best_challenger and all_scope.get("accuracy_delta") is not None and all_scope.get("accuracy_delta") > 0:
+        policy = "kt_strategy_promising_for_offline_monitoring"
+    elif agreement_scope.get("agreement_accuracy") and all_scope.get("production_accuracy") and agreement_scope["agreement_accuracy"] > all_scope["production_accuracy"]:
+        policy = "use_kt_consensus_as_experimental_note"
+    elif best_challenger:
+        policy = "monitor_kt_challenger_only"
+    summary = {
+        "generated_at": pd.Timestamp.now().isoformat(),
+        "project_goal": "Improve KT Wiz prediction accuracy through a team-focused offline challenger while preserving the KBO-wide production model.",
+        "team": "KT Wiz",
+        "total_games_analyzed": dataset_summary.get("total_kt_games"),
+        "current_season_games_analyzed": dataset_summary.get("games_by_season", {}).get("2026", 0),
+        "production_model_on_kt_games": next((row for row in experiment_rows if row.get("model_name", "").startswith("production")), {}),
+        "best_kt_challenger": best_challenger,
+        "best_kt_selective_strategy": best_strategy,
+        "kt_vs_production_summary": all_scope,
+        "agreement_strategy_summary": agreement_scope,
+        "disagreement_strategy_summary": disagreement_scope,
+        "recommended_kt_prediction_policy": policy,
+        "leakage_audit_summary": {
+            "allowed_feature_columns": dataset_summary.get("available_features", []),
+            "excluded_columns": dataset_summary.get("excluded_leakage_columns", []),
+            "label_columns": ["target_win"],
+            "evaluation_only_columns": ["score_team", "score_opp", "run_diff", "actual_close_game", "actual_blowout_game"],
+            "pitching_daily_snapshot_used": False,
+            "status": "pass",
+        },
+        "limitations": [
+            "This model is not production.",
+            "This model does not replace the current KBO-wide model.",
+            "This model is for offline monitoring and portfolio experimentation.",
+            "No betting odds, handicap lines, or over/under lines are used.",
+            "KT-only sample size is limited compared with all KBO games.",
+        ],
+        "next_experiment": "Monitor future KT games and test whether consensus-only KT notes keep outperforming production on completed games.",
+        "rolling_backtest_rows": len(rolling_rows),
+        "skipped_candidates": skipped,
+        "safe_to_replace_model": False,
+        "safe_to_use_pitching_snapshot_as_features": False,
+        "report_only": True,
+    }
+    (results_dir / "kt_wiz_performance_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    return summary
+
+
 def sklearn_candidate_specs(recency_weight):
     try:
         from sklearn.calibration import CalibratedClassifierCV
@@ -2717,6 +3302,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     production_gate_audit = write_production_model_gate_audit(results_dir, selected_row, best_non_pitching, bootstrap_rows, calibration_rows, current_season_bundle.get("current_season_evidence_gate"))
     rejected_candidates = write_rejected_candidate_models(results_dir, best_non_pitching, production_gate_audit, current_season_bundle.get("current_season_evidence_gate", {}))
     performance_bundle = write_performance_challenger_reports(results_dir, features, x, y, split_index, best, best_non_pitching, current_season_bundle)
+    kt_wiz_summary = write_kt_wiz_challenger_reports(results_dir, features, best)
     spread_report = write_model_probability_spread_report(results_dir, probability_spread_rows)
     payload = build_payload(
         best,
@@ -2747,6 +3333,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         leakage_audit_rows,
         current_season_bundle,
         performance_bundle,
+        kt_wiz_summary,
     )
     payload["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload["streak_feature_experiment_rows"] = len(streak_report)
@@ -2779,6 +3366,12 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload["daily_pick_performance_report"] = "modeling/results/daily_pick_performance_report.csv"
     payload["model_consensus_pick_report"] = "modeling/results/model_consensus_pick_report.csv"
     payload["performance_target_summary"] = "modeling/results/performance_target_summary.json"
+    payload["kt_wiz_dataset_summary"] = "modeling/results/kt_wiz_dataset_summary.json"
+    payload["kt_wiz_model_experiment_report"] = "modeling/results/kt_wiz_model_experiment_report.csv"
+    payload["kt_wiz_rolling_backtest_report"] = "modeling/results/kt_wiz_rolling_backtest_report.csv"
+    payload["kt_wiz_selective_pick_strategy_report"] = "modeling/results/kt_wiz_selective_pick_strategy_report.csv"
+    payload["kt_wiz_vs_production_comparison_report"] = "modeling/results/kt_wiz_vs_production_comparison_report.csv"
+    payload["kt_wiz_performance_summary"] = "modeling/results/kt_wiz_performance_summary.json"
     payload.setdefault("diagnostic_reports", {})["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_experiment_report"] = "modeling/results/non_pitching_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_importance_report"] = "modeling/results/non_pitching_feature_importance_report.csv"
@@ -2802,6 +3395,12 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload.setdefault("diagnostic_reports", {})["current_season_drift_report"] = "modeling/results/current_season_drift_report.csv"
     payload.setdefault("diagnostic_reports", {})["current_season_false_signal_report"] = "modeling/results/current_season_false_signal_report.csv"
     payload.setdefault("diagnostic_reports", {})["rejected_candidate_models"] = "modeling/results/rejected_candidate_models.json"
+    payload.setdefault("diagnostic_reports", {})["kt_wiz_dataset_summary"] = "modeling/results/kt_wiz_dataset_summary.json"
+    payload.setdefault("diagnostic_reports", {})["kt_wiz_model_experiment_report"] = "modeling/results/kt_wiz_model_experiment_report.csv"
+    payload.setdefault("diagnostic_reports", {})["kt_wiz_rolling_backtest_report"] = "modeling/results/kt_wiz_rolling_backtest_report.csv"
+    payload.setdefault("diagnostic_reports", {})["kt_wiz_selective_pick_strategy_report"] = "modeling/results/kt_wiz_selective_pick_strategy_report.csv"
+    payload.setdefault("diagnostic_reports", {})["kt_wiz_vs_production_comparison_report"] = "modeling/results/kt_wiz_vs_production_comparison_report.csv"
+    payload.setdefault("diagnostic_reports", {})["kt_wiz_performance_summary"] = "modeling/results/kt_wiz_performance_summary.json"
     if payload.get("feature_importance"):
         pd.DataFrame(
             [{"feature": feature, "importance": importance} for feature, importance in payload["feature_importance"].items()]
@@ -3307,6 +3906,7 @@ def write_model_insight_summary(
     leakage_audit_rows: list[dict] | None = None,
     current_season_bundle: dict | None = None,
     performance_bundle: dict | None = None,
+    kt_wiz_summary: dict | None = None,
 ):
     sorted_segments = [row for row in segment_rows if row["total_games"]]
     best_segments = sorted(sorted_segments, key=lambda row: row["accuracy"] or 0, reverse=True)[:5]
@@ -3330,6 +3930,7 @@ def write_model_insight_summary(
     leakage_audit_rows = leakage_audit_rows or []
     current_season_bundle = current_season_bundle or {}
     performance_bundle = performance_bundle or {}
+    kt_wiz_summary = kt_wiz_summary or {}
     selected_accuracy = selected_row.get("검증 정확도", 0)
     selected_brier = selected_row.get("Brier Score", 1)
     selected_log_loss = selected_row.get("Log Loss", 1)
@@ -3432,6 +4033,11 @@ def write_model_insight_summary(
             "next_strategy_to_monitor": performance_bundle.get("performance_target_summary", {}).get("recommended_performance_challenger", {}),
         },
         "next_performance_experiment_step": "Monitor the report-only performance challenger on future completed games before any production model promotion.",
+        "kt_wiz_focused_experiment_summary": kt_wiz_summary.get("best_kt_challenger", {}),
+        "kt_wiz_vs_production_summary": kt_wiz_summary.get("kt_vs_production_summary", {}),
+        "kt_wiz_selective_pick_summary": kt_wiz_summary.get("best_kt_selective_strategy", {}),
+        "kt_wiz_prediction_policy": kt_wiz_summary.get("recommended_kt_prediction_policy", "no_kt_specific_edge_found"),
+        "next_team_focused_experiment_step": kt_wiz_summary.get("next_experiment", "Continue team-focused offline monitoring before any production use."),
         "revised_non_pitching_feature_policy": "2026 current-season에서 악화된 비투수 feature group은 운영 후보에서 제거하거나 monitor_only로 낮추고, 전체 gate를 통과하기 전까지 생산 모델에는 반영하지 않습니다.",
         "best_candidate_stability_assessment": "개선폭이 작고 bootstrap/calibration/시간창 검증이 충분하지 않아 안정 개선으로 확정하지 않습니다.",
         "useful_non_pitching_features": useful_non_pitching,
@@ -3540,6 +4146,7 @@ def build_payload(
     leakage_audit_rows,
     current_season_bundle,
     performance_bundle,
+    kt_wiz_summary,
 ):
     columns = best["columns"]
     probability = best["probability"]
@@ -3726,6 +4333,7 @@ def build_payload(
         leakage_audit_rows,
         current_season_bundle,
         performance_bundle,
+        kt_wiz_summary,
     )
     payload["diagnostic_reports"] = {
         "feature_diagnostic_report": "modeling/results/feature_diagnostic_report.csv",
@@ -3791,6 +4399,8 @@ def build_payload(
         "selective_pick_strategy_rows": len(performance_bundle.get("selective_pick_strategy_rows", [])),
         "daily_pick_rows": len(performance_bundle.get("daily_pick_rows", [])),
         "consensus_pick_rows": len(performance_bundle.get("consensus_rows", [])),
+        "kt_wiz_model_experiment_rows": len(pd.read_csv(results_dir / "kt_wiz_model_experiment_report.csv")) if (results_dir / "kt_wiz_model_experiment_report.csv").exists() else 0,
+        "kt_wiz_rolling_backtest_rows": len(pd.read_csv(results_dir / "kt_wiz_rolling_backtest_report.csv")) if (results_dir / "kt_wiz_rolling_backtest_report.csv").exists() else 0,
     }
     payload["model_insight_summary"] = insight_summary
     return payload
