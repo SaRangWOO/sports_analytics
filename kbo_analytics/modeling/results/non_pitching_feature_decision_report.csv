@@ -16,13 +16,13 @@ season_win_rate_gap,baseline,14,0.040613,True,"대승/대패 경기, 득실차 �
 recent_5_win_rate,baseline,15,0.035554,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
 season_win_rate_prior,baseline,16,0.028455,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
 season_avg_run_diff_gap,baseline,17,0.027977,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-run_momentum_gap,momentum,18,0.012688,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-back_to_back,baseline,19,0.008232,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-rest_days,baseline,20,0.007928,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-opponent_allowed_momentum_3_vs_10,momentum,21,0.006897,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-games_last_7_days,baseline,22,0.006622,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-allowed_momentum_gap,momentum,23,0.006534,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_run_momentum_3_vs_10,momentum,24,0.005775,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-team_run_momentum_3_vs_10,momentum,25,0.00394,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-team_allowed_momentum_3_vs_10,momentum,26,0.002943,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_run_momentum_3_vs_10,momentum,18,0.010067,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_run_momentum_3_vs_10,momentum,19,0.009564,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_allowed_momentum_3_vs_10,momentum,20,0.008739,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+back_to_back,baseline,21,0.008232,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
+rest_days,baseline,22,0.007928,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
+games_last_7_days,baseline,23,0.006622,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
+allowed_momentum_gap,momentum,24,0.006382,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+run_momentum_gap,momentum,25,0.005011,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_allowed_momentum_3_vs_10,momentum,26,0.003135,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
 venue_win_rate_gap,venue_context,27,0.00281,True,"대승/대패 경기, 득실차 차이 큼","연승 흐름, 박빙 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
