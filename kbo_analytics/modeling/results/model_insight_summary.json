@@ -1281,33 +1281,9 @@
       "next_action": "후보 축소 시 제외"
     },
     {
-      "feature": "opponent_run_momentum_3_vs_10",
-      "feature_group": "momentum",
-      "importance_rank": 18,
-      "importance_mean": 0.009577,
-      "appears_in_best_candidate": true,
-      "segment_helped": "대승/대패 경기, 득실차 차이 큼",
-      "segment_hurt": "연승 흐름, 박빙 경기",
-      "keep_candidate": "segment_only",
-      "reason": "특정 세그먼트 개선 후보로만 유지",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
-    },
-    {
-      "feature": "opponent_allowed_momentum_3_vs_10",
-      "feature_group": "momentum",
-      "importance_rank": 19,
-      "importance_mean": 0.008739,
-      "appears_in_best_candidate": true,
-      "segment_helped": "대승/대패 경기, 득실차 차이 큼",
-      "segment_hurt": "연승 흐름, 박빙 경기",
-      "keep_candidate": "segment_only",
-      "reason": "특정 세그먼트 개선 후보로만 유지",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
-    },
-    {
       "feature": "back_to_back",
       "feature_group": "baseline",
-      "importance_rank": 20,
+      "importance_rank": 18,
       "importance_mean": 0.008232,
       "appears_in_best_candidate": true,
       "segment_helped": "대승/대패 경기, 득실차 차이 큼",
@@ -1319,7 +1295,7 @@
     {
       "feature": "rest_days",
       "feature_group": "baseline",
-      "importance_rank": 21,
+      "importance_rank": 19,
       "importance_mean": 0.007928,
       "appears_in_best_candidate": true,
       "segment_helped": "대승/대패 경기, 득실차 차이 큼",
@@ -1329,9 +1305,45 @@
       "next_action": "후보 축소 시 제외"
     },
     {
+      "feature": "opponent_allowed_momentum_3_vs_10",
+      "feature_group": "momentum",
+      "importance_rank": 20,
+      "importance_mean": 0.007707,
+      "appears_in_best_candidate": true,
+      "segment_helped": "대승/대패 경기, 득실차 차이 큼",
+      "segment_hurt": "연승 흐름, 박빙 경기",
+      "keep_candidate": "segment_only",
+      "reason": "특정 세그먼트 개선 후보로만 유지",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
+    },
+    {
+      "feature": "allowed_momentum_gap",
+      "feature_group": "momentum",
+      "importance_rank": 21,
+      "importance_mean": 0.007563,
+      "appears_in_best_candidate": true,
+      "segment_helped": "대승/대패 경기, 득실차 차이 큼",
+      "segment_hurt": "연승 흐름, 박빙 경기",
+      "keep_candidate": "segment_only",
+      "reason": "특정 세그먼트 개선 후보로만 유지",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
+    },
+    {
+      "feature": "run_momentum_gap",
+      "feature_group": "momentum",
+      "importance_rank": 22,
+      "importance_mean": 0.007146,
+      "appears_in_best_candidate": true,
+      "segment_helped": "대승/대패 경기, 득실차 차이 큼",
+      "segment_hurt": "연승 흐름, 박빙 경기",
+      "keep_candidate": "segment_only",
+      "reason": "특정 세그먼트 개선 후보로만 유지",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
+    },
+    {
       "feature": "games_last_7_days",
       "feature_group": "baseline",
-      "importance_rank": 22,
+      "importance_rank": 23,
       "importance_mean": 0.006622,
       "appears_in_best_candidate": true,
       "segment_helped": "대승/대패 경기, 득실차 차이 큼",
@@ -1343,7 +1355,7 @@
     {
       "feature": "team_run_momentum_3_vs_10",
       "feature_group": "momentum",
-      "importance_rank": 23,
+      "importance_rank": 24,
       "importance_mean": 0.00634,
       "appears_in_best_candidate": true,
       "segment_helped": "대승/대패 경기, 득실차 차이 큼",
@@ -1353,22 +1365,10 @@
       "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
     },
     {
-      "feature": "allowed_momentum_gap",
-      "feature_group": "momentum",
-      "importance_rank": 24,
-      "importance_mean": 0.005544,
-      "appears_in_best_candidate": true,
-      "segment_helped": "대승/대패 경기, 득실차 차이 큼",
-      "segment_hurt": "연승 흐름, 박빙 경기",
-      "keep_candidate": "segment_only",
-      "reason": "특정 세그먼트 개선 후보로만 유지",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
-    },
-    {
-      "feature": "run_momentum_gap",
+      "feature": "opponent_run_momentum_3_vs_10",
       "feature_group": "momentum",
       "importance_rank": 25,
-      "importance_mean": 0.005011,
+      "importance_mean": 0.005775,
       "appears_in_best_candidate": true,
       "segment_helped": "대승/대패 경기, 득실차 차이 큼",
       "segment_hurt": "연승 흐름, 박빙 경기",
@@ -1380,7 +1380,7 @@
       "feature": "team_allowed_momentum_3_vs_10",
       "feature_group": "momentum",
       "importance_rank": 26,
-      "importance_mean": 0.004061,
+      "importance_mean": 0.002993,
       "appears_in_best_candidate": true,
       "segment_helped": "대승/대패 경기, 득실차 차이 큼",
       "segment_hurt": "연승 흐름, 박빙 경기",
@@ -1826,7 +1826,7 @@
   ],
   "calibration_replacement_risk": "calibration gate를 통과하지 못하면 운영 모델 교체 금지",
   "production_gate_audit_summary": {
-    "generated_at": "2026-06-19T08:06:21.365565",
+    "generated_at": "2026-06-19T11:06:27.894563",
     "current_operational_model": "RandomForest 시간가중 모델",
     "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_momentum",
     "current_operational_accuracy": 0.542,
@@ -2000,6 +2000,7 @@
   ],
   "harmful_or_noisy_non_pitching_features": [
     "opponent_recent_5_run_std",
+    "opponent_recent_5_run_std",
     "team_allowed_momentum_3_vs_10",
     "venue_win_rate_gap",
     "venue_win_rate_gap",
@@ -2009,17 +2010,16 @@
     "venue_win_rate_gap",
     "venue_win_rate_gap",
     "venue_win_rate_gap",
-    "winning_streak_after_close_games",
-    "winning_streak_after_close_games"
+    "team_allowed_momentum_3_vs_10"
   ],
   "recommended_next_non_pitching_step": "유용 신호가 반복 확인된 비투수 피처만 다음 후보 세트에 유지하고, 노이즈 가능성이 있는 피처는 운영 모델 교체 후보에서 제외합니다.",
   "pitching_snapshot_collection_status": {
-    "generated_at": "2026-06-19 08:00:02",
+    "generated_at": "2026-06-19 11:00:03",
     "reference_date": "2026-06-19",
     "snapshot_rows_total": 310,
     "snapshot_rows_for_reference_date": 10,
-    "confirmed_starter_count": 0,
-    "estimated_starter_count": 10,
+    "confirmed_starter_count": 10,
+    "estimated_starter_count": 0,
     "unknown_starter_count": 0,
     "teams_with_snapshot": [
       "KIA",
@@ -2051,7 +2051,7 @@
   "safe_to_replace_model": false,
   "reason_not_to_replace_if_false": "최고 비투수 후보의 accuracy 개선폭이 운영 교체 기준(+0.005 초과)을 넘지 못했고, bootstrap 신뢰구간과 calibration 진단에서도 안정적인 개선 근거가 충분하지 않아 운영 모델은 유지합니다.",
   "pitching_snapshot_quality_summary": {
-    "generated_at": "2026-06-19 08:00:02",
+    "generated_at": "2026-06-19 11:00:03",
     "reference_date": "2026-06-19",
     "snapshot_file": "data/official/pitching_daily_snapshot.csv",
     "total_snapshot_rows": 310,
@@ -2061,13 +2061,11 @@
     "actual_team_rows": 10,
     "duplicate_key_count": 0,
     "unknown_starter_count": 0,
-    "estimated_starter_count": 10,
-    "confirmed_starter_count": 0,
+    "estimated_starter_count": 0,
+    "confirmed_starter_count": 10,
     "quality_status": "pass",
     "blocking_issues": [],
-    "warnings": [
-      "confirmed_starter_ratio_check"
-    ],
+    "warnings": [],
     "safe_for_future_feature_use": false,
     "reason_if_not_safe": "누적 기간 부족: 최소 30일 이상 필요",
     "minimum_required_days": 30,

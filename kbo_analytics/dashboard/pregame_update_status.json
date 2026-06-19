@@ -1,12 +1,12 @@
 {
-  "run_time": "2026-06-19 08:00:02",
+  "run_time": "2026-06-19 11:00:03",
   "reference_date": "2026-06-19",
-  "update_stage": "morning",
+  "update_stage": "pregame",
   "games_checked": 5,
   "teams_checked": 10,
   "starter_status_summary": {
-    "confirmed": 0,
-    "estimated": 10,
+    "confirmed": 10,
+    "estimated": 0,
     "unknown": 0
   },
   "dashboard_updated": true,
@@ -16,57 +16,210 @@
       "game_id": "20260619OBLG0",
       "home_team": "LG",
       "away_team": "두산",
-      "home_starter": "송승기",
-      "away_starter": "곽빈",
-      "home_starter_source": "estimated",
-      "away_starter_source": "estimated",
-      "game_starter_status": "estimated_only",
-      "status_label": "추정 선발 기준"
+      "home_starter": "이정용",
+      "away_starter": "벤자민",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
     },
     {
       "game_id": "20260619HTKT0",
       "home_team": "KT",
       "away_team": "KIA",
-      "home_starter": "고영표",
-      "away_starter": "황동하",
-      "home_starter_source": "estimated",
-      "away_starter_source": "estimated",
-      "game_starter_status": "estimated_only",
-      "status_label": "추정 선발 기준"
+      "home_starter": "오원석",
+      "away_starter": "네일",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
     },
     {
       "game_id": "20260619SKNC0",
       "home_team": "NC",
       "away_team": "SSG",
-      "home_starter": "구창모",
+      "home_starter": "토다",
       "away_starter": "베니지아노",
-      "home_starter_source": "estimated",
-      "away_starter_source": "estimated",
-      "game_starter_status": "estimated_only",
-      "status_label": "추정 선발 기준"
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
     },
     {
       "game_id": "20260619SSHH0",
       "home_team": "한화",
       "away_team": "삼성",
-      "home_starter": "왕옌청",
-      "away_starter": "오러클린",
-      "home_starter_source": "estimated",
-      "away_starter_source": "estimated",
-      "game_starter_status": "estimated_only",
-      "status_label": "추정 선발 기준"
+      "home_starter": "박준영",
+      "away_starter": "후라도",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
     },
     {
       "game_id": "20260619LTWO0",
       "home_team": "키움",
       "away_team": "롯데",
-      "home_starter": "안우진",
-      "away_starter": "김진욱",
-      "home_starter_source": "estimated",
-      "away_starter_source": "estimated",
-      "game_starter_status": "estimated_only",
-      "status_label": "추정 선발 기준"
+      "home_starter": "알칸타라",
+      "away_starter": "이민석",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
     }
   ],
-  "changes": []
+  "changes": [
+    {
+      "game_id": "20260619OBLG0",
+      "game": "두산 vs LG",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "이정용"
+    },
+    {
+      "game_id": "20260619OBLG0",
+      "game": "두산 vs LG",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "벤자민"
+    },
+    {
+      "game_id": "20260619OBLG0",
+      "game": "두산 vs LG",
+      "field": "home_starter",
+      "before": "송승기",
+      "after": "이정용",
+      "starter": "이정용"
+    },
+    {
+      "game_id": "20260619OBLG0",
+      "game": "두산 vs LG",
+      "field": "away_starter",
+      "before": "곽빈",
+      "after": "벤자민",
+      "starter": "벤자민"
+    },
+    {
+      "game_id": "20260619HTKT0",
+      "game": "KIA vs KT",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "오원석"
+    },
+    {
+      "game_id": "20260619HTKT0",
+      "game": "KIA vs KT",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "네일"
+    },
+    {
+      "game_id": "20260619HTKT0",
+      "game": "KIA vs KT",
+      "field": "home_starter",
+      "before": "고영표",
+      "after": "오원석",
+      "starter": "오원석"
+    },
+    {
+      "game_id": "20260619HTKT0",
+      "game": "KIA vs KT",
+      "field": "away_starter",
+      "before": "황동하",
+      "after": "네일",
+      "starter": "네일"
+    },
+    {
+      "game_id": "20260619SKNC0",
+      "game": "SSG vs NC",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "토다"
+    },
+    {
+      "game_id": "20260619SKNC0",
+      "game": "SSG vs NC",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "베니지아노"
+    },
+    {
+      "game_id": "20260619SKNC0",
+      "game": "SSG vs NC",
+      "field": "home_starter",
+      "before": "구창모",
+      "after": "토다",
+      "starter": "토다"
+    },
+    {
+      "game_id": "20260619SSHH0",
+      "game": "삼성 vs 한화",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "박준영"
+    },
+    {
+      "game_id": "20260619SSHH0",
+      "game": "삼성 vs 한화",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "후라도"
+    },
+    {
+      "game_id": "20260619SSHH0",
+      "game": "삼성 vs 한화",
+      "field": "home_starter",
+      "before": "왕옌청",
+      "after": "박준영",
+      "starter": "박준영"
+    },
+    {
+      "game_id": "20260619SSHH0",
+      "game": "삼성 vs 한화",
+      "field": "away_starter",
+      "before": "오러클린",
+      "after": "후라도",
+      "starter": "후라도"
+    },
+    {
+      "game_id": "20260619LTWO0",
+      "game": "롯데 vs 키움",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "알칸타라"
+    },
+    {
+      "game_id": "20260619LTWO0",
+      "game": "롯데 vs 키움",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "이민석"
+    },
+    {
+      "game_id": "20260619LTWO0",
+      "game": "롯데 vs 키움",
+      "field": "home_starter",
+      "before": "안우진",
+      "after": "알칸타라",
+      "starter": "알칸타라"
+    },
+    {
+      "game_id": "20260619LTWO0",
+      "game": "롯데 vs 키움",
+      "field": "away_starter",
+      "before": "김진욱",
+      "after": "이민석",
+      "starter": "이민석"
+    }
+  ]
 }
