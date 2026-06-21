@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-06-21T18:36:23.470820",
-  "current_operational_model": "RandomForest 시간가중 모델",
+  "generated_at": "2026-06-22T08:06:20.336604",
+  "current_operational_model": "GradientBoosting 시간가중 모델",
   "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_momentum",
-  "current_operational_accuracy": 0.542,
-  "best_candidate_accuracy": 0.544,
-  "accuracy_delta": 0.002,
+  "current_operational_accuracy": 0.544,
+  "best_candidate_accuracy": 0.542,
+  "accuracy_delta": -0.002,
   "required_accuracy_delta": 0.005,
   "gates": [
     {
       "gate_name": "accuracy_delta_greater_than_0_005",
       "required_condition": "accuracy delta > 0.005",
-      "baseline_value": 0.542,
-      "candidate_value": 0.544,
+      "baseline_value": 0.544,
+      "candidate_value": 0.542,
       "passed": false,
       "severity": "high",
       "explanation": "개선폭이 운영 교체 최소 기준을 넘어야 함"
@@ -38,7 +38,7 @@
       "gate_name": "over_55_accuracy_improved",
       "required_condition": "candidate over_55_accuracy improves",
       "baseline_value": null,
-      "candidate_value": 0.576,
+      "candidate_value": 0.562,
       "passed": true,
       "severity": "medium",
       "explanation": "확신 구간 성능은 별도 bootstrap으로 재확인"
@@ -47,7 +47,7 @@
       "gate_name": "recent_3year_accuracy_not_worse",
       "required_condition": "recent 3 year accuracy not worse",
       "baseline_value": null,
-      "candidate_value": 0.544,
+      "candidate_value": 0.542,
       "passed": true,
       "severity": "medium",
       "explanation": "최근 시즌 안정성 확인"
@@ -65,7 +65,7 @@
       "gate_name": "close_game_accuracy_not_worse",
       "required_condition": "close game accuracy not worse",
       "baseline_value": null,
-      "candidate_value": 0.523,
+      "candidate_value": 0.511,
       "passed": true,
       "severity": "medium",
       "explanation": "박빙 경기 악화 방지"
@@ -82,9 +82,9 @@
     {
       "gate_name": "calibration_not_worse",
       "required_condition": "candidate calibration error not worse",
-      "baseline_value": 0.009,
-      "candidate_value": 0.018,
-      "passed": false,
+      "baseline_value": 0.011,
+      "candidate_value": 0.01,
+      "passed": true,
       "severity": "high",
       "explanation": "확률 보정 악화 방지"
     },
@@ -105,12 +105,12 @@
     "recent_3year_accuracy_not_worse",
     "winning_streak_accuracy_improved",
     "close_game_accuracy_not_worse",
+    "calibration_not_worse",
     "no_data_leakage_detected"
   ],
   "failed_gates": [
     "accuracy_delta_greater_than_0_005",
-    "bootstrap_ci_stable",
-    "calibration_not_worse"
+    "bootstrap_ci_stable"
   ],
   "safe_to_replace_model": false,
   "final_decision": "keep_current_operational_model",
