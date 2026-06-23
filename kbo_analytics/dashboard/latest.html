@@ -166,7 +166,7 @@
   <nav class="dashboard-tabs" aria-label="KBO dashboard tabs">
     <button type="button" class="tab-button active" data-tab="gamePrediction">경기 예측</button>
     <button type="button" class="tab-button" data-tab="runPrediction">득점 기반 승부 예측</button>
-    <button type="button" class="tab-button" data-tab="ktPregameRoadmap">KT 예측 개선 로드맵</button>
+    <button type="button" class="tab-button" data-tab="ktWizTarget">KT 85% 목표</button>
   </nav>
   <div id="gamePrediction" class="tab-panel active">
   <section class="section hero-section">
@@ -414,10 +414,10 @@
       </div>
     
   </div>
-  <div id="ktPregameRoadmap" class="tab-panel">
+  <div id="ktWizTarget" class="tab-panel">
     <section class="section hero-section">
       <div class="eyebrow">KT WIZ · PREGAME MODEL ROADMAP</div>
-      <h2>KT Wiz 예측 개선 현황</h2>
+      <h2>KT Wiz 85% Precision Target</h2>
       <p class="insight-lead">현재 운영 승률은 전날/최근 흐름, 득실, 홈/원정, 휴식일, Elo 등은 반영하지만 오늘 확정 선발, 선발 최근 컨디션, 불펜 실제 소모, 확정 라인업, 핵심 타자/포수 출전 상태는 아직 운영 모델 입력으로 직접 쓰지 않습니다.</p>
       <div class="grid hero-metrics">
         <div class="metric">85% 목표<strong>미달성</strong><span class="note">selected-pick precision 목표</span></div>
@@ -425,6 +425,7 @@
         <div class="metric">표본<strong>77경기</strong><span class="note">Wilson lower-bound 미충족</span></div>
         <div class="metric">운영 반영<strong>미반영</strong><span class="note">offline monitoring only</span></div>
       </div>
+      <p class="note">85% 목표 유지 · 현재 미달성 · 현재 최고 구간: rolling_agreement_probability_ge_52 · 현재 최고 precision: 0.571 · 표본: 77경기 · 목표까지 gap: 0.279 · 상태: not_met · 운영 반영 아님 · offline monitoring only.</p>
     </section>
     <section class="section">
       <div class="section-title">
