@@ -42189,7 +42189,12 @@
     "PostgreSQL 적재 실패는 HTML/CSV/JSON 생성 성공 여부와 분리해서 감시"
   ],
   "kt_wiz_85_percent_target_summary": {
+    "target_definition": "selected-pick precision / selected-pick accuracy for selected KT recommendation segments only",
+    "not_full_season_accuracy": true,
+    "not_all_game_accuracy": true,
+    "not_generic_classification_precision": true,
     "target_accuracy": 0.85,
+    "target_precision": 0.85,
     "target_met": false,
     "best_precision_candidate": {
       "scope": "rolling",
@@ -42201,17 +42206,47 @@
       "target_accuracy": 0.85,
       "target_85_met": false,
       "sample_quality": "usable",
-      "interpretation": "85% target not met; keep improving model and data"
+      "interpretation": "selected-pick precision target not met; historical segment search requires forward validation",
+      "segment_name": "agreement_probability_ge_52",
+      "games": 77,
+      "precision": 0.571,
+      "correct": 44,
+      "target_precision": 0.85,
+      "gap_to_target": 0.279,
+      "meets_target": false,
+      "sample_size_bucket": "medium",
+      "statistically_actionable": true,
+      "evaluation_mode": "rolling",
+      "display_segment_name": "rolling_agreement_probability_ge_52",
+      "precision_ci_low": 0.46,
+      "precision_ci_high": 0.676,
+      "wilson_ci_low": 0.46,
+      "wilson_ci_high": 0.676,
+      "target_met_by_point_estimate": false,
+      "target_met_by_lower_bound": false,
+      "segment_search_count": 12,
+      "selected_after_segment_search": true,
+      "multiple_testing_risk": "high",
+      "requires_forward_validation": true
     },
     "current_gap": 0.279,
+    "segment_search_count": 12,
+    "multiple_testing_risk": "high",
+    "requires_forward_validation": true,
     "status": "not_met"
   },
   "kt_85_percent_precision_target_status": {
+    "target_definition": "selected-pick precision / selected-pick accuracy for selected KT recommendation segments only",
     "target_precision": 0.85,
     "status": "not_met",
-    "current_best_segment": "rolling:rolling_agreement_probability_ge_52",
+    "current_best_segment": "agreement_probability_ge_52",
+    "current_best_display_segment": "rolling_agreement_probability_ge_52",
     "current_best_precision": 0.571,
+    "current_best_games": 77,
     "current_gap_to_target": 0.279,
+    "segment_search_count": 12,
+    "multiple_testing_risk": "high",
+    "requires_forward_validation": true,
     "safe_to_replace_model": false,
     "report_only": true
   },
@@ -42220,6 +42255,7 @@
     "feature_schema": "modeling/results/kt_wiz_pregame_feature_schema.csv",
     "availability_audit": "modeling/results/kt_wiz_pregame_data_availability_audit.csv",
     "target_roadmap": "modeling/results/kt_wiz_85_percent_target_roadmap.json",
+    "game_audit": "modeling/results/kt_wiz_precision_target_game_audit.csv",
     "next_required_sources": [
       "confirmed starters",
       "starter rest and recent form",
@@ -42232,7 +42268,7 @@
   "kt_next_information_source_experiment": "Build timestamped KT pregame feature store for starters, bullpen, and lineup, then rerun KT selective precision report.",
   "kt_minimum_sample_size_guardrail": {
     "tiny": "games < 20; never actionable",
-    "small": "20 <= games < 50; only exploratory even if high accuracy",
+    "small": "20 <= games < 50; exploratory only",
     "medium": "50 <= games < 100; actionable only with leakage audit pass",
     "large": "games >= 100; preferred for promotion monitoring"
   }

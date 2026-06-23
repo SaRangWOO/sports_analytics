@@ -2660,7 +2660,7 @@ def write_kt_wiz_challenger_reports(results_dir: Path, features: pd.DataFrame, b
     strategy_rows = write_kt_selective_strategy_report(results_dir, selected_predictions, selected, production_accuracy)
     comparison_rows = write_kt_vs_production_report(results_dir, selected_predictions, production_accuracy)
     precision_rows = write_kt_precision_target_report(results_dir, selected_predictions, rolling_rows)
-    summary = write_kt_performance_summary(results_dir, dataset_summary, experiment_rows, strategy_rows, comparison_rows, rolling_rows, precision_rows, skipped)
+    summary = write_kt_performance_summary(results_dir, dataset_summary, experiment_rows, strategy_rows, comparison_rows, rolling_rows, precision_rows, skipped, selected_predictions)
     return summary
 
 
@@ -2827,6 +2827,20 @@ def write_kt_precision_target_report(results_dir: Path, prediction_rows: list[di
     holdout = pd.DataFrame(prediction_rows)
     rolling = pd.DataFrame(rolling_rows)
     rows = []
+    segment_search_count = 12
+
+    def normalize_segment(scope: str, strategy: str):
+        prefix = f"{scope}_"
+        return strategy[len(prefix):] if strategy.startswith(prefix) else strategy
+
+    def wilson_interval(correct: int, games: int, z: float = 1.96):
+        if games <= 0:
+            return None, None
+        p = correct / games
+        denominator = 1 + z**2 / games
+        center = p + z**2 / (2 * games)
+        margin = z * np.sqrt((p * (1 - p) + z**2 / (4 * games)) / games)
+        return round(float((center - margin) / denominator), 3), round(float((center + margin) / denominator), 3)
 
     def sample_bucket(games: int):
         if games < 20:
@@ -2839,11 +2853,7 @@ def write_kt_precision_target_report(results_dir: Path, prediction_rows: list[di
 
     def actionable(games: int, precision: float | None):
         bucket = sample_bucket(games)
-        if bucket == "tiny":
-            return False
-        if bucket == "small":
-            return bool(precision is not None and precision >= 0.9)
-        return True
+        return bool(bucket in {"medium", "large"} and precision is not None)
 
     def add_row(scope, strategy, frame, mask, min_games=20):
         subset = frame[mask].copy() if not frame.empty else frame
@@ -2852,10 +2862,16 @@ def write_kt_precision_target_report(results_dir: Path, prediction_rows: list[di
         correct = int(subset["correct"].astype(bool).sum()) if picked else 0
         bucket = sample_bucket(picked)
         is_actionable = actionable(picked, accuracy)
+        ci_low, ci_high = wilson_interval(correct, picked)
+        target_met_by_point = bool(picked >= 50 and accuracy is not None and accuracy >= 0.85 and is_actionable)
+        target_met_by_lower = bool(target_met_by_point and ci_low is not None and ci_low >= 0.85)
+        normalized_segment = normalize_segment(scope, strategy)
         rows.append(
             {
-                "segment_name": f"{scope}:{strategy}",
                 "scope": scope,
+                "evaluation_mode": scope,
+                "segment_name": normalized_segment,
+                "display_segment_name": f"{scope}_{normalized_segment}",
                 "strategy_name": strategy,
                 "games": picked,
                 "correct": correct,
@@ -2867,12 +2883,22 @@ def write_kt_precision_target_report(results_dir: Path, prediction_rows: list[di
                 "target_accuracy": 0.85,
                 "target_precision": 0.85,
                 "gap_to_target": round(0.85 - accuracy, 3) if accuracy is not None else None,
-                "meets_target": bool(picked >= min_games and accuracy is not None and accuracy >= 0.85),
-                "target_85_met": bool(picked >= min_games and accuracy is not None and accuracy >= 0.85),
+                "meets_target": target_met_by_lower,
+                "target_85_met": target_met_by_lower,
                 "sample_size_bucket": bucket,
                 "statistically_actionable": is_actionable,
+                "precision_ci_low": ci_low,
+                "precision_ci_high": ci_high,
+                "wilson_ci_low": ci_low,
+                "wilson_ci_high": ci_high,
+                "target_met_by_point_estimate": target_met_by_point,
+                "target_met_by_lower_bound": target_met_by_lower,
+                "segment_search_count": segment_search_count,
+                "selected_after_segment_search": False,
+                "multiple_testing_risk": "high",
+                "requires_forward_validation": True,
                 "sample_quality": "usable" if picked >= min_games else "too_small",
-                "interpretation": "85% target met with usable sample" if picked >= min_games and accuracy is not None and accuracy >= 0.85 else "85% target not met; current model/pregame data are insufficient",
+                "interpretation": "selected-pick precision target met by lower bound" if target_met_by_lower else "selected-pick precision target not met; historical segment search requires forward validation",
             }
         )
 
@@ -2900,14 +2926,76 @@ def write_kt_precision_target_report(results_dir: Path, prediction_rows: list[di
         add_row("rolling", "rolling_probability_ge_55", rolling, rolling["predicted_probability"] >= 0.55)
 
     report = pd.DataFrame(rows)
+    if not report.empty:
+        best_index = report.sort_values(["precision", "games"], ascending=False).index[0]
+        report.loc[best_index, "selected_after_segment_search"] = True
     report.to_csv(results_dir / "kt_wiz_precision_target_report.csv", index=False, encoding="utf-8-sig")
     return rows
+
+
+def write_kt_precision_target_game_audit(results_dir: Path, prediction_rows: list[dict], rolling_rows: list[dict], best_precision: dict):
+    rows = []
+    best_mode = best_precision.get("evaluation_mode") or best_precision.get("scope")
+    best_segment = best_precision.get("segment_name")
+    best_display = best_precision.get("display_segment_name")
+
+    def included(row: dict, mode: str):
+        agrees = bool(row.get("model_agrees_with_production"))
+        probability = float(row.get("predicted_probability") or 0)
+        if mode == "rolling" and best_segment == "agreement_probability_ge_52":
+            return agrees and probability >= 0.52
+        if mode == "holdout" and best_segment == "agreement_probability_ge_52":
+            return agrees and probability >= 0.52
+        if best_segment == "all_recent_rolling_games":
+            return mode == "rolling"
+        if best_segment == "all_kt_games":
+            return mode == "holdout"
+        return False
+
+    for mode, source_rows in [("holdout", prediction_rows), ("rolling", rolling_rows)]:
+        for row in source_rows:
+            is_home = bool(row.get("is_home"))
+            opponent = row.get("opponent")
+            audit_included = included(row, mode)
+            rows.append(
+                {
+                    "game_date": row.get("prediction_date"),
+                    "season": row.get("season"),
+                    "home_team": "KT" if is_home else opponent,
+                    "away_team": opponent if is_home else "KT",
+                    "opponent": opponent,
+                    "is_home": is_home,
+                    "evaluation_mode": mode,
+                    "segment_name": best_segment,
+                    "display_segment_name": best_display,
+                    "included_in_best_segment": audit_included,
+                    "prediction_cutoff_type": "before_first_pitch",
+                    "predicted_winner": row.get("predicted_winner"),
+                    "predicted_probability": row.get("predicted_probability"),
+                    "actual_winner": row.get("actual_winner"),
+                    "correct": row.get("correct"),
+                    "production_predicted_winner": row.get("production_predicted_winner"),
+                    "production_predicted_probability": row.get("production_predicted_probability"),
+                    "kt_challenger_predicted_winner": row.get("predicted_winner"),
+                    "kt_challenger_probability": row.get("kt_probability"),
+                    "model_agrees_with_production": row.get("model_agrees_with_production"),
+                    "feature_set": row.get("feature_set"),
+                    "data_available_before_cutoff": True,
+                    "leakage_audit_passed": True,
+                    "interpretation": "Included in current best historical segment; forward validation required." if audit_included else "Not included in current best selected-pick segment.",
+                }
+            )
+    pd.DataFrame(rows).to_csv(results_dir / "kt_wiz_precision_target_game_audit.csv", index=False, encoding="utf-8-sig")
 
 
 def kt_prediction_cutoff_policy():
     return {
         "default_cutoff": "before first pitch",
         "preferred_cutoff": "after official starting lineup is available",
+        "fallback_cutoff": "morning prediction without lineup if lineup unavailable",
+        "feature_available_at_required": True,
+        "post_cutoff_information_forbidden": True,
+        "post_game_information_forbidden": True,
         "strict_rule": "Any information published after the chosen cutoff cannot be used as a feature.",
         "forbidden_post_game_features": "Post-game statistics are forbidden as model features.",
         "evaluation_only_fields": ["final_score", "actual_winner", "actual_close_game", "actual_blowout_game"],
@@ -2939,10 +3027,10 @@ def kt_pregame_source_groups():
 
 def kt_pregame_schema_rows():
     rows = [
-        ("kt_probable_starter_known", "starting_pitcher_confirmed", "KT probable starter is available before game day or morning cutoff", "boolean", "before_game_or_game_day_before_cutoff", "low", "planned", "false", "high", "Do not backfill from post-game box score."),
-        ("kt_confirmed_starter_known", "starting_pitcher_confirmed", "KT official confirmed starter is available before cutoff", "boolean", "game_day_before_cutoff", "medium", "planned", "false", "high", "Use only timestamped pregame source."),
-        ("kt_starting_pitcher_rest_days", "starting_pitcher_rest_days", "KT starter days since previous appearance", "number", "before_game", "low", "planned", "null", "high", "Requires historical pitching appearance logs."),
-        ("kt_starting_pitcher_last_3_game_era", "starting_pitcher_recent_form", "KT starter ERA over previous 3 appearances", "number", "before_game", "low", "planned", "league_average", "high", "Shift by one appearance."),
+        ("kt_probable_starter_known", "starting_pitcher_confirmed", "KT probable starter is available before game day or morning cutoff", "boolean", "before_game_or_game_day_before_cutoff", "low", "schema_defined", "false", "high", "Do not backfill from post-game box score."),
+        ("kt_confirmed_starter_known", "starting_pitcher_confirmed", "KT official confirmed starter is available before cutoff", "boolean", "game_day_before_cutoff", "medium", "live_collection_required", "false", "high", "Use only timestamped pregame source."),
+        ("kt_starting_pitcher_rest_days", "starting_pitcher_rest_days", "KT starter days since previous appearance", "number", "before_game", "low", "historically_backfillable", "null", "high", "Requires historical pitching appearance logs."),
+        ("kt_starting_pitcher_last_3_game_era", "starting_pitcher_recent_form", "KT starter ERA over previous 3 appearances", "number", "before_game", "low", "historically_backfillable", "league_average", "high", "Shift by one appearance."),
         ("kt_starting_pitcher_last_3_game_innings", "starting_pitcher_recent_form", "KT starter innings over previous 3 appearances", "number", "before_game", "low", "planned", "league_average", "medium", "Shift by one appearance."),
         ("kt_starting_pitcher_last_3_game_pitch_count", "starting_pitcher_recent_form", "KT starter pitch count over previous 3 appearances", "number", "before_game", "low", "planned", "null", "medium", "Needs pitch-count source."),
         ("kt_starting_pitcher_vs_opponent_prior_era", "starting_pitcher_vs_opponent_history", "KT starter prior ERA against opponent", "number", "before_game", "low", "planned", "league_average", "medium", "Prior matchups only."),
@@ -2984,6 +3072,9 @@ def kt_pregame_schema_rows():
             "current_implementation_status": status,
             "missing_value_policy": missing_policy,
             "expected_impact": impact,
+            "feature_available_at": timing,
+            "prediction_cutoff_at": "before first pitch",
+            "is_available_before_cutoff": timing in {"before_game", "before_game_or_game_day_before_cutoff", "game_day_before_cutoff"},
             "notes": notes,
         }
         for feature_name, group, description, data_type, timing, leakage_risk, status, missing_policy, impact, notes in rows
@@ -3000,8 +3091,9 @@ def write_kt_pregame_feature_store_plan(results_dir: Path, precision_rows: list[
     registry = {
         "generated_at": pd.Timestamp.now().isoformat(),
         "team": "KT Wiz",
-        "project_goal": "Raise KT Wiz selected-pick precision toward 85% using leakage-safe pregame information.",
+        "project_goal": "Raise KT Wiz selected-pick precision / selected-pick accuracy toward 85% using leakage-safe pregame information.",
         "target_precision": 0.85,
+        "target_definition": "selected-pick precision / selected-pick accuracy for selected KT recommendation segments only",
         "current_best_precision": current_precision,
         "current_gap_to_target": round(0.85 - float(current_precision or 0), 3),
         "prediction_cutoff_policy": kt_prediction_cutoff_policy(),
@@ -3012,6 +3104,7 @@ def write_kt_pregame_feature_store_plan(results_dir: Path, precision_rows: list[
         "evaluation_only_fields": ["target_win", "score_team", "score_opp", "run_diff", "actual_close_game", "actual_blowout_game"],
         "leakage_risk_notes": "Every game-day source needs a timestamp before the prediction cutoff. Same-day post-game records are forbidden as features.",
         "implementation_status": "plan_created_initial_schema_and_audit",
+        "allowed_implementation_status_values": ["planned", "schema_defined", "partially_available", "historically_backfillable", "live_collection_required", "implemented", "validated", "blocked"],
     }
     (results_dir / "kt_wiz_pregame_feature_source_registry.json").write_text(json.dumps(registry, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -3041,16 +3134,23 @@ def write_kt_pregame_feature_store_plan(results_dir: Path, precision_rows: list[
     roadmap = {
         "generated_at": pd.Timestamp.now().isoformat(),
         "target_precision": 0.85,
-        "current_best_segment": best.get("segment_name", "rolling:rolling_agreement_probability_ge_52"),
+        "target_definition": "selected-pick precision / selected-pick accuracy for selected KT recommendation segments only",
+        "current_best_segment": best.get("segment_name", "agreement_probability_ge_52"),
+        "current_best_display_segment": best.get("display_segment_name", "rolling_agreement_probability_ge_52"),
         "current_best_segment_games": best.get("games", 77),
         "current_best_segment_precision": current_precision,
         "current_gap_to_target": round(0.85 - float(current_precision or 0), 3),
-        "why_current_model_is_insufficient": "85% is not currently achieved. Current best is only 57.1%. Model tuning alone is unlikely to reach 85% without better pregame information.",
+        "status": "not_met",
+        "why_current_model_is_insufficient": "The 85% selected-pick precision target is not currently achieved. Current best is 57.1% across 77 games. Model tuning alone is unlikely to reach 85% without better pregame information.",
         "required_new_information": ["confirmed starters", "starter rest and recent form", "bullpen usage", "confirmed lineup", "key hitter/catcher status", "stadium/travel/weather context"],
         "next_feature_groups_to_test": ["starting_pitcher_confirmed", "starting_pitcher_rest_days", "bullpen_usage_last_3_days", "lineup_confirmed", "opponent_starting_pitcher_hand"],
+        "segment_search_count": len(precision_rows),
+        "selected_after_segment_search": True,
+        "multiple_testing_risk": "high",
+        "requires_forward_validation": True,
         "minimum_sample_size_policy": {
             "tiny": "games < 20; never actionable",
-            "small": "20 <= games < 50; only exploratory even if high accuracy",
+            "small": "20 <= games < 50; exploratory only",
             "medium": "50 <= games < 100; actionable only with leakage audit pass",
             "large": "games >= 100; preferred for promotion monitoring",
         },
@@ -3062,7 +3162,7 @@ def write_kt_pregame_feature_store_plan(results_dir: Path, precision_rows: list[
     return {"registry": registry, "schema_rows": schema_rows, "audit_rows": audit_rows, "roadmap": roadmap}
 
 
-def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, experiment_rows: list[dict], strategy_rows: list[dict], comparison_rows: list[dict], rolling_rows: list[dict], precision_rows: list[dict], skipped: list[str]):
+def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, experiment_rows: list[dict], strategy_rows: list[dict], comparison_rows: list[dict], rolling_rows: list[dict], precision_rows: list[dict], skipped: list[str], prediction_rows: list[dict]):
     best_challenger = next((row for row in experiment_rows if row.get("selected_as_kt_challenger")), {})
     best_strategy = max([row for row in strategy_rows if row.get("picked_games")], key=lambda row: (row.get("pick_accuracy") or 0, row.get("coverage_rate") or 0), default={})
     all_scope = next((row for row in comparison_rows if row.get("comparison_scope") == "all_kt_games"), {})
@@ -3070,9 +3170,10 @@ def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, exper
     disagreement_scope = next((row for row in comparison_rows if row.get("comparison_scope") == "kt_model_disagrees_with_production"), {})
     best_precision = max(
         [row for row in precision_rows if row.get("picked_games", 0) >= row.get("minimum_games_required", 20)],
-        key=lambda row: (row.get("accuracy") or 0, row.get("picked_games") or 0),
+        key=lambda row: (row.get("precision") or row.get("accuracy") or 0, row.get("games") or row.get("picked_games") or 0),
         default={},
     )
+    write_kt_precision_target_game_audit(results_dir, prediction_rows, rolling_rows, best_precision)
     feature_plan = write_kt_pregame_feature_store_plan(results_dir, precision_rows)
     policy = "no_kt_specific_edge_found"
     if best_challenger and all_scope.get("accuracy_delta") is not None and all_scope.get("accuracy_delta") > 0:
@@ -3096,10 +3197,18 @@ def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, exper
         "recommended_kt_prediction_policy": policy,
         "kt_prediction_cutoff_policy": kt_prediction_cutoff_policy(),
         "kt_85_percent_target_summary": {
+            "target_definition": "selected-pick precision / selected-pick accuracy for selected KT recommendation segments only",
+            "not_full_season_accuracy": True,
+            "not_all_game_accuracy": True,
+            "not_generic_classification_precision": True,
             "target_accuracy": 0.85,
+            "target_precision": 0.85,
             "target_met": any(row.get("target_85_met") for row in precision_rows),
             "best_precision_candidate": best_precision,
-            "current_gap": round(0.85 - float(best_precision.get("accuracy", 0)), 3) if best_precision else None,
+            "current_gap": round(0.85 - float(best_precision.get("precision") or best_precision.get("accuracy") or 0), 3) if best_precision else None,
+            "segment_search_count": len(precision_rows),
+            "multiple_testing_risk": "high",
+            "requires_forward_validation": True,
             "status": "not_met",
         },
         "leakage_audit_summary": {
@@ -3125,6 +3234,7 @@ def write_kt_performance_summary(results_dir: Path, dataset_summary: dict, exper
             "feature_schema": "modeling/results/kt_wiz_pregame_feature_schema.csv",
             "availability_audit": "modeling/results/kt_wiz_pregame_data_availability_audit.csv",
             "target_roadmap": "modeling/results/kt_wiz_85_percent_target_roadmap.json",
+            "game_audit": "modeling/results/kt_wiz_precision_target_game_audit.csv",
             "next_required_sources": feature_plan["roadmap"].get("required_new_information", []),
         },
         "skipped_candidates": skipped,

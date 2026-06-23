@@ -1,11 +1,14 @@
 {
-  "generated_at": "2026-06-16T15:56:48.238517",
+  "generated_at": "2026-06-16T15:56:48.225683",
   "target_precision": 0.85,
-  "current_best_segment": "rolling:rolling_agreement_probability_ge_52",
+  "target_definition": "selected-pick precision / selected-pick accuracy for selected KT recommendation segments only",
+  "current_best_segment": "agreement_probability_ge_52",
+  "current_best_display_segment": "rolling_agreement_probability_ge_52",
   "current_best_segment_games": 77,
   "current_best_segment_precision": 0.571,
   "current_gap_to_target": 0.279,
-  "why_current_model_is_insufficient": "85% is not currently achieved. Current best is only 57.1%. Model tuning alone is unlikely to reach 85% without better pregame information.",
+  "status": "not_met",
+  "why_current_model_is_insufficient": "The 85% selected-pick precision target is not currently achieved. Current best is 57.1% across 77 games. Model tuning alone is unlikely to reach 85% without better pregame information.",
   "required_new_information": [
     "confirmed starters",
     "starter rest and recent form",
@@ -21,13 +24,17 @@
     "lineup_confirmed",
     "opponent_starting_pitcher_hand"
   ],
+  "segment_search_count": 12,
+  "selected_after_segment_search": true,
+  "multiple_testing_risk": "high",
+  "requires_forward_validation": true,
   "minimum_sample_size_policy": {
     "tiny": "games < 20; never actionable",
-    "small": "20 <= games < 50; only exploratory even if high accuracy",
+    "small": "20 <= games < 50; exploratory only",
     "medium": "50 <= games < 100; actionable only with leakage audit pass",
     "large": "games >= 100; preferred for promotion monitoring"
   },
-  "promotion_policy": "A future 85% segment must be medium or large, leakage-safe, repeated in rolling validation, and report-only before production consideration.",
+  "promotion_policy": "A future 85% segment must be medium or large, leakage-safe, repeated in rolling validation, meet the Wilson lower-bound guardrail, and remain report-only before production consideration.",
   "stop_conditions": [
     "segment accuracy falls below production baseline",
     "coverage collapses to tiny sample",

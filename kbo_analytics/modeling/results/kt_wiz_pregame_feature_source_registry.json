@@ -1,13 +1,17 @@
 {
   "generated_at": "2026-06-16T15:56:48.225683",
   "team": "KT Wiz",
-  "project_goal": "Raise KT Wiz selected-pick precision toward 85% using leakage-safe pregame information.",
+  "project_goal": "Raise KT Wiz selected-pick precision / selected-pick accuracy toward 85% using leakage-safe pregame information.",
   "target_precision": 0.85,
   "current_best_precision": 0.571,
   "current_gap_to_target": 0.279,
   "prediction_cutoff_policy": {
     "default_cutoff": "before first pitch",
     "preferred_cutoff": "after official starting lineup is available",
+    "fallback_cutoff": "morning prediction without lineup if lineup unavailable",
+    "feature_available_at_required": true,
+    "post_cutoff_information_forbidden": true,
+    "post_game_information_forbidden": true,
     "strict_rule": "Any information published after the chosen cutoff cannot be used as a feature.",
     "forbidden_post_game_features": "Post-game statistics are forbidden as model features.",
     "evaluation_only_fields": [
@@ -68,5 +72,16 @@
     "actual_blowout_game"
   ],
   "leakage_risk_notes": "Every game-day source needs a timestamp before the prediction cutoff. Same-day post-game records are forbidden as features.",
-  "implementation_status": "plan_created_initial_schema_and_audit"
+  "implementation_status": "plan_created_initial_schema_and_audit",
+  "target_definition": "selected-pick precision / selected-pick accuracy for selected KT recommendation segments only",
+  "allowed_implementation_status_values": [
+    "planned",
+    "schema_defined",
+    "partially_available",
+    "historically_backfillable",
+    "live_collection_required",
+    "implemented",
+    "validated",
+    "blocked"
+  ]
 }

@@ -112,6 +112,10 @@
   },
   "recommended_kt_prediction_policy": "use_kt_consensus_as_experimental_note",
   "kt_85_percent_target_summary": {
+    "target_definition": "selected-pick precision / selected-pick accuracy for selected KT recommendation segments only",
+    "not_full_season_accuracy": true,
+    "not_all_game_accuracy": true,
+    "not_generic_classification_precision": true,
     "target_accuracy": 0.85,
     "target_precision": 0.85,
     "target_met": false,
@@ -125,8 +129,8 @@
       "target_accuracy": 0.85,
       "target_85_met": false,
       "sample_quality": "usable",
-      "interpretation": "85% target not met; current model/pregame data are insufficient",
-      "segment_name": "rolling:rolling_agreement_probability_ge_52",
+      "interpretation": "selected-pick precision target not met; historical segment search requires forward validation",
+      "segment_name": "agreement_probability_ge_52",
       "games": 77,
       "precision": 0.571,
       "correct": 44,
@@ -134,9 +138,24 @@
       "gap_to_target": 0.279,
       "meets_target": false,
       "sample_size_bucket": "medium",
-      "statistically_actionable": true
+      "statistically_actionable": true,
+      "evaluation_mode": "rolling",
+      "display_segment_name": "rolling_agreement_probability_ge_52",
+      "precision_ci_low": 0.46,
+      "precision_ci_high": 0.676,
+      "wilson_ci_low": 0.46,
+      "wilson_ci_high": 0.676,
+      "target_met_by_point_estimate": false,
+      "target_met_by_lower_bound": false,
+      "segment_search_count": 12,
+      "selected_after_segment_search": true,
+      "multiple_testing_risk": "high",
+      "requires_forward_validation": true
     },
     "current_gap": 0.279,
+    "segment_search_count": 12,
+    "multiple_testing_risk": "high",
+    "requires_forward_validation": true,
     "status": "not_met"
   },
   "leakage_audit_summary": {
@@ -248,6 +267,10 @@
   "kt_prediction_cutoff_policy": {
     "default_cutoff": "before first pitch",
     "preferred_cutoff": "after official starting lineup is available",
+    "fallback_cutoff": "morning prediction without lineup if lineup unavailable",
+    "feature_available_at_required": true,
+    "post_cutoff_information_forbidden": true,
+    "post_game_information_forbidden": true,
     "strict_rule": "Any information published after the chosen cutoff cannot be used as a feature.",
     "forbidden_post_game_features": "Post-game statistics are forbidden as model features.",
     "evaluation_only_fields": [
@@ -262,6 +285,7 @@
     "feature_schema": "modeling/results/kt_wiz_pregame_feature_schema.csv",
     "availability_audit": "modeling/results/kt_wiz_pregame_data_availability_audit.csv",
     "target_roadmap": "modeling/results/kt_wiz_85_percent_target_roadmap.json",
+    "game_audit": "modeling/results/kt_wiz_precision_target_game_audit.csv",
     "next_required_sources": [
       "confirmed starters",
       "starter rest and recent form",

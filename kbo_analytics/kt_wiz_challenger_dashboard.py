@@ -67,6 +67,7 @@ def build_dashboard(reference_date: date):
     comparison = load_csv(RESULTS_DIR / "kt_wiz_vs_production_comparison_report.csv")
     rolling = load_csv(RESULTS_DIR / "kt_wiz_rolling_backtest_report.csv")
     precision = load_csv(RESULTS_DIR / "kt_wiz_precision_target_report.csv")
+    game_audit = load_csv(RESULTS_DIR / "kt_wiz_precision_target_game_audit.csv")
     feature_schema = load_csv(RESULTS_DIR / "kt_wiz_pregame_feature_schema.csv")
     availability_audit = load_csv(RESULTS_DIR / "kt_wiz_pregame_data_availability_audit.csv")
 
@@ -74,7 +75,9 @@ def build_dashboard(reference_date: date):
     policy = summary.get("recommended_kt_prediction_policy", "no_kt_specific_edge_found")
     target = summary.get("kt_85_percent_target_summary", {})
     best_precision = roadmap or best_precision_row(precision)
+    current_best_segment = best_precision.get("current_best_display_segment", best_precision.get("display_segment_name", best_precision.get("segment_name", "not_available")))
     current_best_precision = best_precision.get("current_best_segment_precision", best_precision.get("precision", best_precision.get("accuracy", "not_available")))
+    current_best_games = best_precision.get("current_best_segment_games", best_precision.get("games", "not_available"))
     current_gap = best_precision.get("current_gap_to_target", best_precision.get("gap_to_target", "not_available"))
     cards = [
         metric_card("KT 분석 경기", summary.get("total_games_analyzed")),
@@ -83,7 +86,9 @@ def build_dashboard(reference_date: date):
         metric_card("실험 후보", best.get("model_name", "not_available")),
         metric_card("후보 정확도", best.get("accuracy", "not_available")),
         metric_card("85% 목표", "달성" if target.get("target_met") else "미달"),
-        metric_card("최고 구간", current_best_precision),
+        metric_card("최고 구간", current_best_segment),
+        metric_card("최고 precision", current_best_precision),
+        metric_card("대상 경기", current_best_games),
         metric_card("목표까지 차이", current_gap),
         metric_card("운영 반영", "미반영"),
     ]
@@ -123,6 +128,16 @@ def build_dashboard(reference_date: date):
   <main>
     <div class="grid">{''.join(cards)}</div>
     <section>
+      <h2>KT Challenger Status</h2>
+      <div class="note">KT challenger는 offline monitoring 전용입니다. production KBO-wide model을 대체하지 않으며, 운영 pick으로 사용하지 않습니다.</div>
+      <div class="grid">
+        {metric_card("Best challenger", best.get("model_name", "not_available"))}
+        {metric_card("Production comparison", summary.get("kt_vs_production_summary", {}).get("accuracy_delta", "not_available"))}
+        {metric_card("Policy", policy)}
+        {metric_card("Report only", summary.get("report_only", True))}
+      </div>
+    </section>
+    <section>
       <h2>KT Dataset Summary</h2>
       <p class="muted">기준일: {escape(reference_date.isoformat())}</p>
       <div class="grid">
@@ -146,15 +161,21 @@ def build_dashboard(reference_date: date):
     </section>
     <section>
       <h2>85% Precision Target</h2>
-      <p class="muted">85% 목표 유지. 현재 미달성. 최고 구간은 {escape(str(current_best_precision))}이며 현재 모델 튜닝만으로는 부족합니다.</p>
+      <p class="muted">Target definition: selected-pick precision / selected-pick accuracy for selected KT recommendation segments only. It is not full-season accuracy, all-game accuracy, or generic classification precision.</p>
+      <p class="muted">85% 목표 유지. 현재 미달성. 최고 구간은 {escape(str(current_best_segment))}, precision은 {escape(str(current_best_precision))}, 경기 수는 {escape(str(current_best_games))}, gap은 {escape(str(current_gap))}입니다.</p>
       <div class="warning">선발/불펜/라인업 정보의 누수 없는 축적이 필요합니다. 이 화면은 운영 반영이 아닌 KT 전용 offline monitoring입니다.</div>
-      {render_table(precision.sort_values([("precision" if "precision" in precision.columns else "accuracy"), ("games" if "games" in precision.columns else "picked_games")], ascending=False) if not precision.empty else precision, ["segment_name", "scope", "strategy_name", "games", "correct", "precision", "picked_games", "minimum_games_required", "coverage_rate", "accuracy", "target_precision", "target_85_met", "meets_target", "sample_size_bucket", "statistically_actionable", "sample_quality", "interpretation"], 20)}
+      {render_table(precision.sort_values([("precision" if "precision" in precision.columns else "accuracy"), ("games" if "games" in precision.columns else "picked_games")], ascending=False) if not precision.empty else precision, ["evaluation_mode", "segment_name", "display_segment_name", "games", "correct", "precision", "target_precision", "gap_to_target", "meets_target", "sample_size_bucket", "statistically_actionable", "wilson_ci_low", "wilson_ci_high", "target_met_by_point_estimate", "target_met_by_lower_bound", "segment_search_count", "selected_after_segment_search", "multiple_testing_risk", "requires_forward_validation", "interpretation"], 20)}
+    </section>
+    <section>
+      <h2>Why 85% Is Not Met</h2>
+      <div class="warning">The current best segment is the result of historical segment search and must be forward-validated before operational use.</div>
+      <p class="muted">현재 모델은 confirmed starter, bullpen usage, lineup, catcher status, key hitter availability 신호가 부족합니다. 모델 튜닝만으로 gap을 닫기는 어렵고, cutoff 이전에 확인된 pregame 데이터 축적이 필요합니다.</p>
     </section>
     <section>
       <h2>85% Precision Roadmap</h2>
       <div class="grid">
         {metric_card("목표 precision", roadmap.get("target_precision", 0.85))}
-        {metric_card("현재 최고 구간", roadmap.get("current_best_segment", "not_available"))}
+        {metric_card("현재 최고 구간", roadmap.get("current_best_display_segment", roadmap.get("current_best_segment", "not_available")))}
         {metric_card("현재 최고 precision", roadmap.get("current_best_segment_precision", current_best_precision))}
         {metric_card("현재 gap", roadmap.get("current_gap_to_target", current_gap))}
       </div>
@@ -165,11 +186,15 @@ def build_dashboard(reference_date: date):
     <section>
       <h2>Pregame Feature Store Plan</h2>
       <p class="muted">예측 cutoff 이전에 확인 가능한 정보만 후보 feature로 둡니다. 경기 후 기록과 당일 경기 결과는 평가 전용입니다.</p>
-      {render_table(feature_schema, ["feature_name", "feature_group", "data_type", "allowed_timing", "leakage_risk", "current_implementation_status", "missing_value_policy", "expected_impact", "notes"], 40)}
+      {render_table(feature_schema, ["feature_name", "feature_group", "data_type", "allowed_timing", "leakage_risk", "current_implementation_status", "feature_available_at", "prediction_cutoff_at", "is_available_before_cutoff", "expected_impact", "notes"], 40)}
     </section>
     <section>
       <h2>Pregame Availability Audit</h2>
       {render_table(availability_audit, ["priority", "source_group", "feature_name", "required_for_85_target_experiment", "currently_available", "historical_backfill_possible", "live_collection_needed", "estimated_coverage", "blocking_issue", "interpretation"], 40)}
+    </section>
+    <section>
+      <h2>Precision Target Game Audit</h2>
+      {render_table(game_audit.sort_values(["included_in_best_segment", "game_date"], ascending=[False, False]) if not game_audit.empty else game_audit, ["game_date", "season", "home_team", "away_team", "evaluation_mode", "segment_name", "display_segment_name", "included_in_best_segment", "prediction_cutoff_type", "predicted_winner", "predicted_probability", "actual_winner", "correct", "production_predicted_winner", "production_predicted_probability", "kt_challenger_predicted_winner", "kt_challenger_probability", "model_agrees_with_production", "feature_set", "data_available_before_cutoff", "leakage_audit_passed", "interpretation"], 40)}
     </section>
     <section>
       <h2>Rolling Backtest</h2>
@@ -180,6 +205,7 @@ def build_dashboard(reference_date: date):
       <div class="note">현재는 포트폴리오 검증용 실험 모델입니다. KT 특화 실험 후보: offline monitoring. 메인 예측과 운영 모델을 대체하지 않습니다.</div>
       <p>{escape(str(summary.get("leakage_audit_summary", {})))}</p>
       <p>{escape(str(summary.get("limitations", [])))}</p>
+      <div class="warning">Final policy: offline monitoring only, no production replacement, no betting recommendation.</div>
     </section>
   </main>
 </body>
