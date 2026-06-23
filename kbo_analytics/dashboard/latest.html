@@ -166,6 +166,7 @@
   <nav class="dashboard-tabs" aria-label="KBO dashboard tabs">
     <button type="button" class="tab-button active" data-tab="gamePrediction">경기 예측</button>
     <button type="button" class="tab-button" data-tab="runPrediction">득점 기반 승부 예측</button>
+    <button type="button" class="tab-button" data-tab="ktPregameRoadmap">KT 예측 개선 로드맵</button>
   </nav>
   <div id="gamePrediction" class="tab-panel active">
   <section class="section hero-section">
@@ -412,6 +413,64 @@
         </details>
       </div>
     
+  </div>
+  <div id="ktPregameRoadmap" class="tab-panel">
+    <section class="section hero-section">
+      <div class="eyebrow">KT WIZ · PREGAME MODEL ROADMAP</div>
+      <h2>KT Wiz 예측 개선 현황</h2>
+      <p class="insight-lead">현재 운영 승률은 전날/최근 흐름, 득실, 홈/원정, 휴식일, Elo 등은 반영하지만 오늘 확정 선발, 선발 최근 컨디션, 불펜 실제 소모, 확정 라인업, 핵심 타자/포수 출전 상태는 아직 운영 모델 입력으로 직접 쓰지 않습니다.</p>
+      <div class="grid hero-metrics">
+        <div class="metric">85% 목표<strong>미달성</strong><span class="note">selected-pick precision 목표</span></div>
+        <div class="metric">최고 구간<strong>0.571</strong><span class="note">rolling_agreement_probability_ge_52</span></div>
+        <div class="metric">표본<strong>77경기</strong><span class="note">Wilson lower-bound 미충족</span></div>
+        <div class="metric">운영 반영<strong>미반영</strong><span class="note">offline monitoring only</span></div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">WHY · 현재 한계</div>
+          <h2>오늘 경기 승률로 쓰기 부족한 정보</h2>
+        </div>
+      </div>
+      <div class="tables">
+        <div>
+          <h3>현재 운영 모델에 반영되는 축</h3>
+          <table><thead><tr><th>구분</th><th>상태</th></tr></thead><tbody>
+            <tr><td>최근 경기 흐름</td><td>최근 3/5/10경기 득점·실점·득실차 반영</td></tr>
+            <tr><td>홈/원정·휴식일</td><td>경기 전 확인 가능한 일정 기반 피처 반영</td></tr>
+            <tr><td>상대 흐름·Elo</td><td>완료 경기 기준 누수 없이 반영</td></tr>
+          </tbody></table>
+        </div>
+        <div>
+          <h3>아직 운영 피처가 아닌 축</h3>
+          <table><thead><tr><th>구분</th><th>필요 조건</th></tr></thead><tbody>
+            <tr><td>오늘 확정 선발</td><td>예측 cutoff 이전 timestamp 필요</td></tr>
+            <tr><td>선발 최근 3경기 상태</td><td>해당 경기 이전 등판만 shift 집계</td></tr>
+            <tr><td>불펜 실제 소모</td><td>전날까지 투구수·이닝 로그 필요</td></tr>
+            <tr><td>확정 라인업</td><td>경기 전 발표 시점 보존 필요</td></tr>
+            <tr><td>핵심 타자/포수 출전</td><td>라인업·부상 소스의 cutoff 검증 필요</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <p class="note">이 탭은 codex://threads/019e0626-85cf-7951-9bfd-a63489754b2e 에서 정리한 문제의식, 즉 “표시 정보가 아니라 오늘 경기 전력 정보가 모델 입력으로 검증되어야 한다”는 결론을 대시보드에 명시한 것입니다.</p>
+    </section>
+    <section class="section">
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">NEXT · 검증 순서</div>
+          <h2>운영 모델 교체 없이 진행할 다음 단계</h2>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="metric">1단계<strong>Pregame feature store</strong><span class="note">선발·불펜·라인업 timestamp 축적</span></div>
+        <div class="metric">2단계<strong>Offline challenger</strong><span class="note">기존 모델과 분리 검증</span></div>
+        <div class="metric">3단계<strong>Forward validation</strong><span class="note">segment search 이후 미래 경기 검증</span></div>
+        <div class="metric">4단계<strong>Promotion gate</strong><span class="note">85% lower-bound와 production safety 동시 통과</span></div>
+      </div>
+      <p class="note">정책: 운영 모델 교체 없음, win_predictor_model.json 변경 없음, pitching_daily_snapshot.csv 피처 사용 없음, betting recommendation 없음.</p>
+      <a class="action-link" href="kt_wiz_challenger.html">KT Wiz challenger 상세 대시보드 보기</a>
+    </section>
   </div>
 </main>
 <script>
