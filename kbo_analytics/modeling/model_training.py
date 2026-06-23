@@ -3433,6 +3433,591 @@ def baseball_candidate_specs():
     ]
 
 
+def pregame_feature_availability_rows():
+    rows = [
+        ("starter_prior_era", "starter", "A", "no", "partial", "false", "true", "medium", "투수별 과거 선발 로그가 없어 historical prior ERA를 누수 없이 재구성할 수 없습니다.", "투수 등판 로그 수집 후 shift/asof 피처로 승격"),
+        ("starter_prior_whip", "starter", "A", "no", "partial", "false", "true", "medium", "투수별 과거 피안타/볼넷/이닝 로그가 없습니다.", "투수 게임 로그 수집"),
+        ("starter_recent3_era", "starter", "A", "no", "no", "false", "false", "medium", "최근 3선발 기록을 계산할 투수별 선발 로그가 없습니다.", "선발 등판 로그와 경기 전 timestamp 저장"),
+        ("starter_recent3_ip", "starter", "A", "no", "no", "false", "false", "medium", "최근 3선발 평균 이닝 원천이 없습니다.", "투수 등판별 IP 수집"),
+        ("starter_rest_days", "starter", "A", "no", "no", "false", "false", "low", "이전 등판일 로그가 없어 휴식일을 계산할 수 없습니다.", "투수별 등판일 히스토리 구축"),
+        ("starter_recent_pitch_count", "starter", "A", "no", "no", "false", "false", "medium", "투구 수 로그가 없습니다.", "투구 수가 포함된 박스스코어 원천 수집"),
+        ("bullpen_pitch_count_last1d", "bullpen", "A", "no", "no", "false", "false", "medium", "구원 투수별 실제 투구 수 원천이 없습니다.", "불펜 등판/투구 수 로그 수집"),
+        ("bullpen_pitch_count_last3d", "bullpen", "A", "no", "no", "false", "false", "medium", "최근 3일 실제 투구 수는 현재 팀 경기 수 proxy와 구분됩니다.", "투수별 등판 로그 수집 후 계산"),
+        ("bullpen_appearances_last3d", "bullpen", "A", "proxy", "proxy", "true", "true", "low", "현재는 팀 최근 3일 경기 수를 불펜 부담 proxy로 사용합니다.", "실제 구원 등판 수로 대체 필요"),
+        ("previous_game_run_diff", "previous_game", "A", "yes", "yes", "true", "true", "low", "팀의 직전 완료 경기 득실차는 현재 경기 이전 정보입니다.", "후보 모델에서 사용"),
+        ("previous_game_bullpen_usage", "previous_game", "A", "no", "no", "false", "false", "medium", "전날 불펜 실제 투구 수 원천이 없습니다.", "불펜 로그 수집"),
+        ("team_recent_form", "team_form", "A", "yes", "yes", "true", "true", "low", "기존 rolling 피처는 shift/asof 기반으로 현재 경기 이전만 사용합니다.", "운영 baseline 및 후보에서 계속 사용"),
+        ("confirmed_lineup", "lineup", "B", "no", "partial", "false", "true", "high_without_snapshots", "경기 전 라인업은 live/snapshot-only이며 과거 pregame 히스토리가 없습니다.", "30일 이상 timestamped lineup snapshot 누적 후 실험"),
+        ("lineup_ops_gap", "lineup", "B", "no", "partial", "false", "true", "high_without_snapshots", "현재 선수 기록 스냅샷을 과거 경기에 붙이면 미래 정보 누수입니다.", "과거 시점별 라인업/선수 스탯 스냅샷 필요"),
+        ("top5_lineup_ops_gap", "lineup", "B", "no", "partial", "false", "true", "high_without_snapshots", "과거 라인업과 당시 선수 OPS 스냅샷이 없습니다.", "timestamped lineup feature store 구축"),
+        ("key_hitter_absence", "key_hitter", "B", "no", "no", "false", "false", "high_without_snapshots", "부상/결장 히스토리 원천이 없습니다.", "공식 엔트리/라인업 결장 로그 수집"),
+        ("game_id_date_team", "metadata", "A", "yes", "yes", "false", "true", "low", "식별/조인 메타데이터이며 학습 피처가 아닙니다.", "평가/감사용으로만 유지"),
+    ]
+    return [
+        {
+            "feature": feature,
+            "feature_group": group,
+            "eligibility_tier": tier,
+            "historical_source_available": hist,
+            "live_source_available": live,
+            "can_use_for_training": train,
+            "can_use_for_today_prediction": today,
+            "leakage_risk": risk,
+            "reason": reason,
+            "recommended_action": action,
+        }
+        for feature, group, tier, hist, live, train, today, risk, reason, action in rows
+    ]
+
+
+def write_pregame_feature_availability_report(results_dir: Path):
+    rows = pregame_feature_availability_rows()
+    pd.DataFrame(rows).to_csv(results_dir / "pregame_feature_availability_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def build_pregame_matchup_feature_store(game_level_features: pd.DataFrame, features: pd.DataFrame):
+    frame = game_level_features.dropna(subset=["target_home_win"]).copy()
+    if frame.empty:
+        return frame
+    frame["game_date"] = pd.to_datetime(frame["date"]).dt.strftime("%Y-%m-%d")
+    frame["home_win"] = frame["target_home_win"].astype(int)
+    frame["actual_winner"] = np.where(frame["home_win"] == 1, frame["home_team"], frame["away_team"])
+    team_work = features.copy()
+    team_work["date_dt"] = pd.to_datetime(team_work["date"])
+    team_work["actual_game_id"] = team_work["game_id"].astype(str).str.rsplit("_", n=1).str[0]
+    team_work["run_diff"] = team_work["actual_run_margin"]
+    team_work = team_work.sort_values(["team", "date_dt", "actual_game_id"])
+    team_work["previous_game_run_diff"] = team_work.groupby("team")["run_diff"].shift(1)
+    team_work["previous_game_bullpen_pitch_count"] = np.nan
+    prior = team_work[["date", "actual_game_id", "team", "previous_game_run_diff", "previous_game_bullpen_pitch_count"]].copy()
+    prior["date"] = pd.to_datetime(prior["date"]).dt.strftime("%Y-%m-%d")
+    for side in ["home", "away"]:
+        side_prior = prior.rename(
+            columns={
+                "date": "game_date",
+                "actual_game_id": "game_id",
+                "team": f"{side}_team",
+                "previous_game_run_diff": f"{side}_previous_game_run_diff",
+                "previous_game_bullpen_pitch_count": f"{side}_previous_game_bullpen_pitch_count",
+            }
+        )
+        frame = frame.merge(side_prior, on=["game_date", "game_id", f"{side}_team"], how="left")
+
+    output = pd.DataFrame(
+        {
+            "game_date": frame["game_date"],
+            "game_id": frame["game_id"],
+            "away_team": frame["away_team"],
+            "home_team": frame["home_team"],
+            "actual_winner": frame["actual_winner"],
+            "home_win": frame["home_win"],
+            "home_starter": "",
+            "away_starter": "",
+            "both_starters_known": False,
+            "starter_info_quality": 0.0,
+            "home_starter_era_prior": np.nan,
+            "away_starter_era_prior": np.nan,
+            "starter_era_gap": np.nan,
+            "home_starter_whip_prior": np.nan,
+            "away_starter_whip_prior": np.nan,
+            "starter_whip_gap": np.nan,
+            "home_starter_recent3_era": np.nan,
+            "away_starter_recent3_era": np.nan,
+            "starter_recent3_era_gap": np.nan,
+            "home_starter_recent3_ip": np.nan,
+            "away_starter_recent3_ip": np.nan,
+            "starter_recent3_ip_gap": np.nan,
+            "home_starter_rest_days": np.nan,
+            "away_starter_rest_days": np.nan,
+            "starter_rest_days_gap": np.nan,
+            "home_starter_recent_pitch_count": np.nan,
+            "away_starter_recent_pitch_count": np.nan,
+            "starter_recent_pitch_count_gap": np.nan,
+            "home_bullpen_pitch_count_last1d": np.nan,
+            "away_bullpen_pitch_count_last1d": np.nan,
+            "bullpen_pitch_count_last1d_gap": np.nan,
+            "home_bullpen_pitch_count_last3d": np.nan,
+            "away_bullpen_pitch_count_last3d": np.nan,
+            "bullpen_pitch_count_last3d_gap": np.nan,
+            "home_bullpen_appearances_last3d": frame.get("home_recent_3day_games", pd.Series(0, index=frame.index)),
+            "away_bullpen_appearances_last3d": frame.get("away_recent_3day_games", pd.Series(0, index=frame.index)),
+            "bullpen_appearances_last3d_gap": frame.get("recent_3day_games_gap", pd.Series(0, index=frame.index)),
+            "home_previous_game_run_diff": frame["home_previous_game_run_diff"],
+            "away_previous_game_run_diff": frame["away_previous_game_run_diff"],
+            "previous_game_run_diff_gap": frame["home_previous_game_run_diff"].fillna(0) - frame["away_previous_game_run_diff"].fillna(0),
+            "home_previous_game_bullpen_pitch_count": frame["home_previous_game_bullpen_pitch_count"],
+            "away_previous_game_bullpen_pitch_count": frame["away_previous_game_bullpen_pitch_count"],
+            "previous_game_bullpen_usage_gap": np.nan,
+            "lineup_confirmed": False,
+            "lineup_feature_status": "snapshot_only_not_training",
+            "key_hitter_feature_status": "not_available_without_historical_injury_or_lineup_logs",
+            "excluded_leakage_columns": "actual_winner;home_win;actual_run_margin;actual_close_game;actual_blowout_game;lineup_snapshot_only;pitching_daily_snapshot_latest",
+        }
+    )
+    safe_extra_columns = [
+        "recent_10_win_rate_gap",
+        "season_win_rate_gap",
+        "season_avg_run_diff_gap",
+        "recent_5_runs_avg_gap",
+        "recent_5_allowed_avg_gap",
+        "recent_5_run_creation_gap",
+        "recent_10_run_creation_gap",
+        "recent_run_diff_10_gap",
+        "venue_win_rate_gap",
+        "games_last_7_days_gap",
+        "recent_3day_games_gap",
+        "rest_days_gap",
+        "bullpen_fatigue_score_gap",
+        "bullpen_fatigue_gap",
+    ]
+    for column in safe_extra_columns:
+        if column in frame.columns:
+            output[column] = frame[column]
+    return output
+
+
+def write_pregame_feature_store(results_dir: Path, game_level_features: pd.DataFrame, features: pd.DataFrame):
+    store = build_pregame_matchup_feature_store(game_level_features, features)
+    store.to_csv(results_dir / "pregame_matchup_feature_store.csv", index=False, encoding="utf-8-sig")
+    return store
+
+
+def write_pregame_feature_leakage_audit(results_dir: Path):
+    rows = [
+        ("actual_winner", "false", "true", "false", "true", "false", "not_applicable", "evaluation_only", "label only; never used in training"),
+        ("home_win", "false", "true", "false", "true", "false", "not_applicable", "evaluation_only", "target label only"),
+        ("actual_run_margin", "false", "true", "false", "true", "false", "not_applicable", "evaluation_only", "current-game margin is excluded from pregame training"),
+        ("actual_close_game", "false", "true", "false", "true", "false", "not_applicable", "evaluation_only", "post-game segment label only"),
+        ("actual_blowout_game", "false", "true", "false", "true", "false", "not_applicable", "evaluation_only", "post-game segment label only"),
+        ("pitching_daily_snapshot.csv", "false", "false", "false", "false", "true", "not_applied", "blocked", "latest snapshot is not attached to historical training rows"),
+        ("lineup_confirmed", "false", "false", "false", "false", "true", "not_applied", "blocked", "historical pregame lineup logs are not available"),
+        ("starter_identity_proxy", "false", "false", "false", "false", "true", "not_applied", "not_available", "actual starting pitcher from boxscore is not reconstructed; no proxy used"),
+        ("team_recent_form", "true", "false", "false", "false", "false", "shift_1_applied", "pass", "existing rolling features use prior games only"),
+        ("previous_game_run_diff", "true", "false", "false", "false", "false", "shift_1_applied", "pass", "team previous completed game only"),
+        ("bullpen_appearances_last3d_proxy", "true", "false", "false", "false", "false", "asof_prior_date_applied", "pass", "team recent 3-day game count proxy only; no pitch count invented"),
+    ]
+    audit = pd.DataFrame(
+        [
+            {
+                "feature": feature,
+                "used_in_training": used,
+                "uses_current_game_result": current,
+                "uses_future_game_result": future,
+                "uses_post_game_information": post,
+                "requires_historical_snapshot": snapshot,
+                "shift_or_asof_applied": shift,
+                "leakage_status": status,
+                "detail": detail,
+            }
+            for feature, used, current, future, post, snapshot, shift, status, detail in rows
+        ]
+    )
+    audit.to_csv(results_dir / "pregame_feature_leakage_audit.csv", index=False, encoding="utf-8-sig")
+    return audit.to_dict(orient="records")
+
+
+def _safe_log_loss(y_true, probability):
+    return log_loss(y_true, np.clip(probability, 1e-6, 1 - 1e-6), labels=[0, 1])
+
+
+def _pick_frame_for_pregame(frame: pd.DataFrame, probability: np.ndarray):
+    picks = frame[["game_date", "game_id", "home_team", "away_team", "home_win"]].copy()
+    picks["home_probability"] = probability
+    picks["pick_probability"] = np.maximum(probability, 1 - probability)
+    picks["pred_home_win"] = (probability >= 0.5).astype(int)
+    picks["correct"] = picks["pred_home_win"] == picks["home_win"]
+    picks["starter_edge"] = frame.get("starter_era_gap", pd.Series(np.nan, index=frame.index)).abs().fillna(0) >= 0.6
+    picks["bullpen_edge"] = frame.get("bullpen_appearances_last3d_gap", pd.Series(0, index=frame.index)).abs().fillna(0) >= 2
+    picks["both_starters_known"] = frame.get("both_starters_known", pd.Series(False, index=frame.index)).astype(bool)
+    picks["daily_rank"] = picks.groupby("game_date")["pick_probability"].rank(method="first", ascending=False)
+    return picks
+
+
+def _accuracy_from_mask(picks: pd.DataFrame, mask):
+    selected = picks[np.asarray(mask, dtype=bool)]
+    return round(float(selected["correct"].mean()), 3) if len(selected) else None
+
+
+def _pregame_metrics(frame: pd.DataFrame, y_true: np.ndarray, probability: np.ndarray):
+    pred = (probability >= 0.5).astype(int)
+    confidence = np.maximum(probability, 1 - probability)
+    over_55 = confidence >= 0.55
+    picks = _pick_frame_for_pregame(frame, probability)
+    score = {"brier": round(float(brier_score_loss(y_true, probability)), 3), "log_loss": round(float(_safe_log_loss(y_true, probability)), 3)}
+    return {
+        "accuracy": round(float((pred == y_true).mean()), 3),
+        "brier": score["brier"],
+        "log_loss": score["log_loss"],
+        "over_55_games": int(over_55.sum()),
+        "over_55_accuracy": round(float((pred[over_55] == y_true[over_55]).mean()), 3) if over_55.any() else None,
+        "daily_top1_accuracy": _accuracy_from_mask(picks, picks["daily_rank"] <= 1),
+        "daily_top2_accuracy": _accuracy_from_mask(picks, picks["daily_rank"] <= 2),
+        "confirmed_starter_games": int(picks["both_starters_known"].sum()),
+        "confirmed_starter_accuracy": _accuracy_from_mask(picks, picks["both_starters_known"]),
+        "starter_edge_games": int(picks["starter_edge"].sum()),
+        "starter_edge_accuracy": _accuracy_from_mask(picks, picks["starter_edge"]),
+        "bullpen_edge_games": int(picks["bullpen_edge"].sum()),
+        "bullpen_edge_accuracy": _accuracy_from_mask(picks, picks["bullpen_edge"]),
+        "current_season_accuracy": _accuracy_from_mask(picks, pd.to_datetime(picks["game_date"]).dt.year == pd.to_datetime(picks["game_date"]).dt.year.max()),
+        "rolling_accuracy": None,
+        "picks": picks,
+    }
+
+
+def _available_training_columns(frame: pd.DataFrame, columns: list[str]):
+    available = []
+    for column in columns:
+        if column not in frame.columns:
+            continue
+        series = pd.to_numeric(frame[column], errors="coerce")
+        if series.notna().sum() and series.nunique(dropna=True) > 1:
+            available.append(column)
+    return available
+
+
+def pregame_feature_sets(frame: pd.DataFrame):
+    production = _available_training_columns(
+        frame,
+        [
+            "recent_10_win_rate_gap",
+            "season_win_rate_gap",
+            "season_avg_run_diff_gap",
+            "recent_5_runs_avg_gap",
+            "recent_5_allowed_avg_gap",
+            "recent_5_run_creation_gap",
+            "recent_10_run_creation_gap",
+            "recent_run_diff_10_gap",
+            "venue_win_rate_gap",
+            "games_last_7_days_gap",
+            "recent_3day_games_gap",
+            "rest_days_gap",
+            "bullpen_fatigue_score_gap",
+            "bullpen_fatigue_gap",
+        ],
+    )
+    starter = _available_training_columns(
+        frame,
+        [
+            "starter_era_gap",
+            "starter_whip_gap",
+            "starter_recent3_era_gap",
+            "starter_recent3_ip_gap",
+            "starter_rest_days_gap",
+            "starter_recent_pitch_count_gap",
+            "starter_info_quality",
+        ],
+    )
+    bullpen = _available_training_columns(
+        frame,
+        [
+            "bullpen_pitch_count_last1d_gap",
+            "bullpen_pitch_count_last3d_gap",
+            "bullpen_appearances_last3d_gap",
+        ],
+    )
+    previous = _available_training_columns(frame, ["previous_game_run_diff_gap", "previous_game_bullpen_usage_gap"])
+    sets = {
+        "production_features_only": production,
+        "starter_features_only": starter,
+        "bullpen_features_only": bullpen,
+        "previous_game_fatigue_features_only": previous,
+        "production_plus_starter": list(dict.fromkeys(production + starter)),
+        "production_plus_bullpen": list(dict.fromkeys(production + bullpen)),
+        "production_plus_starter_bullpen": list(dict.fromkeys(production + starter + bullpen)),
+        "production_plus_pregame_safe_features": list(dict.fromkeys(production + starter + bullpen + previous)),
+        "pregame_safe_without_lineup": list(dict.fromkeys(starter + bullpen + previous + production)),
+        "pregame_safe_all_available": list(dict.fromkeys(starter + bullpen + previous + production)),
+    }
+    return sets
+
+
+def _fit_predict_pregame_model(model_name: str, model, x_train, y_train, x_test):
+    train_scaled, test_scaled, _, _ = standardize_train_test(x_train, x_test)
+    model.fit(train_scaled, y_train)
+    return model.predict_proba(test_scaled)[:, 1]
+
+
+def write_pregame_matchup_model_report(results_dir: Path, store: pd.DataFrame):
+    if store.empty:
+        pd.DataFrame().to_csv(results_dir / "pregame_matchup_model_report.csv", index=False, encoding="utf-8-sig")
+        return [], None
+    from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+    from sklearn.linear_model import LogisticRegression
+
+    frame = store.dropna(subset=["home_win"]).copy()
+    frame = frame.sort_values(["game_date", "game_id"]).reset_index(drop=True)
+    split = chronological_split_index(frame["game_date"])
+    train, test = frame.iloc[:split].copy(), frame.iloc[split:].copy()
+    y_train = train["home_win"].astype(int).to_numpy()
+    y_test = test["home_win"].astype(int).to_numpy()
+    feature_sets = pregame_feature_sets(frame)
+    families = [
+        ("production baseline on same games", LogisticRegression(max_iter=1000)),
+        ("LogisticRegression", LogisticRegression(max_iter=1000)),
+        ("HistGradientBoosting", HistGradientBoostingClassifier(max_iter=180, learning_rate=0.04, max_leaf_nodes=12, l2_regularization=0.1, random_state=42)),
+        ("RandomForest", RandomForestClassifier(n_estimators=300, max_depth=6, min_samples_leaf=10, random_state=42, n_jobs=-1)),
+    ]
+    rows = []
+    prediction_cache = {}
+    for feature_set, columns in feature_sets.items():
+        if not columns:
+            rows.append(
+                {
+                    "model_name": "not_available",
+                    "feature_set": feature_set,
+                    "training_scope": "historical_pregame_safe",
+                    "train_games": int(len(train)),
+                    "test_games": int(len(test)),
+                    "accuracy": None,
+                    "brier": None,
+                    "log_loss": None,
+                    "over_55_games": None,
+                    "over_55_accuracy": None,
+                    "daily_top1_accuracy": None,
+                    "daily_top2_accuracy": None,
+                    "confirmed_starter_games": 0,
+                    "confirmed_starter_accuracy": None,
+                    "starter_edge_games": 0,
+                    "starter_edge_accuracy": None,
+                    "bullpen_edge_games": None,
+                    "bullpen_edge_accuracy": None,
+                    "current_season_accuracy": None,
+                    "rolling_accuracy": None,
+                    "selected_as_pregame_challenger": False,
+                    "interpretation": "사용 가능한 누수 안전 피처가 없어 후보 학습 제외",
+                }
+            )
+            continue
+        for model_name, model in families:
+            if model_name == "production baseline on same games" and feature_set != "production_features_only":
+                continue
+            probability = _fit_predict_pregame_model(model_name, model, train[columns].fillna(0), y_train, test[columns].fillna(0))
+            metrics = _pregame_metrics(test, y_test, probability)
+            prediction_cache[(model_name, feature_set)] = {"probability": probability, "metrics": metrics, "columns": columns}
+            rows.append(
+                {
+                    "model_name": model_name,
+                    "feature_set": feature_set,
+                    "training_scope": "historical_pregame_safe",
+                    "train_games": int(len(train)),
+                    "test_games": int(len(test)),
+                    **{key: metrics[key] for key in [
+                        "accuracy",
+                        "brier",
+                        "log_loss",
+                        "over_55_games",
+                        "over_55_accuracy",
+                        "daily_top1_accuracy",
+                        "daily_top2_accuracy",
+                        "confirmed_starter_games",
+                        "confirmed_starter_accuracy",
+                        "starter_edge_games",
+                        "starter_edge_accuracy",
+                        "bullpen_edge_games",
+                        "bullpen_edge_accuracy",
+                        "current_season_accuracy",
+                        "rolling_accuracy",
+                    ]},
+                    "selected_as_pregame_challenger": False,
+                    "interpretation": "offline monitoring candidate; not production probability input",
+                }
+            )
+    valid_rows = [row for row in rows if row.get("accuracy") is not None]
+    best_row = max(valid_rows, key=lambda row: ((row.get("daily_top1_accuracy") or 0), (row.get("daily_top2_accuracy") or 0), row.get("accuracy") or 0)) if valid_rows else None
+    if best_row:
+        for row in rows:
+            row["selected_as_pregame_challenger"] = row["model_name"] == best_row["model_name"] and row["feature_set"] == best_row["feature_set"]
+    pd.DataFrame(rows).to_csv(results_dir / "pregame_matchup_model_report.csv", index=False, encoding="utf-8-sig")
+    best_key = (best_row["model_name"], best_row["feature_set"]) if best_row else None
+    return rows, {"row": best_row, **prediction_cache.get(best_key, {})} if best_key else None
+
+
+def write_pregame_rolling_backtest_report(results_dir: Path, store: pd.DataFrame, best_challenger: dict | None):
+    rows = []
+    if store.empty or not best_challenger:
+        pd.DataFrame(rows).to_csv(results_dir / "pregame_matchup_rolling_backtest_report.csv", index=False, encoding="utf-8-sig")
+        return rows
+    from sklearn.linear_model import LogisticRegression
+
+    frame = store.dropna(subset=["home_win"]).sort_values(["game_date", "game_id"]).reset_index(drop=True)
+    feature_set = best_challenger["row"]["feature_set"]
+    columns = pregame_feature_sets(frame).get(feature_set, [])
+    frame["prediction_season"] = frame["game_date"].astype(str).str.slice(0, 4)
+    seasons = sorted(frame["prediction_season"].unique())
+    for prediction_season in seasons:
+        train = frame[frame["prediction_season"] < prediction_season]
+        test = frame[frame["prediction_season"] == prediction_season]
+        if len(train) < 200 or test.empty or not columns:
+            rows.append(
+                {
+                    "prediction_date": prediction_season,
+                    "train_games_before_date": int(len(train)),
+                    "test_games_on_date": int(len(test)),
+                    "model_name": best_challenger["row"]["model_name"],
+                    "feature_set": feature_set,
+                    "accuracy": None,
+                    "brier": None,
+                    "log_loss": None,
+                    "top1_pick": "",
+                    "top1_probability": None,
+                    "top1_result": "skipped_insufficient_history",
+                    "top2_picks": "",
+                    "top2_accuracy": None,
+                    "confirmed_starter_accuracy": None,
+                    "interpretation": "insufficient history or no eligible columns",
+                }
+            )
+            continue
+        y_train = train["home_win"].astype(int).to_numpy()
+        y_test = test["home_win"].astype(int).to_numpy()
+        probability = _fit_predict_pregame_model(
+            "rolling LogisticRegression",
+            LogisticRegression(max_iter=1000),
+            train[columns].fillna(0),
+            y_train,
+            test[columns].fillna(0),
+        )
+        metrics = _pregame_metrics(test, y_test, probability)
+        picks = metrics["picks"].sort_values("pick_probability", ascending=False)
+        top1 = picks.iloc[0]
+        top2 = picks.head(2)
+        rows.append(
+            {
+                "prediction_date": prediction_season,
+                "train_games_before_date": int(len(train)),
+                "test_games_on_date": int(len(test)),
+                "model_name": best_challenger["row"]["model_name"],
+                "feature_set": feature_set,
+                "accuracy": metrics["accuracy"],
+                "brier": metrics["brier"],
+                "log_loss": metrics["log_loss"],
+                "top1_pick": f'{top1["away_team"]} vs {top1["home_team"]}',
+                "top1_probability": round(float(top1["pick_probability"]), 3),
+                "top1_result": "correct" if bool(top1["correct"]) else "wrong",
+                "top2_picks": "; ".join((top2["away_team"] + " vs " + top2["home_team"]).tolist()),
+                "top2_accuracy": round(float(top2["correct"].mean()), 3),
+                "confirmed_starter_accuracy": metrics["confirmed_starter_accuracy"],
+                "interpretation": "rolling train-before-date validation",
+            }
+        )
+    pd.DataFrame(rows).to_csv(results_dir / "pregame_matchup_rolling_backtest_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_pregame_selective_pick_strategy_report(results_dir: Path, store: pd.DataFrame, best_challenger: dict | None):
+    rows = []
+    if store.empty or not best_challenger:
+        pd.DataFrame(rows).to_csv(results_dir / "pregame_selective_pick_strategy_report.csv", index=False, encoding="utf-8-sig")
+        return rows
+    frame = store.dropna(subset=["home_win"]).sort_values(["game_date", "game_id"]).reset_index(drop=True)
+    split = chronological_split_index(frame["game_date"])
+    test = frame.iloc[split:].copy()
+    probability = best_challenger["probability"]
+    base_metrics = _pregame_metrics(test, test["home_win"].astype(int).to_numpy(), probability)
+    picks = base_metrics["picks"]
+    strategies = {
+        "all_games": pd.Series(True, index=picks.index),
+        "probability_ge_52": picks["pick_probability"] >= 0.52,
+        "probability_ge_53": picks["pick_probability"] >= 0.53,
+        "probability_ge_54": picks["pick_probability"] >= 0.54,
+        "probability_ge_55": picks["pick_probability"] >= 0.55,
+        "daily_top1": picks["daily_rank"] <= 1,
+        "daily_top2": picks["daily_rank"] <= 2,
+        "confirmed_starters_only": picks["both_starters_known"],
+        "starter_edge_only": picks["starter_edge"],
+        "bullpen_edge_only": picks["bullpen_edge"],
+        "starter_and_bullpen_edge_agree": picks["starter_edge"] & picks["bullpen_edge"],
+        "production_and_pregame_agree": pd.Series(False, index=picks.index),
+        "production_and_pregame_disagree_avoid": pd.Series(False, index=picks.index),
+    }
+    for name, mask in strategies.items():
+        selected = picks[mask]
+        selected_prob = probability[mask.to_numpy() if hasattr(mask, "to_numpy") else np.asarray(mask)]
+        y_selected = selected["home_win"].astype(int).to_numpy()
+        rows.append(
+            {
+                "strategy_name": name,
+                "model_name": best_challenger["row"]["model_name"],
+                "feature_set": best_challenger["row"]["feature_set"],
+                "games_total": int(len(picks)),
+                "picked_games": int(len(selected)),
+                "coverage_rate": round(float(len(selected) / max(len(picks), 1)), 3),
+                "pick_accuracy": round(float(selected["correct"].mean()), 3) if len(selected) else None,
+                "daily_top1_games": int((selected["daily_rank"] <= 1).sum()) if len(selected) else 0,
+                "daily_top1_accuracy": round(float(selected[selected["daily_rank"] <= 1]["correct"].mean()), 3) if (selected["daily_rank"] <= 1).any() else None,
+                "daily_top2_games": int((selected["daily_rank"] <= 2).sum()) if len(selected) else 0,
+                "daily_top2_accuracy": round(float(selected[selected["daily_rank"] <= 2]["correct"].mean()), 3) if (selected["daily_rank"] <= 2).any() else None,
+                "confirmed_starter_pick_accuracy": round(float(selected[selected["both_starters_known"]]["correct"].mean()), 3) if selected["both_starters_known"].any() else None,
+                "starter_edge_pick_accuracy": round(float(selected[selected["starter_edge"]]["correct"].mean()), 3) if selected["starter_edge"].any() else None,
+                "bullpen_edge_pick_accuracy": round(float(selected[selected["bullpen_edge"]]["correct"].mean()), 3) if selected["bullpen_edge"].any() else None,
+                "avg_probability": round(float(selected["pick_probability"].mean()), 3) if len(selected) else None,
+                "brier": round(float(brier_score_loss(y_selected, selected_prob)), 3) if len(selected) else None,
+                "log_loss": round(float(_safe_log_loss(y_selected, selected_prob)), 3) if len(selected) else None,
+                "interpretation": "production comparison unavailable in this offline challenger report" if name.startswith("production_and_pregame") else "selective strategy backtest; offline monitoring only",
+            }
+        )
+    pd.DataFrame(rows).to_csv(results_dir / "pregame_selective_pick_strategy_report.csv", index=False, encoding="utf-8-sig")
+    return rows
+
+
+def write_pregame_performance_summary(results_dir: Path, availability_rows: list[dict], leakage_rows: list[dict], model_rows: list[dict], rolling_rows: list[dict], strategy_rows: list[dict], best_challenger: dict | None):
+    available_features = [row["feature"] for row in availability_rows if row["can_use_for_training"] == "true"]
+    unavailable = [row["feature"] for row in availability_rows if row["can_use_for_training"] != "true"]
+    best_strategy = max([row for row in strategy_rows if row.get("pick_accuracy") is not None], key=lambda row: (row.get("daily_top1_accuracy") or 0, row.get("pick_accuracy") or 0), default={})
+    best_row = best_challenger["row"] if best_challenger else {}
+    summary = {
+        "generated_at": date.today().isoformat(),
+        "project_goal": "Improve actual KBO prediction success by adding leakage-safe pregame matchup information such as starting pitcher form, starter rest, bullpen fatigue, and previous-game fatigue, while keeping the production model unchanged until a challenger proves stable.",
+        "production_model_baseline": next((row for row in model_rows if row.get("model_name") == "production baseline on same games"), {}),
+        "available_pregame_features": available_features,
+        "unavailable_or_snapshot_only_features": unavailable,
+        "best_pregame_challenger": best_row.get("model_name"),
+        "best_pregame_feature_set": best_row.get("feature_set"),
+        "best_selective_pick_strategy": best_strategy,
+        "daily_top1_result": best_row.get("daily_top1_accuracy"),
+        "daily_top2_result": best_row.get("daily_top2_accuracy"),
+        "confirmed_starter_subset_result": best_row.get("confirmed_starter_accuracy"),
+        "starter_edge_subset_result": best_row.get("starter_edge_accuracy"),
+        "bullpen_edge_subset_result": best_row.get("bullpen_edge_accuracy"),
+        "current_season_result": best_row.get("current_season_accuracy"),
+        "leakage_audit_summary": {
+            "rows": len(leakage_rows),
+            "blocked_features": [row["feature"] for row in leakage_rows if row["leakage_status"] == "blocked"],
+            "status": "pass" if all(row["leakage_status"] in {"pass", "evaluation_only", "blocked", "not_available"} for row in leakage_rows) else "review_required",
+        },
+        "recommended_next_step": "Collect historical pitcher game logs and timestamped lineup snapshots, then rerun this challenger with starter rest/recent form and actual bullpen pitch counts.",
+        "promotion_policy": "Do not replace production yet. A pregame challenger can be marked offline_monitoring if it improves daily top1/top2 or confirmed-starter subset accuracy. It can only be considered for dashboard production probability after rolling backtest, calibration, and leakage audits pass.",
+        "limitations": [
+            "starter recent form and rest days are not available without pitcher game logs",
+            "lineup and key hitter features are snapshot-only and excluded from historical training",
+            "bullpen pitch counts are not available; only team recent game count proxy is used",
+            "production win probability remains unchanged",
+        ],
+        "rolling_rows": len(rolling_rows),
+    }
+    (results_dir / "pregame_matchup_performance_summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+    return summary
+
+
+def write_pregame_matchup_reports(results_dir: Path, game_level_features: pd.DataFrame, features: pd.DataFrame):
+    availability_rows = write_pregame_feature_availability_report(results_dir)
+    store = write_pregame_feature_store(results_dir, game_level_features, features)
+    leakage_rows = write_pregame_feature_leakage_audit(results_dir)
+    model_rows, best_challenger = write_pregame_matchup_model_report(results_dir, store)
+    rolling_rows = write_pregame_rolling_backtest_report(results_dir, store, best_challenger)
+    strategy_rows = write_pregame_selective_pick_strategy_report(results_dir, store, best_challenger)
+    summary = write_pregame_performance_summary(results_dir, availability_rows, leakage_rows, model_rows, rolling_rows, strategy_rows, best_challenger)
+    return {
+        "availability_rows": availability_rows,
+        "leakage_rows": leakage_rows,
+        "model_rows": model_rows,
+        "rolling_rows": rolling_rows,
+        "strategy_rows": strategy_rows,
+        "summary": summary,
+    }
+
+
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date, data_dir: Path, results_dir: Path):
     training_games = training_games.copy()
     training_games["date"] = pd.to_datetime(training_games["date"])
@@ -3449,6 +4034,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     pitching_context = pd.read_csv(pitching_context_path) if pitching_context_path.exists() else pd.DataFrame()
     game_level_features = attach_pitching_context(build_game_level_frame(features), pitching_context)
     game_level_features.to_csv(results_dir / "game_level_features.csv", index=False, encoding="utf-8-sig")
+    pregame_matchup_bundle = write_pregame_matchup_reports(results_dir, game_level_features, features)
     run_expectancy_frame = export_run_expectancy_dataset(features, completed, results_dir / "run_expectancy_features.csv")
     player_feature_note = ""
     player_game_frame = pd.DataFrame()
@@ -3708,6 +4294,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         current_season_bundle,
         performance_bundle,
         kt_wiz_summary,
+        pregame_matchup_bundle,
     )
     payload["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload["streak_feature_experiment_rows"] = len(streak_report)
@@ -3747,6 +4334,13 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload["kt_wiz_vs_production_comparison_report"] = "modeling/results/kt_wiz_vs_production_comparison_report.csv"
     payload["kt_wiz_precision_target_report"] = "modeling/results/kt_wiz_precision_target_report.csv"
     payload["kt_wiz_performance_summary"] = "modeling/results/kt_wiz_performance_summary.json"
+    payload["pregame_feature_availability_report"] = "modeling/results/pregame_feature_availability_report.csv"
+    payload["pregame_matchup_feature_store"] = "modeling/results/pregame_matchup_feature_store.csv"
+    payload["pregame_feature_leakage_audit"] = "modeling/results/pregame_feature_leakage_audit.csv"
+    payload["pregame_matchup_model_report"] = "modeling/results/pregame_matchup_model_report.csv"
+    payload["pregame_matchup_rolling_backtest_report"] = "modeling/results/pregame_matchup_rolling_backtest_report.csv"
+    payload["pregame_selective_pick_strategy_report"] = "modeling/results/pregame_selective_pick_strategy_report.csv"
+    payload["pregame_matchup_performance_summary"] = "modeling/results/pregame_matchup_performance_summary.json"
     payload.setdefault("diagnostic_reports", {})["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_experiment_report"] = "modeling/results/non_pitching_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_importance_report"] = "modeling/results/non_pitching_feature_importance_report.csv"
@@ -3777,6 +4371,13 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload.setdefault("diagnostic_reports", {})["kt_wiz_vs_production_comparison_report"] = "modeling/results/kt_wiz_vs_production_comparison_report.csv"
     payload.setdefault("diagnostic_reports", {})["kt_wiz_precision_target_report"] = "modeling/results/kt_wiz_precision_target_report.csv"
     payload.setdefault("diagnostic_reports", {})["kt_wiz_performance_summary"] = "modeling/results/kt_wiz_performance_summary.json"
+    payload.setdefault("diagnostic_reports", {})["pregame_feature_availability_report"] = "modeling/results/pregame_feature_availability_report.csv"
+    payload.setdefault("diagnostic_reports", {})["pregame_matchup_feature_store"] = "modeling/results/pregame_matchup_feature_store.csv"
+    payload.setdefault("diagnostic_reports", {})["pregame_feature_leakage_audit"] = "modeling/results/pregame_feature_leakage_audit.csv"
+    payload.setdefault("diagnostic_reports", {})["pregame_matchup_model_report"] = "modeling/results/pregame_matchup_model_report.csv"
+    payload.setdefault("diagnostic_reports", {})["pregame_matchup_rolling_backtest_report"] = "modeling/results/pregame_matchup_rolling_backtest_report.csv"
+    payload.setdefault("diagnostic_reports", {})["pregame_selective_pick_strategy_report"] = "modeling/results/pregame_selective_pick_strategy_report.csv"
+    payload.setdefault("diagnostic_reports", {})["pregame_matchup_performance_summary"] = "modeling/results/pregame_matchup_performance_summary.json"
     if payload.get("feature_importance"):
         pd.DataFrame(
             [{"feature": feature, "importance": importance} for feature, importance in payload["feature_importance"].items()]
@@ -4283,6 +4884,7 @@ def write_model_insight_summary(
     current_season_bundle: dict | None = None,
     performance_bundle: dict | None = None,
     kt_wiz_summary: dict | None = None,
+    pregame_matchup_bundle: dict | None = None,
 ):
     sorted_segments = [row for row in segment_rows if row["total_games"]]
     best_segments = sorted(sorted_segments, key=lambda row: row["accuracy"] or 0, reverse=True)[:5]
@@ -4307,6 +4909,8 @@ def write_model_insight_summary(
     current_season_bundle = current_season_bundle or {}
     performance_bundle = performance_bundle or {}
     kt_wiz_summary = kt_wiz_summary or {}
+    pregame_matchup_bundle = pregame_matchup_bundle or {}
+    pregame_matchup_summary = pregame_matchup_bundle.get("summary", {})
     selected_accuracy = selected_row.get("검증 정확도", 0)
     selected_brier = selected_row.get("Brier Score", 1)
     selected_log_loss = selected_row.get("Log Loss", 1)
@@ -4415,6 +5019,15 @@ def write_model_insight_summary(
         "kt_wiz_85_percent_target_summary": kt_wiz_summary.get("kt_85_percent_target_summary", {}),
         "kt_wiz_prediction_policy": kt_wiz_summary.get("recommended_kt_prediction_policy", "no_kt_specific_edge_found"),
         "next_team_focused_experiment_step": kt_wiz_summary.get("next_experiment", "Continue team-focused offline monitoring before any production use."),
+        "pregame_matchup_feature_summary": pregame_matchup_summary,
+        "pregame_feature_availability_summary": pregame_matchup_bundle.get("availability_rows", []),
+        "pregame_model_candidate_summary": pregame_matchup_bundle.get("model_rows", []),
+        "pregame_selective_pick_summary": pregame_matchup_bundle.get("strategy_rows", []),
+        "today_matchup_model_gap_analysis": "The current production model is primarily a team-form baseline. Pregame matchup features are being tested as a performance challenger and are not yet production probability inputs.",
+        "recommended_performance_next_step": pregame_matchup_summary.get(
+            "recommended_next_step",
+            "Collect leakage-safe pitcher game logs, lineup snapshots, and bullpen usage logs before any production pregame matchup model promotion.",
+        ),
         "revised_non_pitching_feature_policy": "2026 current-season에서 악화된 비투수 feature group은 운영 후보에서 제거하거나 monitor_only로 낮추고, 전체 gate를 통과하기 전까지 생산 모델에는 반영하지 않습니다.",
         "best_candidate_stability_assessment": "개선폭이 작고 bootstrap/calibration/시간창 검증이 충분하지 않아 안정 개선으로 확정하지 않습니다.",
         "useful_non_pitching_features": useful_non_pitching,
@@ -4524,6 +5137,7 @@ def build_payload(
     current_season_bundle,
     performance_bundle,
     kt_wiz_summary,
+    pregame_matchup_bundle=None,
 ):
     columns = best["columns"]
     probability = best["probability"]
@@ -4711,6 +5325,7 @@ def build_payload(
         current_season_bundle,
         performance_bundle,
         kt_wiz_summary,
+        pregame_matchup_bundle,
     )
     payload["diagnostic_reports"] = {
         "feature_diagnostic_report": "modeling/results/feature_diagnostic_report.csv",
