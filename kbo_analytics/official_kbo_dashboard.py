@@ -1687,6 +1687,184 @@ def today_summary(prediction_cards: list[dict]):
     }
 
 
+def _kt_prediction_percent(value):
+    if value is None:
+        return None
+    try:
+        return float(str(value).replace("%", "")) / 100
+    except ValueError:
+        return None
+
+
+def build_kt_wiz_today_prediction(prediction_cards: list[dict], status_payload: dict, generated_at: date, reference_datetime: datetime):
+    kt_game = next(
+        (game for game in status_payload.get("games", []) if "KT" in {game.get("home_team"), game.get("away_team")}),
+        None,
+    )
+    kt_card = next(
+        (card for card in prediction_cards if "KT" in {card.get("home_team"), card.get("away_team")}),
+        None,
+    )
+    source = kt_card or kt_game or {}
+    home_team = source.get("home_team")
+    away_team = source.get("away_team")
+    has_kt_game = bool(source)
+    kt_is_home = home_team == "KT" if has_kt_game else None
+    opponent = away_team if kt_is_home else home_team if has_kt_game else None
+    production_predicted_winner = kt_card.get("예측 구단") if kt_card else None
+    production_probability = _kt_prediction_percent(kt_card.get("예측승률")) if kt_card else None
+    production_kt_probability = None
+    if production_probability is not None:
+        production_kt_probability = production_probability if production_predicted_winner == "KT" else 1 - production_probability
+
+    if kt_card:
+        prediction_status = "production_only_available"
+        recommendation_grade_value = "production_only_reference"
+        confidence_label = trust_label_from_confidence(float(kt_card.get("confidence_value", 0))).lower()
+        final_prediction = production_predicted_winner
+        final_probability = production_kt_probability
+        interpretation = "Production 모델만 당일 KT 경기 기준 확률을 제공합니다. KT challenger는 안전한 당일 피처 산출이 없어 offline monitoring 참고로만 표시합니다."
+    elif has_kt_game:
+        prediction_status = "insufficient_kt_features"
+        recommendation_grade_value = "insufficient_data"
+        confidence_label = "unavailable"
+        final_prediction = None
+        final_probability = None
+        interpretation = "KT 경기 일정은 있으나 당일 운영 예측 카드 또는 안전한 challenger 피처가 없어 확률을 표시하지 않습니다."
+    else:
+        prediction_status = "no_kt_game_today"
+        recommendation_grade_value = "no_kt_game"
+        confidence_label = "unavailable"
+        final_prediction = None
+        final_probability = None
+        interpretation = "기준일에 KT Wiz 경기가 없습니다."
+
+    payload = {
+        "generated_at": reference_datetime.isoformat(),
+        "reference_date": generated_at.isoformat(),
+        "prediction_date": generated_at.isoformat(),
+        "has_kt_game": has_kt_game,
+        "game_id": source.get("game_id") if has_kt_game else None,
+        "home_team": home_team,
+        "away_team": away_team,
+        "opponent": opponent,
+        "kt_is_home": kt_is_home,
+        "production_prediction_available": kt_card is not None,
+        "production_predicted_winner": production_predicted_winner,
+        "production_kt_win_probability": round(production_kt_probability, 3) if production_kt_probability is not None else None,
+        "kt_challenger_prediction_available": False,
+        "kt_challenger_model_name": None,
+        "kt_challenger_feature_set": None,
+        "kt_challenger_predicted_winner": None,
+        "kt_challenger_kt_win_probability": None,
+        "models_agree": None,
+        "final_experimental_prediction": final_prediction,
+        "final_experimental_kt_win_probability": round(final_probability, 3) if final_probability is not None else None,
+        "prediction_status": prediction_status,
+        "recommendation_grade": recommendation_grade_value,
+        "confidence_label": confidence_label,
+        "offline_monitoring_only": True,
+        "not_production_pick": True,
+        "target_85_status": "not_met",
+        "data_limitations": [
+            "KT challenger 당일 확률은 안전한 pregame feature artifact가 있을 때만 표시합니다.",
+            "pitching_daily_snapshot.csv는 모델 피처로 사용하지 않습니다.",
+            "운영 모델 교체 또는 production pick 반영은 하지 않습니다.",
+        ],
+        "interpretation": interpretation,
+    }
+    (RESULTS_DIR / "kt_wiz_today_prediction.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return payload
+
+
+def render_kt_wiz_prediction_tab(payload: dict):
+    def display(value):
+        return "-" if value is None or value == "" else str(value)
+
+    kt_probability = payload.get("final_experimental_kt_win_probability")
+    opponent_probability = 1 - kt_probability if kt_probability is not None else None
+    kt_probability_text = f"{kt_probability:.1%}" if kt_probability is not None else "-"
+    opponent_probability_text = f"{opponent_probability:.1%}" if opponent_probability is not None else "-"
+    game_info = f'{payload.get("away_team")} @ {payload.get("home_team")}' if payload.get("has_kt_game") else "기준일에 KT Wiz 경기가 없습니다."
+    home_away = "홈" if payload.get("kt_is_home") else "원정" if payload.get("kt_is_home") is False else "-"
+    production_probability = payload.get("production_kt_win_probability")
+    challenger_probability = payload.get("kt_challenger_kt_win_probability")
+    production_text = (
+        f'{display(payload.get("production_predicted_winner"))} · KT {production_probability:.1%}'
+        if production_probability is not None
+        else "예측 없음"
+    )
+    challenger_text = (
+        f'{display(payload.get("kt_challenger_predicted_winner"))} · KT {challenger_probability:.1%}'
+        if challenger_probability is not None
+        else "안전한 당일 challenger 예측 없음"
+    )
+    models_agree = payload.get("models_agree")
+    agree_text = "일치" if models_agree is True else "불일치" if models_agree is False else "비교 불가"
+    consensus_text = "consensus" if models_agree else "not consensus"
+    return f"""
+    <section class="section hero-section">
+      <div class="eyebrow">KT WIZ · EXPERIMENTAL PREDICTION</div>
+      <h2>KT Wiz 승리 예측</h2>
+      <p class="insight-lead">{escape(payload.get("interpretation", ""))}</p>
+      <div class="grid hero-metrics">
+        <div class="metric">KT Wiz 승리 확률<strong>{escape(kt_probability_text)}</strong><span class="note">experimental reference</span></div>
+        <div class="metric">예측 결과<strong>{escape(display(payload.get("final_experimental_prediction")))}</strong><span class="note">{escape(payload.get("recommendation_grade", ""))}</span></div>
+        <div class="metric">신뢰도<strong>{escape(payload.get("confidence_label", "unavailable"))}</strong><span class="note">운영 반영 없음</span></div>
+        <div class="metric">85% 목표 상태<strong>not_met</strong><span class="note">offline monitoring only</span></div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="tables">
+        <div>
+          <h3>Game card</h3>
+          <table><tbody>
+            <tr><th>기준일</th><td>{escape(payload.get("reference_date", "-"))}</td></tr>
+            <tr><th>경기 정보</th><td>{escape(game_info)}</td></tr>
+            <tr><th>홈/원정</th><td>{escape(home_away)}</td></tr>
+            <tr><th>상대팀</th><td>{escape(display(payload.get("opponent")))}</td></tr>
+          </tbody></table>
+        </div>
+        <div>
+          <h3>Prediction card</h3>
+          <table><tbody>
+            <tr><th>KT Wiz 승리 확률</th><td>{escape(kt_probability_text)}</td></tr>
+            <tr><th>상대팀 승리 확률</th><td>{escape(opponent_probability_text)}</td></tr>
+            <tr><th>예측 결과</th><td>{escape(display(payload.get("final_experimental_prediction")))}</td></tr>
+            <tr><th>추천 상태</th><td>{escape(payload.get("recommendation_grade", "-"))}</td></tr>
+            <tr><th>신뢰도</th><td>{escape(payload.get("confidence_label", "-"))}</td></tr>
+            <tr><th>운영 반영 여부</th><td>미반영 · offline monitoring only</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="tables">
+        <div>
+          <h3>Model comparison</h3>
+          <table><tbody>
+            <tr><th>Production 모델 예측</th><td>{escape(production_text)}</td></tr>
+            <tr><th>KT Challenger 예측</th><td>{escape(challenger_text)}</td></tr>
+            <tr><th>모델 방향 일치 여부</th><td>{escape(agree_text)}</td></tr>
+            <tr><th>consensus 여부</th><td>{escape(consensus_text)}</td></tr>
+          </tbody></table>
+        </div>
+        <div>
+          <h3>Safety note</h3>
+          <table><tbody>
+            <tr><th>실험 모델</th><td>예</td></tr>
+            <tr><th>offline monitoring only</th><td>예</td></tr>
+            <tr><th>운영 예측 미반영</th><td>예</td></tr>
+            <tr><th>85% 목표 현재</th><td>not_met</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <p class="note">85% 목표 상태: not_met · 현재 최고 구간: rolling_agreement_probability_ge_52 · 현재 최고 precision: 0.571 · 표본: 77경기 · 목표 gap: 0.279</p>
+      <a class="action-link" href="kt_wiz_challenger.html">KT Wiz 상세 실험 대시보드 열기</a>
+    </section>
+    """
+
+
 def export_daily_recommendation_summary(prediction_cards: list[dict], generated_at: datetime, reference_date: date):
     top = prediction_cards[0] if prediction_cards else {}
     strong_count = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "강추천")
@@ -3372,6 +3550,13 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     )
     prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context, status_payload, lineup_context)
     prediction_cards = append_pregame_prediction_history(prediction_cards, status_payload, lineup_context, reference_datetime or datetime.now(), update_stage)
+    kt_wiz_today_prediction = build_kt_wiz_today_prediction(
+        prediction_cards,
+        status_payload,
+        generated_at,
+        reference_datetime or datetime.now(),
+    )
+    kt_wiz_prediction_html = render_kt_wiz_prediction_tab(kt_wiz_today_prediction)
     summary = today_summary(prediction_cards)
     daily_recommendation_summary = export_daily_recommendation_summary(prediction_cards, reference_datetime or datetime.now(), generated_at)
     recommendation_audit_summary = export_recommendation_outcome_audit(games, model_payload.get("selected_model", "unknown"))
@@ -3671,7 +3856,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
   <nav class="dashboard-tabs" aria-label="KBO dashboard tabs">
     <button type="button" class="tab-button active" data-tab="gamePrediction">경기 예측</button>
     <button type="button" class="tab-button" data-tab="runPrediction">득점 기반 승부 예측</button>
-    <button type="button" class="tab-button" data-tab="ktWizTarget">KT 85% 목표</button>
+    <button type="button" class="tab-button" data-tab="ktWizPrediction">KT Wiz 승리 예측</button>
   </nav>
   <div id="gamePrediction" class="tab-panel active">
   <section class="section hero-section">
@@ -3800,64 +3985,8 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
   <div id="runPrediction" class="tab-panel">
     {run_model_html}
   </div>
-  <div id="ktWizTarget" class="tab-panel">
-    <section class="section hero-section">
-      <div class="eyebrow">KT WIZ · PREGAME MODEL ROADMAP</div>
-      <h2>KT Wiz 85% Precision Target</h2>
-      <p class="insight-lead">현재 운영 승률은 전날/최근 흐름, 득실, 홈/원정, 휴식일, Elo 등은 반영하지만 오늘 확정 선발, 선발 최근 컨디션, 불펜 실제 소모, 확정 라인업, 핵심 타자/포수 출전 상태는 아직 운영 모델 입력으로 직접 쓰지 않습니다.</p>
-      <div class="grid hero-metrics">
-        <div class="metric">85% 목표<strong>미달성</strong><span class="note">selected-pick precision 목표</span></div>
-        <div class="metric">최고 구간<strong>0.571</strong><span class="note">rolling_agreement_probability_ge_52</span></div>
-        <div class="metric">표본<strong>77경기</strong><span class="note">Wilson lower-bound 미충족</span></div>
-        <div class="metric">운영 반영<strong>미반영</strong><span class="note">offline monitoring only</span></div>
-      </div>
-      <p class="note">85% 목표 유지 · 현재 미달성 · 현재 최고 구간: rolling_agreement_probability_ge_52 · 현재 최고 precision: 0.571 · 표본: 77경기 · 목표까지 gap: 0.279 · 상태: not_met · 운영 반영 아님 · offline monitoring only.</p>
-    </section>
-    <section class="section">
-      <div class="section-title">
-        <div>
-          <div class="eyebrow">WHY · 현재 한계</div>
-          <h2>오늘 경기 승률로 쓰기 부족한 정보</h2>
-        </div>
-      </div>
-      <div class="tables">
-        <div>
-          <h3>현재 운영 모델에 반영되는 축</h3>
-          <table><thead><tr><th>구분</th><th>상태</th></tr></thead><tbody>
-            <tr><td>최근 경기 흐름</td><td>최근 3/5/10경기 득점·실점·득실차 반영</td></tr>
-            <tr><td>홈/원정·휴식일</td><td>경기 전 확인 가능한 일정 기반 피처 반영</td></tr>
-            <tr><td>상대 흐름·Elo</td><td>완료 경기 기준 누수 없이 반영</td></tr>
-          </tbody></table>
-        </div>
-        <div>
-          <h3>아직 운영 피처가 아닌 축</h3>
-          <table><thead><tr><th>구분</th><th>필요 조건</th></tr></thead><tbody>
-            <tr><td>오늘 확정 선발</td><td>예측 cutoff 이전 timestamp 필요</td></tr>
-            <tr><td>선발 최근 3경기 상태</td><td>해당 경기 이전 등판만 shift 집계</td></tr>
-            <tr><td>불펜 실제 소모</td><td>전날까지 투구수·이닝 로그 필요</td></tr>
-            <tr><td>확정 라인업</td><td>경기 전 발표 시점 보존 필요</td></tr>
-            <tr><td>핵심 타자/포수 출전</td><td>라인업·부상 소스의 cutoff 검증 필요</td></tr>
-          </tbody></table>
-        </div>
-      </div>
-      <p class="note">이 탭은 `codex://threads/019e0626-85cf-7951-9bfd-a63489754b2e`에서 정리한 문제의식, 즉 “표시 정보가 아니라 오늘 경기 전력 정보가 모델 입력으로 검증되어야 한다”는 결론을 대시보드에 명시한 것입니다.</p>
-    </section>
-    <section class="section">
-      <div class="section-title">
-        <div>
-          <div class="eyebrow">NEXT · 검증 순서</div>
-          <h2>운영 모델 교체 없이 진행할 다음 단계</h2>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="metric">1단계<strong>Pregame feature store</strong><span class="note">선발·불펜·라인업 timestamp 축적</span></div>
-        <div class="metric">2단계<strong>Offline challenger</strong><span class="note">기존 모델과 분리 검증</span></div>
-        <div class="metric">3단계<strong>Forward validation</strong><span class="note">segment search 이후 미래 경기 검증</span></div>
-        <div class="metric">4단계<strong>Promotion gate</strong><span class="note">85% lower-bound와 production safety 동시 통과</span></div>
-      </div>
-      <p class="note">정책: 운영 모델 교체 없음, `win_predictor_model.json` 변경 없음, `pitching_daily_snapshot.csv` 피처 사용 없음, betting recommendation 없음.</p>
-      <a class="action-link" href="kt_wiz_challenger.html">KT Wiz challenger 상세 대시보드 보기</a>
-    </section>
+  <div id="ktWizPrediction" class="tab-panel">
+    {kt_wiz_prediction_html}
   </div>
 </main>
 <script>
