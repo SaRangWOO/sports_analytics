@@ -1696,7 +1696,85 @@ def _kt_prediction_percent(value):
         return None
 
 
-def build_kt_wiz_today_prediction(prediction_cards: list[dict], status_payload: dict, generated_at: date, reference_datetime: datetime):
+def _team_record_summary(games: pd.DataFrame, team: str, reference_date: date):
+    completed = games[
+        games["status"].eq("Final")
+        & games["team"].eq(team)
+        & (pd.to_datetime(games["date"]).dt.date < reference_date)
+    ].copy()
+    if completed.empty:
+        return {}
+    recent = completed.sort_values("date").tail(10)
+    wins = int(completed["result"].eq("Win").sum())
+    losses = int(completed["result"].eq("Loss").sum())
+    recent_wins = int(recent["result"].eq("Win").sum())
+    run_diff = float((recent["score_team"] - recent["score_opp"]).mean())
+    return {
+        "games": int(len(completed)),
+        "wins": wins,
+        "losses": losses,
+        "win_rate": wins / max(wins + losses, 1),
+        "recent_10_wins": recent_wins,
+        "recent_10_losses": int(recent["result"].eq("Loss").sum()),
+        "recent_10_win_rate": recent_wins / max(int(recent["result"].isin(["Win", "Loss"]).sum()), 1),
+        "recent_10_run_diff": round(run_diff, 2),
+        "recent_10_runs_for": round(float(recent["score_team"].mean()), 2),
+        "recent_10_runs_against": round(float(recent["score_opp"].mean()), 2),
+    }
+
+
+def build_kt_reference_signal(games: pd.DataFrame, reference_date: date, opponent: str | None, kt_is_home: bool | None):
+    if not opponent:
+        return None
+    kt = _team_record_summary(games, "KT", reference_date)
+    opp = _team_record_summary(games, opponent, reference_date)
+    if not kt or not opp:
+        return None
+
+    completed = games[
+        games["status"].eq("Final")
+        & (pd.to_datetime(games["date"]).dt.date < reference_date)
+    ].copy()
+    h2h = completed[
+        completed["team"].eq("KT")
+        & completed["opponent"].eq(opponent)
+        & (pd.to_datetime(completed["date"]).dt.year == reference_date.year)
+    ]
+    home_away = completed[
+        completed["team"].eq("KT")
+        & completed["home_away"].eq("H" if kt_is_home else "A")
+    ]
+    h2h_games = int(len(h2h))
+    h2h_win_rate = float(h2h["result"].eq("Win").mean()) if h2h_games else 0.5
+    venue_win_rate = float(home_away["result"].eq("Win").mean()) if not home_away.empty else 0.5
+    score = (
+        0.50
+        + (kt["win_rate"] - opp["win_rate"]) * 0.18
+        + (kt["recent_10_win_rate"] - opp["recent_10_win_rate"]) * 0.16
+        + np.clip((kt["recent_10_run_diff"] - opp["recent_10_run_diff"]) / 10, -0.08, 0.08)
+        + (h2h_win_rate - 0.5) * 0.08
+        + (venue_win_rate - 0.5) * 0.05
+    )
+    probability = float(np.clip(score, 0.38, 0.62))
+    drivers = [
+        f"시즌 승률 KT {kt['win_rate']:.3f} vs {opponent} {opp['win_rate']:.3f}",
+        f"최근 10경기 KT {kt['recent_10_wins']}승 {kt['recent_10_losses']}패, {opponent} {opp['recent_10_wins']}승 {opp['recent_10_losses']}패",
+        f"최근 10경기 평균 득실 KT {kt['recent_10_run_diff']:+.2f}, {opponent} {opp['recent_10_run_diff']:+.2f}",
+        f"시즌 맞대결 KT {int(h2h['result'].eq('Win').sum())}승 {int(h2h['result'].eq('Loss').sum())}패",
+        f"KT {'홈' if kt_is_home else '원정'} 승률 {venue_win_rate:.3f}",
+    ]
+    return {
+        "probability": round(probability, 3),
+        "predicted_winner": "KT" if probability >= 0.5 else opponent,
+        "grade": "lean_kt" if probability >= 0.54 else "lean_opponent" if probability <= 0.46 else "watch",
+        "confidence_label": "medium" if probability >= 0.57 or probability <= 0.43 else "low",
+        "drivers": drivers,
+        "kt_summary": kt,
+        "opponent_summary": opp,
+    }
+
+
+def build_kt_wiz_today_prediction(prediction_cards: list[dict], status_payload: dict, generated_at: date, reference_datetime: datetime, games: pd.DataFrame | None = None):
     kt_game = next(
         (game for game in status_payload.get("games", []) if "KT" in {game.get("home_team"), game.get("away_team")}),
         None,
@@ -1716,6 +1794,7 @@ def build_kt_wiz_today_prediction(prediction_cards: list[dict], status_payload: 
     production_kt_probability = None
     if production_probability is not None:
         production_kt_probability = production_probability if production_predicted_winner == "KT" else 1 - production_probability
+    reference_signal = build_kt_reference_signal(games, generated_at, opponent, kt_is_home) if games is not None and has_kt_game else None
 
     if kt_card:
         prediction_status = "production_only_available"
@@ -1724,6 +1803,13 @@ def build_kt_wiz_today_prediction(prediction_cards: list[dict], status_payload: 
         final_prediction = production_predicted_winner
         final_probability = production_kt_probability
         interpretation = "Production 모델만 당일 KT 경기 기준 확률을 제공합니다. KT challenger는 안전한 당일 피처 산출이 없어 offline monitoring 참고로만 표시합니다."
+    elif reference_signal:
+        prediction_status = "kt_game_available"
+        recommendation_grade_value = "watch"
+        confidence_label = reference_signal["confidence_label"]
+        final_prediction = reference_signal["predicted_winner"]
+        final_probability = reference_signal["probability"]
+        interpretation = "운영 모델 확률은 없지만, 완료 경기 기준 시즌/최근/상대전적 참고 신호를 표시합니다. 정확도 보장 신호가 아니므로 관망 등급입니다."
     elif has_kt_game:
         prediction_status = "insufficient_kt_features"
         recommendation_grade_value = "insufficient_data"
@@ -1760,6 +1846,12 @@ def build_kt_wiz_today_prediction(prediction_cards: list[dict], status_payload: 
         "models_agree": None,
         "final_experimental_prediction": final_prediction,
         "final_experimental_kt_win_probability": round(final_probability, 3) if final_probability is not None else None,
+        "reference_signal_available": reference_signal is not None,
+        "reference_signal_kt_win_probability": reference_signal["probability"] if reference_signal else None,
+        "reference_signal_predicted_winner": reference_signal["predicted_winner"] if reference_signal else None,
+        "reference_signal_grade": reference_signal["grade"] if reference_signal else None,
+        "reference_signal_inputs": reference_signal["drivers"] if reference_signal else [],
+        "reference_signal_note": "완료 경기 기준 시즌/최근/상대전적/홈원정 참고 신호이며 production 또는 challenger 모델 확률이 아닙니다.",
         "prediction_status": prediction_status,
         "recommendation_grade": recommendation_grade_value,
         "confidence_label": confidence_label,
@@ -1802,22 +1894,31 @@ def render_kt_wiz_prediction_tab(payload: dict):
     models_agree = payload.get("models_agree")
     agree_text = "일치" if models_agree is True else "불일치" if models_agree is False else "비교 불가"
     consensus_text = "consensus" if models_agree else "not consensus"
+    signal_rows = "".join(
+        f"<tr><td>{escape(item)}</td></tr>"
+        for item in payload.get("reference_signal_inputs", [])
+    ) or "<tr><td>표시할 참고 신호가 없습니다.</td></tr>"
+    signal_note = payload.get("reference_signal_note", "")
+    confidence_display = {"low": "낮음", "medium": "보통", "high": "높음", "unavailable": "확인 불가"}.get(
+        str(payload.get("confidence_label", "unavailable")),
+        str(payload.get("confidence_label", "-")),
+    )
     return f"""
     <section class="section hero-section">
-      <div class="eyebrow">KT WIZ · EXPERIMENTAL PREDICTION</div>
+      <div class="eyebrow">KT WIZ · TODAY PREDICTION</div>
       <h2>KT Wiz 승리 예측</h2>
-      <p class="insight-lead">{escape(payload.get("interpretation", ""))}</p>
+      <p class="insight-lead">오늘 KT 경기에서 바로 확인할 핵심 지표입니다. 선발투수와 라인업 정보가 확인되면 승률은 재계산 대상입니다.</p>
       <div class="grid hero-metrics">
-        <div class="metric">KT Wiz 승리 확률<strong>{escape(kt_probability_text)}</strong><span class="note">experimental reference</span></div>
-        <div class="metric">예측 결과<strong>{escape(display(payload.get("final_experimental_prediction")))}</strong><span class="note">{escape(payload.get("recommendation_grade", ""))}</span></div>
-        <div class="metric">신뢰도<strong>{escape(payload.get("confidence_label", "unavailable"))}</strong><span class="note">운영 반영 없음</span></div>
-        <div class="metric">85% 목표 상태<strong>not_met</strong><span class="note">offline monitoring only</span></div>
+        <div class="metric">오늘 상대<strong>{escape(display(payload.get("opponent")))}</strong><span class="note">{escape(game_info)}</span></div>
+        <div class="metric">KT 승리 확률<strong>{escape(kt_probability_text)}</strong><span class="note">현재 참고 확률</span></div>
+        <div class="metric">상대 승리 확률<strong>{escape(opponent_probability_text)}</strong><span class="note">{escape(display(payload.get("opponent")))}</span></div>
+        <div class="metric">예측 결과<strong>{escape(display(payload.get("final_experimental_prediction")))}</strong><span class="note">신뢰도 {escape(confidence_display)}</span></div>
       </div>
     </section>
     <section class="section">
       <div class="tables">
         <div>
-          <h3>Game card</h3>
+          <h3>경기 정보</h3>
           <table><tbody>
             <tr><th>기준일</th><td>{escape(payload.get("reference_date", "-"))}</td></tr>
             <tr><th>경기 정보</th><td>{escape(game_info)}</td></tr>
@@ -1826,17 +1927,28 @@ def render_kt_wiz_prediction_tab(payload: dict):
           </tbody></table>
         </div>
         <div>
-          <h3>Prediction card</h3>
+          <h3>예측 요약</h3>
           <table><tbody>
-            <tr><th>KT Wiz 승리 확률</th><td>{escape(kt_probability_text)}</td></tr>
+            <tr><th>KT 승리 확률</th><td>{escape(kt_probability_text)}</td></tr>
             <tr><th>상대팀 승리 확률</th><td>{escape(opponent_probability_text)}</td></tr>
             <tr><th>예측 결과</th><td>{escape(display(payload.get("final_experimental_prediction")))}</td></tr>
-            <tr><th>추천 상태</th><td>{escape(payload.get("recommendation_grade", "-"))}</td></tr>
-            <tr><th>신뢰도</th><td>{escape(payload.get("confidence_label", "-"))}</td></tr>
-            <tr><th>운영 반영 여부</th><td>미반영 · offline monitoring only</td></tr>
+            <tr><th>신뢰도</th><td>{escape(confidence_display)}</td></tr>
+            <tr><th>85% 목표</th><td>not_met · 현재 개선 목표</td></tr>
           </tbody></table>
         </div>
       </div>
+    </section>
+    <section class="section">
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">REFERENCE SIGNALS</div>
+          <h2>경기 전 참고 신호</h2>
+        </div>
+      </div>
+      <div class="wide-table">
+        <table><thead><tr><th>완료 경기 기준 신호</th></tr></thead><tbody>{signal_rows}</tbody></table>
+      </div>
+      <p class="note">{escape(signal_note)}</p>
     </section>
     <section class="section">
       <div class="tables">
@@ -3555,6 +3667,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
         status_payload,
         generated_at,
         reference_datetime or datetime.now(),
+        games,
     )
     kt_wiz_prediction_html = render_kt_wiz_prediction_tab(kt_wiz_today_prediction)
     summary = today_summary(prediction_cards)
