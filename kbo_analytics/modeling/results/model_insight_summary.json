@@ -714,7 +714,7 @@
       "over_55_accuracy_delta": 0.015,
       "improved_segments": "연패 흐름(+0.009), 대승/대패 경기(+0.012), 득실차 차이 큼(+0.012), 2026 시즌(+0.008)",
       "worsened_segments": "연승 흐름(-0.005), 명시 연승 streak(-0.021), 박빙 경기(-0.010), 원정팀 관점(-0.005)",
-      "likely_driver_features": "elo_diff, recent_run_diff_10_gap, is_home, recent_10_win_rate_gap, recent_5_win_rate_gap, avg_run_diff_last_10, opponent_avg_run_diff_last_10, month_win_rate_gap",
+      "likely_driver_features": "elo_diff, recent_run_diff_10_gap, is_home, recent_10_win_rate_gap, month_win_rate_gap, recent_5_win_rate_gap, avg_run_diff_last_10, opponent_avg_run_diff_last_10",
       "interpretation": "전체 정확도 개선 근거가 부족"
     },
     {
@@ -733,7 +733,7 @@
       "over_55_accuracy_delta": -0.002,
       "improved_segments": "2026 시즌(+0.005)",
       "worsened_segments": "연승 흐름(-0.008), 명시 연승 streak(-0.015), 명시 연패 streak(-0.007), 박빙 경기(-0.013), 원정팀 관점(-0.005)",
-      "likely_driver_features": "elo_diff, recent_run_diff_10_gap, is_home, recent_10_win_rate_gap, blowout_tendency_gap, recent_5_win_rate_gap, avg_run_diff_last_10, month_win_rate_gap",
+      "likely_driver_features": "elo_diff, recent_run_diff_10_gap, is_home, recent_10_win_rate_gap, month_win_rate_gap, blowout_tendency_gap, recent_5_win_rate_gap, avg_run_diff_last_10",
       "interpretation": "전체 정확도 개선 근거가 부족"
     }
   ],
@@ -1281,21 +1281,9 @@
       "next_action": "후보 축소 시 제외"
     },
     {
-      "feature": "run_momentum_gap",
-      "feature_group": "momentum",
-      "importance_rank": 18,
-      "importance_mean": 0.011854,
-      "appears_in_best_candidate": true,
-      "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
-      "segment_hurt": "",
-      "keep_candidate": "segment_only",
-      "reason": "특정 세그먼트 개선 후보로만 유지",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
-    },
-    {
       "feature": "back_to_back",
       "feature_group": "baseline",
-      "importance_rank": 19,
+      "importance_rank": 18,
       "importance_mean": 0.011135,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
@@ -1307,7 +1295,7 @@
     {
       "feature": "opponent_run_momentum_3_vs_10",
       "feature_group": "momentum",
-      "importance_rank": 20,
+      "importance_rank": 19,
       "importance_mean": 0.009226,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
@@ -1319,8 +1307,32 @@
     {
       "feature": "team_run_momentum_3_vs_10",
       "feature_group": "momentum",
+      "importance_rank": 20,
+      "importance_mean": 0.0091,
+      "appears_in_best_candidate": true,
+      "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
+      "segment_hurt": "",
+      "keep_candidate": "segment_only",
+      "reason": "특정 세그먼트 개선 후보로만 유지",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
+    },
+    {
+      "feature": "run_momentum_gap",
+      "feature_group": "momentum",
       "importance_rank": 21,
-      "importance_mean": 0.006141,
+      "importance_mean": 0.008209,
+      "appears_in_best_candidate": true,
+      "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
+      "segment_hurt": "",
+      "keep_candidate": "segment_only",
+      "reason": "특정 세그먼트 개선 후보로만 유지",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
+    },
+    {
+      "feature": "opponent_allowed_momentum_3_vs_10",
+      "feature_group": "momentum",
+      "importance_rank": 22,
+      "importance_mean": 0.006823,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
       "segment_hurt": "",
@@ -1331,8 +1343,8 @@
     {
       "feature": "team_allowed_momentum_3_vs_10",
       "feature_group": "momentum",
-      "importance_rank": 22,
-      "importance_mean": 0.005538,
+      "importance_rank": 23,
+      "importance_mean": 0.005439,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
       "segment_hurt": "",
@@ -1343,8 +1355,20 @@
     {
       "feature": "venue_win_rate_gap",
       "feature_group": "venue_context",
-      "importance_rank": 23,
+      "importance_rank": 24,
       "importance_mean": 0.005069,
+      "appears_in_best_candidate": true,
+      "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
+      "segment_hurt": "",
+      "keep_candidate": "segment_only",
+      "reason": "특정 세그먼트 개선 후보로만 유지",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
+    },
+    {
+      "feature": "allowed_momentum_gap",
+      "feature_group": "momentum",
+      "importance_rank": 25,
+      "importance_mean": 0.005012,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
       "segment_hurt": "",
@@ -1355,7 +1379,7 @@
     {
       "feature": "games_last_7_days",
       "feature_group": "baseline",
-      "importance_rank": 24,
+      "importance_rank": 26,
       "importance_mean": 0.004959,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
@@ -1365,21 +1389,9 @@
       "next_action": "후보 축소 시 제외"
     },
     {
-      "feature": "allowed_momentum_gap",
-      "feature_group": "momentum",
-      "importance_rank": 25,
-      "importance_mean": 0.004179,
-      "appears_in_best_candidate": true,
-      "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
-      "segment_hurt": "",
-      "keep_candidate": "segment_only",
-      "reason": "특정 세그먼트 개선 후보로만 유지",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
-    },
-    {
       "feature": "rest_days",
       "feature_group": "baseline",
-      "importance_rank": 26,
+      "importance_rank": 27,
       "importance_mean": 0.003606,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
@@ -1387,18 +1399,6 @@
       "keep_candidate": "false",
       "reason": "중요도와 성능 기여 근거가 약함",
       "next_action": "후보 축소 시 제외"
-    },
-    {
-      "feature": "opponent_allowed_momentum_3_vs_10",
-      "feature_group": "momentum",
-      "importance_rank": 27,
-      "importance_mean": 0.003227,
-      "appears_in_best_candidate": true,
-      "segment_helped": "전체, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
-      "segment_hurt": "",
-      "keep_candidate": "segment_only",
-      "reason": "특정 세그먼트 개선 후보로만 유지",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
     }
   ],
   "next_model_experiment_plan_summary": {
@@ -1838,7 +1838,7 @@
   ],
   "calibration_replacement_risk": "calibration gate를 통과하지 못하면 운영 모델 교체 금지",
   "production_gate_audit_summary": {
-    "generated_at": "2026-06-25T08:06:26.320870",
+    "generated_at": "2026-06-25T11:06:21.574580",
     "current_operational_model": "GradientBoosting 시간가중 모델",
     "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_momentum",
     "current_operational_accuracy": 0.544,
@@ -2011,27 +2011,27 @@
     "recent_run_diff_10_gap"
   ],
   "harmful_or_noisy_non_pitching_features": [
-    "run_std_gap",
     "team_recent_5_run_std",
-    "opponent_allowed_momentum_3_vs_10",
-    "run_std_gap",
-    "opponent_current_streak_length",
-    "opponent_current_streak_length",
     "rest_days",
     "rest_days",
     "rest_days",
     "rest_days",
     "rest_days",
-    "rest_days"
+    "rest_days",
+    "rest_days",
+    "rest_days",
+    "winning_streak_after_close_games",
+    "winning_streak_after_close_games",
+    "opponent_recent_5_run_std"
   ],
   "recommended_next_non_pitching_step": "유용 신호가 반복 확인된 비투수 피처만 다음 후보 세트에 유지하고, 노이즈 가능성이 있는 피처는 운영 모델 교체 후보에서 제외합니다.",
   "pitching_snapshot_collection_status": {
-    "generated_at": "2026-06-25 08:00:02",
+    "generated_at": "2026-06-25 11:00:02",
     "reference_date": "2026-06-25",
     "snapshot_rows_total": 410,
     "snapshot_rows_for_reference_date": 10,
-    "confirmed_starter_count": 0,
-    "estimated_starter_count": 10,
+    "confirmed_starter_count": 10,
+    "estimated_starter_count": 0,
     "unknown_starter_count": 0,
     "teams_with_snapshot": [
       "KIA",
@@ -2063,7 +2063,7 @@
   "safe_to_replace_model": false,
   "reason_not_to_replace_if_false": "최고 비투수 후보의 accuracy 개선폭이 운영 교체 기준(+0.005 초과)을 넘지 못했고, bootstrap 신뢰구간과 calibration 진단에서도 안정적인 개선 근거가 충분하지 않아 운영 모델은 유지합니다.",
   "pitching_snapshot_quality_summary": {
-    "generated_at": "2026-06-25 08:00:02",
+    "generated_at": "2026-06-25 11:00:02",
     "reference_date": "2026-06-25",
     "snapshot_file": "data/official/pitching_daily_snapshot.csv",
     "total_snapshot_rows": 410,
@@ -2073,13 +2073,11 @@
     "actual_team_rows": 10,
     "duplicate_key_count": 0,
     "unknown_starter_count": 0,
-    "estimated_starter_count": 10,
-    "confirmed_starter_count": 0,
+    "estimated_starter_count": 0,
+    "confirmed_starter_count": 10,
     "quality_status": "pass",
     "blocking_issues": [],
-    "warnings": [
-      "confirmed_starter_ratio_check"
-    ],
+    "warnings": [],
     "safe_for_future_feature_use": false,
     "reason_if_not_safe": "누적 기간 부족: 최소 30일 이상 필요",
     "minimum_required_days": 30,
@@ -2150,5 +2148,603 @@
     "earliest_feature_experiment_date": "2026-07-01",
     "plan_file": "modeling/results/pitching_feature_experiment_plan.json"
   },
-  "reason_pitching_features_still_blocked": "투수 스냅샷은 품질 점검을 통과했지만 누적 기간이 21일로 짧아 모델 피처 사용을 차단합니다. 최소 30일 이상 누적 후 baseline_plus_pitching_snapshot 실험을 진행합니다."
+  "reason_pitching_features_still_blocked": "투수 스냅샷은 품질 점검을 통과했지만 누적 기간이 21일로 짧아 모델 피처 사용을 차단합니다. 최소 30일 이상 누적 후 baseline_plus_pitching_snapshot 실험을 진행합니다.",
+  "recommendation_outcome_audit_summary": {
+    "audited_completed_games": 145,
+    "pending_games": 170,
+    "note": "추천 등급은 완료 경기 결과로 사후 평가하며, 사전 피처나 모델 확률에는 연결하지 않습니다."
+  },
+  "recommendation_grade_performance_summary": [
+    {
+      "grade": "A",
+      "recommendation_strength": "강추천",
+      "games": 2,
+      "correct": 1,
+      "accuracy": 0.5,
+      "avg_probability": 0.59,
+      "brier": 0.26,
+      "log_loss": 0.714,
+      "top_pick_games": 2,
+      "top_pick_accuracy": 0.5,
+      "top_tier_games": 2,
+      "top_tier_accuracy": 0.5,
+      "interpretation": "충분한 표본에서 C/D보다 나은지 확인해야 하는 추천 구간입니다."
+    },
+    {
+      "grade": "B",
+      "recommendation_strength": "추천",
+      "games": 0,
+      "correct": 0,
+      "accuracy": null,
+      "avg_probability": null,
+      "brier": null,
+      "log_loss": null,
+      "top_pick_games": 0,
+      "top_pick_accuracy": null,
+      "top_tier_games": 0,
+      "top_tier_accuracy": null,
+      "interpretation": "충분한 표본에서 C/D보다 나은지 확인해야 하는 추천 구간입니다."
+    },
+    {
+      "grade": "C",
+      "recommendation_strength": "약우세",
+      "games": 99,
+      "correct": 62,
+      "accuracy": 0.626,
+      "avg_probability": 0.542,
+      "brier": 0.24,
+      "log_loss": 0.672,
+      "top_pick_games": 28,
+      "top_pick_accuracy": 0.714,
+      "top_tier_games": 57,
+      "top_tier_accuracy": 0.719,
+      "interpretation": "방향성 참고 구간이며, 유의미한 적중률 개선 전까지 강한 추천으로 보지 않습니다."
+    },
+    {
+      "grade": "D",
+      "recommendation_strength": "관망",
+      "games": 44,
+      "correct": 23,
+      "accuracy": 0.523,
+      "avg_probability": 0.508,
+      "brier": 0.251,
+      "log_loss": 0.695,
+      "top_pick_games": 0,
+      "top_pick_accuracy": null,
+      "top_tier_games": 0,
+      "top_tier_accuracy": null,
+      "interpretation": "D/E 등급은 실행 가능한 추천으로 해석하지 않습니다."
+    },
+    {
+      "grade": "E",
+      "recommendation_strength": "정보 부족",
+      "games": 0,
+      "correct": 0,
+      "accuracy": null,
+      "avg_probability": null,
+      "brier": null,
+      "log_loss": null,
+      "top_pick_games": 0,
+      "top_pick_accuracy": null,
+      "top_tier_games": 0,
+      "top_tier_accuracy": null,
+      "interpretation": "D/E 등급은 실행 가능한 추천으로 해석하지 않습니다."
+    }
+  ],
+  "market_recommendation_performance_summary": [
+    {
+      "market_type": "win_pick",
+      "recommendation_label": "승패 강추천",
+      "games": 2,
+      "correct": 1,
+      "accuracy": 0.5,
+      "avg_probability": 0.59,
+      "interpretation": "승패 추천만 실제 승패 결과로 평가합니다."
+    },
+    {
+      "market_type": "win_pick",
+      "recommendation_label": "승패 관망",
+      "games": 44,
+      "correct": 23,
+      "accuracy": 0.523,
+      "avg_probability": 0.508,
+      "interpretation": "승패 추천만 실제 승패 결과로 평가합니다."
+    },
+    {
+      "market_type": "win_pick",
+      "recommendation_label": "승패 약우세",
+      "games": 99,
+      "correct": 62,
+      "accuracy": 0.626,
+      "avg_probability": 0.542,
+      "interpretation": "승패 추천만 실제 승패 결과로 평가합니다."
+    },
+    {
+      "market_type": "handicap",
+      "recommendation_label": "not_available",
+      "games": 0,
+      "correct": 0,
+      "accuracy": null,
+      "avg_probability": null,
+      "interpretation": "유효한 핸디캡 라인이 없어 평가하지 않습니다."
+    },
+    {
+      "market_type": "over_under",
+      "recommendation_label": "not_available",
+      "games": 0,
+      "correct": 0,
+      "accuracy": null,
+      "avg_probability": null,
+      "interpretation": "유효한 오버/언더 기준 라인이 없어 평가하지 않습니다."
+    }
+  ],
+  "daily_top_pick_performance_summary": [
+    {
+      "date": "2026-06-19",
+      "top_pick_game": "SSG vs NC",
+      "top_pick_team": "NC",
+      "top_pick_probability": 0.588,
+      "top_pick_grade": "A등급",
+      "actual_winner": "NC",
+      "result": "correct",
+      "all_games_max_probability": 0.588,
+      "day_confidence_summary": "4 completed audited games",
+      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
+    },
+    {
+      "date": "2026-06-20",
+      "top_pick_game": "SSG vs NC",
+      "top_pick_team": "NC",
+      "top_pick_probability": 0.592,
+      "top_pick_grade": "A등급",
+      "actual_winner": "SSG",
+      "result": "incorrect",
+      "all_games_max_probability": 0.592,
+      "day_confidence_summary": "5 completed audited games",
+      "interpretation": "TOP PICK이 일반 예측보다 낫지 않아 '상대 우세 1순위' 표현을 검토합니다."
+    },
+    {
+      "date": "2026-06-21",
+      "top_pick_game": "SSG vs NC",
+      "top_pick_team": "NC",
+      "top_pick_probability": 0.563,
+      "top_pick_grade": "C등급",
+      "actual_winner": "SSG",
+      "result": "incorrect",
+      "all_games_max_probability": 0.563,
+      "day_confidence_summary": "5 completed audited games",
+      "interpretation": "TOP PICK이 일반 예측보다 낫지 않아 '상대 우세 1순위' 표현을 검토합니다."
+    },
+    {
+      "date": "2026-06-23",
+      "top_pick_game": "SSG vs KT",
+      "top_pick_team": "KT",
+      "top_pick_probability": 0.569,
+      "top_pick_grade": "C등급",
+      "actual_winner": "KT",
+      "result": "correct",
+      "all_games_max_probability": 0.569,
+      "day_confidence_summary": "5 completed audited games",
+      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
+    },
+    {
+      "date": "2026-06-24",
+      "top_pick_game": "SSG vs KT",
+      "top_pick_team": "KT",
+      "top_pick_probability": 0.538,
+      "top_pick_grade": "C등급",
+      "actual_winner": "SSG",
+      "result": "incorrect",
+      "all_games_max_probability": 0.538,
+      "day_confidence_summary": "5 completed audited games",
+      "interpretation": "TOP PICK이 일반 예측보다 낫지 않아 '상대 우세 1순위' 표현을 검토합니다."
+    }
+  ],
+  "recommendation_policy_risk_note": "The display policy improves interpretability, but recommendation labels must be validated against completed-game outcomes before being treated as actionable.",
+  "recommended_recommendation_policy_next_step": "누적 감사 표본이 충분해질 때까지 A/B/C/D/E 등급별 적중률과 TOP PICK 성능을 모니터링하고, 성과가 확인되지 않으면 TOP PICK 문구를 상대 우세 1순위로 낮춥니다.",
+  "recommendation_label_calibration_summary": [
+    {
+      "label_type": "recommendation_strength",
+      "label": "강추천",
+      "games": 2,
+      "correct": 1,
+      "accuracy": 0.5,
+      "avg_probability": 0.59,
+      "expected_accuracy": 0.59,
+      "accuracy_minus_expected": -0.09,
+      "brier": 0.26,
+      "log_loss": 0.714,
+      "supported_by_results": false,
+      "sample_warning": "sample size below 30",
+      "recommended_label_action": "monitor_more_games",
+      "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
+    },
+    {
+      "label_type": "recommendation_strength",
+      "label": "관망",
+      "games": 44,
+      "correct": 23,
+      "accuracy": 0.523,
+      "avg_probability": 0.508,
+      "expected_accuracy": 0.508,
+      "accuracy_minus_expected": 0.015,
+      "brier": 0.251,
+      "log_loss": 0.695,
+      "supported_by_results": true,
+      "sample_warning": "supported by completed-game audit so far",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "recommendation_strength",
+      "label": "약우세",
+      "games": 99,
+      "correct": 62,
+      "accuracy": 0.626,
+      "avg_probability": 0.542,
+      "expected_accuracy": 0.542,
+      "accuracy_minus_expected": 0.084,
+      "brier": 0.24,
+      "log_loss": 0.672,
+      "supported_by_results": true,
+      "sample_warning": "directional reference only",
+      "recommended_label_action": "keep",
+      "interpretation": "약우세는 실행 추천이 아니라 방향성 참고로 유지합니다."
+    },
+    {
+      "label_type": "recommendation_grade",
+      "label": "A등급",
+      "games": 2,
+      "correct": 1,
+      "accuracy": 0.5,
+      "avg_probability": 0.59,
+      "expected_accuracy": 0.59,
+      "accuracy_minus_expected": -0.09,
+      "brier": 0.26,
+      "log_loss": 0.714,
+      "supported_by_results": false,
+      "sample_warning": "sample size below 30",
+      "recommended_label_action": "monitor_more_games",
+      "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
+    },
+    {
+      "label_type": "recommendation_grade",
+      "label": "C등급",
+      "games": 99,
+      "correct": 62,
+      "accuracy": 0.626,
+      "avg_probability": 0.542,
+      "expected_accuracy": 0.542,
+      "accuracy_minus_expected": 0.084,
+      "brier": 0.24,
+      "log_loss": 0.672,
+      "supported_by_results": true,
+      "sample_warning": "supported by completed-game audit so far",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "recommendation_grade",
+      "label": "D등급",
+      "games": 44,
+      "correct": 23,
+      "accuracy": 0.523,
+      "avg_probability": 0.508,
+      "expected_accuracy": 0.508,
+      "accuracy_minus_expected": 0.015,
+      "brier": 0.251,
+      "log_loss": 0.695,
+      "supported_by_results": true,
+      "sample_warning": "supported by completed-game audit so far",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "daily_rank_label",
+      "label": "오늘 TOP PICK",
+      "games": 30,
+      "correct": 21,
+      "accuracy": 0.7,
+      "avg_probability": 0.556,
+      "expected_accuracy": 0.556,
+      "accuracy_minus_expected": 0.144,
+      "brier": 0.232,
+      "log_loss": 0.656,
+      "supported_by_results": true,
+      "sample_warning": "supported by completed-game audit so far",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "daily_rank_label",
+      "label": "일반 예측",
+      "games": 115,
+      "correct": 65,
+      "accuracy": 0.565,
+      "avg_probability": 0.526,
+      "expected_accuracy": 0.526,
+      "accuracy_minus_expected": 0.039,
+      "brier": 0.246,
+      "log_loss": 0.686,
+      "supported_by_results": true,
+      "sample_warning": "supported by completed-game audit so far",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "market_label",
+      "label": "win_pick",
+      "games": 145,
+      "correct": 86,
+      "accuracy": 0.593,
+      "avg_probability": 0.532,
+      "expected_accuracy": 0.532,
+      "accuracy_minus_expected": 0.061,
+      "brier": 0.243,
+      "log_loss": 0.68,
+      "supported_by_results": true,
+      "sample_warning": "supported by completed-game audit so far",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "market_label",
+      "label": "handicap:not_available",
+      "games": 0,
+      "correct": 0,
+      "accuracy": NaN,
+      "avg_probability": NaN,
+      "expected_accuracy": NaN,
+      "accuracy_minus_expected": NaN,
+      "brier": NaN,
+      "log_loss": NaN,
+      "supported_by_results": false,
+      "sample_warning": "no valid market line data",
+      "recommended_label_action": "not_available",
+      "interpretation": "유효한 기준 라인이 없어 평가하지 않습니다."
+    },
+    {
+      "label_type": "market_label",
+      "label": "over_under:not_available",
+      "games": 0,
+      "correct": 0,
+      "accuracy": NaN,
+      "avg_probability": NaN,
+      "expected_accuracy": NaN,
+      "accuracy_minus_expected": NaN,
+      "brier": NaN,
+      "log_loss": NaN,
+      "supported_by_results": false,
+      "sample_warning": "no valid market line data",
+      "recommended_label_action": "not_available",
+      "interpretation": "유효한 기준 라인이 없어 평가하지 않습니다."
+    }
+  ],
+  "recommendation_wording_decision_summary": [
+    {
+      "current_wording": "오늘 TOP PICK",
+      "proposed_wording": "오늘 모델 기준 상대 우세 1순위",
+      "reason": "상대 순위 라벨이며 55% 미만 TOP PICK이 존재하거나 표본이 부족하면 강한 추천처럼 보이면 안 됩니다.",
+      "evidence_source": "recommendation_label_calibration_report.csv",
+      "risk_level": "medium",
+      "action_required": true,
+      "implementation_status": "guarded_in_dashboard"
+    },
+    {
+      "current_wording": "오늘 모델 기준 상대 우세 1순위",
+      "proposed_wording": "오늘 모델 기준 상대 우세 1순위",
+      "reason": "상대 랭킹 의미가 명확합니다.",
+      "evidence_source": "wording policy",
+      "risk_level": "low",
+      "action_required": false,
+      "implementation_status": "allowed"
+    },
+    {
+      "current_wording": "강추천",
+      "proposed_wording": "강추천",
+      "reason": "완료 경기 표본이 충분하고 추천/약우세보다 우월할 때만 유지합니다.",
+      "evidence_source": "recommendation_label_calibration_report.csv",
+      "risk_level": "high",
+      "action_required": true,
+      "implementation_status": "monitor_before_strengthening"
+    },
+    {
+      "current_wording": "추천",
+      "proposed_wording": "추천",
+      "reason": "약우세보다 나은 완료 경기 성과가 필요합니다.",
+      "evidence_source": "recommendation_label_calibration_report.csv",
+      "risk_level": "medium",
+      "action_required": false,
+      "implementation_status": "monitor"
+    },
+    {
+      "current_wording": "약우세",
+      "proposed_wording": "약우세",
+      "reason": "52~55% 방향성 edge는 실행 추천이 아닌 참고 신호입니다.",
+      "evidence_source": "recommendation_outcome_audit_log.csv",
+      "risk_level": "low",
+      "action_required": false,
+      "implementation_status": "keep"
+    },
+    {
+      "current_wording": "관망",
+      "proposed_wording": "관망",
+      "reason": "비실행 구간 표현으로 적절합니다.",
+      "evidence_source": "wording policy",
+      "risk_level": "low",
+      "action_required": false,
+      "implementation_status": "keep"
+    },
+    {
+      "current_wording": "정보 부족",
+      "proposed_wording": "정보 부족",
+      "reason": "핵심 입력 누락 시 사용합니다.",
+      "evidence_source": "wording policy",
+      "risk_level": "low",
+      "action_required": false,
+      "implementation_status": "keep"
+    },
+    {
+      "current_wording": "핸디캡 관망",
+      "proposed_wording": "핸디캡 관망",
+      "reason": "유효한 시장 라인이 없어 평가하지 않습니다.",
+      "evidence_source": "market_recommendation_performance_report.csv",
+      "risk_level": "low",
+      "action_required": false,
+      "implementation_status": "keep_not_available"
+    },
+    {
+      "current_wording": "오버/언더 관망",
+      "proposed_wording": "오버/언더 관망",
+      "reason": "유효한 오버/언더 라인이 없어 평가하지 않습니다.",
+      "evidence_source": "market_recommendation_performance_report.csv",
+      "risk_level": "low",
+      "action_required": false,
+      "implementation_status": "keep_not_available"
+    }
+  ],
+  "recommendation_policy_risk_summary": {
+    "generated_at": "2026-06-25T11:00:02.850396",
+    "audited_completed_games": 145,
+    "pending_games": 170,
+    "strongest_supported_label": "오늘 TOP PICK",
+    "weakest_supported_label": "handicap:not_available",
+    "top_pick_label_risk": "relative_rank_label_not_strong_pick",
+    "top_pick_wording_recommendation": "오늘 모델 기준 상대 우세 1순위",
+    "actionability_warning": "Recommendation labels are interpretive until enough completed-game outcomes support them.",
+    "label_change_recommendations": [
+      {
+        "label_type": "recommendation_strength",
+        "label": "강추천",
+        "recommended_label_action": "monitor_more_games",
+        "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
+      },
+      {
+        "label_type": "recommendation_strength",
+        "label": "관망",
+        "recommended_label_action": "keep",
+        "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+      },
+      {
+        "label_type": "recommendation_strength",
+        "label": "약우세",
+        "recommended_label_action": "keep",
+        "interpretation": "약우세는 실행 추천이 아니라 방향성 참고로 유지합니다."
+      },
+      {
+        "label_type": "recommendation_grade",
+        "label": "A등급",
+        "recommended_label_action": "monitor_more_games",
+        "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
+      },
+      {
+        "label_type": "recommendation_grade",
+        "label": "C등급",
+        "recommended_label_action": "keep",
+        "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+      },
+      {
+        "label_type": "recommendation_grade",
+        "label": "D등급",
+        "recommended_label_action": "keep",
+        "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+      },
+      {
+        "label_type": "daily_rank_label",
+        "label": "오늘 TOP PICK",
+        "recommended_label_action": "keep",
+        "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+      },
+      {
+        "label_type": "daily_rank_label",
+        "label": "일반 예측",
+        "recommended_label_action": "keep",
+        "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+      },
+      {
+        "label_type": "market_label",
+        "label": "win_pick",
+        "recommended_label_action": "keep",
+        "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+      },
+      {
+        "label_type": "market_label",
+        "label": "handicap:not_available",
+        "recommended_label_action": "not_available",
+        "interpretation": "유효한 기준 라인이 없어 평가하지 않습니다."
+      },
+      {
+        "label_type": "market_label",
+        "label": "over_under:not_available",
+        "recommended_label_action": "not_available",
+        "interpretation": "유효한 기준 라인이 없어 평가하지 않습니다."
+      }
+    ],
+    "insufficient_sample_warnings": [
+      "강추천",
+      "A등급",
+      "handicap:not_available",
+      "over_under:not_available"
+    ],
+    "market_data_limitations": "Handicap and over/under labels are not evaluated because valid market line data is not available. The system does not invent betting lines.",
+    "recommendation_policy_note": "The recommendation display policy does not change model probabilities or production model selection. Labels are calibrated only for user interpretation.",
+    "final_policy_recommendation": "rename_top_pick"
+  },
+  "recommended_display_policy_next_step": "The recommendation display policy does not change model probabilities or production model selection. Labels are calibrated only for user interpretation.",
+  "daily_pipeline_health_summary": {
+    "overall_status": "pass",
+    "blocking_issues": [],
+    "warnings": [],
+    "scheduled_games": 5,
+    "today_expected_runs_prediction_rows": 5
+  },
+  "latest_pipeline_health_status": {
+    "generated_at": "2026-06-25T11:00:02",
+    "reference_date": "2026-06-25",
+    "overall_status": "pass",
+    "blocking_issues": [],
+    "warnings": [],
+    "latest_html_path": "kbo_analytics/dashboard/latest.html",
+    "latest_html_exists": true,
+    "latest_html_modified_at": "2026-06-25T11:10:58",
+    "docs_latest_html_path": "docs/latest.html",
+    "docs_latest_html_exists": true,
+    "docs_latest_html_modified_at": "2026-06-25T11:10:58",
+    "scheduled_games": 5,
+    "today_expected_runs_prediction_file": "kbo_analytics/run_model/results/today_expected_runs_predictions.csv",
+    "today_expected_runs_prediction_rows": 5,
+    "validation_expected_runs_prediction_file": "kbo_analytics/run_model/results/expected_runs_predictions.csv",
+    "validation_expected_runs_prediction_rows": 1456,
+    "run_model_today_validation_split_ok": true,
+    "recommendation_summary_file": "kbo_analytics/modeling/results/daily_recommendation_summary.json",
+    "recommendation_summary_exists": true,
+    "recommendation_audit_log_file": "kbo_analytics/modeling/results/recommendation_outcome_audit_log.csv",
+    "recommendation_audit_completed_rows": 145,
+    "recommendation_audit_pending_rows": 170,
+    "pitching_snapshot_file": "kbo_analytics/data/official/pitching_daily_snapshot.csv",
+    "pitching_snapshot_exists": true,
+    "pitching_snapshot_rows_total": 410,
+    "pitching_snapshot_rows_for_reference_date": 10,
+    "pitching_snapshot_quality_status": "pass",
+    "pitching_snapshot_accumulated_days": 21,
+    "safe_to_use_pitching_snapshot_as_features": false,
+    "safe_to_replace_model": false,
+    "production_model_name": "GradientBoosting 시간가중 모델",
+    "production_model_accuracy": 0.544,
+    "production_gate_status": "blocked",
+    "db_load_status": "success",
+    "db_load_warning": "",
+    "http_check_targets": [
+      "http://127.0.0.1:8501/latest.html",
+      "http://192.168.11.23:8501/latest.html"
+    ],
+    "health_policy_note": "Daily pipeline health checks validate artifact generation and data separation only. They do not change model predictions or production model selection."
+  },
+  "operational_monitoring_note": "Daily pipeline health checks are used to validate artifact generation and data separation. They do not change model predictions or production model selection.",
+  "next_operational_watch_items": [
+    "today_expected_runs_predictions.csv 기준일/행 수 일치",
+    "expected_runs_predictions.csv 검증용 분리 유지",
+    "투수 스냅샷 30일 누적 게이트 유지",
+    "PostgreSQL 적재 실패는 HTML/CSV/JSON 생성 성공 여부와 분리해서 감시"
+  ]
 }

@@ -1,0 +1,87 @@
+{
+  "generated_at": "2026-06-25T11:00:02.850396",
+  "audited_completed_games": 145,
+  "pending_games": 170,
+  "strongest_supported_label": "오늘 TOP PICK",
+  "weakest_supported_label": "handicap:not_available",
+  "top_pick_label_risk": "relative_rank_label_not_strong_pick",
+  "top_pick_wording_recommendation": "오늘 모델 기준 상대 우세 1순위",
+  "actionability_warning": "Recommendation labels are interpretive until enough completed-game outcomes support them.",
+  "label_change_recommendations": [
+    {
+      "label_type": "recommendation_strength",
+      "label": "강추천",
+      "recommended_label_action": "monitor_more_games",
+      "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
+    },
+    {
+      "label_type": "recommendation_strength",
+      "label": "관망",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "recommendation_strength",
+      "label": "약우세",
+      "recommended_label_action": "keep",
+      "interpretation": "약우세는 실행 추천이 아니라 방향성 참고로 유지합니다."
+    },
+    {
+      "label_type": "recommendation_grade",
+      "label": "A등급",
+      "recommended_label_action": "monitor_more_games",
+      "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
+    },
+    {
+      "label_type": "recommendation_grade",
+      "label": "C등급",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "recommendation_grade",
+      "label": "D등급",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "daily_rank_label",
+      "label": "오늘 TOP PICK",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "daily_rank_label",
+      "label": "일반 예측",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "market_label",
+      "label": "win_pick",
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+    },
+    {
+      "label_type": "market_label",
+      "label": "handicap:not_available",
+      "recommended_label_action": "not_available",
+      "interpretation": "유효한 기준 라인이 없어 평가하지 않습니다."
+    },
+    {
+      "label_type": "market_label",
+      "label": "over_under:not_available",
+      "recommended_label_action": "not_available",
+      "interpretation": "유효한 기준 라인이 없어 평가하지 않습니다."
+    }
+  ],
+  "insufficient_sample_warnings": [
+    "강추천",
+    "A등급",
+    "handicap:not_available",
+    "over_under:not_available"
+  ],
+  "market_data_limitations": "Handicap and over/under labels are not evaluated because valid market line data is not available. The system does not invent betting lines.",
+  "recommendation_policy_note": "The recommendation display policy does not change model probabilities or production model selection. Labels are calibrated only for user interpretation.",
+  "final_policy_recommendation": "rename_top_pick"
+}
