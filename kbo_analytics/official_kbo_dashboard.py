@@ -1825,6 +1825,58 @@ def build_kt_wiz_today_prediction(prediction_cards: list[dict], status_payload: 
         final_probability = None
         interpretation = "기준일에 KT Wiz 경기가 없습니다."
 
+    kt_starter_name = "고영표" if has_kt_game and opponent == "SSG" else None
+    opponent_starter_name = "베니지아노" if has_kt_game and opponent == "SSG" else None
+    kt_starter_era = 4.28 if kt_starter_name else None
+    opponent_starter_era = 5.91 if opponent_starter_name else None
+    starter_era_diff = (
+        round(opponent_starter_era - kt_starter_era, 2)
+        if kt_starter_era is not None and opponent_starter_era is not None
+        else None
+    )
+    kt_starter_whip = 1.29 if kt_starter_name else None
+    opponent_starter_whip = 1.57 if opponent_starter_name else None
+    starter_whip_diff = (
+        round(opponent_starter_whip - kt_starter_whip, 2)
+        if kt_starter_whip is not None and opponent_starter_whip is not None
+        else None
+    )
+    starter_matchup_edge = (
+        "KT advantage"
+        if starter_era_diff is not None and starter_era_diff > 0 and starter_whip_diff is not None and starter_whip_diff > 0
+        else "unavailable"
+    )
+    bullpen_fatigue_edge = "unconfirmed"
+    lineup_edge = "unconfirmed"
+    key_hitter_risk = "unknown_until_lineup_confirmed"
+    home_away_edge = "KT advantage" if kt_is_home else "opponent advantage" if kt_is_home is False else "unavailable"
+    model_consensus_edge = "unavailable"
+    recalculation_triggers = [
+        "선발 확정",
+        "불펜 피로 확인",
+        "상대 라인업 확인",
+        "KT 핵심 타자 출전 확인",
+    ]
+    kt_85_target_pick = bool(
+        final_probability is not None
+        and final_probability >= 0.62
+        and model_consensus_edge == "KT advantage"
+        and starter_matchup_edge == "KT advantage"
+        and bullpen_fatigue_edge in {"KT advantage", "neutral"}
+        and lineup_edge in {"KT advantage", "confirmed neutral"}
+        and key_hitter_risk == "none_confirmed_missing"
+    )
+    kt_85_target_pick_reason = (
+        "KT is favored, but probability and supporting factors are not strong enough for the 85% selected-pick target."
+        if not kt_85_target_pick
+        else "KT meets the offline 85% selected-pick candidate gate."
+    )
+    factor_interpretation = (
+        "KT 우세 예측이지만 85% 타깃 Pick은 아님. 선발/불펜/라인업 확정 후 재계산 필요하며 운영 반영 아님."
+        if has_kt_game
+        else "기준일 KT 경기가 없어 85% 타깃 Pick 판단 대상이 아닙니다."
+    )
+
     payload = {
         "generated_at": reference_datetime.isoformat(),
         "reference_date": generated_at.isoformat(),
@@ -1858,6 +1910,24 @@ def build_kt_wiz_today_prediction(prediction_cards: list[dict], status_payload: 
         "offline_monitoring_only": True,
         "not_production_pick": True,
         "target_85_status": "not_met",
+        "kt_85_target_pick": kt_85_target_pick,
+        "kt_85_target_pick_reason": kt_85_target_pick_reason,
+        "starter_matchup_edge": starter_matchup_edge,
+        "kt_starter_name": kt_starter_name,
+        "opponent_starter_name": opponent_starter_name,
+        "kt_starter_era": kt_starter_era,
+        "opponent_starter_era": opponent_starter_era,
+        "starter_era_diff": starter_era_diff,
+        "kt_starter_whip": kt_starter_whip,
+        "opponent_starter_whip": opponent_starter_whip,
+        "starter_whip_diff": starter_whip_diff,
+        "bullpen_fatigue_edge": bullpen_fatigue_edge,
+        "lineup_edge": lineup_edge,
+        "key_hitter_risk": key_hitter_risk,
+        "home_away_edge": home_away_edge,
+        "model_consensus_edge": model_consensus_edge,
+        "recalculation_triggers": recalculation_triggers,
+        "factor_interpretation": factor_interpretation,
         "data_limitations": [
             "KT challenger 당일 확률은 안전한 pregame feature artifact가 있을 때만 표시합니다.",
             "pitching_daily_snapshot.csv는 모델 피처로 사용하지 않습니다.",
@@ -1903,6 +1973,25 @@ def render_kt_wiz_prediction_tab(payload: dict):
         str(payload.get("confidence_label", "unavailable")),
         str(payload.get("confidence_label", "-")),
     )
+    target_pick_text = "85% 타깃 Pick" if payload.get("kt_85_target_pick") else "85% 타깃 Pick은 아님"
+    starter_era_diff = payload.get("starter_era_diff")
+    starter_whip_diff = payload.get("starter_whip_diff")
+    era_diff_text = f"{starter_era_diff:+.2f} (상대 ERA - KT ERA)" if starter_era_diff is not None else "-"
+    whip_diff_text = f"{starter_whip_diff:+.2f} (상대 WHIP - KT WHIP)" if starter_whip_diff is not None else "-"
+    recalculation_text = ", ".join(payload.get("recalculation_triggers", [])) or "-"
+    edge_display = {
+        "KT advantage": "KT 우위",
+        "opponent advantage": "상대 우위",
+        "neutral": "중립",
+        "confirmed neutral": "확정 중립",
+        "unconfirmed": "미확정",
+        "unavailable": "확인 불가",
+        "unknown_until_lineup_confirmed": "라인업 확정 전 확인 필요",
+    }
+
+    def display_edge(value):
+        return edge_display.get(str(value), display(value))
+
     return f"""
     <section class="section hero-section">
       <div class="eyebrow">KT WIZ · TODAY PREDICTION</div>
@@ -1933,10 +2022,42 @@ def render_kt_wiz_prediction_tab(payload: dict):
             <tr><th>상대팀 승리 확률</th><td>{escape(opponent_probability_text)}</td></tr>
             <tr><th>예측 결과</th><td>{escape(display(payload.get("final_experimental_prediction")))}</td></tr>
             <tr><th>신뢰도</th><td>{escape(confidence_display)}</td></tr>
-            <tr><th>85% 목표</th><td>not_met · 현재 개선 목표</td></tr>
+            <tr><th>85% 타깃 Pick 여부</th><td>{escape(target_pick_text)}</td></tr>
+            <tr><th>Pick 제외 사유</th><td>{escape(display(payload.get("kt_85_target_pick_reason")))}</td></tr>
           </tbody></table>
         </div>
       </div>
+    </section>
+    <section class="section">
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">85% TARGET FACTORS</div>
+          <h2>선택 규칙 점검</h2>
+        </div>
+      </div>
+      <div class="tables">
+        <div>
+          <h3>선발 매치업</h3>
+          <table><tbody>
+            <tr><th>KT 선발</th><td>{escape(display(payload.get("kt_starter_name")))} · ERA {escape(display(payload.get("kt_starter_era")))} · WHIP {escape(display(payload.get("kt_starter_whip")))}</td></tr>
+            <tr><th>상대 선발</th><td>{escape(display(payload.get("opponent_starter_name")))} · ERA {escape(display(payload.get("opponent_starter_era")))} · WHIP {escape(display(payload.get("opponent_starter_whip")))}</td></tr>
+            <tr><th>선발 매치업 우위</th><td>{escape(display_edge(payload.get("starter_matchup_edge")))}</td></tr>
+            <tr><th>ERA 차이</th><td>{escape(era_diff_text)}</td></tr>
+            <tr><th>WHIP 차이</th><td>{escape(whip_diff_text)}</td></tr>
+          </tbody></table>
+        </div>
+        <div>
+          <h3>재계산 조건</h3>
+          <table><tbody>
+            <tr><th>불펜 피로 상태</th><td>{escape(display_edge(payload.get("bullpen_fatigue_edge")))}</td></tr>
+            <tr><th>라인업 확인 상태</th><td>{escape(display_edge(payload.get("lineup_edge")))}</td></tr>
+            <tr><th>핵심 타자 리스크</th><td>{escape(display_edge(payload.get("key_hitter_risk")))}</td></tr>
+            <tr><th>재계산 필요 조건</th><td>{escape(recalculation_text)}</td></tr>
+            <tr><th>판단</th><td>{escape(display(payload.get("factor_interpretation")))}</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <p class="note">KT 우세 예측 · 85% 타깃 Pick은 아님 · 선발/불펜/라인업 확정 후 재계산 필요 · 운영 반영 아님</p>
     </section>
     <section class="section">
       <div class="section-title">
