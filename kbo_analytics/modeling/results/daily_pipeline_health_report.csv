@@ -1,7 +1,7 @@
 ﻿check_name,status,severity,detail,recommended_action
 latest_html_exists_check,pass,blocking,/home/tera/1.project/1.sports_analytics/kbo_analytics/dashboard/latest.html,latest.html 생성 경로 확인
 docs_latest_html_exists_check,pass,blocking,/home/tera/1.project/1.sports_analytics/docs/latest.html,docs/latest.html 배포 복사 확인
-latest_html_freshness_check,pass,warning,latest_html_modified_at=2026-06-27T13:10:59,자동 실행 시 latest.html 수정 시간이 실행일과 일치하는지 확인
+latest_html_freshness_check,pass,warning,latest_html_modified_at=2026-06-27T13:40:52,자동 실행 시 latest.html 수정 시간이 실행일과 일치하는지 확인
 today_expected_runs_predictions_exists_check,pass,blocking,"scheduled_games=5, file=/home/tera/1.project/1.sports_analytics/kbo_analytics/run_model/results/today_expected_runs_predictions.csv",예정 경기일에는 today_expected_runs_predictions.csv 생성 확인
 today_expected_runs_predictions_reference_date_check,pass,blocking,"reference_date=2026-06-27, rows=5",today 파일은 기준일 예정 경기만 포함해야 함
 expected_runs_predictions_validation_only_check,pass,blocking,expected_runs_predictions.csv는 actual/result 컬럼이 있는 검증용 파일이어야 함,검증용과 오늘 예측용 산출물 분리 유지
