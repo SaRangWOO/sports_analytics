@@ -1,7 +1,7 @@
 ﻿check_name,status,severity,detail,recommended_action
 latest_html_exists_check,pass,blocking,/home/tera/1.project/1.sports_analytics/kbo_analytics/dashboard/latest.html,latest.html 생성 경로 확인
 docs_latest_html_exists_check,pass,blocking,/home/tera/1.project/1.sports_analytics/docs/latest.html,docs/latest.html 배포 복사 확인
-latest_html_freshness_check,pass,warning,latest_html_modified_at=2026-06-28T16:11:01,자동 실행 시 latest.html 수정 시간이 실행일과 일치하는지 확인
+latest_html_freshness_check,pass,warning,latest_html_modified_at=2026-06-28T16:41:01,자동 실행 시 latest.html 수정 시간이 실행일과 일치하는지 확인
 today_expected_runs_predictions_exists_check,pass,blocking,"scheduled_games=5, file=/home/tera/1.project/1.sports_analytics/kbo_analytics/run_model/results/today_expected_runs_predictions.csv",예정 경기일에는 today_expected_runs_predictions.csv 생성 확인
 today_expected_runs_predictions_reference_date_check,pass,blocking,"reference_date=2026-06-28, rows=5",today 파일은 기준일 예정 경기만 포함해야 함
 expected_runs_predictions_validation_only_check,pass,blocking,expected_runs_predictions.csv는 actual/result 컬럼이 있는 검증용 파일이어야 함,검증용과 오늘 예측용 산출물 분리 유지
@@ -10,7 +10,7 @@ daily_recommendation_summary_exists_check,pass,warning,/home/tera/1.project/1.sp
 recommendation_outcome_audit_exists_check,pass,warning,/home/tera/1.project/1.sports_analytics/kbo_analytics/modeling/results/recommendation_outcome_audit_log.csv,추천 사후 감사 로그 생성 확인
 recommendation_label_calibration_exists_check,pass,warning,/home/tera/1.project/1.sports_analytics/kbo_analytics/modeling/results/recommendation_label_calibration_report.csv,추천 라벨 보정 리포트 생성 확인
 pitching_snapshot_exists_check,pass,warning,/home/tera/1.project/1.sports_analytics/kbo_analytics/data/official/pitching_daily_snapshot.csv,투수 스냅샷 누적 파일 확인
-pitching_snapshot_reference_date_rows_check,warning,warning,"reference_date_rows=12, expected_team_rows=10",예정 경기일에는 경기당 양 팀 스냅샷 행 확인
+pitching_snapshot_reference_date_rows_check,warning,warning,"reference_date_rows=20, expected_team_rows=10",예정 경기일에는 경기당 양 팀 스냅샷 행 확인
 pitching_snapshot_quality_check,warning,warning,quality_status=fail,pitching_snapshot_quality_status.json 품질 상태 확인
 pitching_snapshot_feature_gate_check,pass,blocking,safe_to_use_pitching_snapshot_as_features=False,최소 누적 기간 전까지 투수 스냅샷 피처 사용 차단
 safe_to_replace_model_check,pass,blocking,safe_to_replace_model=False,생산 모델 교체 게이트 유지
