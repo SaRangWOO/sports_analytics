@@ -1,10 +1,10 @@
 ﻿feature,feature_group,importance_rank,importance_mean,appears_in_best_candidate,segment_helped,segment_hurt,keep_candidate,reason,next_action
 elo_diff,baseline,1,0.115917,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
 recent_run_diff_10_gap,baseline,2,0.070008,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
-blowout_tendency_gap,close_blowout,3,0.063923,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
-recent_5_win_rate_gap,baseline,4,0.063582,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
-recent_10_win_rate_gap,baseline,5,0.062957,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_avg_run_diff_last_10,baseline,6,0.062475,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
+recent_5_win_rate_gap,baseline,3,0.063582,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
+recent_10_win_rate_gap,baseline,4,0.062957,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_avg_run_diff_last_10,baseline,5,0.062475,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
+blowout_tendency_gap,close_blowout,6,0.059778,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
 opponent_recent_10_win_rate,baseline,7,0.057552,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
 is_home,baseline,8,0.057273,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
 avg_run_diff_last_10,baseline,9,0.057156,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
@@ -14,16 +14,16 @@ opponent_recent_5_win_rate,baseline,12,0.051001,True,"연패 흐름, 박빙 경�
 avg_run_diff_last_5,baseline,13,0.050593,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
 head_to_head_win_rate_gap,baseline,14,0.048874,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
 recent_5_win_rate,baseline,15,0.044233,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
-team_recent_10_blowout_win_rate,close_blowout,16,0.041967,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_recent_10_blowout_win_rate,close_blowout,17,0.040193,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_recent_10_blowout_win_rate,close_blowout,16,0.043745,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
+team_recent_10_blowout_win_rate,close_blowout,17,0.043055,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",review,중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요,다음 실험에서 선택 피처 세트 후보로 검토
 season_win_rate_gap,baseline,18,0.038982,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-opponent_recent_10_blowout_loss_rate,close_blowout,19,0.036414,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-season_avg_run_diff_gap,baseline,20,0.030072,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-team_recent_10_blowout_loss_rate,close_blowout,21,0.028395,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_recent_10_blowout_loss_rate,close_blowout,19,0.033551,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_recent_10_blowout_loss_rate,close_blowout,20,0.031707,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+season_avg_run_diff_gap,baseline,21,0.030072,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
 season_win_rate_prior,baseline,22,0.026794,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-close_game_rate_gap,close_blowout,23,0.024995,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-team_recent_5_close_game_rate,close_blowout,24,0.016964,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_recent_5_close_game_rate_exact,close_blowout,25,0.00986,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+close_game_rate_gap,close_blowout,23,0.022082,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_recent_5_close_game_rate,close_blowout,24,0.014254,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_recent_5_close_game_rate_exact,close_blowout,25,0.010525,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
 back_to_back,baseline,26,0.008055,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
 games_last_7_days,baseline,27,0.006872,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
 venue_win_rate_gap,venue_context,28,0.004418,True,"연패 흐름, 박빙 경기","대승/대패 경기, 강팀 vs 약팀",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
