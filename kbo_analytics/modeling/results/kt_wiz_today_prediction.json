@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-03T08:00:02.364909",
+  "generated_at": "2026-07-03T11:00:02.486626",
   "reference_date": "2026-07-03",
   "prediction_date": "2026-07-03",
   "has_kt_game": true,
@@ -65,5 +65,31 @@
     "pitching_daily_snapshot.csv는 모델 피처로 사용하지 않습니다.",
     "운영 모델 교체 또는 production pick 반영은 하지 않습니다."
   ],
-  "interpretation": "Production 모델만 당일 KT 경기 기준 확률을 제공합니다. KT challenger는 안전한 당일 피처 산출이 없어 offline monitoring 참고로만 표시합니다."
+  "interpretation": "Production 모델만 당일 KT 경기 기준 확률을 제공합니다. KT challenger는 안전한 당일 피처 산출이 없어 offline monitoring 참고로만 표시합니다.",
+  "accuracy_snapshot": {
+    "as_of": null,
+    "overall_games": 0,
+    "overall_correct": 0,
+    "overall_accuracy": null,
+    "best_segment_games": 0,
+    "best_segment_correct": 0,
+    "best_segment_accuracy": null,
+    "current_season_games": 0,
+    "current_season_correct": 0,
+    "current_season_accuracy": null,
+    "post_dashboard_games": 0,
+    "post_dashboard_correct": 0,
+    "post_dashboard_accuracy": null,
+    "daily_top_pick_games": 38,
+    "daily_top_pick_correct": 28,
+    "daily_top_pick_accuracy": 0.737,
+    "target_accuracy": 0.85,
+    "gap_to_85": null,
+    "status": "insufficient_data",
+    "improvement_notes": [
+      "KT 85% 목표는 아직 달성하지 못했습니다.",
+      "50~55%대 예측은 selected-pick에서 제외하고 관망으로 유지합니다.",
+      "선발/불펜/라인업 확정 전 확률은 재계산 대상으로 표시합니다."
+    ]
+  }
 }
