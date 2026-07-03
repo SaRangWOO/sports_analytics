@@ -2,8 +2,8 @@
   "available": true,
   "training_cutoff": "2026-06-28",
   "validation_cutoff": "2026-06-28",
-  "prediction_training_cutoff": "2026-07-02",
-  "latest_completed_game_date_used": "2026-07-02",
+  "prediction_training_cutoff": "2026-07-03",
+  "latest_completed_game_date_used": "2026-07-03",
   "current_week_games_included_for_prediction": true,
   "training_start_year": 2016,
   "training_end_year": 2026,
@@ -63,14 +63,14 @@
     },
     {
       "모델": "Streak 피처 RandomForest 실험",
-      "검증 정확도": 0.536,
+      "검증 정확도": 0.532,
       "피처 수": 38,
       "Brier Score": 0.247,
       "Log Loss": 0.688
     },
     {
       "모델": "Streak 피처 RandomForest 시간가중 실험",
-      "검증 정확도": 0.536,
+      "검증 정확도": 0.534,
       "피처 수": 38,
       "Brier Score": 0.247,
       "Log Loss": 0.688
@@ -275,12 +275,12 @@
       "모델": "경기 단위 선수영향도 참고 RandomForest",
       "검증 정확도": 0.518,
       "피처 수": 88,
-      "Brier Score": 0.25,
-      "Log Loss": 0.694
+      "Brier Score": 0.251,
+      "Log Loss": 0.695
     },
     {
       "모델": "경기 단위 선수영향도 참고 GradientBoosting",
-      "검증 정확도": 0.493,
+      "검증 정확도": 0.498,
       "피처 수": 88,
       "Brier Score": 0.258,
       "Log Loss": 0.71
@@ -363,12 +363,12 @@
   "today_probability_distribution": {
     "split": "today",
     "total_games": 10,
-    "p50": 0.554,
-    "p75": 0.559,
+    "p50": 0.539,
+    "p75": 0.546,
     "p90": 0.577,
     "max": 0.577,
-    "over_53": 8,
-    "over_55": 6,
+    "over_53": 6,
+    "over_55": 2,
     "over_58": 0,
     "over_60": 0
   },
@@ -482,32 +482,32 @@
     {
       "model": "Streak 피처 RandomForest 실험",
       "total_games": 2986,
-      "accuracy": 0.536,
+      "accuracy": 0.532,
       "brier": 0.247,
       "logloss": 0.688,
       "avg_confidence": 0.539,
       "p75_confidence": 0.557,
-      "p90_confidence": 0.575,
-      "max_confidence": 0.625,
-      "over_55": 999,
-      "over_58": 238,
-      "over_60": 59,
-      "over_55_accuracy": 0.578
+      "p90_confidence": 0.576,
+      "max_confidence": 0.626,
+      "over_55": 986,
+      "over_58": 240,
+      "over_60": 48,
+      "over_55_accuracy": 0.581
     },
     {
       "model": "Streak 피처 RandomForest 시간가중 실험",
       "total_games": 2986,
-      "accuracy": 0.536,
+      "accuracy": 0.534,
       "brier": 0.247,
       "logloss": 0.688,
       "avg_confidence": 0.539,
       "p75_confidence": 0.558,
       "p90_confidence": 0.576,
-      "max_confidence": 0.629,
-      "over_55": 1013,
-      "over_58": 221,
-      "over_60": 33,
-      "over_55_accuracy": 0.58
+      "max_confidence": 0.625,
+      "over_55": 1015,
+      "over_58": 214,
+      "over_60": 37,
+      "over_55_accuracy": 0.577
     },
     {
       "model": "Streak 피처 GradientBoosting 실험",
@@ -933,31 +933,31 @@
       "model": "경기 단위 선수영향도 참고 RandomForest",
       "total_games": 1441,
       "accuracy": 0.518,
-      "brier": 0.25,
-      "logloss": 0.694,
+      "brier": 0.251,
+      "logloss": 0.695,
       "avg_confidence": 0.531,
-      "p75_confidence": 0.545,
-      "p90_confidence": 0.561,
-      "max_confidence": 0.617,
-      "over_55": 276,
-      "over_58": 42,
+      "p75_confidence": 0.544,
+      "p90_confidence": 0.562,
+      "max_confidence": 0.625,
+      "over_55": 268,
+      "over_58": 46,
       "over_60": 7,
-      "over_55_accuracy": 0.511
+      "over_55_accuracy": 0.459
     },
     {
       "model": "경기 단위 선수영향도 참고 GradientBoosting",
       "total_games": 1441,
-      "accuracy": 0.493,
+      "accuracy": 0.498,
       "brier": 0.258,
       "logloss": 0.71,
-      "avg_confidence": 0.565,
-      "p75_confidence": 0.591,
-      "p90_confidence": 0.633,
-      "max_confidence": 0.835,
-      "over_55": 770,
-      "over_58": 453,
-      "over_60": 314,
-      "over_55_accuracy": 0.499
+      "avg_confidence": 0.569,
+      "p75_confidence": 0.597,
+      "p90_confidence": 0.642,
+      "max_confidence": 0.886,
+      "over_55": 802,
+      "over_58": 509,
+      "over_60": 342,
+      "over_55_accuracy": 0.495
     }
   ],
   "selected_model_probability_spread": {
@@ -1096,43 +1096,43 @@
   ],
   "today_predictions": [
     {
-      "경기일": "2026-07-03",
+      "경기일": "2026-07-04",
       "기준팀": "KIA",
       "상대팀": "NC",
       "예측 구단": "KIA",
-      "예측승률": "55.9%",
+      "예측승률": "53.9%",
       "예측": "승리 예측",
       "예측 근거": "KIA 최근 5경기 흐름 우위, KIA 최근 10경기 흐름 우위"
     },
     {
-      "경기일": "2026-07-03",
+      "경기일": "2026-07-04",
       "기준팀": "KT",
       "상대팀": "롯데",
-      "예측 구단": "KT",
-      "예측승률": "52.0%",
-      "예측": "승리 예측",
-      "예측 근거": "KT 홈 경기"
+      "예측 구단": "롯데",
+      "예측승률": "49.1%",
+      "예측": "패배 예측",
+      "예측 근거": "롯데 최근 5경기 흐름 우위, 롯데 최근 10경기 흐름 우위"
     },
     {
-      "경기일": "2026-07-03",
+      "경기일": "2026-07-04",
       "기준팀": "LG",
       "상대팀": "한화",
       "예측 구단": "LG",
-      "예측승률": "53.9%",
+      "예측승률": "52.2%",
       "예측": "승리 예측",
       "예측 근거": "LG 홈 경기"
     },
     {
-      "경기일": "2026-07-03",
+      "경기일": "2026-07-04",
       "기준팀": "NC",
       "상대팀": "KIA",
       "예측 구단": "KIA",
-      "예측승률": "44.1%",
+      "예측승률": "46.1%",
       "예측": "패배 예측",
       "예측 근거": "KIA 최근 5경기 흐름 우위, KIA 최근 10경기 흐름 우위"
     },
     {
-      "경기일": "2026-07-03",
+      "경기일": "2026-07-04",
       "기준팀": "SSG",
       "상대팀": "삼성",
       "예측 구단": "삼성",
@@ -1141,25 +1141,25 @@
       "예측 근거": "삼성 최근 5경기 흐름 우위, 삼성 최근 10경기 흐름 우위"
     },
     {
-      "경기일": "2026-07-03",
+      "경기일": "2026-07-04",
       "기준팀": "두산",
       "상대팀": "키움",
       "예측 구단": "두산",
-      "예측승률": "55.4%",
+      "예측승률": "54.6%",
       "예측": "승리 예측",
-      "예측 근거": "두산 최근 5경기 흐름 우위, 두산 최근 10경기 흐름 우위"
+      "예측 근거": "두산 최근 10경기 흐름 우위"
     },
     {
-      "경기일": "2026-07-03",
+      "경기일": "2026-07-04",
       "기준팀": "롯데",
       "상대팀": "KT",
-      "예측 구단": "KT",
-      "예측승률": "48.0%",
-      "예측": "패배 예측",
-      "예측 근거": "KT 홈 경기"
+      "예측 구단": "롯데",
+      "예측승률": "50.9%",
+      "예측": "승리 예측",
+      "예측 근거": "롯데 최근 5경기 흐름 우위, 롯데 최근 10경기 흐름 우위"
     },
     {
-      "경기일": "2026-07-03",
+      "경기일": "2026-07-04",
       "기준팀": "삼성",
       "상대팀": "SSG",
       "예측 구단": "삼성",
@@ -1168,20 +1168,20 @@
       "예측 근거": "삼성 최근 5경기 흐름 우위, 삼성 최근 10경기 흐름 우위"
     },
     {
-      "경기일": "2026-07-03",
+      "경기일": "2026-07-04",
       "기준팀": "키움",
       "상대팀": "두산",
       "예측 구단": "두산",
-      "예측승률": "44.6%",
+      "예측승률": "45.4%",
       "예측": "패배 예측",
-      "예측 근거": "두산 최근 5경기 흐름 우위, 두산 최근 10경기 흐름 우위"
+      "예측 근거": "두산 최근 10경기 흐름 우위"
     },
     {
-      "경기일": "2026-07-03",
+      "경기일": "2026-07-04",
       "기준팀": "한화",
       "상대팀": "LG",
       "예측 구단": "LG",
-      "예측승률": "46.1%",
+      "예측승률": "47.8%",
       "예측": "패배 예측",
       "예측 근거": "LG 홈 경기"
     }
@@ -2526,7 +2526,7 @@
         "feature": "team_recent_10_blowout_win_rate",
         "feature_group": "close_blowout",
         "importance_rank": 16,
-        "importance_mean": 0.041325,
+        "importance_mean": 0.04239,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2538,7 +2538,7 @@
         "feature": "opponent_recent_10_blowout_win_rate",
         "feature_group": "close_blowout",
         "importance_rank": 17,
-        "importance_mean": 0.041157,
+        "importance_mean": 0.040193,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2564,7 +2564,7 @@
         "feature": "opponent_recent_10_blowout_loss_rate",
         "feature_group": "close_blowout",
         "importance_rank": 19,
-        "importance_mean": 0.031707,
+        "importance_mean": 0.036557,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2576,7 +2576,7 @@
         "feature": "team_recent_10_blowout_loss_rate",
         "feature_group": "close_blowout",
         "importance_rank": 20,
-        "importance_mean": 0.031,
+        "importance_mean": 0.031361,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2612,7 +2612,7 @@
         "feature": "close_game_rate_gap",
         "feature_group": "close_blowout",
         "importance_rank": 23,
-        "importance_mean": 0.022336,
+        "importance_mean": 0.024995,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2624,7 +2624,7 @@
         "feature": "team_recent_5_close_game_rate",
         "feature_group": "close_blowout",
         "importance_rank": 24,
-        "importance_mean": 0.016964,
+        "importance_mean": 0.019914,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2636,7 +2636,7 @@
         "feature": "opponent_recent_5_close_game_rate_exact",
         "feature_group": "close_blowout",
         "importance_rank": 25,
-        "importance_mean": 0.010525,
+        "importance_mean": 0.015298,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -3131,7 +3131,7 @@
     ],
     "calibration_replacement_risk": "calibration gate를 통과하지 못하면 운영 모델 교체 금지",
     "production_gate_audit_summary": {
-      "generated_at": "2026-07-03T18:36:31.061552",
+      "generated_at": "2026-07-04T08:06:35.599236",
       "current_operational_model": "핵심 수치 RandomForest 보수 모델",
       "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout",
       "current_operational_accuracy": 0.54,
@@ -3304,18 +3304,18 @@
       "recent_run_diff_10_gap"
     ],
     "harmful_or_noisy_non_pitching_features": [
+      "team_current_streak_length",
+      "team_current_streak_length",
       "run_std_gap",
-      "season_phase",
+      "winning_streak_with_low_run_diff",
+      "winning_streak_with_low_run_diff",
       "rest_days",
       "rest_days",
       "rest_days",
       "rest_days",
       "rest_days",
       "rest_days",
-      "rest_days",
-      "rest_days",
-      "team_recent_5_run_std",
-      "team_allowed_momentum_3_vs_10"
+      "rest_days"
     ],
     "recommended_next_non_pitching_step": "유용 신호가 반복 확인된 비투수 피처만 다음 후보 세트에 유지하고, 노이즈 가능성이 있는 피처는 운영 모델 교체 후보에서 제외합니다.",
     "pitching_snapshot_collection_status": {
