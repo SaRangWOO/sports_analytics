@@ -1866,16 +1866,18 @@ def build_kt_wiz_today_prediction(prediction_cards: list[dict], status_payload: 
         and lineup_edge in {"KT advantage", "confirmed neutral"}
         and key_hitter_risk == "none_confirmed_missing"
     )
-    kt_85_target_pick_reason = (
-        "KT is favored, but probability and supporting factors are not strong enough for the 85% selected-pick target."
-        if not kt_85_target_pick
-        else "KT meets the offline 85% selected-pick candidate gate."
-    )
-    factor_interpretation = (
-        "KT 우세 예측이지만 85% 타깃 Pick은 아님. 선발/불펜/라인업 확정 후 재계산 필요하며 운영 반영 아님."
-        if has_kt_game
-        else "기준일 KT 경기가 없어 85% 타깃 Pick 판단 대상이 아닙니다."
-    )
+    if kt_85_target_pick:
+        kt_85_target_pick_reason = "KT meets the offline 85% selected-pick candidate gate."
+        factor_interpretation = "KT가 85% 타깃 후보 조건을 충족했지만 운영 반영 전 forward validation이 필요합니다."
+    elif final_probability is not None and final_probability < 0.5:
+        kt_85_target_pick_reason = "KT is not favored, and supporting factors are not strong enough for the 85% selected-pick target."
+        factor_interpretation = "KT 열세 예측이며 85% 타깃 Pick은 아님. 선발/불펜/라인업 확정 후 재계산 필요하며 운영 반영 아님."
+    elif has_kt_game:
+        kt_85_target_pick_reason = "KT is favored, but probability and supporting factors are not strong enough for the 85% selected-pick target."
+        factor_interpretation = "KT 우세 예측이지만 85% 타깃 Pick은 아님. 선발/불펜/라인업 확정 후 재계산 필요하며 운영 반영 아님."
+    else:
+        kt_85_target_pick_reason = "No KT game is available for the 85% selected-pick target gate."
+        factor_interpretation = "기준일 KT 경기가 없어 85% 타깃 Pick 판단 대상이 아닙니다."
 
     payload = {
         "generated_at": reference_datetime.isoformat(),
@@ -1935,8 +1937,86 @@ def build_kt_wiz_today_prediction(prediction_cards: list[dict], status_payload: 
         ],
         "interpretation": interpretation,
     }
+    accuracy_snapshot = build_kt_wiz_accuracy_snapshot()
+    payload["accuracy_snapshot"] = accuracy_snapshot
     (RESULTS_DIR / "kt_wiz_today_prediction.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     return payload
+
+
+def build_kt_wiz_accuracy_snapshot():
+    target_accuracy = 0.85
+    snapshot = {
+        "as_of": None,
+        "overall_games": 0,
+        "overall_correct": 0,
+        "overall_accuracy": None,
+        "best_segment_games": 0,
+        "best_segment_correct": 0,
+        "best_segment_accuracy": None,
+        "current_season_games": 0,
+        "current_season_correct": 0,
+        "current_season_accuracy": None,
+        "post_dashboard_games": 0,
+        "post_dashboard_correct": 0,
+        "post_dashboard_accuracy": None,
+        "daily_top_pick_games": 0,
+        "daily_top_pick_correct": 0,
+        "daily_top_pick_accuracy": None,
+        "target_accuracy": target_accuracy,
+        "gap_to_85": None,
+        "status": "insufficient_data",
+        "improvement_notes": [
+            "KT 85% 목표는 아직 달성하지 못했습니다.",
+            "50~55%대 예측은 selected-pick에서 제외하고 관망으로 유지합니다.",
+            "선발/불펜/라인업 확정 전 확률은 재계산 대상으로 표시합니다.",
+        ],
+    }
+    report_path = RESULTS_DIR / "kt_wiz_precision_target_report.csv"
+    if report_path.exists():
+        report = pd.read_csv(report_path)
+        overall = report[(report["evaluation_mode"].astype(str).eq("holdout")) & (report["segment_name"].astype(str).eq("all_kt_games"))]
+        current = report[(report["evaluation_mode"].astype(str).eq("holdout")) & (report["segment_name"].astype(str).eq("current_season_2026"))]
+        selected = report[report["selected_after_segment_search"].astype(str).str.lower().eq("true")]
+        if not overall.empty:
+            row = overall.iloc[0]
+            snapshot["overall_games"] = int(row["games"])
+            snapshot["overall_correct"] = int(row["correct"])
+            snapshot["overall_accuracy"] = round(float(row["precision"]), 3)
+        if not current.empty:
+            row = current.iloc[0]
+            snapshot["current_season_games"] = int(row["games"])
+            snapshot["current_season_correct"] = int(row["correct"])
+            snapshot["current_season_accuracy"] = round(float(row["precision"]), 3)
+        if not selected.empty:
+            row = selected.iloc[0]
+            snapshot["best_segment_games"] = int(row["games"])
+            snapshot["best_segment_correct"] = int(row["correct"])
+            snapshot["best_segment_accuracy"] = round(float(row["precision"]), 3)
+    audit_path = RESULTS_DIR / "kt_wiz_precision_target_game_audit.csv"
+    if audit_path.exists():
+        audit = pd.read_csv(audit_path)
+        if not audit.empty and "correct" in audit.columns:
+            audit["correct_bool"] = audit["correct"].astype(str).str.lower().eq("true")
+            snapshot["as_of"] = str(audit["game_date"].max()) if "game_date" in audit.columns else None
+            if "game_date" in audit.columns:
+                post_dashboard = audit[pd.to_datetime(audit["game_date"], errors="coerce") >= pd.Timestamp("2026-06-25")]
+                post_dashboard = post_dashboard.drop_duplicates(subset=["game_date", "opponent"], keep="last")
+                snapshot["post_dashboard_games"] = int(len(post_dashboard))
+                snapshot["post_dashboard_correct"] = int(post_dashboard["correct_bool"].sum()) if not post_dashboard.empty else 0
+                snapshot["post_dashboard_accuracy"] = round(float(post_dashboard["correct_bool"].mean()), 3) if not post_dashboard.empty else None
+    top_path = RESULTS_DIR / "daily_top_pick_performance_report.csv"
+    if top_path.exists():
+        top = pd.read_csv(top_path)
+        completed = top[top["result"].isin(["correct", "incorrect"])] if "result" in top.columns else pd.DataFrame()
+        snapshot["daily_top_pick_games"] = int(len(completed))
+        snapshot["daily_top_pick_correct"] = int(completed["result"].eq("correct").sum()) if not completed.empty else 0
+        snapshot["daily_top_pick_accuracy"] = round(float(completed["result"].eq("correct").mean()), 3) if not completed.empty else None
+    reference_accuracy = snapshot["best_segment_accuracy"] or snapshot["overall_accuracy"]
+    if reference_accuracy is not None:
+        snapshot["gap_to_85"] = round(target_accuracy - reference_accuracy, 3)
+        snapshot["status"] = "target_not_met" if reference_accuracy < target_accuracy else "target_met_by_point_estimate"
+    pd.DataFrame([snapshot]).to_csv(RESULTS_DIR / "kt_wiz_accuracy_since_dashboard_report.csv", index=False, encoding="utf-8-sig")
+    return snapshot
 
 
 def render_kt_wiz_prediction_tab(payload: dict):
@@ -1991,6 +2071,17 @@ def render_kt_wiz_prediction_tab(payload: dict):
 
     def display_edge(value):
         return edge_display.get(str(value), display(value))
+
+    accuracy = payload.get("accuracy_snapshot", {}) or {}
+
+    def rate_text(value):
+        return f"{float(value):.1%}" if value is not None and value != "" else "-"
+
+    improvement_notes = "".join(
+        f"<tr><td>{escape(str(note))}</td></tr>"
+        for note in accuracy.get("improvement_notes", [])
+    ) or "<tr><td>표시할 보완점이 없습니다.</td></tr>"
+    direction_note = "KT 우세 예측" if kt_probability is not None and kt_probability >= 0.5 else "KT 열세 예측" if kt_probability is not None else "KT 확률 없음"
 
     return f"""
     <section class="section hero-section">
@@ -2057,7 +2148,39 @@ def render_kt_wiz_prediction_tab(payload: dict):
           </tbody></table>
         </div>
       </div>
-      <p class="note">KT 우세 예측 · 85% 타깃 Pick은 아님 · 선발/불펜/라인업 확정 후 재계산 필요 · 운영 반영 아님</p>
+      <p class="note">{escape(direction_note)} · 85% 타깃 Pick은 아님 · 선발/불펜/라인업 확정 후 재계산 필요 · 운영 반영 아님</p>
+    </section>
+    <section class="section">
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">ACCURACY MONITORING</div>
+          <h2>누적 적중률 점검</h2>
+        </div>
+      </div>
+      <div class="tables">
+        <div>
+          <h3>KT 모델 적중률</h3>
+          <table><tbody>
+            <tr><th>평가 기준일</th><td>{escape(display(accuracy.get("as_of")))}</td></tr>
+            <tr><th>전체 KT 예측</th><td>{escape(display(accuracy.get("overall_correct")))} / {escape(display(accuracy.get("overall_games")))} · {escape(rate_text(accuracy.get("overall_accuracy")))}</td></tr>
+            <tr><th>best segment</th><td>{escape(display(accuracy.get("best_segment_correct")))} / {escape(display(accuracy.get("best_segment_games")))} · {escape(rate_text(accuracy.get("best_segment_accuracy")))}</td></tr>
+            <tr><th>2026 시즌</th><td>{escape(display(accuracy.get("current_season_correct")))} / {escape(display(accuracy.get("current_season_games")))} · {escape(rate_text(accuracy.get("current_season_accuracy")))}</td></tr>
+            <tr><th>대시보드 이후</th><td>{escape(display(accuracy.get("post_dashboard_correct")))} / {escape(display(accuracy.get("post_dashboard_games")))} · {escape(rate_text(accuracy.get("post_dashboard_accuracy")))}</td></tr>
+          </tbody></table>
+        </div>
+        <div>
+          <h3>85% 목표 상태</h3>
+          <table><tbody>
+            <tr><th>목표 적중률</th><td>{escape(rate_text(accuracy.get("target_accuracy")))}</td></tr>
+            <tr><th>현재 gap</th><td>{escape(rate_text(accuracy.get("gap_to_85")))}</td></tr>
+            <tr><th>상태</th><td>{escape(display(accuracy.get("status")))}</td></tr>
+            <tr><th>일별 TOP PICK</th><td>{escape(display(accuracy.get("daily_top_pick_correct")))} / {escape(display(accuracy.get("daily_top_pick_games")))} · {escape(rate_text(accuracy.get("daily_top_pick_accuracy")))}</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="wide-table">
+        <table><thead><tr><th>보완 필요점</th></tr></thead><tbody>{improvement_notes}</tbody></table>
+      </div>
     </section>
     <section class="section">
       <div class="section-title">
