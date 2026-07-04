@@ -1,71 +1,71 @@
 {
-  "run_time": "2026-07-04 18:30:03",
-  "reference_date": "2026-07-04",
-  "update_stage": "pregame",
+  "run_time": "2026-07-05 08:00:02",
+  "reference_date": "2026-07-05",
+  "update_stage": "morning",
   "games_checked": 5,
   "teams_checked": 10,
   "starter_status_summary": {
-    "confirmed": 10,
-    "estimated": 0,
+    "confirmed": 0,
+    "estimated": 10,
     "unknown": 0
   },
   "dashboard_updated": true,
   "github_pushed": true,
   "games": [
     {
-      "game_id": "2026-07-04_한화_LG",
-      "home_team": "LG",
-      "away_team": "한화",
-      "home_starter": "장현식",
-      "away_starter": "에르난데스",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "2026-07-04_삼성_SSG",
-      "home_team": "SSG",
-      "away_team": "삼성",
-      "home_starter": "타케다",
-      "away_starter": "최원태",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "2026-07-04_NC_KIA",
-      "home_team": "KIA",
-      "away_team": "NC",
-      "home_starter": "시라카와",
-      "away_starter": "라일리",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "2026-07-04_롯데_KT",
-      "home_team": "KT",
-      "away_team": "롯데",
-      "home_starter": "고영표",
-      "away_starter": "비슬리",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "2026-07-04_두산_키움",
+      "game_id": "20260705OBWO0",
       "home_team": "키움",
       "away_team": "두산",
-      "home_starter": "박준현",
-      "away_starter": "최승용",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
+      "home_starter": "안우진",
+      "away_starter": "잭로그",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
+    },
+    {
+      "game_id": "20260705HHLG0",
+      "home_team": "LG",
+      "away_team": "한화",
+      "home_starter": "웰스",
+      "away_starter": "화이트",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
+    },
+    {
+      "game_id": "20260705SSSK0",
+      "home_team": "SSG",
+      "away_team": "삼성",
+      "home_starter": "김민",
+      "away_starter": "양창섭",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
+    },
+    {
+      "game_id": "20260705NCHT0",
+      "home_team": "KIA",
+      "away_team": "NC",
+      "home_starter": "네일",
+      "away_starter": "임지민",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
+    },
+    {
+      "game_id": "20260705LTKT0",
+      "home_team": "KT",
+      "away_team": "롯데",
+      "home_starter": "소형준",
+      "away_starter": "로드리게스",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
     }
   ],
   "changes": []
