@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-07-05T17:00:02.678227",
+  "generated_at": "2026-07-05T17:30:03.149348",
   "reference_date": "2026-07-05",
-  "total_games": 5,
+  "total_games": 4,
   "strong_recommendation_count": 1,
   "recommendation_count": 0,
-  "weak_edge_count": 3,
+  "weak_edge_count": 2,
   "watch_count": 1,
   "no_info_count": 0,
   "top_pick": "삼성",
@@ -12,8 +12,8 @@
   "day_confidence_summary": "승패 방향과 시장별 추천을 분리해 표시합니다.",
   "strong_recommendation_available": true,
   "message": "오늘 TOP PICK은 삼성 우세입니다. 핸디캡과 오버/언더는 별도 보수 기준으로 확인해야 합니다.",
-  "audited_completed_games": 188,
-  "pending_games": 219,
+  "audited_completed_games": 189,
+  "pending_games": 221,
   "grade_performance_snapshot": [
     {
       "grade": "A",
@@ -48,16 +48,16 @@
     {
       "grade": "C",
       "recommendation_strength": "약우세",
-      "games": 118,
-      "correct": 72,
-      "accuracy": 0.61,
+      "games": 119,
+      "correct": 73,
+      "accuracy": 0.613,
       "avg_probability": 0.541,
       "brier": 0.241,
-      "log_loss": 0.676,
+      "log_loss": 0.675,
       "top_pick_games": 30,
       "top_pick_accuracy": 0.733,
-      "top_tier_games": 62,
-      "top_tier_accuracy": 0.742,
+      "top_tier_games": 63,
+      "top_tier_accuracy": 0.746,
       "interpretation": "방향성 참고 구간이며, 유의미한 적중률 개선 전까지 강한 추천으로 보지 않습니다."
     },
     {
@@ -92,18 +92,6 @@
     }
   ],
   "top_pick_performance_snapshot": [
-    {
-      "date": "2026-06-30",
-      "top_pick_game": "SSG vs KIA",
-      "top_pick_team": "KIA",
-      "top_pick_probability": 0.566,
-      "top_pick_grade": "B등급",
-      "actual_winner": "KIA",
-      "result": "correct",
-      "all_games_max_probability": 0.566,
-      "day_confidence_summary": "4 completed audited games",
-      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
-    },
     {
       "date": "2026-07-01",
       "top_pick_game": "LG vs 키움",
@@ -151,12 +139,24 @@
       "all_games_max_probability": 0.577,
       "day_confidence_summary": "5 completed audited games",
       "interpretation": "TOP PICK은 상대 순위 라벨입니다."
+    },
+    {
+      "date": "2026-07-05",
+      "top_pick_game": "두산 vs 키움",
+      "top_pick_team": "두산",
+      "top_pick_probability": 0.549,
+      "top_pick_grade": "C등급",
+      "actual_winner": "두산",
+      "result": "correct",
+      "all_games_max_probability": 0.549,
+      "day_confidence_summary": "1 completed audited games",
+      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
     }
   ],
   "recommendation_policy_warning": "Daily TOP PICK is a relative ranking label and should not be interpreted as a strong recommendation unless the recommendation grade is A or B.",
   "label_calibration_status": "rename_top_pick",
   "top_pick_wording_status": "오늘 모델 기준 상대 우세 1순위",
   "actionability_warning": "Recommendation labels are interpretive until enough completed-game outcomes support them.",
-  "completed_games_used_for_label_calibration": 188,
-  "pending_games_for_future_calibration": 219
+  "completed_games_used_for_label_calibration": 189,
+  "pending_games_for_future_calibration": 221
 }
