@@ -1,9 +1,9 @@
 ﻿comparison,metric,baseline_mean,candidate_mean,mean_delta,ci_lower_95,ci_upper_95,statistically_stable,bootstrap_iterations,interpretation
-핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout,accuracy,0.54,0.543,0.002,-0.008,0.011,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout,brier,0.247,0.247,-0.0,-0.001,0.001,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout,log_loss,0.688,0.688,-0.0,-0.002,0.001,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout,over_55_accuracy,0.59,0.59,-0.0,-0.019,0.017,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout,recent_3year_accuracy,0.54,0.542,0.002,-0.007,0.011,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout,winning_streak_accuracy,0.495,0.507,0.012,-0.009,0.035,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout,losing_streak_accuracy,0.577,0.579,0.002,-0.019,0.02,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout,close_game_accuracy,0.487,0.528,0.04,0.01,0.07,True,300,95% CI 기준 안정 개선 신호
+핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,accuracy,0.538,0.543,0.005,-0.005,0.015,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,brier,0.247,0.247,0.0,-0.001,0.001,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,log_loss,0.688,0.687,0.0,-0.001,0.002,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,over_55_accuracy,0.585,0.571,-0.014,-0.034,0.008,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,recent_3year_accuracy,0.539,0.544,0.005,-0.003,0.014,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,winning_streak_accuracy,0.498,0.505,0.007,-0.014,0.027,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,losing_streak_accuracy,0.577,0.578,0.001,-0.019,0.021,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,close_game_accuracy,0.487,0.502,0.015,-0.014,0.045,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
