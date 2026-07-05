@@ -63,14 +63,14 @@
     },
     {
       "모델": "Streak 피처 RandomForest 실험",
-      "검증 정확도": 0.536,
+      "검증 정확도": 0.538,
       "피처 수": 38,
       "Brier Score": 0.247,
       "Log Loss": 0.688
     },
     {
       "모델": "Streak 피처 RandomForest 시간가중 실험",
-      "검증 정확도": 0.534,
+      "검증 정확도": 0.535,
       "피처 수": 38,
       "Brier Score": 0.247,
       "Log Loss": 0.688
@@ -482,32 +482,32 @@
     {
       "model": "Streak 피처 RandomForest 실험",
       "total_games": 2986,
-      "accuracy": 0.536,
+      "accuracy": 0.538,
       "brier": 0.247,
       "logloss": 0.688,
       "avg_confidence": 0.539,
-      "p75_confidence": 0.557,
+      "p75_confidence": 0.556,
       "p90_confidence": 0.575,
-      "max_confidence": 0.626,
-      "over_55": 983,
-      "over_58": 229,
-      "over_60": 48,
-      "over_55_accuracy": 0.581
+      "max_confidence": 0.625,
+      "over_55": 980,
+      "over_58": 227,
+      "over_60": 47,
+      "over_55_accuracy": 0.574
     },
     {
       "model": "Streak 피처 RandomForest 시간가중 실험",
       "total_games": 2986,
-      "accuracy": 0.534,
+      "accuracy": 0.535,
       "brier": 0.247,
       "logloss": 0.688,
-      "avg_confidence": 0.54,
+      "avg_confidence": 0.539,
       "p75_confidence": 0.558,
-      "p90_confidence": 0.575,
-      "max_confidence": 0.628,
-      "over_55": 1024,
-      "over_58": 216,
-      "over_60": 38,
-      "over_55_accuracy": 0.577
+      "p90_confidence": 0.576,
+      "max_confidence": 0.63,
+      "over_55": 1020,
+      "over_58": 220,
+      "over_60": 36,
+      "over_55_accuracy": 0.58
     },
     {
       "model": "Streak 피처 GradientBoosting 실험",
@@ -1982,7 +1982,7 @@
         "over_55_accuracy_delta": 0.007,
         "improved_segments": "연패 흐름(+0.010)",
         "worsened_segments": "전체(-0.007), 연승 흐름(-0.005), 명시 연승 streak(-0.025), 박빙 경기(-0.037), 홈팀 관점(-0.006), 원정팀 관점(-0.007), 강팀 vs 약팀(-0.016), 최근 3년(-0.007), 2026 시즌(-0.016)",
-        "likely_driver_features": "elo_diff, recent_run_diff_10_gap, recent_5_win_rate_gap, recent_10_win_rate_gap, opponent_avg_run_diff_last_10, opponent_recent_10_win_rate, is_home, avg_run_diff_last_10",
+        "likely_driver_features": "elo_diff, recent_run_diff_10_gap, recent_5_win_rate_gap, recent_10_win_rate_gap, opponent_avg_run_diff_last_10, month_win_rate_gap, opponent_recent_10_win_rate, is_home",
         "interpretation": "전체 정확도 개선 근거가 부족"
       },
       {
@@ -2001,7 +2001,7 @@
         "over_55_accuracy_delta": 0.0,
         "improved_segments": "",
         "worsened_segments": "전체(-0.006), 연승 흐름(-0.011), 명시 연승 streak(-0.013), 명시 연패 streak(-0.006), 박빙 경기(-0.024), 대승/대패 경기(-0.028), 홈팀 관점(-0.007), 강팀 vs 약팀(-0.028), 최근 3년(-0.006), 2026 시즌(-0.011)",
-        "likely_driver_features": "elo_diff, recent_run_diff_10_gap, blowout_tendency_gap, recent_5_win_rate_gap, recent_10_win_rate_gap, opponent_avg_run_diff_last_10, month_win_rate_gap, opponent_recent_10_win_rate",
+        "likely_driver_features": "elo_diff, recent_run_diff_10_gap, recent_5_win_rate_gap, recent_10_win_rate_gap, blowout_tendency_gap, opponent_avg_run_diff_last_10, opponent_recent_10_win_rate, is_home",
         "interpretation": "전체 정확도 개선 근거가 부족"
       }
     ],
@@ -2370,7 +2370,7 @@
         "feature": "blowout_tendency_gap",
         "feature_group": "close_blowout",
         "importance_rank": 3,
-        "importance_mean": 0.067357,
+        "importance_mean": 0.063923,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2526,7 +2526,7 @@
         "feature": "team_recent_10_blowout_win_rate",
         "feature_group": "close_blowout",
         "importance_rank": 16,
-        "importance_mean": 0.041967,
+        "importance_mean": 0.041325,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2538,7 +2538,7 @@
         "feature": "opponent_recent_10_blowout_win_rate",
         "feature_group": "close_blowout",
         "importance_rank": 17,
-        "importance_mean": 0.040193,
+        "importance_mean": 0.041094,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2561,10 +2561,10 @@
         "next_action": "후보 축소 시 제외"
       },
       {
-        "feature": "opponent_recent_10_blowout_loss_rate",
+        "feature": "team_recent_10_blowout_loss_rate",
         "feature_group": "close_blowout",
         "importance_rank": 19,
-        "importance_mean": 0.036414,
+        "importance_mean": 0.030268,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2585,10 +2585,10 @@
         "next_action": "후보 축소 시 제외"
       },
       {
-        "feature": "team_recent_10_blowout_loss_rate",
+        "feature": "opponent_recent_10_blowout_loss_rate",
         "feature_group": "close_blowout",
         "importance_rank": 21,
-        "importance_mean": 0.029516,
+        "importance_mean": 0.027551,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2624,7 +2624,7 @@
         "feature": "team_recent_5_close_game_rate",
         "feature_group": "close_blowout",
         "importance_rank": 24,
-        "importance_mean": 0.016964,
+        "importance_mean": 0.013895,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -2636,7 +2636,7 @@
         "feature": "opponent_recent_5_close_game_rate_exact",
         "feature_group": "close_blowout",
         "importance_rank": 25,
-        "importance_mean": 0.010548,
+        "importance_mean": 0.011998,
         "appears_in_best_candidate": true,
         "segment_helped": "연패 흐름, 박빙 경기",
         "segment_hurt": "대승/대패 경기, 강팀 vs 약팀",
@@ -3131,7 +3131,7 @@
     ],
     "calibration_replacement_risk": "calibration gate를 통과하지 못하면 운영 모델 교체 금지",
     "production_gate_audit_summary": {
-      "generated_at": "2026-07-05T08:06:27.876580",
+      "generated_at": "2026-07-05T11:06:26.319141",
       "current_operational_model": "핵심 수치 RandomForest 보수 모델",
       "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout",
       "current_operational_accuracy": 0.54,
@@ -3304,11 +3304,11 @@
       "recent_run_diff_10_gap"
     ],
     "harmful_or_noisy_non_pitching_features": [
-      "run_std_gap",
-      "opponent_current_streak_length",
-      "opponent_current_streak_length",
+      "opponent_recent_5_run_std",
       "team_recent_10_run_std",
+      "team_recent_5_run_std",
       "season_phase",
+      "rest_days",
       "rest_days",
       "rest_days",
       "rest_days",
