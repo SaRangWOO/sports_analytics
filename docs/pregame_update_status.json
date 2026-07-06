@@ -1,16 +1,72 @@
 {
-  "run_time": "2026-07-06 18:30:02",
-  "reference_date": "2026-07-06",
-  "update_stage": "pregame",
-  "games_checked": 0,
-  "teams_checked": 0,
+  "run_time": "2026-07-07 08:00:02",
+  "reference_date": "2026-07-07",
+  "update_stage": "morning",
+  "games_checked": 5,
+  "teams_checked": 10,
   "starter_status_summary": {
     "confirmed": 0,
-    "estimated": 0,
+    "estimated": 10,
     "unknown": 0
   },
   "dashboard_updated": true,
   "github_pushed": true,
-  "games": [],
+  "games": [
+    {
+      "game_id": "20260707SKOB0",
+      "home_team": "두산",
+      "away_team": "SSG",
+      "home_starter": "잭로그",
+      "away_starter": "베니지아노",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
+    },
+    {
+      "game_id": "20260707LGSS0",
+      "home_team": "삼성",
+      "away_team": "LG",
+      "home_starter": "후라도",
+      "away_starter": "웰스",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
+    },
+    {
+      "game_id": "20260707HTLT0",
+      "home_team": "롯데",
+      "away_team": "KIA",
+      "home_starter": "박세웅",
+      "away_starter": "네일",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
+    },
+    {
+      "game_id": "20260707WOKT0",
+      "home_team": "KT",
+      "away_team": "키움",
+      "home_starter": "사우어",
+      "away_starter": "박준현",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
+    },
+    {
+      "game_id": "20260707NCHH0",
+      "home_team": "한화",
+      "away_team": "NC",
+      "home_starter": "화이트",
+      "away_starter": "임지민",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
+    }
+  ],
   "changes": []
 }
