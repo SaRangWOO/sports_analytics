@@ -720,7 +720,7 @@
       "over_55_accuracy_delta": 0.0,
       "improved_segments": "2026 시즌(+0.005)",
       "worsened_segments": "전체(-0.010), 연패 흐름(-0.019), 명시 연승 streak(-0.006), 명시 연패 streak(-0.018), 박빙 경기(-0.049), 대승/대패 경기(-0.007), 홈팀 관점(-0.013), 원정팀 관점(-0.008), 강팀 vs 약팀(-0.021), 최근 3년(-0.010)",
-      "likely_driver_features": "elo_diff, recent_run_diff_10_gap, recent_10_win_rate_gap, blowout_tendency_gap, is_home, month_win_rate_gap, opponent_avg_run_diff_last_10, avg_run_diff_last_10",
+      "likely_driver_features": "elo_diff, recent_run_diff_10_gap, recent_10_win_rate_gap, is_home, blowout_tendency_gap, opponent_avg_run_diff_last_10, avg_run_diff_last_10, recent_5_win_rate_gap",
       "interpretation": "전체 정확도 개선 근거가 부족"
     }
   ],
@@ -1268,34 +1268,10 @@
       "next_action": "후보 축소 시 제외"
     },
     {
-      "feature": "team_run_momentum_3_vs_10",
-      "feature_group": "momentum",
-      "importance_rank": 18,
-      "importance_mean": 0.010112,
-      "appears_in_best_candidate": true,
-      "segment_helped": "연패 흐름",
-      "segment_hurt": "박빙 경기, 대승/대패 경기, 강팀 vs 약팀",
-      "keep_candidate": "segment_only",
-      "reason": "특정 세그먼트 개선 후보로만 유지",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
-    },
-    {
       "feature": "venue_win_rate_gap",
       "feature_group": "venue_context",
-      "importance_rank": 19,
+      "importance_rank": 18,
       "importance_mean": 0.009374,
-      "appears_in_best_candidate": true,
-      "segment_helped": "연패 흐름",
-      "segment_hurt": "박빙 경기, 대승/대패 경기, 강팀 vs 약팀",
-      "keep_candidate": "segment_only",
-      "reason": "특정 세그먼트 개선 후보로만 유지",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
-    },
-    {
-      "feature": "opponent_run_momentum_3_vs_10",
-      "feature_group": "momentum",
-      "importance_rank": 20,
-      "importance_mean": 0.009164,
       "appears_in_best_candidate": true,
       "segment_helped": "연패 흐름",
       "segment_hurt": "박빙 경기, 대승/대패 경기, 강팀 vs 약팀",
@@ -1306,8 +1282,20 @@
     {
       "feature": "run_momentum_gap",
       "feature_group": "momentum",
-      "importance_rank": 21,
+      "importance_rank": 19,
       "importance_mean": 0.00873,
+      "appears_in_best_candidate": true,
+      "segment_helped": "연패 흐름",
+      "segment_hurt": "박빙 경기, 대승/대패 경기, 강팀 vs 약팀",
+      "keep_candidate": "segment_only",
+      "reason": "특정 세그먼트 개선 후보로만 유지",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
+    },
+    {
+      "feature": "allowed_momentum_gap",
+      "feature_group": "momentum",
+      "importance_rank": 20,
+      "importance_mean": 0.008508,
       "appears_in_best_candidate": true,
       "segment_helped": "연패 흐름",
       "segment_hurt": "박빙 경기, 대승/대패 경기, 강팀 vs 약팀",
@@ -1318,7 +1306,7 @@
     {
       "feature": "back_to_back",
       "feature_group": "baseline",
-      "importance_rank": 22,
+      "importance_rank": 21,
       "importance_mean": 0.008393,
       "appears_in_best_candidate": true,
       "segment_helped": "연패 흐름",
@@ -1326,6 +1314,18 @@
       "keep_candidate": "false",
       "reason": "중요도와 성능 기여 근거가 약함",
       "next_action": "후보 축소 시 제외"
+    },
+    {
+      "feature": "team_run_momentum_3_vs_10",
+      "feature_group": "momentum",
+      "importance_rank": 22,
+      "importance_mean": 0.008072,
+      "appears_in_best_candidate": true,
+      "segment_helped": "연패 흐름",
+      "segment_hurt": "박빙 경기, 대승/대패 경기, 강팀 vs 약팀",
+      "keep_candidate": "segment_only",
+      "reason": "특정 세그먼트 개선 후보로만 유지",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
     },
     {
       "feature": "team_allowed_momentum_3_vs_10",
@@ -1340,10 +1340,22 @@
       "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
     },
     {
-      "feature": "opponent_allowed_momentum_3_vs_10",
+      "feature": "opponent_run_momentum_3_vs_10",
       "feature_group": "momentum",
       "importance_rank": 24,
-      "importance_mean": 0.006502,
+      "importance_mean": 0.006508,
+      "appears_in_best_candidate": true,
+      "segment_helped": "연패 흐름",
+      "segment_hurt": "박빙 경기, 대승/대패 경기, 강팀 vs 약팀",
+      "keep_candidate": "segment_only",
+      "reason": "특정 세그먼트 개선 후보로만 유지",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
+    },
+    {
+      "feature": "opponent_allowed_momentum_3_vs_10",
+      "feature_group": "momentum",
+      "importance_rank": 25,
+      "importance_mean": 0.006455,
       "appears_in_best_candidate": true,
       "segment_helped": "연패 흐름",
       "segment_hurt": "박빙 경기, 대승/대패 경기, 강팀 vs 약팀",
@@ -1354,7 +1366,7 @@
     {
       "feature": "games_last_7_days",
       "feature_group": "baseline",
-      "importance_rank": 25,
+      "importance_rank": 26,
       "importance_mean": 0.006025,
       "appears_in_best_candidate": true,
       "segment_helped": "연패 흐름",
@@ -1362,18 +1374,6 @@
       "keep_candidate": "false",
       "reason": "중요도와 성능 기여 근거가 약함",
       "next_action": "후보 축소 시 제외"
-    },
-    {
-      "feature": "allowed_momentum_gap",
-      "feature_group": "momentum",
-      "importance_rank": 26,
-      "importance_mean": 0.005537,
-      "appears_in_best_candidate": true,
-      "segment_helped": "연패 흐름",
-      "segment_hurt": "박빙 경기, 대승/대패 경기, 강팀 vs 약팀",
-      "keep_candidate": "segment_only",
-      "reason": "특정 세그먼트 개선 후보로만 유지",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토"
     },
     {
       "feature": "rest_days",
@@ -1836,7 +1836,7 @@
   ],
   "calibration_replacement_risk": "calibration gate를 통과하지 못하면 운영 모델 교체 금지",
   "production_gate_audit_summary": {
-    "generated_at": "2026-07-08T17:06:34.934598",
+    "generated_at": "2026-07-08T17:36:22.251843",
     "current_operational_model": "핵심 수치 RandomForest 보수 모델",
     "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_momentum",
     "current_operational_accuracy": 0.539,
@@ -2009,26 +2009,26 @@
     "recent_run_diff_10_gap"
   ],
   "harmful_or_noisy_non_pitching_features": [
+    "winning_streak_after_close_games",
+    "winning_streak_after_close_games",
+    "winning_streak_with_low_run_diff",
+    "winning_streak_with_low_run_diff",
     "season_phase",
-    "team_recent_5_run_std",
-    "opponent_current_streak_length",
-    "opponent_current_streak_length",
-    "team_recent_5_run_std",
     "team_recent_10_run_std",
-    "run_std_gap",
+    "opponent_run_momentum_3_vs_10",
     "team_allowed_momentum_3_vs_10",
-    "team_run_momentum_3_vs_10",
-    "opponent_recent_5_run_std",
-    "rest_days",
-    "rest_days"
+    "run_std_gap",
+    "season_phase",
+    "opponent_recent_10_run_std",
+    "opponent_recent_10_run_std"
   ],
   "recommended_next_non_pitching_step": "유용 신호가 반복 확인된 비투수 피처만 다음 후보 세트에 유지하고, 노이즈 가능성이 있는 피처는 운영 모델 교체 후보에서 제외합니다.",
   "pitching_snapshot_collection_status": {
-    "generated_at": "2026-07-08 17:00:03",
+    "generated_at": "2026-07-08 17:30:02",
     "reference_date": "2026-07-08",
-    "snapshot_rows_total": 632,
-    "snapshot_rows_for_reference_date": 12,
-    "confirmed_starter_count": 12,
+    "snapshot_rows_total": 634,
+    "snapshot_rows_for_reference_date": 14,
+    "confirmed_starter_count": 14,
     "estimated_starter_count": 0,
     "unknown_starter_count": 0,
     "teams_with_snapshot": [
@@ -2061,18 +2061,18 @@
   "safe_to_replace_model": false,
   "reason_not_to_replace_if_false": "최고 비투수 후보의 accuracy 개선폭이 운영 교체 기준(+0.005 초과)을 넘지 못했고, bootstrap 신뢰구간과 calibration 진단에서도 안정적인 개선 근거가 충분하지 않아 운영 모델은 유지합니다.",
   "pitching_snapshot_quality_summary": {
-    "generated_at": "2026-07-08 17:00:03",
+    "generated_at": "2026-07-08 17:30:02",
     "reference_date": "2026-07-08",
     "snapshot_file": "data/official/pitching_daily_snapshot.csv",
-    "total_snapshot_rows": 632,
-    "reference_date_rows": 12,
+    "total_snapshot_rows": 634,
+    "reference_date_rows": 14,
     "scheduled_games": 5,
     "expected_team_rows": 10,
-    "actual_team_rows": 12,
+    "actual_team_rows": 14,
     "duplicate_key_count": 0,
     "unknown_starter_count": 0,
     "estimated_starter_count": 0,
-    "confirmed_starter_count": 12,
+    "confirmed_starter_count": 14,
     "quality_status": "fail",
     "blocking_issues": [
       "team_count_check"
@@ -2162,7 +2162,7 @@
   "reason_pitching_features_still_blocked": "투수 스냅샷은 품질 점검을 통과했지만 누적 기간이 32일로 짧아 모델 피처 사용을 차단합니다. 최소 30일 이상 누적 후 baseline_plus_pitching_snapshot 실험을 진행합니다.",
   "recommendation_outcome_audit_summary": {
     "audited_completed_games": 196,
-    "pending_games": 230,
+    "pending_games": 231,
     "note": "추천 등급은 완료 경기 결과로 사후 평가하며, 사전 피처나 모델 확률에는 연결하지 않습니다."
   },
   "recommendation_grade_performance_summary": [
@@ -2656,9 +2656,9 @@
     }
   ],
   "recommendation_policy_risk_summary": {
-    "generated_at": "2026-07-08T17:00:03.398792",
+    "generated_at": "2026-07-08T17:30:02.381915",
     "audited_completed_games": 196,
-    "pending_games": 230,
+    "pending_games": 231,
     "strongest_supported_label": "오늘 TOP PICK",
     "weakest_supported_label": "handicap:not_available",
     "top_pick_label_risk": "relative_rank_label_not_strong_pick",
@@ -2768,7 +2768,7 @@
     "today_expected_runs_prediction_rows": 5
   },
   "latest_pipeline_health_status": {
-    "generated_at": "2026-07-08T17:00:03",
+    "generated_at": "2026-07-08T17:30:02",
     "reference_date": "2026-07-08",
     "overall_status": "warning",
     "blocking_issues": [],
@@ -2778,10 +2778,10 @@
     ],
     "latest_html_path": "kbo_analytics/dashboard/latest.html",
     "latest_html_exists": true,
-    "latest_html_modified_at": "2026-07-08T17:08:15",
+    "latest_html_modified_at": "2026-07-08T17:38:01",
     "docs_latest_html_path": "docs/latest.html",
     "docs_latest_html_exists": true,
-    "docs_latest_html_modified_at": "2026-07-08T17:08:15",
+    "docs_latest_html_modified_at": "2026-07-08T17:38:01",
     "scheduled_games": 5,
     "today_expected_runs_prediction_file": "kbo_analytics/run_model/results/today_expected_runs_predictions.csv",
     "today_expected_runs_prediction_rows": 5,
@@ -2792,11 +2792,11 @@
     "recommendation_summary_exists": true,
     "recommendation_audit_log_file": "kbo_analytics/modeling/results/recommendation_outcome_audit_log.csv",
     "recommendation_audit_completed_rows": 196,
-    "recommendation_audit_pending_rows": 230,
+    "recommendation_audit_pending_rows": 231,
     "pitching_snapshot_file": "kbo_analytics/data/official/pitching_daily_snapshot.csv",
     "pitching_snapshot_exists": true,
-    "pitching_snapshot_rows_total": 632,
-    "pitching_snapshot_rows_for_reference_date": 12,
+    "pitching_snapshot_rows_total": 634,
+    "pitching_snapshot_rows_for_reference_date": 14,
     "pitching_snapshot_quality_status": "fail",
     "pitching_snapshot_accumulated_days": 32,
     "safe_to_use_pitching_snapshot_as_features": false,
