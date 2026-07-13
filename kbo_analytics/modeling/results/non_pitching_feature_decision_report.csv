@@ -17,23 +17,23 @@ recent_5_win_rate,baseline,15,0.038209,True,"연승 흐름, 연패 흐름","박�
 season_avg_run_diff_gap,baseline,16,0.029242,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
 season_win_rate_prior,baseline,17,0.028676,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
 streak_length_gap,streak,18,0.026322,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-losing_streak_low_scoring_offense,streak,19,0.026045,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-losing_streak_with_negative_run_diff,streak,20,0.022474,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_vs_losing_streak_flag,streak,21,0.021866,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_losing_streak_flag,streak,22,0.02148,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_winning_streak_flag,streak,23,0.021176,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_current_streak_type,streak,24,0.020981,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-losing_streak_allowed_runs_spike,streak,25,0.020824,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-winning_streak_bullpen_fatigue_proxy,streak,26,0.020336,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-team_winning_streak_flag,streak,27,0.019636,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-team_losing_streak_flag,streak,28,0.017826,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-team_current_streak_type,streak,29,0.012277,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-team_current_streak_length,streak,30,0.009221,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-back_to_back,baseline,31,0.009188,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-venue_win_rate_gap,venue_context,32,0.00846,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-opponent_current_streak_length,streak,33,0.007335,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-games_last_7_days,baseline,34,0.005776,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-rest_days,baseline,35,0.004678,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
-winning_streak_after_close_games,close_blowout,36,0.004583,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-winning_streak_with_low_run_diff,streak,37,0.004067,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
-winning_streak_regression_risk,streak,38,0.001383,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+losing_streak_low_scoring_offense,streak,19,0.023699,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_losing_streak_flag,streak,20,0.02239,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_vs_losing_streak_flag,streak,21,0.021266,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_winning_streak_flag,streak,22,0.02113,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_current_streak_type,streak,23,0.021112,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+losing_streak_allowed_runs_spike,streak,24,0.020824,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+losing_streak_with_negative_run_diff,streak,25,0.01842,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+winning_streak_bullpen_fatigue_proxy,streak,26,0.01795,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+opponent_winning_streak_flag,streak,27,0.017251,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_losing_streak_flag,streak,28,0.015256,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_current_streak_type,streak,29,0.012541,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+back_to_back,baseline,30,0.009188,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
+venue_win_rate_gap,venue_context,31,0.00846,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+winning_streak_regression_risk,streak,32,0.006893,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+games_last_7_days,baseline,33,0.005776,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
+opponent_current_streak_length,streak,34,0.005347,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+team_current_streak_length,streak,35,0.004691,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+rest_days,baseline,36,0.004678,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",false,중요도와 성능 기여 근거가 약함,후보 축소 시 제외
+winning_streak_after_close_games,close_blowout,37,0.004408,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
+winning_streak_with_low_run_diff,streak,38,0.001968,True,"연승 흐름, 연패 흐름","박빙 경기, 대승/대패 경기",segment_only,특정 세그먼트 개선 후보로만 유지,다음 실험에서 선택 피처 세트 후보로 검토
