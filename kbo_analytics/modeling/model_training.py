@@ -2317,6 +2317,15 @@ def kt_feature_frame(features: pd.DataFrame):
     kt_rows["kt_recent_10_runs_scored"] = kt_rows["avg_score_last_10"]
     kt_rows["kt_recent_5_runs_allowed"] = kt_rows["avg_allowed_last_5"]
     kt_rows["kt_recent_10_runs_allowed"] = kt_rows["avg_allowed_last_10"]
+    kt_rows["kt_previous_game_win"] = kt_rows.get("previous_game_win", 0.5)
+    kt_rows["kt_previous_game_score"] = kt_rows.get("previous_game_score", 0.0)
+    kt_rows["kt_previous_game_allowed"] = kt_rows.get("previous_game_allowed", 0.0)
+    kt_rows["kt_previous_game_run_diff"] = kt_rows.get("previous_game_run_diff", 0.0)
+    kt_rows["opponent_previous_game_win"] = kt_rows.get("opponent_previous_game_win", 0.5)
+    kt_rows["opponent_previous_game_score"] = kt_rows.get("opponent_previous_game_score", 0.0)
+    kt_rows["opponent_previous_game_allowed"] = kt_rows.get("opponent_previous_game_allowed", 0.0)
+    kt_rows["opponent_previous_game_run_diff"] = kt_rows.get("opponent_previous_game_run_diff", 0.0)
+    kt_rows["kt_previous_game_run_diff_gap"] = kt_rows.get("previous_game_run_diff_gap", 0.0)
     kt_rows["kt_home_win_rate_prior"] = kt_rows.get("team_recent_home_win_rate_prior", 0.5)
     kt_rows["kt_away_win_rate_prior"] = kt_rows.get("team_recent_away_win_rate_prior", 0.5)
     kt_rows["kt_vs_opponent_recent_win_rate"] = kt_rows.get("head_to_head_win_rate_prior", 0.5)
@@ -2384,6 +2393,17 @@ def kt_feature_sets(kt_rows: pd.DataFrame, production_columns: list[str]):
     ]
     home_away = ["kt_is_home", "kt_home_win_rate_prior", "kt_away_win_rate_prior", "kt_rest_days", "kt_games_last_7_days"]
     recent = ["kt_recent_5_win_rate", "kt_recent_5_run_diff", "kt_recent_5_runs_scored", "kt_recent_5_runs_allowed", "opponent_recent_5_win_rate", "opponent_recent_5_run_diff"]
+    previous_game = [
+        "kt_previous_game_win",
+        "kt_previous_game_score",
+        "kt_previous_game_allowed",
+        "kt_previous_game_run_diff",
+        "opponent_previous_game_win",
+        "opponent_previous_game_score",
+        "opponent_previous_game_allowed",
+        "opponent_previous_game_run_diff",
+        "kt_previous_game_run_diff_gap",
+    ]
     without_false = [column for column in kt_form + opponent + home_away if "streak" not in column and "blowout" not in column]
     all_safe = list(dict.fromkeys(kt_form + opponent + home_away + recent + ["kt_close_game_win_rate_prior", "kt_blowout_game_rate_prior", "kt_after_win_win_rate_prior", "kt_after_loss_win_rate_prior", "kt_month_win_rate_prior", "kt_season_phase", "kt_games_last_14_days"]))
     sets = {
@@ -2392,6 +2412,8 @@ def kt_feature_sets(kt_rows: pd.DataFrame, production_columns: list[str]):
         "kt_team_form_plus_opponent_context": kt_form + opponent,
         "kt_home_away_context": home_away,
         "kt_recent_form_only": recent,
+        "kt_previous_game_context": previous_game,
+        "kt_team_form_plus_previous_game": kt_form + opponent + previous_game,
         "kt_without_false_signal_features": without_false,
         "kt_all_non_pitching_safe_features": all_safe,
     }
@@ -2431,7 +2453,7 @@ def should_run_kt_candidate(model_name: str, feature_set: str):
     if model_name in {"GradientBoostingClassifier", "HistGradientBoostingClassifier"}:
         return feature_set in {"kt_team_form_plus_opponent_context", "kt_without_false_signal_features", "kt_all_non_pitching_safe_features"}
     if model_name in {"RandomForestClassifier", "ExtraTreesClassifier"}:
-        return feature_set in {"kt_team_form_features", "kt_without_false_signal_features"}
+        return feature_set in {"kt_team_form_features", "kt_without_false_signal_features", "kt_team_form_plus_previous_game"}
     return False
 
 
@@ -3316,6 +3338,27 @@ def compact_feature_columns(x: pd.DataFrame):
     ]
 
 
+def compact_previous_game_feature_columns(x: pd.DataFrame):
+    return available_columns(
+        compact_feature_columns(x)
+        + [
+            "previous_game_win",
+            "previous_game_score",
+            "previous_game_allowed",
+            "previous_game_run_diff",
+            "opponent_previous_game_win",
+            "opponent_previous_game_score",
+            "opponent_previous_game_allowed",
+            "opponent_previous_game_run_diff",
+            "previous_game_win_gap",
+            "previous_game_score_gap",
+            "previous_game_allowed_gap",
+            "previous_game_run_diff_gap",
+        ],
+        x,
+    )
+
+
 def streak_feature_columns(x: pd.DataFrame):
     columns = compact_feature_columns(x) + list(STREAK_FEATURES)
     return [column for column in columns if column in x.columns]
@@ -3342,18 +3385,26 @@ def non_pitching_feature_sets(x: pd.DataFrame):
     return {name: available_columns(list(dict.fromkeys(columns)), x) for name, columns in groups.items()}
 
 
-def compact_sklearn_candidate_specs(recency_weight):
+def compact_sklearn_candidate_specs(recency_weight, day_recency_weight=None):
     try:
         from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
     except ImportError:
         return []
 
-    return [
+    specs = [
         ("핵심 수치 RandomForest 보수 모델", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), None),
         ("핵심 수치 RandomForest 보수 시간가중 모델", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), recency_weight),
         ("핵심 수치 GradientBoosting 보수 모델", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), None),
         ("핵심 수치 GradientBoosting 보수 시간가중 모델", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), recency_weight),
     ]
+    if day_recency_weight is not None:
+        specs.extend(
+            [
+                ("핵심 수치 RandomForest 일자가중 모델", RandomForestClassifier(n_estimators=800, max_depth=5, min_samples_leaf=12, class_weight="balanced_subsample", random_state=42, n_jobs=-1), day_recency_weight),
+                ("핵심 수치 GradientBoosting 일자가중 모델", HistGradientBoostingClassifier(max_iter=350, learning_rate=0.025, max_leaf_nodes=10, l2_regularization=0.15, random_state=42), day_recency_weight),
+            ]
+        )
+    return specs
 
 
 def streak_candidate_specs(recency_weight):
@@ -4018,9 +4069,60 @@ def write_pregame_matchup_reports(results_dir: Path, game_level_features: pd.Dat
     }
 
 
+def write_latest_training_data_status(results_dir: Path, data_dir: Path, training_games: pd.DataFrame, validation_cutoff: date, prediction_date: date):
+    prediction_training_cutoff = prediction_date - timedelta(days=1)
+    final_games = training_games[training_games["status"].eq("Final")].copy()
+    latest_training_games = final_games[pd.to_datetime(final_games["date"]).dt.date <= prediction_training_cutoff].copy()
+    latest_training_games.to_csv(data_dir / "latest_model_training_games.csv", index=False, encoding="utf-8-sig")
+
+    if latest_training_games.empty:
+        latest_completed_game_date = ""
+    else:
+        latest_completed_game_date = pd.to_datetime(latest_training_games["date"]).dt.date.max().isoformat()
+
+    cutoff_rows = final_games[pd.to_datetime(final_games["date"]).dt.date == prediction_training_cutoff].copy()
+    recent_daily_rows = []
+    for game_date, rows in final_games.groupby(pd.to_datetime(final_games["date"]).dt.date):
+        if game_date > prediction_training_cutoff:
+            continue
+        recent_daily_rows.append(
+            {
+                "game_date": game_date.isoformat(),
+                "final_team_rows": int(len(rows)),
+                "final_games": int(len(rows) / 2),
+                "included_for_prediction_training": bool(game_date <= prediction_training_cutoff),
+            }
+        )
+    recent_daily_rows = sorted(recent_daily_rows, key=lambda row: row["game_date"])[-14:]
+    pd.DataFrame(recent_daily_rows).to_csv(results_dir / "latest_training_data_status.csv", index=False, encoding="utf-8-sig")
+
+    status = {
+        "reference_date": prediction_date.isoformat(),
+        "validation_cutoff": validation_cutoff.isoformat(),
+        "prediction_training_cutoff": prediction_training_cutoff.isoformat(),
+        "latest_completed_game_date_used": latest_completed_game_date,
+        "latest_training_team_rows": int(len(latest_training_games)),
+        "latest_training_games": int(len(latest_training_games) / 2),
+        "cutoff_date_final_team_rows": int(len(cutoff_rows)),
+        "cutoff_date_final_games": int(len(cutoff_rows) / 2),
+        "cutoff_date_included_for_prediction_training": bool(len(cutoff_rows) > 0),
+        "current_week_games_included_for_prediction": bool(
+            not latest_training_games.empty
+            and pd.to_datetime(latest_training_games["date"]).dt.date.gt(validation_cutoff).any()
+        ),
+        "latest_training_file": "data/official/latest_model_training_games.csv",
+        "recent_daily_status_file": "modeling/results/latest_training_data_status.csv",
+        "note": "Prediction training uses Final games through reference_date - 1. If the cutoff date has no Final rows in the official source, no result is invented.",
+    }
+    (results_dir / "latest_training_data_status.json").write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
+    return status
+
+
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date, data_dir: Path, results_dir: Path):
     training_games = training_games.copy()
     training_games["date"] = pd.to_datetime(training_games["date"])
+    results_dir.mkdir(parents=True, exist_ok=True)
+    latest_training_status = write_latest_training_data_status(results_dir, data_dir, training_games, cutoff, prediction_date)
     completed = training_games[
         (training_games["status"] == "Final")
         & ((training_games["date"].dt.year < cutoff.year) | (training_games["date"].dt.date <= cutoff))
@@ -4028,7 +4130,6 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     model_input = data_dir / "model_training_games.csv"
     completed.to_csv(model_input, index=False, encoding="utf-8-sig")
     features = build_features(model_input)
-    results_dir.mkdir(parents=True, exist_ok=True)
     features.to_csv(results_dir / "features.csv", index=False, encoding="utf-8-sig")
     pitching_context_path = data_dir / "pitching_context.csv"
     pitching_context = pd.read_csv(pitching_context_path) if pitching_context_path.exists() else pd.DataFrame()
@@ -4061,6 +4162,9 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     train_years = pd.to_datetime(features.iloc[:split_index]["date"]).dt.year
     max_train_year = int(train_years.max())
     recency_weight = (0.85 ** (max_train_year - train_years)).clip(lower=0.35).to_numpy(dtype=float)
+    train_dates = pd.to_datetime(features.iloc[:split_index]["date"])
+    max_train_date = train_dates.max()
+    day_recency_weight = (0.5 ** ((max_train_date - train_dates).dt.days / 365)).clip(lower=0.25).to_numpy(dtype=float)
 
     candidate_columns = {
         "기본 흐름 모델": [col for col in non_streak_columns(x.columns) if col not in {"team_elo_pre", "opponent_elo_pre", "elo_diff", "games_last_7_days", "back_to_back"}],
@@ -4075,6 +4179,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     non_pitching_importance_rows = []
     non_pitching_segment_rows = []
     non_pitching_prediction_results = {}
+    previous_game_experiment_rows = []
 
     for name, columns in candidate_columns.items():
         x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
@@ -4089,7 +4194,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         probability_spread_rows.append(model_probability_spread(name, y_test, probability, accuracy, score))
         best = pick_better_model(best, result)
 
-    for name, model, sample_weight in compact_sklearn_candidate_specs(recency_weight):
+    for name, model, sample_weight in compact_sklearn_candidate_specs(recency_weight, day_recency_weight):
         columns = compact_feature_columns(x)
         x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
         train_scaled, test_scaled, mean, std = standardize_train_test(x_train, x_test)
@@ -4104,6 +4209,36 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         probability_spread_rows.append(model_probability_spread(name, y_test, probability, accuracy, score))
         streak_experiment_rows.append(streak_experiment_metrics(name, "compact_baseline", features.iloc[split_index:].copy(), y_test, probability, False))
         best = pick_better_model(best, result)
+
+    for name, model, sample_weight in compact_sklearn_candidate_specs(recency_weight, day_recency_weight):
+        columns = compact_previous_game_feature_columns(x)
+        x_train, x_test = x.iloc[:split_index][columns], x.iloc[split_index:][columns]
+        train_scaled, test_scaled, _, _ = standardize_train_test(x_train, x_test)
+        fit_kwargs = {"sample_weight": sample_weight} if sample_weight is not None else {}
+        model.fit(train_scaled, y_train, **fit_kwargs)
+        probability = normalize_game_probabilities(features.iloc[split_index:], model.predict_proba(test_scaled)[:, 1])
+        pred = (probability >= 0.5).astype(int)
+        accuracy = round(float((pred == y_test).mean()), 3)
+        score = probability_scores(y_test, probability)
+        candidate_name = f"{name} + 직전 경기"
+        candidate_results.append({"모델": candidate_name, "검증 정확도": accuracy, "피처 수": len(columns), **score})
+        probability_spread_rows.append(model_probability_spread(candidate_name, y_test, probability, accuracy, score))
+        experiment = model_probability_spread(candidate_name, y_test, probability, accuracy, score)
+        experiment.update(
+            {
+                "feature_set": "compact_plus_previous_game",
+                "production_eligible": False,
+                "selected_candidate": False,
+                "policy_note": "Leakage-safe shift(1) candidate; offline validation only until bootstrap and calibration gates pass.",
+            }
+        )
+        previous_game_experiment_rows.append(experiment)
+
+    pd.DataFrame(previous_game_experiment_rows).to_csv(
+        results_dir / "previous_game_feature_experiment_report.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
 
     for name, model, sample_weight in streak_candidate_specs(recency_weight):
         columns = streak_feature_columns(x)
@@ -4295,6 +4430,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
         performance_bundle,
         kt_wiz_summary,
         pregame_matchup_bundle,
+        latest_training_status,
     )
     payload["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload["streak_feature_experiment_rows"] = len(streak_report)
@@ -4341,6 +4477,11 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload["pregame_matchup_rolling_backtest_report"] = "modeling/results/pregame_matchup_rolling_backtest_report.csv"
     payload["pregame_selective_pick_strategy_report"] = "modeling/results/pregame_selective_pick_strategy_report.csv"
     payload["pregame_matchup_performance_summary"] = "modeling/results/pregame_matchup_performance_summary.json"
+    payload["latest_training_data_status"] = latest_training_status
+    payload["latest_training_data_status_file"] = "modeling/results/latest_training_data_status.json"
+    payload["latest_training_data_status_report"] = "modeling/results/latest_training_data_status.csv"
+    payload["previous_game_feature_experiment_report"] = "modeling/results/previous_game_feature_experiment_report.csv"
+    payload["previous_game_feature_policy_note"] = "직전 경기 피처는 현재 경기 이전 shift(1) 정보만 사용하며, 운영 모델 자동 교체 대상이 아닌 검증 후보입니다."
     payload.setdefault("diagnostic_reports", {})["streak_feature_experiment_report"] = "modeling/results/streak_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_experiment_report"] = "modeling/results/non_pitching_feature_experiment_report.csv"
     payload.setdefault("diagnostic_reports", {})["non_pitching_feature_importance_report"] = "modeling/results/non_pitching_feature_importance_report.csv"
@@ -4378,6 +4519,9 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     payload.setdefault("diagnostic_reports", {})["pregame_matchup_rolling_backtest_report"] = "modeling/results/pregame_matchup_rolling_backtest_report.csv"
     payload.setdefault("diagnostic_reports", {})["pregame_selective_pick_strategy_report"] = "modeling/results/pregame_selective_pick_strategy_report.csv"
     payload.setdefault("diagnostic_reports", {})["pregame_matchup_performance_summary"] = "modeling/results/pregame_matchup_performance_summary.json"
+    payload.setdefault("diagnostic_reports", {})["latest_training_data_status"] = "modeling/results/latest_training_data_status.json"
+    payload.setdefault("diagnostic_reports", {})["latest_training_data_status_report"] = "modeling/results/latest_training_data_status.csv"
+    payload.setdefault("diagnostic_reports", {})["previous_game_feature_experiment_report"] = "modeling/results/previous_game_feature_experiment_report.csv"
     if payload.get("feature_importance"):
         pd.DataFrame(
             [{"feature": feature, "importance": importance} for feature, importance in payload["feature_importance"].items()]
@@ -4885,6 +5029,7 @@ def write_model_insight_summary(
     performance_bundle: dict | None = None,
     kt_wiz_summary: dict | None = None,
     pregame_matchup_bundle: dict | None = None,
+    latest_training_status: dict | None = None,
 ):
     sorted_segments = [row for row in segment_rows if row["total_games"]]
     best_segments = sorted(sorted_segments, key=lambda row: row["accuracy"] or 0, reverse=True)[:5]
@@ -4910,6 +5055,7 @@ def write_model_insight_summary(
     performance_bundle = performance_bundle or {}
     kt_wiz_summary = kt_wiz_summary or {}
     pregame_matchup_bundle = pregame_matchup_bundle or {}
+    latest_training_status = latest_training_status or {}
     pregame_matchup_summary = pregame_matchup_bundle.get("summary", {})
     selected_accuracy = selected_row.get("검증 정확도", 0)
     selected_brier = selected_row.get("Brier Score", 1)
@@ -5024,6 +5170,8 @@ def write_model_insight_summary(
         "pregame_model_candidate_summary": pregame_matchup_bundle.get("model_rows", []),
         "pregame_selective_pick_summary": pregame_matchup_bundle.get("strategy_rows", []),
         "today_matchup_model_gap_analysis": "The current production model is primarily a team-form baseline. Pregame matchup features are being tested as a performance challenger and are not yet production probability inputs.",
+        "latest_training_data_summary": latest_training_status,
+        "latest_completed_game_inclusion_policy": "Today prediction retraining uses official Final games through reference_date - 1. Validation remains cutoff-based, and missing official Final rows are reported rather than invented.",
         "recommended_performance_next_step": pregame_matchup_summary.get(
             "recommended_next_step",
             "Collect leakage-safe pitcher game logs, lineup snapshots, and bullpen usage logs before any production pregame matchup model promotion.",
@@ -5138,6 +5286,7 @@ def build_payload(
     performance_bundle,
     kt_wiz_summary,
     pregame_matchup_bundle=None,
+    latest_training_status=None,
 ):
     columns = best["columns"]
     probability = best["probability"]
@@ -5326,6 +5475,7 @@ def build_payload(
         performance_bundle,
         kt_wiz_summary,
         pregame_matchup_bundle,
+        latest_training_status,
     )
     payload["diagnostic_reports"] = {
         "feature_diagnostic_report": "modeling/results/feature_diagnostic_report.csv",

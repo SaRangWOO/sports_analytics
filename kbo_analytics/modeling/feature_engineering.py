@@ -74,6 +74,12 @@ def rolling_group_std(values: pd.Series, season: pd.Series, team: pd.Series, win
     return values.groupby([season, team]).rolling(window, min_periods=2).std().reset_index(level=[0, 1], drop=True).fillna(0.0)
 
 
+def prior_group_cumsum(df: pd.DataFrame, group_keys: list[str], value_column: str) -> pd.Series:
+    return df.groupby(group_keys, sort=False)[value_column].transform(
+        lambda values: values.fillna(0).cumsum().shift(1)
+    )
+
+
 def build_features(input_path: str | Path, include_unlabeled: bool = False) -> pd.DataFrame:
     df = pd.read_csv(input_path)
     if include_unlabeled:
@@ -116,11 +122,15 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         shifted_close = (shifted_abs_diff <= 1).astype(float)
         shifted_blowout_win = ((grouped["run_diff"].shift(1) >= 5) & (grouped["target_win"].shift(1) == 1)).astype(float)
         shifted_blowout_loss = ((grouped["run_diff"].shift(1) <= -5) & (grouped["target_win"].shift(1) == 0)).astype(float)
+        df["previous_game_win"] = shifted_win.fillna(0.5)
+        df["previous_game_score"] = shifted_score.fillna(df["score_team"].mean())
+        df["previous_game_allowed"] = shifted_allowed.fillna(df["score_opp"].mean())
+        df["previous_game_run_diff"] = shifted_diff.fillna(0.0)
         prior_games = grouped.cumcount()
-        prior_wins = grouped["target_win"].cumsum().shift(1)
-        prior_runs = grouped["score_team"].cumsum().shift(1)
-        prior_allowed = grouped["score_opp"].cumsum().shift(1)
-        prior_run_diff = grouped["run_diff"].cumsum().shift(1)
+        prior_wins = prior_group_cumsum(df, group_keys, "target_win")
+        prior_runs = prior_group_cumsum(df, group_keys, "score_team")
+        prior_allowed = prior_group_cumsum(df, group_keys, "score_opp")
+        prior_run_diff = prior_group_cumsum(df, group_keys, "run_diff")
         first_team_row = grouped.cumcount() == 0
         prior_wins = prior_wins.mask(first_team_row, 0)
         prior_runs = prior_runs.mask(first_team_row, 0)
@@ -155,7 +165,7 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["recent_5_close_game_rate"] = df["team_recent_5_close_game_rate"]
         venue_grouped = df.groupby(["season", "team", "home_away"], group_keys=False)
         venue_prior_games = venue_grouped.cumcount()
-        venue_prior_wins = venue_grouped["target_win"].cumsum().shift(1)
+        venue_prior_wins = prior_group_cumsum(df, ["season", "team", "home_away"], "target_win")
         venue_shifted_win = venue_grouped["target_win"].shift(1)
         venue_shifted_diff = venue_grouped["run_diff"].shift(1)
         venue_first_row = venue_grouped.cumcount() == 0
@@ -167,8 +177,8 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["team_recent_away_win_rate_prior"] = df["team_recent_same_venue_win_rate_prior"].where(df["home_away"] == "A", 0.5)
         month_grouped = df.groupby(["season", "team", "month"], group_keys=False)
         month_prior_games = month_grouped.cumcount()
-        month_prior_wins = month_grouped["target_win"].cumsum().shift(1)
-        month_prior_diff = month_grouped["run_diff"].cumsum().shift(1)
+        month_prior_wins = prior_group_cumsum(df, ["season", "team", "month"], "target_win")
+        month_prior_diff = prior_group_cumsum(df, ["season", "team", "month"], "run_diff")
         month_first_row = month_grouped.cumcount() == 0
         month_prior_wins = month_prior_wins.mask(month_first_row, 0)
         month_prior_diff = month_prior_diff.mask(month_first_row, 0)
@@ -177,7 +187,7 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["season_phase"] = pd.cut(df["month"], bins=[0, 4, 7, 12], labels=[0, 1, 2]).astype(int)
         h2h_grouped = df.groupby(["season", "team", "opponent"], group_keys=False)
         h2h_prior_games = h2h_grouped.cumcount()
-        h2h_prior_wins = h2h_grouped["target_win"].cumsum().shift(1)
+        h2h_prior_wins = prior_group_cumsum(df, ["season", "team", "opponent"], "target_win")
         h2h_first_row = h2h_grouped.cumcount() == 0
         h2h_prior_wins = h2h_prior_wins.mask(h2h_first_row, 0)
         df["head_to_head_win_rate_prior"] = add_prior_rate(h2h_prior_wins, h2h_prior_games, 0.5)
@@ -215,6 +225,10 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
                 "team_month_win_rate_prior",
                 "team_month_run_diff_prior",
                 "head_to_head_win_rate_prior",
+                "previous_game_win",
+                "previous_game_score",
+                "previous_game_allowed",
+                "previous_game_run_diff",
             ]
         ].rename(
             columns={
@@ -248,6 +262,10 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
                 "team_month_win_rate_prior": "opponent_month_win_rate_prior",
                 "team_month_run_diff_prior": "opponent_month_run_diff_prior",
                 "head_to_head_win_rate_prior": "opponent_head_to_head_win_rate_prior",
+                "previous_game_win": "opponent_previous_game_win",
+                "previous_game_score": "opponent_previous_game_score",
+                "previous_game_allowed": "opponent_previous_game_allowed",
+                "previous_game_run_diff": "opponent_previous_game_run_diff",
             }
         )
         df = df.merge(opponent_context, on=["date", "opponent"], how="left")
@@ -310,6 +328,10 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["winning_streak_after_close_games"] = df["team_winning_streak_flag"] * (df["recent_5_close_game_rate"] >= 0.6).astype(int)
         df["venue_win_rate_gap"] = df["venue_win_rate_prior"] - df["opponent_venue_win_rate_prior"]
         df["head_to_head_win_rate_gap"] = df["head_to_head_win_rate_prior"] - df["opponent_head_to_head_win_rate_prior"]
+        df["previous_game_win_gap"] = df["previous_game_win"] - df["opponent_previous_game_win"]
+        df["previous_game_score_gap"] = df["previous_game_score"] - df["opponent_previous_game_score"]
+        df["previous_game_allowed_gap"] = df["opponent_previous_game_allowed"] - df["previous_game_allowed"]
+        df["previous_game_run_diff_gap"] = df["previous_game_run_diff"] - df["opponent_previous_game_run_diff"]
         games_last_7 = pd.Series(0, index=df.index, dtype=float)
         for _, team_dates in df.groupby(group_keys)["date"]:
             for row_index, current_date in team_dates.items():
@@ -421,6 +443,18 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         df["head_to_head_win_rate_prior"] = 0.5
         df["opponent_head_to_head_win_rate_prior"] = 0.5
         df["head_to_head_win_rate_gap"] = 0
+        df["previous_game_win"] = 0.5
+        df["previous_game_score"] = df["score_team"].mean()
+        df["previous_game_allowed"] = df["score_opp"].mean()
+        df["previous_game_run_diff"] = 0
+        df["opponent_previous_game_win"] = 0.5
+        df["opponent_previous_game_score"] = df["score_opp"].mean()
+        df["opponent_previous_game_allowed"] = df["score_team"].mean()
+        df["opponent_previous_game_run_diff"] = 0
+        df["previous_game_win_gap"] = 0
+        df["previous_game_score_gap"] = 0
+        df["previous_game_allowed_gap"] = 0
+        df["previous_game_run_diff_gap"] = 0
         df["team_elo_pre"] = 1500.0
         df["opponent_elo_pre"] = 1500.0
         df["elo_diff"] = 0.0
@@ -535,6 +569,18 @@ def build_features(input_path: str | Path, include_unlabeled: bool = False) -> p
         "head_to_head_win_rate_prior",
         "opponent_head_to_head_win_rate_prior",
         "head_to_head_win_rate_gap",
+        "previous_game_win",
+        "previous_game_score",
+        "previous_game_allowed",
+        "previous_game_run_diff",
+        "opponent_previous_game_win",
+        "opponent_previous_game_score",
+        "opponent_previous_game_allowed",
+        "opponent_previous_game_run_diff",
+        "previous_game_win_gap",
+        "previous_game_score_gap",
+        "previous_game_allowed_gap",
+        "previous_game_run_diff_gap",
         "team_elo_pre",
         "opponent_elo_pre",
         "elo_diff",

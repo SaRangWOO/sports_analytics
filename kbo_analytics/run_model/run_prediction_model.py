@@ -87,6 +87,7 @@ def create_rolling_run_features(run_df: pd.DataFrame):
     df["team_recent_5g_runs"] = grouped["shifted_runs"].transform(lambda x: x.rolling(5, min_periods=1).mean())
     df["team_recent_10g_runs"] = grouped["shifted_runs"].transform(lambda x: x.rolling(10, min_periods=1).mean())
     df["team_season_runs"] = grouped["shifted_runs"].transform(lambda x: x.expanding(min_periods=1).mean())
+    df["team_recent_3g_allowed"] = grouped["shifted_allowed"].transform(lambda x: x.rolling(3, min_periods=1).mean())
     df["team_recent_5g_allowed"] = grouped["shifted_allowed"].transform(lambda x: x.rolling(5, min_periods=1).mean())
     df["team_recent_10g_allowed"] = grouped["shifted_allowed"].transform(lambda x: x.rolling(10, min_periods=1).mean())
     df["team_season_allowed"] = grouped["shifted_allowed"].transform(lambda x: x.expanding(min_periods=1).mean())
@@ -95,6 +96,13 @@ def create_rolling_run_features(run_df: pd.DataFrame):
     df["team_season_win_rate"] = grouped["shifted_win"].transform(lambda x: x.expanding(min_periods=1).mean())
     df["team_recent_5g_run_diff"] = df["team_recent_5g_runs"] - df["team_recent_5g_allowed"]
     df["team_recent_10g_run_diff"] = df["team_recent_10g_runs"] - df["team_recent_10g_allowed"]
+    df["team_previous_game_runs"] = df["shifted_runs"]
+    df["team_previous_game_allowed"] = df["shifted_allowed"]
+    df["team_previous_game_run_diff"] = df["shifted_runs"] - df["shifted_allowed"]
+    df["team_run_momentum_3_vs_10"] = df["team_recent_3g_runs"] - df["team_recent_10g_runs"]
+    df["team_allowed_momentum_3_vs_10"] = df["team_recent_3g_allowed"] - df["team_recent_10g_allowed"]
+    df["team_recent_5g_runs_std"] = grouped["shifted_runs"].transform(lambda x: x.rolling(5, min_periods=2).std())
+    df["team_recent_5g_allowed_std"] = grouped["shifted_allowed"].transform(lambda x: x.rolling(5, min_periods=2).std())
 
     df["previous_game_date"] = grouped["date"].shift(1)
     df["rest_days"] = (df["date"] - df["previous_game_date"]).dt.days.fillna(1).clip(lower=0, upper=14)
@@ -105,6 +113,7 @@ def create_rolling_run_features(run_df: pd.DataFrame):
         "team_recent_5g_runs",
         "team_recent_10g_runs",
         "team_season_runs",
+        "team_recent_3g_allowed",
         "team_recent_5g_allowed",
         "team_recent_10g_allowed",
         "team_season_allowed",
@@ -113,6 +122,13 @@ def create_rolling_run_features(run_df: pd.DataFrame):
         "team_season_win_rate",
         "team_recent_5g_run_diff",
         "team_recent_10g_run_diff",
+        "team_previous_game_runs",
+        "team_previous_game_allowed",
+        "team_previous_game_run_diff",
+        "team_run_momentum_3_vs_10",
+        "team_allowed_momentum_3_vs_10",
+        "team_recent_5g_runs_std",
+        "team_recent_5g_allowed_std",
     ]
     league_avg_runs = float(df["target_runs"].mean())
     fill_values = {
@@ -121,6 +137,11 @@ def create_rolling_run_features(run_df: pd.DataFrame):
         "team_season_win_rate": 0.5,
         "team_recent_5g_run_diff": 0.0,
         "team_recent_10g_run_diff": 0.0,
+        "team_previous_game_run_diff": 0.0,
+        "team_run_momentum_3_vs_10": 0.0,
+        "team_allowed_momentum_3_vs_10": 0.0,
+        "team_recent_5g_runs_std": 0.0,
+        "team_recent_5g_allowed_std": 0.0,
     }
     for col in run_feature_cols:
         df[col] = df[col].fillna(fill_values.get(col, league_avg_runs))
@@ -135,6 +156,7 @@ def merge_opponent_features(df: pd.DataFrame):
         "team_recent_5g_runs",
         "team_recent_10g_runs",
         "team_season_runs",
+        "team_recent_3g_allowed",
         "team_recent_5g_allowed",
         "team_recent_10g_allowed",
         "team_season_allowed",
@@ -143,6 +165,13 @@ def merge_opponent_features(df: pd.DataFrame):
         "team_season_win_rate",
         "team_recent_5g_run_diff",
         "team_recent_10g_run_diff",
+        "team_previous_game_runs",
+        "team_previous_game_allowed",
+        "team_previous_game_run_diff",
+        "team_run_momentum_3_vs_10",
+        "team_allowed_momentum_3_vs_10",
+        "team_recent_5g_runs_std",
+        "team_recent_5g_allowed_std",
         "rest_days",
         "back_to_back",
     ]
@@ -152,6 +181,7 @@ def merge_opponent_features(df: pd.DataFrame):
             "team_recent_5g_runs": "opponent_recent_5g_runs",
             "team_recent_10g_runs": "opponent_recent_10g_runs",
             "team_season_runs": "opponent_season_runs",
+            "team_recent_3g_allowed": "opponent_recent_3g_allowed",
             "team_recent_5g_allowed": "opponent_recent_5g_allowed",
             "team_recent_10g_allowed": "opponent_recent_10g_allowed",
             "team_season_allowed": "opponent_season_allowed",
@@ -160,6 +190,13 @@ def merge_opponent_features(df: pd.DataFrame):
             "team_season_win_rate": "opponent_season_win_rate",
             "team_recent_5g_run_diff": "opponent_recent_5g_run_diff",
             "team_recent_10g_run_diff": "opponent_recent_10g_run_diff",
+            "team_previous_game_runs": "opponent_previous_game_runs",
+            "team_previous_game_allowed": "opponent_previous_game_allowed",
+            "team_previous_game_run_diff": "opponent_previous_game_run_diff",
+            "team_run_momentum_3_vs_10": "opponent_run_momentum_3_vs_10",
+            "team_allowed_momentum_3_vs_10": "opponent_allowed_momentum_3_vs_10",
+            "team_recent_5g_runs_std": "opponent_recent_5g_runs_std",
+            "team_recent_5g_allowed_std": "opponent_recent_5g_allowed_std",
             "rest_days": "opponent_rest_days",
             "back_to_back": "opponent_back_to_back",
         }
@@ -176,6 +213,9 @@ def merge_opponent_features(df: pd.DataFrame):
     merged["recent_10g_win_rate_gap"] = merged["team_recent_10g_win_rate"] - merged["opponent_recent_10g_win_rate"]
     merged["season_win_rate_gap"] = merged["team_season_win_rate"] - merged["opponent_season_win_rate"]
     merged["rest_days_gap"] = merged["rest_days"] - merged["opponent_rest_days"]
+    merged["previous_game_run_diff_gap"] = merged["team_previous_game_run_diff"] - merged["opponent_previous_game_run_diff"]
+    merged["run_momentum_gap"] = merged["team_run_momentum_3_vs_10"] - merged["opponent_run_momentum_3_vs_10"]
+    merged["allowed_momentum_gap"] = merged["opponent_allowed_momentum_3_vs_10"] - merged["team_allowed_momentum_3_vs_10"]
     return merged.sort_values(["date", "game_key", "is_home"]).reset_index(drop=True)
 
 
@@ -189,6 +229,7 @@ def feature_columns(df: pd.DataFrame):
         "team_recent_5g_runs",
         "team_recent_10g_runs",
         "team_season_runs",
+        "team_recent_3g_allowed",
         "team_recent_5g_allowed",
         "team_recent_10g_allowed",
         "team_season_allowed",
@@ -197,9 +238,17 @@ def feature_columns(df: pd.DataFrame):
         "team_season_win_rate",
         "team_recent_5g_run_diff",
         "team_recent_10g_run_diff",
+        "team_previous_game_runs",
+        "team_previous_game_allowed",
+        "team_previous_game_run_diff",
+        "team_run_momentum_3_vs_10",
+        "team_allowed_momentum_3_vs_10",
+        "team_recent_5g_runs_std",
+        "team_recent_5g_allowed_std",
         "opponent_recent_5g_runs",
         "opponent_recent_10g_runs",
         "opponent_season_runs",
+        "opponent_recent_3g_allowed",
         "opponent_recent_5g_allowed",
         "opponent_recent_10g_allowed",
         "opponent_season_allowed",
@@ -208,6 +257,13 @@ def feature_columns(df: pd.DataFrame):
         "opponent_season_win_rate",
         "opponent_recent_5g_run_diff",
         "opponent_recent_10g_run_diff",
+        "opponent_previous_game_runs",
+        "opponent_previous_game_allowed",
+        "opponent_previous_game_run_diff",
+        "opponent_run_momentum_3_vs_10",
+        "opponent_allowed_momentum_3_vs_10",
+        "opponent_recent_5g_runs_std",
+        "opponent_recent_5g_allowed_std",
         "opponent_rest_days",
         "opponent_back_to_back",
         "recent_5g_runs_gap",
@@ -221,6 +277,9 @@ def feature_columns(df: pd.DataFrame):
         "recent_10g_win_rate_gap",
         "season_win_rate_gap",
         "rest_days_gap",
+        "previous_game_run_diff_gap",
+        "run_momentum_gap",
+        "allowed_momentum_gap",
     ]
     return [col for col in cols if col in df.columns]
 
