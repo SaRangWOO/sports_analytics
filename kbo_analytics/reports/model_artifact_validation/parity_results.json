@@ -1,0 +1,46 @@
+{
+  "status": "pass",
+  "reference_date": "2026-07-29",
+  "latest_completed_game_date": "2026-07-28",
+  "scheduled_games": 5,
+  "training_rows": 15028,
+  "selected_model": "핵심 수치 RandomForest 보수 시간가중 모델",
+  "prediction_unit": "team",
+  "feature_count": 21,
+  "artifact_id": "2026-07-28-ea851a2e6414f8ba",
+  "candidate_validation_passed": true,
+  "isolated_promotion_passed": true,
+  "serialization_identity_passed": true,
+  "serialization_identity_method": "The validated actual candidate bundle was re-serialized into a second isolated artifact root and compared at raw probability precision.",
+  "raw_probability_parity": {
+    "keys_match": true,
+    "max_raw_delta": 1.1102230246251565e-16,
+    "max_normalized_delta": 1.1102230246251565e-16
+  },
+  "output_field_parity": true,
+  "compared_output_fields": [
+    "경기일",
+    "기준팀",
+    "상대팀",
+    "예측 구단",
+    "예측승률",
+    "예측",
+    "예측 근거"
+  ],
+  "prediction_rows": 10,
+  "predict_only_validation_runs": 3,
+  "predict_only_training_calls_detected": [],
+  "predict_only_changed_result_files": [],
+  "manifest_files": [
+    "feature_schema.json",
+    "metadata.json",
+    "metrics.json",
+    "model.joblib"
+  ],
+  "pitching_snapshot_in_feature_schema": false,
+  "production_scope": "isolated validation artifact root only",
+  "operating_repository_git_or_output_changes": "none",
+  "full_run_count": 1,
+  "full_harness_note": "The full run and candidate validation completed once. A validation-only schema lookup failed afterward; no full rerun was performed.",
+  "failed_checks": []
+}
