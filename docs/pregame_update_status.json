@@ -1,6 +1,6 @@
 {
-  "run_time": "2026-07-16 18:30:02",
-  "reference_date": "2026-07-16",
+  "run_time": "2026-07-29 17:00:14",
+  "reference_date": "2026-07-29",
   "update_stage": "pregame",
   "games_checked": 5,
   "teams_checked": 10,
@@ -13,60 +13,173 @@
   "github_pushed": true,
   "games": [
     {
-      "game_id": "2026-07-16_KT_LG",
+      "game_id": "20260729WOLG0",
       "home_team": "LG",
-      "away_team": "KT",
-      "home_starter": "톨허스트",
-      "away_starter": "로건",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "2026-07-16_롯데_삼성",
-      "home_team": "삼성",
-      "away_team": "롯데",
-      "home_starter": "양창섭",
-      "away_starter": "로드리게스",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "2026-07-16_KIA_SSG",
-      "home_team": "SSG",
-      "away_team": "KIA",
-      "home_starter": "아빌라",
-      "away_starter": "올러",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "2026-07-16_두산_NC",
-      "home_team": "NC",
-      "away_team": "두산",
-      "home_starter": "라일리",
-      "away_starter": "곽빈",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "2026-07-16_키움_한화",
-      "home_team": "한화",
       "away_team": "키움",
-      "home_starter": "화이트",
-      "away_starter": "알칸타라",
+      "home_starter": "웰스",
+      "away_starter": "하영민",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
+    },
+    {
+      "game_id": "20260729HTSS0",
+      "home_team": "삼성",
+      "away_team": "KIA",
+      "home_starter": "양창섭",
+      "away_starter": "시라카와",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
+    },
+    {
+      "game_id": "2026-07-29_두산_SSG",
+      "home_team": "SSG",
+      "away_team": "두산",
+      "home_starter": "김민준",
+      "away_starter": "최승용",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
+    },
+    {
+      "game_id": "20260729KTNC0",
+      "home_team": "NC",
+      "away_team": "KT",
+      "home_starter": "테일러",
+      "away_starter": "오원석",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
+    },
+    {
+      "game_id": "20260729LTHH0",
+      "home_team": "한화",
+      "away_team": "롯데",
+      "home_starter": "왕옌청",
+      "away_starter": "로드리게스",
       "home_starter_source": "confirmed",
       "away_starter_source": "confirmed",
       "game_starter_status": "both_confirmed",
       "status_label": "확정 선발 반영 완료"
     }
   ],
-  "changes": []
+  "changes": [
+    {
+      "game_id": "20260729WOLG0",
+      "game": "키움 vs LG",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "웰스"
+    },
+    {
+      "game_id": "20260729WOLG0",
+      "game": "키움 vs LG",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "하영민"
+    },
+    {
+      "game_id": "20260729WOLG0",
+      "game": "키움 vs LG",
+      "field": "home_starter",
+      "before": "톨허스트",
+      "after": "웰스",
+      "starter": "웰스"
+    },
+    {
+      "game_id": "20260729HTSS0",
+      "game": "KIA vs 삼성",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "양창섭"
+    },
+    {
+      "game_id": "20260729HTSS0",
+      "game": "KIA vs 삼성",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "시라카와"
+    },
+    {
+      "game_id": "20260729HTSS0",
+      "game": "KIA vs 삼성",
+      "field": "home_starter",
+      "before": "오러클린",
+      "after": "양창섭",
+      "starter": "양창섭"
+    },
+    {
+      "game_id": "20260729HTSS0",
+      "game": "KIA vs 삼성",
+      "field": "away_starter",
+      "before": "네일",
+      "after": "시라카와",
+      "starter": "시라카와"
+    },
+    {
+      "game_id": "20260729KTNC0",
+      "game": "KT vs NC",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "테일러"
+    },
+    {
+      "game_id": "20260729KTNC0",
+      "game": "KT vs NC",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "오원석"
+    },
+    {
+      "game_id": "20260729KTNC0",
+      "game": "KT vs NC",
+      "field": "home_starter",
+      "before": "구창모",
+      "after": "테일러",
+      "starter": "테일러"
+    },
+    {
+      "game_id": "20260729KTNC0",
+      "game": "KT vs NC",
+      "field": "away_starter",
+      "before": "고영표",
+      "after": "오원석",
+      "starter": "오원석"
+    },
+    {
+      "game_id": "20260729LTHH0",
+      "game": "롯데 vs 한화",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "왕옌청"
+    },
+    {
+      "game_id": "20260729LTHH0",
+      "game": "롯데 vs 한화",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "로드리게스"
+    },
+    {
+      "game_id": "20260729LTHH0",
+      "game": "롯데 vs 한화",
+      "field": "away_starter",
+      "before": "박세웅",
+      "after": "로드리게스",
+      "starter": "로드리게스"
+    }
+  ]
 }

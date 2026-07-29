@@ -1,6 +1,6 @@
 {
-  "current_best_accuracy": 0.547,
-  "current_best_model": "RandomForest 보수 시간가중 모델",
+  "current_best_accuracy": 0.552,
+  "current_best_model": "핵심 수치 GradientBoosting 보수 시간가중 모델",
   "why_not_replaced": "전체 accuracy만이 아니라 Brier Score, Log Loss, over_55_accuracy, 최근 3년, 연승, 박빙 gate를 동시에 통과하지 못했습니다.",
   "strongest_new_feature_groups": [
     "baseline"
@@ -37,19 +37,18 @@
   "candidate_features_to_review": [
     "elo_diff",
     "recent_run_diff_10_gap",
-    "recent_10_win_rate_gap",
-    "opponent_avg_run_diff_last_10",
     "is_home",
+    "recent_10_win_rate_gap",
     "recent_5_win_rate_gap",
     "avg_run_diff_last_10",
     "opponent_recent_10_win_rate",
+    "opponent_avg_run_diff_last_10",
+    "avg_run_diff_last_5",
     "head_to_head_win_rate_gap",
     "recent_10_win_rate",
-    "opponent_avg_run_diff_last_5",
-    "opponent_recent_5_win_rate"
+    "opponent_avg_run_diff_last_5"
   ],
   "candidate_features_to_drop": [
-    "recent_5_win_rate",
     "season_avg_run_diff_gap",
     "season_win_rate_prior",
     "back_to_back",

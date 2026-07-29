@@ -1,7 +1,7 @@
 ﻿current_wording,proposed_wording,reason,evidence_source,risk_level,action_required,implementation_status
 오늘 TOP PICK,오늘 모델 기준 상대 우세 1순위,상대 순위 라벨이며 55% 미만 TOP PICK이 존재하거나 표본이 부족하면 강한 추천처럼 보이면 안 됩니다.,recommendation_label_calibration_report.csv,medium,True,guarded_in_dashboard
 오늘 모델 기준 상대 우세 1순위,오늘 모델 기준 상대 우세 1순위,상대 랭킹 의미가 명확합니다.,wording policy,low,False,allowed
-강추천,강추천,완료 경기 표본이 충분하고 추천/약우세보다 우월할 때만 유지합니다.,recommendation_label_calibration_report.csv,high,True,monitor_before_strengthening
+강추천,강추천,완료 경기 표본이 충분하고 추천/약우세보다 우월할 때만 유지합니다.,recommendation_label_calibration_report.csv,high,False,monitor_before_strengthening
 추천,추천,약우세보다 나은 완료 경기 성과가 필요합니다.,recommendation_label_calibration_report.csv,medium,True,monitor
 약우세,약우세,52~55% 방향성 edge는 실행 추천이 아닌 참고 신호입니다.,recommendation_outcome_audit_log.csv,low,False,keep
 관망,관망,비실행 구간 표현으로 적절합니다.,wording policy,low,False,keep

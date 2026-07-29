@@ -1,0 +1,97 @@
+{
+  "generated_at": "2026-06-08T17:02:16.045405",
+  "decision_id": "kbo-current-season-candidate-2026-001",
+  "decision_title": "Reject non-pitching KBO candidate for current-season production use",
+  "production_model": "핵심 수치 GradientBoosting 보수 모델",
+  "candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_volatility",
+  "candidate_status": "rejected_for_now",
+  "decision": "do_not_replace_production_model",
+  "decision_reason": "Historical improvement was small, current-season validation failed, rolling backtest failed, and production gates are not passed.",
+  "historical_evidence": {
+    "candidate_accuracy": 0.547,
+    "candidate_brier": 0.248,
+    "candidate_log_loss": 0.69,
+    "note": "The historical signal was limited and did not satisfy the production replacement threshold."
+  },
+  "current_season_evidence": {
+    "season": 2026,
+    "completed_games": 261,
+    "minimum_games_required": 50,
+    "baseline_accuracy": 0.579,
+    "candidate_accuracy": 0.525,
+    "accuracy_delta": -0.054,
+    "rolling_backtest_accuracy_delta": -0.031,
+    "baseline_brier": 0.246,
+    "candidate_brier": 0.249,
+    "baseline_log_loss": 0.685,
+    "candidate_log_loss": 0.691,
+    "baseline_over_55_accuracy": 0.575,
+    "candidate_over_55_accuracy": 0.559,
+    "passed": false,
+    "failed_reasons": [
+      "current_season_accuracy_delta_not_greater_than_0_005",
+      "current_season_brier_worse",
+      "current_season_log_loss_worse",
+      "rolling_backtest_not_better"
+    ],
+    "decision": "do_not_replace_production_model"
+  },
+  "rolling_backtest_evidence": {
+    "rolling_accuracy_delta": -0.031,
+    "status": "failed"
+  },
+  "failed_gates": [
+    "accuracy_delta_greater_than_0_005",
+    "bootstrap_ci_stable",
+    "calibration_not_worse",
+    "current_season_accuracy_delta_not_greater_than_0_005",
+    "current_season_brier_worse",
+    "current_season_evidence_gate",
+    "current_season_log_loss_worse",
+    "rolling_backtest_not_better"
+  ],
+  "false_signal_features": [
+    "venue_win_rate_gap",
+    "run_std_gap",
+    "opponent_recent_10_run_std",
+    "team_recent_5_allowed_std",
+    "allowed_std_gap",
+    "team_recent_5_run_std",
+    "team_recent_10_run_std",
+    "opponent_recent_5_run_std",
+    "opponent_recent_5_allowed_std"
+  ],
+  "files_supporting_decision": [
+    "kbo_analytics/modeling/results/current_season_performance_report.csv",
+    "kbo_analytics/modeling/results/current_season_rolling_backtest_report.csv",
+    "kbo_analytics/modeling/results/current_season_candidate_stability_report.csv",
+    "kbo_analytics/modeling/results/current_season_degradation_report.csv",
+    "kbo_analytics/modeling/results/current_season_feature_group_ablation_report.csv",
+    "kbo_analytics/modeling/results/current_season_drift_report.csv",
+    "kbo_analytics/modeling/results/current_season_false_signal_report.csv",
+    "kbo_analytics/modeling/results/production_model_gate_audit.json",
+    "kbo_analytics/modeling/results/model_insight_summary.json"
+  ],
+  "reconsideration_conditions": [
+    "additional 2026 completed games",
+    "pitching snapshot minimum history gate passed",
+    "full production gate pass required",
+    "bootstrap CI stable",
+    "calibration not worse",
+    "Brier and Log Loss not worse",
+    "current-season rolling backtest improvement"
+  ],
+  "prohibited_actions": [
+    "do not promote candidate to production",
+    "do not use pitching snapshot before gate passes",
+    "do not lower confidence thresholds",
+    "do not force probabilities",
+    "do not use post-game information as pre-game features"
+  ],
+  "next_allowed_actions": [
+    "monitor production versus rejected_for_now candidate offline only",
+    "keep accumulating pitching snapshots until minimum history gate passes",
+    "track completed-game prediction outcomes after games finish",
+    "revisit pitching snapshot feature experiments only after eligibility gates pass"
+  ]
+}

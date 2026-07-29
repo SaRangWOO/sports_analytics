@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-06-08T17:02:16.045405",
+  "objective": "Prepare a future audit that compares pre-game predictions against actual results after games complete.",
+  "required_inputs": [
+    "production predictions saved before game start",
+    "completed game results after Final status",
+    "model metadata and confidence bucket at prediction time",
+    "starter, lineup, streak, volatility, venue, close-game, and blowout context available at prediction time"
+  ],
+  "output_file_planned": "kbo_analytics/modeling/results/prediction_outcome_audit_log.csv",
+  "audit_frequency": "daily_after_games_complete",
+  "fields_to_store": [
+    "prediction_date",
+    "game_date",
+    "game",
+    "production_pick",
+    "production_probability",
+    "actual_winner",
+    "production_result",
+    "confidence_bucket",
+    "model_reason",
+    "starter_status",
+    "lineup_status",
+    "streak_state",
+    "volatility_signal",
+    "venue_signal",
+    "close_game_flag",
+    "blowout_flag",
+    "challenger_pick",
+    "challenger_probability",
+    "challenger_result",
+    "production_challenger_agreement",
+    "failure_category",
+    "note"
+  ],
+  "failure_categories": [
+    "overconfident_wrong",
+    "low_confidence_correct",
+    "close_game_noise",
+    "streak_false_signal",
+    "volatility_false_signal",
+    "venue_false_signal",
+    "starter_info_missing",
+    "lineup_info_missing",
+    "bullpen_unknown",
+    "normal_miss"
+  ],
+  "leakage_policy": "Audit rows must be written only after game completion and must not be fed back as pre-game features without date-based shift and separate validation.",
+  "dashboard_policy": "Do not wire the audit log into production dashboard decisions until explicitly requested and validated.",
+  "implementation_status": "plan_only_not_wired_to_production"
+}

@@ -1,0 +1,18 @@
+﻿feature,feature_group,eligibility_tier,historical_source_available,live_source_available,can_use_for_training,can_use_for_today_prediction,leakage_risk,reason,recommended_action
+starter_prior_era,starter,A,no,partial,false,true,medium,투수별 과거 선발 로그가 없어 historical prior ERA를 누수 없이 재구성할 수 없습니다.,투수 등판 로그 수집 후 shift/asof 피처로 승격
+starter_prior_whip,starter,A,no,partial,false,true,medium,투수별 과거 피안타/볼넷/이닝 로그가 없습니다.,투수 게임 로그 수집
+starter_recent3_era,starter,A,no,no,false,false,medium,최근 3선발 기록을 계산할 투수별 선발 로그가 없습니다.,선발 등판 로그와 경기 전 timestamp 저장
+starter_recent3_ip,starter,A,no,no,false,false,medium,최근 3선발 평균 이닝 원천이 없습니다.,투수 등판별 IP 수집
+starter_rest_days,starter,A,no,no,false,false,low,이전 등판일 로그가 없어 휴식일을 계산할 수 없습니다.,투수별 등판일 히스토리 구축
+starter_recent_pitch_count,starter,A,no,no,false,false,medium,투구 수 로그가 없습니다.,투구 수가 포함된 박스스코어 원천 수집
+bullpen_pitch_count_last1d,bullpen,A,no,no,false,false,medium,구원 투수별 실제 투구 수 원천이 없습니다.,불펜 등판/투구 수 로그 수집
+bullpen_pitch_count_last3d,bullpen,A,no,no,false,false,medium,최근 3일 실제 투구 수는 현재 팀 경기 수 proxy와 구분됩니다.,투수별 등판 로그 수집 후 계산
+bullpen_appearances_last3d,bullpen,A,proxy,proxy,true,true,low,현재는 팀 최근 3일 경기 수를 불펜 부담 proxy로 사용합니다.,실제 구원 등판 수로 대체 필요
+previous_game_run_diff,previous_game,A,yes,yes,true,true,low,팀의 직전 완료 경기 득실차는 현재 경기 이전 정보입니다.,후보 모델에서 사용
+previous_game_bullpen_usage,previous_game,A,no,no,false,false,medium,전날 불펜 실제 투구 수 원천이 없습니다.,불펜 로그 수집
+team_recent_form,team_form,A,yes,yes,true,true,low,기존 rolling 피처는 shift/asof 기반으로 현재 경기 이전만 사용합니다.,운영 baseline 및 후보에서 계속 사용
+confirmed_lineup,lineup,B,no,partial,false,true,high_without_snapshots,경기 전 라인업은 live/snapshot-only이며 과거 pregame 히스토리가 없습니다.,30일 이상 timestamped lineup snapshot 누적 후 실험
+lineup_ops_gap,lineup,B,no,partial,false,true,high_without_snapshots,현재 선수 기록 스냅샷을 과거 경기에 붙이면 미래 정보 누수입니다.,과거 시점별 라인업/선수 스탯 스냅샷 필요
+top5_lineup_ops_gap,lineup,B,no,partial,false,true,high_without_snapshots,과거 라인업과 당시 선수 OPS 스냅샷이 없습니다.,timestamped lineup feature store 구축
+key_hitter_absence,key_hitter,B,no,no,false,false,high_without_snapshots,부상/결장 히스토리 원천이 없습니다.,공식 엔트리/라인업 결장 로그 수집
+game_id_date_team,metadata,A,yes,yes,false,true,low,식별/조인 메타데이터이며 학습 피처가 아닙니다.,평가/감사용으로만 유지

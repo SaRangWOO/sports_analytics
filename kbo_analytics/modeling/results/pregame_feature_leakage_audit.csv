@@ -1,0 +1,12 @@
+﻿feature,used_in_training,uses_current_game_result,uses_future_game_result,uses_post_game_information,requires_historical_snapshot,shift_or_asof_applied,leakage_status,detail
+actual_winner,false,true,false,true,false,not_applicable,evaluation_only,label only; never used in training
+home_win,false,true,false,true,false,not_applicable,evaluation_only,target label only
+actual_run_margin,false,true,false,true,false,not_applicable,evaluation_only,current-game margin is excluded from pregame training
+actual_close_game,false,true,false,true,false,not_applicable,evaluation_only,post-game segment label only
+actual_blowout_game,false,true,false,true,false,not_applicable,evaluation_only,post-game segment label only
+pitching_daily_snapshot.csv,false,false,false,false,true,not_applied,blocked,latest snapshot is not attached to historical training rows
+lineup_confirmed,false,false,false,false,true,not_applied,blocked,historical pregame lineup logs are not available
+starter_identity_proxy,false,false,false,false,true,not_applied,not_available,actual starting pitcher from boxscore is not reconstructed; no proxy used
+team_recent_form,true,false,false,false,false,shift_1_applied,pass,existing rolling features use prior games only
+previous_game_run_diff,true,false,false,false,false,shift_1_applied,pass,team previous completed game only
+bullpen_appearances_last3d_proxy,true,false,false,false,false,asof_prior_date_applied,pass,team recent 3-day game count proxy only; no pitch count invented

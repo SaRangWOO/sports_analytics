@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-07-16T18:30:02.796605",
-  "audited_completed_games": 204,
-  "pending_games": 246,
-  "strongest_supported_label": "오늘 TOP PICK",
+  "generated_at": "2026-07-29T17:00:14.308980",
+  "audited_completed_games": 92,
+  "pending_games": 99,
+  "strongest_supported_label": "약우세",
   "weakest_supported_label": "handicap:not_available",
   "top_pick_label_risk": "relative_rank_label_not_strong_pick",
   "top_pick_wording_recommendation": "오늘 모델 기준 상대 우세 1순위",
@@ -10,15 +10,9 @@
   "label_change_recommendations": [
     {
       "label_type": "recommendation_strength",
-      "label": "강추천",
+      "label": "관망",
       "recommended_label_action": "monitor_more_games",
       "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
-    },
-    {
-      "label_type": "recommendation_strength",
-      "label": "관망",
-      "recommended_label_action": "keep",
-      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
     },
     {
       "label_type": "recommendation_strength",
@@ -29,12 +23,6 @@
     {
       "label_type": "recommendation_strength",
       "label": "추천",
-      "recommended_label_action": "monitor_more_games",
-      "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
-    },
-    {
-      "label_type": "recommendation_grade",
-      "label": "A등급",
       "recommended_label_action": "monitor_more_games",
       "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
     },
@@ -53,14 +41,14 @@
     {
       "label_type": "recommendation_grade",
       "label": "D등급",
-      "recommended_label_action": "keep",
-      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+      "recommended_label_action": "monitor_more_games",
+      "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
     },
     {
       "label_type": "daily_rank_label",
       "label": "오늘 TOP PICK",
-      "recommended_label_action": "keep",
-      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+      "recommended_label_action": "monitor_more_games",
+      "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
     },
     {
       "label_type": "daily_rank_label",
@@ -88,10 +76,11 @@
     }
   ],
   "insufficient_sample_warnings": [
-    "강추천",
+    "관망",
     "추천",
-    "A등급",
     "B등급",
+    "D등급",
+    "오늘 TOP PICK",
     "handicap:not_available",
     "over_under:not_available"
   ],

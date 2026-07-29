@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-07-29T17:12:07.517332",
+  "target_precision": 0.85,
+  "target_definition": "selected-pick precision / selected-pick accuracy for selected KT recommendation segments only",
+  "current_best_segment": "current_season_2026",
+  "current_best_display_segment": "holdout_current_season_2026",
+  "current_best_segment_games": 89,
+  "current_best_segment_precision": 0.573,
+  "current_gap_to_target": 0.277,
+  "status": "not_met",
+  "why_current_model_is_insufficient": "The 85% selected-pick precision target is not currently achieved. Current best is 57.1% across 77 games. Model tuning alone is unlikely to reach 85% without better pregame information.",
+  "required_new_information": [
+    "confirmed starters",
+    "starter rest and recent form",
+    "bullpen usage",
+    "confirmed lineup",
+    "key hitter/catcher status",
+    "stadium/travel/weather context"
+  ],
+  "next_feature_groups_to_test": [
+    "starting_pitcher_confirmed",
+    "starting_pitcher_rest_days",
+    "bullpen_usage_last_3_days",
+    "lineup_confirmed",
+    "opponent_starting_pitcher_hand"
+  ],
+  "segment_search_count": 12,
+  "selected_after_segment_search": true,
+  "multiple_testing_risk": "high",
+  "requires_forward_validation": true,
+  "minimum_sample_size_policy": {
+    "tiny": "games < 20; never actionable",
+    "small": "20 <= games < 50; exploratory only",
+    "medium": "50 <= games < 100; actionable only with leakage audit pass",
+    "large": "games >= 100; preferred for promotion monitoring"
+  },
+  "promotion_policy": "A future 85% segment must be medium or large, leakage-safe, repeated in rolling validation, and report-only before production consideration.",
+  "stop_conditions": [
+    "segment accuracy falls below production baseline",
+    "coverage collapses to tiny sample",
+    "timestamped pregame source cannot be verified",
+    "Brier/log loss materially worsen"
+  ],
+  "next_experiment_plan": "Build timestamped KT pregame feature store for starters, bullpen, and lineup, then rerun KT selective precision report."
+}

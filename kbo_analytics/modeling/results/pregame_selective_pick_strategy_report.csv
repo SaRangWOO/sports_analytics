@@ -1,0 +1,14 @@
+﻿strategy_name,model_name,feature_set,games_total,picked_games,coverage_rate,pick_accuracy,daily_top1_games,daily_top1_accuracy,daily_top2_games,daily_top2_accuracy,confirmed_starter_pick_accuracy,starter_edge_pick_accuracy,bullpen_edge_pick_accuracy,avg_probability,brier,log_loss,interpretation
+all_games,RandomForest,production_plus_pregame_safe_features,1455,1455,1.0,0.538,340,0.541,666,0.554,,,0.553,0.545,0.25,0.693,selective strategy backtest; offline monitoring only
+probability_ge_52,RandomForest,production_plus_pregame_safe_features,1455,998,0.686,0.546,332,0.533,629,0.548,,,0.526,0.562,0.25,0.693,selective strategy backtest; offline monitoring only
+probability_ge_53,RandomForest,production_plus_pregame_safe_features,1455,824,0.566,0.54,328,0.527,590,0.546,,,0.529,0.569,0.25,0.694,selective strategy backtest; offline monitoring only
+probability_ge_54,RandomForest,production_plus_pregame_safe_features,1455,699,0.48,0.538,317,0.524,538,0.543,,,0.591,0.576,0.251,0.695,selective strategy backtest; offline monitoring only
+probability_ge_55,RandomForest,production_plus_pregame_safe_features,1455,572,0.393,0.54,298,0.52,475,0.541,,,0.611,0.582,0.251,0.695,selective strategy backtest; offline monitoring only
+daily_top1,RandomForest,production_plus_pregame_safe_features,1455,340,0.234,0.541,340,0.541,340,0.541,,,0.556,0.585,0.254,0.702,selective strategy backtest; offline monitoring only
+daily_top2,RandomForest,production_plus_pregame_safe_features,1455,666,0.458,0.554,340,0.541,666,0.554,,,0.556,0.57,0.25,0.693,selective strategy backtest; offline monitoring only
+confirmed_starters_only,RandomForest,production_plus_pregame_safe_features,1455,0,0.0,,0,,0,,,,,,,,selective strategy backtest; offline monitoring only
+starter_edge_only,RandomForest,production_plus_pregame_safe_features,1455,0,0.0,,0,,0,,,,,,,,selective strategy backtest; offline monitoring only
+bullpen_edge_only,RandomForest,production_plus_pregame_safe_features,1455,47,0.032,0.553,9,0.556,27,0.556,,,0.553,0.55,0.248,0.688,selective strategy backtest; offline monitoring only
+starter_and_bullpen_edge_agree,RandomForest,production_plus_pregame_safe_features,1455,0,0.0,,0,,0,,,,,,,,selective strategy backtest; offline monitoring only
+production_and_pregame_agree,RandomForest,production_plus_pregame_safe_features,1455,0,0.0,,0,,0,,,,,,,,production comparison unavailable in this offline challenger report
+production_and_pregame_disagree_avoid,RandomForest,production_plus_pregame_safe_features,1455,0,0.0,,0,,0,,,,,,,,production comparison unavailable in this offline challenger report
