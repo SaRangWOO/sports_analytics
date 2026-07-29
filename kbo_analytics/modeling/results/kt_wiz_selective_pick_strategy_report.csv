@@ -1,13 +1,13 @@
 ﻿strategy_name,model_name,feature_set,kt_games_total,picked_games,coverage_rate,pick_accuracy,avg_probability,brier,log_loss,home_pick_accuracy,away_pick_accuracy,current_season_pick_accuracy,interpretation
-all_kt_games,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,300,1.0,0.533,0.564,0.256,0.707,0.51,0.557,0.573,KT strategy improves over production baseline
-kt_probability_ge_52,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,258,0.86,0.527,0.573,0.257,0.709,0.508,0.547,0.593,KT strategy improves over production baseline
-kt_probability_ge_53,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,234,0.78,0.517,0.578,0.259,0.712,0.508,0.526,0.581,KT strategy improves over production baseline
-kt_probability_ge_54,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,204,0.68,0.529,0.584,0.259,0.713,0.51,0.549,0.629,KT strategy improves over production baseline
-kt_probability_ge_55,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,179,0.597,0.514,0.59,0.262,0.719,0.466,0.56,0.618,KT strategy needs more monitoring
-kt_home_only,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,151,0.503,0.51,0.563,0.258,0.71,0.51,,0.578,KT strategy needs more monitoring
-kt_away_only,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,149,0.497,0.557,0.566,0.254,0.703,,0.557,0.568,KT strategy improves over production baseline
-kt_after_loss_games,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,133,0.443,0.534,0.566,0.257,0.709,0.471,0.6,0.629,KT strategy improves over production baseline
-kt_after_win_games,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,167,0.557,0.533,0.563,0.255,0.705,0.542,0.524,0.537,KT strategy improves over production baseline
-kt_model_and_production_agree,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,150,0.5,0.547,0.567,0.256,0.706,0.543,0.551,0.59,KT strategy improves over production baseline
-kt_model_disagrees_with_production,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,141,0.47,0.525,0.56,0.256,0.705,0.463,0.581,0.56,KT strategy improves over production baseline
-kt_consensus_only,HistGradientBoostingClassifier,kt_all_non_pitching_safe_features,300,131,0.437,0.542,0.575,0.256,0.708,0.549,0.533,0.6,KT strategy improves over production baseline
+all_kt_games,ExtraTreesClassifier,kt_without_false_signal_features,300,300,1.0,0.54,0.537,0.253,0.698,0.55,0.53,0.551,KT strategy improves over production baseline
+kt_probability_ge_52,ExtraTreesClassifier,kt_without_false_signal_features,300,192,0.64,0.505,0.553,0.255,0.703,0.512,0.493,0.517,KT strategy needs more monitoring
+kt_probability_ge_53,ExtraTreesClassifier,kt_without_false_signal_features,300,154,0.513,0.519,0.56,0.255,0.704,0.536,0.476,0.51,KT strategy needs more monitoring
+kt_probability_ge_54,ExtraTreesClassifier,kt_without_false_signal_features,300,118,0.393,0.508,0.568,0.258,0.709,0.539,0.414,0.486,KT strategy needs more monitoring
+kt_probability_ge_55,ExtraTreesClassifier,kt_without_false_signal_features,300,86,0.287,0.5,0.576,0.26,0.714,0.507,0.474,0.5,KT strategy needs more monitoring
+kt_home_only,ExtraTreesClassifier,kt_without_false_signal_features,300,151,0.503,0.55,0.549,0.252,0.697,0.55,,0.6,KT strategy improves over production baseline
+kt_away_only,ExtraTreesClassifier,kt_without_false_signal_features,300,149,0.497,0.53,0.526,0.253,0.7,,0.53,0.5,KT strategy improves over production baseline
+kt_after_loss_games,ExtraTreesClassifier,kt_without_false_signal_features,300,133,0.443,0.564,0.535,0.253,0.699,0.588,0.538,0.657,KT strategy improves over production baseline
+kt_after_win_games,ExtraTreesClassifier,kt_without_false_signal_features,300,167,0.557,0.521,0.539,0.252,0.698,0.518,0.524,0.481,KT strategy improves over production baseline
+kt_model_and_production_agree,ExtraTreesClassifier,kt_without_false_signal_features,300,200,0.667,0.54,0.544,0.254,0.701,0.549,0.529,0.574,KT strategy improves over production baseline
+kt_model_disagrees_with_production,ExtraTreesClassifier,kt_without_false_signal_features,300,91,0.303,0.538,0.523,0.251,0.695,0.543,0.536,0.476,KT strategy improves over production baseline
+kt_consensus_only,ExtraTreesClassifier,kt_without_false_signal_features,300,141,0.47,0.511,0.558,0.256,0.705,0.516,0.5,0.545,KT strategy needs more monitoring

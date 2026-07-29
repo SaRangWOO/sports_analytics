@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-07-29T17:38:26.532714",
+  "generated_at": "2026-07-29T18:15:31.018806",
   "rejected_candidates": [
     {
-      "model": "비투수 피처 GradientBoosting 실험 / baseline_plus_momentum",
-      "feature_set": "baseline_plus_momentum",
+      "model": "비투수 피처 GradientBoosting 실험 / baseline_plus_month_phase",
+      "feature_set": "baseline_plus_month_phase",
       "status": "rejected_for_now",
-      "accuracy": 0.547,
+      "accuracy": 0.557,
       "brier": 0.247,
-      "log_loss": 0.688
+      "log_loss": 0.686
     }
   ],
   "rejection_reason": "historical signal is not stable in 2026 current-season validation and production gates are not passed",
