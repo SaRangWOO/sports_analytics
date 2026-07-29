@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_DIR="/home/tera/1.project/1.sports_analytics/kbo_analytics"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 PYTHON_BIN="$PROJECT_DIR/.venv/bin/python"
 LOG_DIR="$PROJECT_DIR/logs"
 LOG_FILE="$LOG_DIR/daily_update_$(date +%F).log"
