@@ -194,7 +194,30 @@ def fetch_schedule(year: int, through_month: int, start_month: int = 3):
     rows = []
     for month in range(start_month, through_month + 1):
         rows.extend(fetch_schedule_month(year, month))
-    return pd.DataFrame(rows)
+    schedule = pd.DataFrame(rows)
+    if schedule.empty:
+        return schedule
+
+    for game_date_text, date_rows in schedule.groupby("date", sort=False):
+        if not date_rows["status"].eq("Scheduled").any():
+            continue
+        game_date = datetime.strptime(str(game_date_text), "%Y-%m-%d").date()
+        game_list = fetch_kbo_game_list(game_date)
+        game_ids = {
+            (str(game.get("AWAY_NM", "")).strip(), str(game.get("HOME_NM", "")).strip()): str(game.get("G_ID", "")).strip()
+            for game in game_list
+            if str(game.get("G_ID", "")).strip()
+        }
+        for (away_team, home_team), game_id in game_ids.items():
+            mask = (
+                schedule.index.isin(date_rows.index)
+                & (
+                    ((schedule["team"] == away_team) & (schedule["opponent"] == home_team))
+                    | ((schedule["team"] == home_team) & (schedule["opponent"] == away_team))
+                )
+            )
+            schedule.loc[mask, "game_id"] = schedule.loc[mask, "team"].map(lambda team: f"{game_id}_{team}")
+    return schedule
 
 
 def fetch_training_schedule(start_year: int, reference_date: date):
