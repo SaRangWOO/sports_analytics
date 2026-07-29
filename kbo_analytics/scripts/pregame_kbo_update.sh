@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_DIR="/home/tera/1.project/1.sports_analytics/kbo_analytics"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 PYTHON_BIN="$PROJECT_DIR/.venv/bin/python"
 LOG_DIR="$PROJECT_DIR/logs"
 LOG_FILE="$LOG_DIR/pregame_update_$(date +%F).log"
@@ -21,13 +22,20 @@ if [ -f "$PROJECT_DIR/.env" ]; then
 fi
 
 docker compose up -d kbo-db kbo-api dashboard
-"$PYTHON_BIN" official_kbo_dashboard.py --training-start-year 2016 --update-stage pregame
+test -f "$PROJECT_DIR/modeling/artifacts/production/manifest.json"
+"$PYTHON_BIN" scripts/predict_only_dashboard.py --update-stage pregame
 
 curl -fsS "http://localhost:8501/latest.html" >/dev/null
 curl -fsS "http://localhost:8501/kt.html" >/dev/null
 
-"$PYTHON_BIN" - <<'PY'
+PUBLISH=false
+case "$(date +%M)" in
+  00|30) PUBLISH=true ;;
+esac
+
+PUBLISH="$PUBLISH" "$PYTHON_BIN" - <<'PY'
 import json
+import os
 from pathlib import Path
 
 for path in [
@@ -38,11 +46,11 @@ for path in [
     if not path.exists():
         continue
     payload = json.loads(path.read_text(encoding="utf-8"))
-    payload["github_pushed"] = True
+    payload["github_pushed"] = os.environ["PUBLISH"] == "true"
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 PY
 
-if ! git diff --quiet -- dashboard data/official modeling/results ../docs; then
+if [ "$PUBLISH" = true ] && ! git diff --quiet -- dashboard data/official modeling/results ../docs; then
   git add dashboard data/official modeling/results ../docs
   git commit -m "Update KBO pregame analytics outputs $(date +%F-%H%M)"
   git push origin main

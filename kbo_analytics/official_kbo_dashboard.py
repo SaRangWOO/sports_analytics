@@ -1333,6 +1333,61 @@ def export_lineup_context(context: dict, output_path: Path, prediction_date: dat
     pd.DataFrame(rows).to_csv(output_path, index=False, encoding="utf-8-sig")
 
 
+def append_lineup_daily_snapshot(
+    context: dict,
+    output_path: Path,
+    prediction_date: date,
+    snapshot_time: datetime,
+):
+    rows = []
+    captured_at = snapshot_time.strftime("%Y-%m-%d %H:%M:%S")
+    for team, values in sorted(context.items()):
+        for player in values.get("lineup", []):
+            rows.append(
+                {
+                    "snapshot_date": snapshot_time.date().isoformat(),
+                    "snapshot_time": captured_at,
+                    "reference_date": prediction_date.isoformat(),
+                    "scheduled_game_id": values.get("game_id", ""),
+                    "team": team,
+                    "home_away": "H" if values.get("side") == "home" else "A",
+                    "lineup_source": values.get("lineup_source", "unknown"),
+                    "lineup_info_quality": 1.0 if values.get("lineup_source") == "confirmed" else 0.5,
+                    "batting_order": player.get("타순", ""),
+                    "position": player.get("포지션", ""),
+                    "player": player.get("선수", ""),
+                    "war": player.get("WAR", ""),
+                    "data_source": "KBO GetLineUpAnalysis",
+                }
+            )
+    if not rows:
+        return
+
+    current = pd.DataFrame(rows)
+    if output_path.exists():
+        history = pd.read_csv(output_path)
+        comparison_columns = [
+            "scheduled_game_id",
+            "team",
+            "lineup_source",
+            "batting_order",
+            "position",
+            "player",
+        ]
+        latest = history[history["reference_date"].astype(str) == prediction_date.isoformat()].copy()
+        if not latest.empty:
+            latest_time = latest["snapshot_time"].astype(str).max()
+            latest = latest[latest["snapshot_time"].astype(str) == latest_time]
+            previous_signature = latest[comparison_columns].fillna("").astype(str).sort_values(comparison_columns).to_dict("records")
+            current_signature = current[comparison_columns].fillna("").astype(str).sort_values(comparison_columns).to_dict("records")
+            if previous_signature == current_signature:
+                return
+        current = pd.concat([history, current], ignore_index=True)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    current.to_csv(output_path, index=False, encoding="utf-8-sig")
+
+
 def starter_status_label(status: str):
     return {
         "both_confirmed": "확정 선발 반영 완료",
@@ -2605,14 +2660,42 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     update_pitching_snapshot_diagnostics(RESULTS_DIR, snapshot_status)
     snapshot_quality_path = RESULTS_DIR / "pitching_snapshot_quality_status.json"
     snapshot_quality = json.loads(snapshot_quality_path.read_text(encoding="utf-8")) if snapshot_quality_path.exists() else {}
+    snapshot_time = reference_datetime or datetime.now()
     export_lineup_context(lineup_context, DATA_DIR / "lineup_context.csv", generated_at)
+    append_lineup_daily_snapshot(
+        lineup_context,
+        DATA_DIR / "lineup_daily_snapshot.csv",
+        generated_at,
+        snapshot_time,
+    )
     lineup_confirmed_count = sum(1 for values in lineup_context.values() if values.get("lineup_source") == "confirmed")
     lineup_recent_count = sum(1 for values in lineup_context.values() if values.get("lineup_source") == "recent")
-    status_payload = build_pregame_update_status(games, pitching_context, generated_at, reference_datetime or datetime.now(), update_stage)
-    export_pregame_update_status(status_payload)
+    status_payload = build_pregame_update_status(games, pitching_context, generated_at, snapshot_time, update_stage)
     status_summary = status_payload["starter_status_summary"]
     lineup_unknown_count = max(status_payload["teams_checked"] - lineup_confirmed_count - lineup_recent_count, 0)
-    update_stage_label = "경기 전 업데이트" if update_stage == "pregame" else "오전 정식 업데이트"
+    status_payload["lineup_status_summary"] = {
+        "confirmed": lineup_confirmed_count,
+        "recent": lineup_recent_count,
+        "unknown": lineup_unknown_count,
+    }
+    if update_stage == "morning":
+        prediction_stage = "morning_estimated"
+        update_stage_label = "오전 예측 · 추정 선발/최근 라인업"
+    elif lineup_confirmed_count == status_payload["teams_checked"] and lineup_confirmed_count:
+        prediction_stage = "pregame_lineup_confirmed"
+        update_stage_label = "경기 전 재산출 · 확정 선발/금일 라인업"
+    elif status_summary.get("confirmed", 0) == status_payload["teams_checked"]:
+        prediction_stage = "pregame_starters_confirmed"
+        update_stage_label = "경기 전 재산출 · 확정 선발/라인업 대기"
+    else:
+        prediction_stage = "pregame_partial"
+        update_stage_label = "경기 전 재산출 · 일부 정보 확인"
+    status_payload["prediction_stage"] = prediction_stage
+    status_payload["probability_policy_note"] = (
+        "승률은 승인된 운영 모델로 다시 산출합니다. 확정 라인업은 시점 스냅샷으로 수집하며, "
+        "검증된 라인업 피처 artifact가 배포되기 전에는 승률 입력으로 사용하지 않습니다."
+    )
+    export_pregame_update_status(status_payload)
     changes = status_payload.get("changes", [])
     change_text = (
         f'최근 변경: {changes[0]["game"]} {changes[0]["field"]} {changes[0]["before"]} → {changes[0]["after"]}'
