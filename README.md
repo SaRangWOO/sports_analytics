@@ -42,7 +42,7 @@ KBO 리그 데이터를 수집하고, 구단 리포트와 경기 승패 예측 �
 ## 실행
 
 ```bash
-cd /home/tera/1.project/1.sports_analytics/kbo_analytics
+cd /home/wsr/1.project/1.sports_analytics/kbo_analytics
 docker compose up -d
 .venv/bin/python official_kbo_dashboard.py --training-start-year 2016
 ```
@@ -59,8 +59,27 @@ python -m http.server 8501 -d dashboard
 http://127.0.0.1:8501/latest.html
 ```
 
+현재 VM 외부에서 확인:
+
+```text
+http://192.168.11.70:8501/latest.html
+```
+
+## 개발과 운영 프로세스
+
+- 일일 운영: `kbo_analytics/scripts/daily_kbo_update.sh`
+- 경기 전 갱신: `kbo_analytics/scripts/pregame_kbo_update.sh`
+- 안전한 저비용 검사: `kbo_analytics/.venv/bin/python kbo_analytics/scripts/kbo_tasks.py smoke`
+- 전체 공식 실행: `kbo_analytics/.venv/bin/python kbo_analytics/scripts/kbo_tasks.py full`
+
+현재 전체 공식 실행은 데이터 수집, 후보 모델 검증, 오늘 예측, 대시보드 생성을 모두 수행하므로 비용이 큽니다. 목표 일일 predict-only 구조와 점진적 분리 계획은 [아키텍처 문서](docs/ARCHITECTURE.md)를 참고하세요.
+
 ## 자세한 문서
 
 프로젝트 구조, 데이터 흐름, 지표 산식, 모델링 방식, 자동화 스크립트 설명은 아래 문서를 참고하세요.
 
 [kbo_analytics/README.md](kbo_analytics/README.md)
+
+- [현재 프로젝트 상태](docs/PROJECT_STATE.md)
+- [현재 및 목표 아키텍처](docs/ARCHITECTURE.md)
+- [자원 및 산출물 정책](docs/RESOURCE_POLICY.md)

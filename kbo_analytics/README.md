@@ -459,7 +459,7 @@ target_home_win
 ### 4.1 프로젝트 폴더 이동
 
 ```bash
-cd /home/tera/1.project/1.sports_analytics/kbo_analytics
+cd /home/wsr/1.project/1.sports_analytics/kbo_analytics
 ```
 
 ### 4.2 Docker 서비스 실행
@@ -508,7 +508,29 @@ docker compose up -d
 | `--update-stage` | `morning` 또는 `pregame` |
 | `--training-start-year` | 모델 학습 시작 연도 |
 
-### 4.4 문법 확인
+### 4.4 작업별 실행
+
+기존 진입점을 안전하게 호출하는 얇은 작업 CLI가 있습니다.
+
+```bash
+.venv/bin/python scripts/kbo_tasks.py --help
+.venv/bin/python scripts/kbo_tasks.py smoke
+.venv/bin/python scripts/kbo_tasks.py features
+.venv/bin/python scripts/kbo_tasks.py run-model --reference-date 2026-07-29
+.venv/bin/python scripts/kbo_tasks.py run-dashboard
+```
+
+실행하지 않고 실제 호출 명령만 확인:
+
+```bash
+.venv/bin/python scripts/kbo_tasks.py --dry-run full \
+  --reference-date 2026-07-29 \
+  --training-start-year 2016
+```
+
+현재 `full`은 공식 데이터 수집, 전체 후보 검증, 예측, HTML 생성을 모두 수행하는 고비용 명령입니다. 공식 수집만, 검증만, 운영 모델 예측만, 메인 대시보드 렌더링만 수행하는 명령은 아직 없습니다. 자세한 분리 계획은 `../docs/ARCHITECTURE.md`를 참고하세요.
+
+### 4.5 문법 확인
 
 코드를 수정한 뒤에는 먼저 문법 오류를 확인합니다.
 
@@ -526,12 +548,18 @@ docker compose up -d
   modeling/model_training.py
 ```
 
-### 4.5 HTML 확인
+### 4.6 HTML 확인
 
 일반 사용자는 GitHub에 배포된 정적 대시보드 링크로 확인합니다.
 
 ```text
 https://raw.githack.com/SaRangWOO/sports_analytics/main/docs/
+```
+
+현재 VM의 동적 대시보드:
+
+```text
+http://192.168.11.70:8501/latest.html
 ```
 
 운영 서버 안에서만 직접 확인할 때는 아래 내부 주소를 사용할 수 있습니다. 이 주소는 서버 내부 전용이므로 일반 사용자 브라우저에서는 열리지 않습니다.
@@ -569,8 +597,8 @@ python -m http.server 8501 -d dashboard
 현재 서버 crontab:
 
 ```cron
-0 8 * * * /usr/bin/flock -n /tmp/kbo_daily_update.lock /home/tera/1.project/1.sports_analytics/kbo_analytics/scripts/daily_kbo_update.sh
-0,30 11-18 * * * /usr/bin/flock -n /tmp/kbo_pregame_update.lock /home/tera/1.project/1.sports_analytics/kbo_analytics/scripts/pregame_kbo_update.sh
+0 8 * * * /usr/bin/flock -n /tmp/kbo_daily_update.lock /usr/bin/bash /home/wsr/1.project/1.sports_analytics/kbo_analytics/scripts/daily_kbo_update.sh
+0,30 11-18 * * * /usr/bin/flock -n /tmp/kbo_pregame_update.lock /usr/bin/bash /home/wsr/1.project/1.sports_analytics/kbo_analytics/scripts/pregame_kbo_update.sh
 ```
 
 운영 의도는 다음과 같습니다.
