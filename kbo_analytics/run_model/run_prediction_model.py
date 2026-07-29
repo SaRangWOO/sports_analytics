@@ -17,6 +17,9 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = ROOT_DIR / "data" / "official" / "model_training_games.csv"
 DEFAULT_SCHEDULE_INPUT = ROOT_DIR / "data" / "official" / "prediction_games.csv"
 DEFAULT_RESULTS = Path(__file__).resolve().parent / "results"
+PYTHAGOREAN_EXPONENT = 1.83
+LOGISTIC_WIN_CONVERSION = "logistic_run_diff"
+PYTHAGOREAN_WIN_CONVERSION = "pythagorean_1_83"
 
 
 def _base_game_id(game_id: str):
@@ -353,6 +356,22 @@ def to_game_level_prediction(frame: pd.DataFrame, pred_col: str):
     return games
 
 
+def pythagorean_home_win_probability(home_expected_runs, away_expected_runs, exponent: float = PYTHAGOREAN_EXPONENT):
+    home = np.clip(np.asarray(home_expected_runs, dtype=float), 1e-6, None)
+    away = np.clip(np.asarray(away_expected_runs, dtype=float), 1e-6, None)
+    home_power = np.power(home, exponent)
+    away_power = np.power(away, exponent)
+    return home_power / (home_power + away_power)
+
+
+def convert_home_win_probability(games: pd.DataFrame, conversion: str, logistic_model=None):
+    if conversion == PYTHAGOREAN_WIN_CONVERSION:
+        return pythagorean_home_win_probability(games["home_expected_runs"], games["away_expected_runs"])
+    if conversion == LOGISTIC_WIN_CONVERSION and logistic_model is not None:
+        return logistic_model.predict_proba(games[["expected_run_diff"]])[:, 1]
+    raise ValueError(f"Unsupported win conversion: {conversion}")
+
+
 def evaluate_win_conversion(trained_models: dict, train_df: pd.DataFrame, val_df: pd.DataFrame, features: list[str]):
     scores = []
     predictions = {}
@@ -366,33 +385,64 @@ def evaluate_win_conversion(trained_models: dict, train_df: pd.DataFrame, val_df
         train_games = to_game_level_prediction(train_scored, pred_col)
         val_games = to_game_level_prediction(val_scored, pred_col)
 
+        train_evaluation = train_games[train_games["home_actual_runs"].ne(train_games["away_actual_runs"])].copy()
+        val_evaluation = val_games[val_games["home_actual_runs"].ne(val_games["away_actual_runs"])].copy()
         clf = LogisticRegression(fit_intercept=True)
-        clf.fit(train_games[["expected_run_diff"]], train_games["target_home_win"])
-        win_models[name] = clf
-        val_games["home_win_probability"] = clf.predict_proba(val_games[["expected_run_diff"]])[:, 1]
-        val_games["pred_home_win"] = (val_games["home_win_probability"] >= 0.5).astype(int)
-        val_games["predicted_winner"] = np.where(val_games["pred_home_win"].eq(1), val_games["home_team"], val_games["away_team"])
-        val_games["actual_winner"] = np.where(val_games["target_home_win"].eq(1), val_games["home_team"], val_games["away_team"])
-        val_games["prediction_result"] = np.where(val_games["predicted_winner"].eq(val_games["actual_winner"]), "correct", "wrong")
+        clf.fit(train_evaluation[["expected_run_diff"]], train_evaluation["target_home_win"])
 
-        score = {
-            "model": name,
-            "accuracy": round(float(accuracy_score(val_games["target_home_win"], val_games["pred_home_win"])), 4),
-            "brier_score": round(float(brier_score_loss(val_games["target_home_win"], val_games["home_win_probability"])), 4),
-            "log_loss": round(float(log_loss(val_games["target_home_win"], val_games["home_win_probability"])), 4),
-            "run_diff_direction_accuracy": round(float(((val_games["expected_run_diff"] > 0) == (val_games["target_home_win"] == 1)).mean()), 4),
-        }
-        scores.append(score)
-        predictions[name] = val_games
+        for conversion in [LOGISTIC_WIN_CONVERSION, PYTHAGOREAN_WIN_CONVERSION]:
+            scored_games = val_games.copy()
+            scored_games["home_win_probability"] = convert_home_win_probability(scored_games, conversion, clf)
+            scored_games["pred_home_win"] = (scored_games["home_win_probability"] >= 0.5).astype(int)
+            scored_games["predicted_winner"] = np.where(
+                scored_games["pred_home_win"].eq(1),
+                scored_games["home_team"],
+                scored_games["away_team"],
+            )
+            scored_games["actual_winner"] = np.select(
+                [
+                    scored_games["home_actual_runs"] > scored_games["away_actual_runs"],
+                    scored_games["home_actual_runs"] < scored_games["away_actual_runs"],
+                ],
+                [scored_games["home_team"], scored_games["away_team"]],
+                default="Tie",
+            )
+            scored_games["prediction_result"] = np.select(
+                [
+                    scored_games["actual_winner"].eq("Tie"),
+                    scored_games["predicted_winner"].eq(scored_games["actual_winner"]),
+                ],
+                ["tie_excluded", "correct"],
+                default="wrong",
+            )
+            evaluated = scored_games.loc[val_evaluation.index]
+            score = {
+                "model": name,
+                "win_conversion": conversion,
+                "accuracy": round(float(accuracy_score(evaluated["target_home_win"], evaluated["pred_home_win"])), 4),
+                "brier_score": round(float(brier_score_loss(evaluated["target_home_win"], evaluated["home_win_probability"])), 4),
+                "log_loss": round(float(log_loss(evaluated["target_home_win"], evaluated["home_win_probability"])), 4),
+                "run_diff_direction_accuracy": round(
+                    float(((evaluated["expected_run_diff"] > 0) == (evaluated["target_home_win"] == 1)).mean()),
+                    4,
+                ),
+                "evaluated_games": int(len(evaluated)),
+                "excluded_ties": int(len(scored_games) - len(evaluated)),
+            }
+            key = (name, conversion)
+            scores.append(score)
+            predictions[key] = scored_games
+            win_models[key] = clf if conversion == LOGISTIC_WIN_CONVERSION else None
     return scores, predictions, win_models
 
 
 def select_model(run_scores: list[dict], win_scores: list[dict]):
     by_model = {row["model"]: dict(row) for row in run_scores}
+    candidates = []
     for row in win_scores:
-        by_model[row["model"]].update(row)
-    candidates = list(by_model.values())
-    return sorted(candidates, key=lambda row: (row["mae"], row["brier_score"], -row["accuracy"]))[0], candidates
+        candidates.append({**by_model[row["model"]], **row})
+    selected = sorted(candidates, key=lambda row: (row["mae"], row["brier_score"], -row["accuracy"]))[0]
+    return selected, candidates
 
 
 def error_tags(row: pd.Series):
@@ -560,7 +610,16 @@ def selected_feature_importance(model, val_df: pd.DataFrame, features: list[str]
     return sorted(rows, key=lambda row: row["importance_mean"], reverse=True)
 
 
-def build_today_predictions(input_path: Path, schedule_path: Path, reference_date: pd.Timestamp, selected_model, win_model, features: list[str], output_dir: Path):
+def build_today_predictions(
+    input_path: Path,
+    schedule_path: Path,
+    reference_date: pd.Timestamp,
+    selected_model,
+    win_model,
+    win_conversion: str,
+    features: list[str],
+    output_dir: Path,
+):
     schedule_games = load_team_games(schedule_path, completed_only=False)
     target_date = pd.Timestamp(reference_date).normalize()
     scheduled = schedule_games[(schedule_games["status"].eq("Scheduled")) & (schedule_games["date"].dt.normalize().eq(target_date))].copy()
@@ -602,7 +661,7 @@ def build_today_predictions(input_path: Path, schedule_path: Path, reference_dat
     scored["pred_runs_today"] = np.clip(selected_model.predict(scored[features]), 0, None)
     games = to_game_level_prediction(scored, "pred_runs_today")
     games = games.drop(columns=[col for col in ["home_actual_runs", "away_actual_runs", "target_home_win", "actual_run_diff"] if col in games.columns])
-    games["home_win_probability"] = win_model.predict_proba(games[["expected_run_diff"]])[:, 1]
+    games["home_win_probability"] = convert_home_win_probability(games, win_conversion, win_model)
     games["predicted_winner"] = np.where(games["home_win_probability"] >= 0.5, games["home_team"], games["away_team"])
     games["date"] = pd.to_datetime(games["date"]).dt.strftime("%Y-%m-%d")
     for col in ["home_expected_runs", "away_expected_runs", "expected_run_diff", "home_win_probability"]:
@@ -628,10 +687,20 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float, referen
     trained_models, run_scores = train_run_regressors(train_df, val_df, features)
     win_scores, prediction_map, win_models = evaluate_win_conversion(trained_models, train_df, val_df, features)
     selected, candidate_scores = select_model(run_scores, win_scores)
+    selected_key = (selected["model"], selected["win_conversion"])
     ref_date = pd.Timestamp(reference_date or datetime.now().date())
-    today_predictions, today_status = build_today_predictions(input_path, schedule_path, ref_date, trained_models[selected["model"]], win_models[selected["model"]], features, output_dir)
+    today_predictions, today_status = build_today_predictions(
+        input_path,
+        schedule_path,
+        ref_date,
+        trained_models[selected["model"]],
+        win_models[selected_key],
+        selected["win_conversion"],
+        features,
+        output_dir,
+    )
 
-    selected_predictions = prediction_map[selected["model"]].copy()
+    selected_predictions = prediction_map[selected_key].copy()
     selected_error_analysis = build_error_analysis(selected_predictions)
     selected_error_analysis["date"] = pd.to_datetime(selected_error_analysis["date"]).dt.strftime("%Y-%m-%d")
     error_columns = [
@@ -664,6 +733,7 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float, referen
     high_score_summary, low_score_summary = build_score_error_summaries(selected_error_analysis)
     importance_rows = selected_feature_importance(trained_models[selected["model"]], val_df, features)
     pd.DataFrame(importance_rows).to_csv(output_dir / "run_model_feature_importance.csv", index=False, encoding="utf-8-sig")
+    pd.DataFrame(win_scores).to_csv(output_dir / "run_model_win_conversion_report.csv", index=False, encoding="utf-8-sig")
 
     selected_predictions["date"] = pd.to_datetime(selected_predictions["date"]).dt.strftime("%Y-%m-%d")
     selected_predictions = selected_predictions[
@@ -695,6 +765,8 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float, referen
             "기존 대시보드/승패 모델과 분리된 득점 기반 모델입니다.",
             "기존 modeling/results 산출물은 사용하지 않습니다.",
             "완료 경기 원천 CSV만 읽기 전용으로 사용합니다.",
+            "예상 득점의 승률 변환은 검증 구간의 Brier Score와 정확도를 함께 비교해 선택합니다.",
+            "Pythagorean 변환은 야구 득점 모델에 사용되는 고정 지수 1.83을 적용하며 별도 결과 정보는 사용하지 않습니다.",
         ],
         "train_ratio": train_ratio,
         "training_cutoff": pd.Timestamp(cutoff).strftime("%Y-%m-%d"),
@@ -723,6 +795,7 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float, referen
             "results/run_model_error_analysis.csv",
             "results/error_tag_summary.csv",
             "results/run_model_feature_importance.csv",
+            "results/run_model_win_conversion_report.csv",
         ],
     }
     (output_dir / "expected_runs_model.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
