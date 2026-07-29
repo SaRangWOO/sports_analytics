@@ -113,5 +113,12 @@ The current server payload contains 21 selected columns. Current lineup and pitc
 - `modeling/results`: 28 MiB
 - `run_model/results`: 7.4 MiB
 
+## Production Artifact Path
+- Explicit model development can create a candidate artifact containing the D-1 refit, preprocessing state, feature order, class order, metrics, and integrity manifest.
+- Candidate validation, production promotion, and rollback are separate commands.
+- Predict-only loads only `modeling/artifacts/production/current` after checksum, schema, compatibility, approval, and smoke checks.
+- Missing or invalid production artifacts fail closed and never trigger automatic training.
+- Actual generated model binaries remain local operating artifacts and are not committed to normal Git.
+
 ## Next Recommended Work
-Create a persisted production-model artifact and a predict-only daily path. Keep the existing full evaluator as an explicit model-development command. This is the highest-value prerequisite for avoiding daily 41-candidate retraining without changing model behavior.
+Run an explicit operating-VM model-development build, validate serialization identity against the live selected model, promote only after human review, and compare full versus predict-only outputs before changing cron.

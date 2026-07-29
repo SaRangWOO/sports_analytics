@@ -145,6 +145,25 @@ reference date
 
 The daily path must not run candidate comparison, ablation, bootstrap, or hyperparameter experiments.
 
+## Implemented Artifact Boundary
+
+```text
+explicit model development
+  -> selected D-1 refit
+  -> candidate/<artifact_id>
+  -> manifest/schema/checksum/load/smoke validation
+  -> explicit promotion
+  -> production/current
+  -> predict-only current feature generation
+  -> unchanged probability normalization and dashboard payload
+```
+
+`model.joblib` stores the fitted estimator or custom logistic state, scaling
+statistics, feature order, prediction unit, and class order. Promotion preserves
+the prior production directory under `previous/`; rollback is explicit. A
+missing, incomplete, unapproved, incompatible, or checksum-invalid production
+artifact stops predict-only without invoking `evaluate_model`.
+
 ## Target Model-Development Pipeline
 
 ```text

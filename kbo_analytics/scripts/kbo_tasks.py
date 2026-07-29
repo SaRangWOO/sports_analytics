@@ -46,6 +46,43 @@ def build_parser():
     run_dashboard.add_argument("--results-dir", type=Path, default=PROJECT_DIR / "run_model" / "results")
     run_dashboard.add_argument("--output", type=Path, default=PROJECT_DIR / "run_model" / "dashboard.html")
     run_dashboard.set_defaults(task_name="run-dashboard")
+
+    artifact_build = subparsers.add_parser(
+        "model-artifact-build",
+        help="Run explicit model development and save the selected D-1 refit as a candidate artifact.",
+    )
+    add_common_reference_arguments(artifact_build)
+    artifact_build.add_argument("--training-start-year", type=int, default=2016)
+    artifact_build.set_defaults(task_name="model-artifact-build")
+
+    artifact_validate = subparsers.add_parser(
+        "model-artifact-validate",
+        help="Validate a candidate manifest, checksums, schema, load, and smoke prediction.",
+    )
+    artifact_validate.add_argument("--artifact-id", required=True)
+    artifact_validate.set_defaults(task_name="model-artifact-validate")
+
+    artifact_promote = subparsers.add_parser(
+        "model-artifact-promote",
+        help="Explicitly promote a validated candidate and preserve the current production artifact.",
+    )
+    artifact_promote.add_argument("--artifact-id", required=True)
+    artifact_promote.set_defaults(task_name="model-artifact-promote")
+
+    artifact_rollback = subparsers.add_parser(
+        "model-artifact-rollback",
+        help="Restore the most recent valid previous production artifact.",
+    )
+    artifact_rollback.set_defaults(task_name="model-artifact-rollback")
+
+    predict_only = subparsers.add_parser(
+        "predict-only",
+        help="Refresh current predictions and dashboard from the approved production artifact without model training.",
+    )
+    add_common_reference_arguments(predict_only)
+    predict_only.add_argument("--reference-datetime")
+    predict_only.add_argument("--update-stage", choices=["morning", "pregame"], default="morning")
+    predict_only.set_defaults(task_name="predict-only")
     return parser
 
 
@@ -55,13 +92,30 @@ def commands_for(args):
         files = [
             PROJECT_DIR / "official_kbo_dashboard.py",
             PROJECT_DIR / "modeling" / "feature_engineering.py",
+            PROJECT_DIR / "modeling" / "model_artifacts.py",
             PROJECT_DIR / "modeling" / "model_training.py",
+            PROJECT_DIR / "modeling" / "predict_only.py",
+            PROJECT_DIR / "modeling" / "prediction_runtime.py",
             PROJECT_DIR / "run_model" / "run_prediction_model.py",
             PROJECT_DIR / "run_model" / "run_model_dashboard.py",
+            PROJECT_DIR / "scripts" / "model_artifact_admin.py",
+            PROJECT_DIR / "scripts" / "model_artifact_build.py",
+            PROJECT_DIR / "scripts" / "predict_only_dashboard.py",
         ]
         return [
             ([python, "-m", "py_compile", *map(str, files)], PROJECT_DIR),
             ([python, "-m", "unittest", "test_feature_engineering.py", "-v"], PROJECT_DIR / "modeling"),
+            (
+                [
+                    python,
+                    "-m",
+                    "unittest",
+                    "modeling.test_model_artifacts",
+                    "modeling.test_predict_only",
+                    "-v",
+                ],
+                PROJECT_DIR,
+            ),
         ]
     if args.task_name == "full":
         command = [
@@ -107,19 +161,74 @@ def commands_for(args):
         if args.reference_date:
             command.extend(["--reference-date", args.reference_date])
         return [(command, PROJECT_DIR)]
-    return [
-        (
-            [
-                python,
-                str(PROJECT_DIR / "run_model" / "run_model_dashboard.py"),
-                "--results-dir",
-                str(args.results_dir),
-                "--output",
-                str(args.output),
-            ],
-            PROJECT_DIR,
-        )
+    if args.task_name == "run-dashboard":
+        return [
+            (
+                [
+                    python,
+                    str(PROJECT_DIR / "run_model" / "run_model_dashboard.py"),
+                    "--results-dir",
+                    str(args.results_dir),
+                    "--output",
+                    str(args.output),
+                ],
+                PROJECT_DIR,
+            )
+        ]
+    if args.task_name == "model-artifact-build":
+        command = [
+            python,
+            str(PROJECT_DIR / "scripts" / "model_artifact_build.py"),
+            "--training-start-year",
+            str(args.training_start_year),
+        ]
+        if args.reference_date:
+            command.extend(["--reference-date", args.reference_date])
+        return [(command, PROJECT_DIR)]
+    if args.task_name == "model-artifact-validate":
+        return [
+            (
+                [
+                    python,
+                    str(PROJECT_DIR / "scripts" / "model_artifact_admin.py"),
+                    "validate",
+                    "--artifact-id",
+                    args.artifact_id,
+                ],
+                PROJECT_DIR,
+            )
+        ]
+    if args.task_name == "model-artifact-promote":
+        return [
+            (
+                [
+                    python,
+                    str(PROJECT_DIR / "scripts" / "model_artifact_admin.py"),
+                    "promote",
+                    "--artifact-id",
+                    args.artifact_id,
+                ],
+                PROJECT_DIR,
+            )
+        ]
+    if args.task_name == "model-artifact-rollback":
+        return [
+            (
+                [python, str(PROJECT_DIR / "scripts" / "model_artifact_admin.py"), "rollback"],
+                PROJECT_DIR,
+            )
+        ]
+    command = [
+        python,
+        str(PROJECT_DIR / "scripts" / "predict_only_dashboard.py"),
+        "--update-stage",
+        args.update_stage,
     ]
+    if args.reference_date:
+        command.extend(["--reference-date", args.reference_date])
+    if args.reference_datetime:
+        command.extend(["--reference-datetime", args.reference_datetime])
+    return [(command, PROJECT_DIR)]
 
 
 def main():

@@ -528,9 +528,39 @@ docker compose up -d
   --training-start-year 2016
 ```
 
-현재 `full`은 공식 데이터 수집, 전체 후보 검증, 예측, HTML 생성을 모두 수행하는 고비용 명령입니다. 공식 수집만, 검증만, 운영 모델 예측만, 메인 대시보드 렌더링만 수행하는 명령은 아직 없습니다. 자세한 분리 계획은 `../docs/ARCHITECTURE.md`를 참고하세요.
+현재 `full`은 공식 데이터 수집, 전체 후보 검증, 예측, HTML 생성을 모두 수행하는 고비용 명령입니다. 운영 예측과 대시보드 갱신은 승인된 아티팩트를 사용하는 `predict-only`로 분리할 수 있습니다. 공식 수집만 또는 렌더링만 수행하는 더 세부적인 명령은 아직 없습니다. 자세한 구조는 `../docs/ARCHITECTURE.md`를 참고하세요.
 
-### 4.5 문법 확인
+### 4.5 운영 모델 아티팩트와 predict-only
+
+모델 개발 결과를 candidate로 저장하는 명령은 전체 후보 검증을 포함하는
+명시적 고비용 작업입니다. production으로 자동 승격하지 않습니다.
+
+```bash
+.venv/bin/python scripts/kbo_tasks.py model-artifact-build --reference-date 2026-07-29
+.venv/bin/python scripts/kbo_tasks.py model-artifact-validate --artifact-id ARTIFACT_ID
+.venv/bin/python scripts/kbo_tasks.py model-artifact-promote --artifact-id ARTIFACT_ID
+```
+
+승격된 모델로 현재 데이터 수집, 승률 예측, 기존 HTML 렌더링만 수행:
+
+```bash
+.venv/bin/python scripts/kbo_tasks.py predict-only --reference-date 2026-07-29
+```
+
+직전 운영 모델 복구:
+
+```bash
+.venv/bin/python scripts/kbo_tasks.py model-artifact-rollback
+```
+
+predict-only는 manifest, 체크섬, 승인 상태, runtime 호환성, feature schema,
+모델 로드와 소형 예측을 먼저 검증합니다. production 아티팩트가 없거나
+손상되면 오류로 종료하며 전체 학습을 자동 실행하지 않습니다. 실제
+`model.joblib`과 생성 metadata는 운영 VM의 영속 저장소에 보관하고 일반
+Git에는 커밋하지 않습니다. 운영 cron 전환 전에는 같은 기준일의 기존 full
+결과와 predict-only 결과가 일치하는지 운영 VM에서 별도로 확인해야 합니다.
+
+### 4.6 문법 확인
 
 코드를 수정한 뒤에는 먼저 문법 오류를 확인합니다.
 
@@ -548,7 +578,7 @@ docker compose up -d
   modeling/model_training.py
 ```
 
-### 4.6 HTML 확인
+### 4.7 HTML 확인
 
 일반 사용자는 GitHub에 배포된 정적 대시보드 링크로 확인합니다.
 

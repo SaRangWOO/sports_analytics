@@ -95,3 +95,10 @@ Capacity is sufficient. The main inefficiency is repeated work and Git history g
 - Medium: feature regeneration, independent expected-runs model.
 - High: official full run from 2016, all candidate models, ablation, bootstrap, full static rebuild.
 - Run high-cost work only when explicitly required and record reference date and elapsed time.
+
+## Production Prediction
+
+- Use `scripts/kbo_tasks.py predict-only` for normal current prediction after an artifact is approved.
+- Predict-only must not call candidate training, ablation, bootstrap, gate evaluation, or the D-1 refit.
+- `model-artifact-build` is an explicit expensive model-development command; do not schedule it as the normal daily or pregame path.
+- Artifact validation, promotion, rollback, and fixture tests are low-cost operations.

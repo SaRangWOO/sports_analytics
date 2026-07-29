@@ -20,12 +20,14 @@
 - Run-model dashboard: `kbo_analytics/run_model/run_model_dashboard.py`.
 - Daily/pregame operations: `kbo_analytics/scripts/daily_kbo_update.sh` and `pregame_kbo_update.sh`.
 - Safe task wrapper: `kbo_analytics/scripts/kbo_tasks.py`.
+- Predict-only dashboard: `kbo_analytics/scripts/predict_only_dashboard.py`.
 
 ## Pipeline Boundaries
 - Daily operations collect current data, validate outputs, predict, render, and publish.
 - Model development builds candidate features, runs chronological validation, calibration, ablation, bootstrap checks, and replacement gates.
-- The current full entrypoint still performs both flows. Do not claim they are separated until a predict-only production path exists.
+- The legacy full entrypoint still performs both flows. Normal predict-only runs load an explicitly approved production artifact and must not fall back to training.
 - Run full candidate training only when the task explicitly requests model development or a full integration check.
+- Candidate creation, validation, production promotion, and rollback are separate explicit operations.
 
 ## Data Rules
 - Never invent unavailable KBO records.
@@ -41,12 +43,14 @@
 - Do not mix large collector, model, and dashboard refactors in one task.
 - Preserve PostgreSQL-skip behavior: DB failure must not block CSV/JSON/HTML generation.
 - Do not replace the production model unless the recorded production gate passes.
+- Do not load joblib files outside `kbo_analytics/modeling/artifacts/`; validate manifest checksums and production approval first.
 - Do not delete or rewrite tracked generated artifacts unless the task requires regeneration.
 
 ## Minimum Validation
 - Syntax: `.venv/bin/python -m py_compile official_kbo_dashboard.py modeling/feature_engineering.py modeling/model_training.py`.
 - Unit test: run `modeling/test_feature_engineering.py` from `kbo_analytics/modeling`.
 - Wrapper smoke: `.venv/bin/python scripts/kbo_tasks.py --dry-run smoke`.
+- Artifact tests: `.venv/bin/python -m unittest modeling.test_model_artifacts modeling.test_predict_only -v`.
 - Use a full dashboard run only when required; it re-collects multiple seasons and trains many candidates.
 - Report commands, pass/fail, skipped expensive checks, and the reason for each skip.
 

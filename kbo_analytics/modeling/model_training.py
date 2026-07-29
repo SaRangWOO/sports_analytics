@@ -10,7 +10,6 @@ from sklearn.metrics import brier_score_loss, log_loss
 
 from .feature_engineering import build_features
 from .game_level_features import (
-    align_game_level_matrix,
     attach_player_context,
     attach_pitching_context,
     build_game_level_frame,
@@ -24,6 +23,7 @@ from .model_evaluation import (
     pick_better_model,
     probability_scores,
 )
+from .prediction_runtime import generate_today_predictions
 from .run_expectancy import export_run_expectancy_dataset
 from .train_win_predictor import prepare_matrix, sigmoid, standardize_train_test, train_logistic_regression
 
@@ -105,12 +105,6 @@ def non_streak_columns(columns):
 
 def available_columns(columns: list[str], x: pd.DataFrame):
     return [column for column in columns if column in x.columns]
-
-
-def align_prediction_matrix(features: pd.DataFrame, feature_columns: list[str], mean: pd.Series, std: pd.Series):
-    x, _ = prepare_matrix(features)
-    x = x.reindex(columns=feature_columns, fill_value=0)
-    return (x - mean) / std.replace(0, 1)
 
 
 def prediction_reason(row: pd.Series, predicted_team: str | None = None):
@@ -4118,7 +4112,15 @@ def write_latest_training_data_status(results_dir: Path, data_dir: Path, trainin
     return status
 
 
-def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date, data_dir: Path, results_dir: Path):
+def evaluate_model(
+    training_games: pd.DataFrame,
+    current_games: pd.DataFrame,
+    cutoff: date,
+    prediction_date: date,
+    data_dir: Path,
+    results_dir: Path,
+    artifact_root: Path | None = None,
+):
     training_games = training_games.copy()
     training_games["date"] = pd.to_datetime(training_games["date"])
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -4399,7 +4401,7 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     performance_bundle = write_performance_challenger_reports(results_dir, features, x, y, split_index, best, best_non_pitching, current_season_bundle)
     kt_wiz_summary = write_kt_wiz_challenger_reports(results_dir, features, best)
     spread_report = write_model_probability_spread_report(results_dir, probability_spread_rows)
-    payload = build_payload(
+    payload, prediction_bundle = build_payload(
         best,
         candidate_results,
         features,
@@ -4538,6 +4540,20 @@ def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cu
     )
     payload["run_expectancy_files"] = ["modeling/results/run_expectancy_features.csv"]
     payload["run_expectancy_rows"] = int(len(run_expectancy_frame))
+    if artifact_root is not None:
+        from .model_artifacts import create_evaluation_candidate
+
+        artifact_path = create_evaluation_candidate(
+            artifact_root=artifact_root,
+            project_root=Path(__file__).resolve().parents[2],
+            prediction_bundle=prediction_bundle,
+            payload=payload,
+            selected_metrics=selected_row,
+            production_gate_audit=production_gate_audit,
+            bootstrap_rows=bootstrap_rows,
+        )
+        payload["candidate_artifact_id"] = artifact_path.name
+        payload["candidate_artifact_status"] = "candidate"
     (results_dir / "win_predictor_model.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     return payload
 
@@ -5239,11 +5255,22 @@ def train_prediction_bundle(best, training_games, prediction_training_cutoff, da
     else:
         px, py = prepare_matrix(prediction_features)
         weight_dates = pd.to_datetime(prediction_features["date"])
+    available_feature_columns = list(px.columns)
     px = px[columns]
     scaled, _, mean, std = standardize_train_test(px, px)
     if best["model_type"] == "from_scratch_logistic_regression":
         weights, bias = train_logistic_regression(scaled.to_numpy(), py, lr=0.05, epochs=3500)
-        return {"model_type": "from_scratch_logistic_regression", "weights": weights, "bias": bias, "mean": mean, "std": std}
+        return {
+            "model_type": "from_scratch_logistic_regression",
+            "weights": weights,
+            "bias": bias,
+            "mean": mean,
+            "std": std,
+            "available_feature_columns": available_feature_columns,
+            "feature_order": list(columns),
+            "prediction_unit": best.get("prediction_unit", "team"),
+            "class_order": [0, 1],
+        }
     from sklearn.base import clone
     model = clone(best["model"])
     fit_kwargs = {}
@@ -5252,7 +5279,16 @@ def train_prediction_bundle(best, training_games, prediction_training_cutoff, da
         max_year = int(years.max())
         fit_kwargs["sample_weight"] = (0.85 ** (max_year - years)).clip(lower=0.35).to_numpy(dtype=float)
     model.fit(scaled, py, **fit_kwargs)
-    return {"model_type": best["model_type"], "model": model, "mean": mean, "std": std}
+    return {
+        "model_type": best["model_type"],
+        "model": model,
+        "mean": mean,
+        "std": std,
+        "available_feature_columns": available_feature_columns,
+        "feature_order": list(columns),
+        "prediction_unit": best.get("prediction_unit", "team"),
+        "class_order": [value.item() if hasattr(value, "item") else value for value in model.classes_],
+    }
 
 
 def build_payload(
@@ -5339,44 +5375,16 @@ def build_payload(
         train_rows = int(split_index)
         test_rows = int(len(features) - split_index)
 
-    prediction_input = data_dir / "prediction_games.csv"
-    current_games.to_csv(prediction_input, index=False, encoding="utf-8-sig")
-    prediction_features = build_features(prediction_input, include_unlabeled=True)
-    prediction_features["date_obj"] = pd.to_datetime(prediction_features["date"]).dt.date
-    today_features = prediction_features[(prediction_features["date_obj"] == prediction_date) & (prediction_features["target_win"].isna())].copy()
-    today_predictions = []
-    if not today_features.empty and prediction_unit == "game":
-        pitching_context_path = data_dir / "pitching_context.csv"
-        pitching_context = pd.read_csv(pitching_context_path) if pitching_context_path.exists() else pd.DataFrame()
-        game_prediction_frame = attach_pitching_context(build_game_level_frame(prediction_features), pitching_context)
-        game_prediction_frame["date_obj"] = pd.to_datetime(game_prediction_frame["date"]).dt.date
-        today_games = game_prediction_frame[(game_prediction_frame["date_obj"] == prediction_date) & (game_prediction_frame["target_home_win"].isna())].copy()
-        if not today_games.empty:
-            prediction_scaled = align_game_level_matrix(today_games.drop(columns=["date_obj"]), columns, prediction_bundle["mean"], prediction_bundle["std"])
-            game_probability = prediction_bundle["model"].predict_proba(prediction_scaled)[:, 1]
-            for (_, row), home_prob in zip(today_games.iterrows(), game_probability):
-                home_pick = home_prob >= 0.5
-                predicted_team = row["home_team"] if home_pick else row["away_team"]
-                reason = game_prediction_reason(row, predicted_team)
-                today_predictions.extend([
-                    {"경기일": row["date"], "기준팀": row["home_team"], "상대팀": row["away_team"], "예측 구단": predicted_team, "예측승률": f"{home_prob:.1%}", "예측": "승리 예측" if home_pick else "패배 예측", "예측 근거": reason},
-                    {"경기일": row["date"], "기준팀": row["away_team"], "상대팀": row["home_team"], "예측 구단": predicted_team, "예측승률": f"{1 - home_prob:.1%}", "예측": "승리 예측" if not home_pick else "패배 예측", "예측 근거": reason},
-                ])
-    elif not today_features.empty:
-        prediction_scaled = align_prediction_matrix(today_features.drop(columns=["date_obj"]), columns, prediction_bundle["mean"], prediction_bundle["std"])
-        if prediction_bundle["model_type"] == "from_scratch_logistic_regression":
-            raw_today_probability = sigmoid(prediction_scaled.to_numpy() @ prediction_bundle["weights"] + prediction_bundle["bias"])
-        else:
-            raw_today_probability = prediction_bundle["model"].predict_proba(prediction_scaled)[:, 1]
-        today_probability = normalize_game_probabilities(today_features, raw_today_probability)
-        today_features["경기일"] = pd.to_datetime(today_features["date"]).dt.strftime("%Y-%m-%d")
-        today_features["기준팀"] = today_features["team"]
-        today_features["상대팀"] = today_features["opponent"]
-        today_features["예측승률"] = [f"{p:.1%}" for p in today_probability]
-        today_features["예측"] = np.where(today_probability >= 0.5, "승리 예측", "패배 예측")
-        today_features["예측 구단"] = np.where(today_probability >= 0.5, today_features["team"], today_features["opponent"])
-        today_features["예측 근거"] = today_features.apply(lambda row: prediction_reason(row, row["예측 구단"]), axis=1)
-        today_predictions = today_features[["경기일", "기준팀", "상대팀", "예측 구단", "예측승률", "예측", "예측 근거"]].to_dict(orient="records")
+    today_predictions = generate_today_predictions(
+        current_games=current_games,
+        prediction_date=prediction_date,
+        data_dir=data_dir,
+        feature_order=columns,
+        prediction_unit=prediction_unit,
+        prediction_bundle=prediction_bundle,
+        team_reason=prediction_reason,
+        game_reason=game_prediction_reason,
+    )
 
     today_probability_values = []
     for row in today_predictions:
@@ -5545,4 +5553,4 @@ def build_payload(
         "kt_wiz_rolling_backtest_rows": len(pd.read_csv(results_dir / "kt_wiz_rolling_backtest_report.csv")) if (results_dir / "kt_wiz_rolling_backtest_report.csv").exists() else 0,
     }
     payload["model_insight_summary"] = insight_summary
-    return payload
+    return payload, prediction_bundle
