@@ -15,6 +15,15 @@ import requests
 
 from modeling.feature_engineering import build_features
 from modeling.model_training import evaluate_model as run_model_evaluation
+from modeling.pitching_snapshot_storage import (
+    SCHEDULE_COLUMNS,
+    SNAPSHOT_KEY,
+    canonicalize_pitching_snapshots,
+    merge_pitching_snapshots,
+    read_pitching_snapshot,
+    save_pitching_snapshot,
+    validate_pitching_snapshot,
+)
 from modeling.train_win_predictor import (
     prepare_matrix,
     sigmoid,
@@ -596,6 +605,28 @@ def fetch_kbo_game_list(game_date: date):
         return []
 
 
+def pitching_snapshot_schedule_frame(game_date: date):
+    rows = []
+    for game in fetch_kbo_game_list(game_date):
+        game_date_value = str(game.get("G_DT", ""))
+        game_time_value = str(game.get("G_TM", ""))
+        rows.append(
+            {
+                "reference_date": datetime.strptime(
+                    game_date_value,
+                    "%Y%m%d",
+                ).date().isoformat(),
+                "away_team": str(game.get("AWAY_NM", "")).strip(),
+                "home_team": str(game.get("HOME_NM", "")).strip(),
+                "scheduled_start_datetime": (
+                    f"{game_date_value} {game_time_value}"
+                ),
+                "official_game_id": str(game.get("G_ID", "")).strip(),
+            }
+        )
+    return pd.DataFrame(rows, columns=SCHEDULE_COLUMNS)
+
+
 def load_manual_confirmed_starters(prediction_date: date):
     path = DATA_DIR.parent / "manual" / "confirmed_starters.csv"
     if not path.exists():
@@ -873,17 +904,34 @@ def append_pitching_daily_snapshot(games: pd.DataFrame, context: dict, output_pa
     ]
     output_path.parent.mkdir(parents=True, exist_ok=True)
     new_frame = pd.DataFrame(rows, columns=columns)
-    if output_path.exists():
-        existing = pd.read_csv(output_path)
-        frame = existing if new_frame.empty else pd.concat([existing, new_frame], ignore_index=True)
-    else:
-        frame = new_frame
-    if not frame.empty:
-        frame = frame.sort_values("snapshot_time").drop_duplicates(
-            subset=["snapshot_date", "reference_date", "team", "scheduled_game_id"],
-            keep="last",
+    if not new_frame.empty:
+        new_frame = canonicalize_pitching_snapshots(
+            new_frame,
+            pitching_snapshot_schedule_frame(prediction_date),
+            prediction_reference_datetime=reference_datetime,
         )
-    frame.to_csv(output_path, index=False, encoding="utf-8-sig")
+    existing = (
+        read_pitching_snapshot(output_path)
+        if output_path.exists()
+        else pd.DataFrame(columns=columns)
+    )
+    if new_frame.empty:
+        validate_pitching_snapshot(
+            existing,
+            as_of_date=reference_datetime.date(),
+        )
+        frame = existing
+    else:
+        frame = merge_pitching_snapshots(
+            existing,
+            new_frame,
+            as_of_date=reference_datetime.date(),
+        )
+        save_pitching_snapshot(
+            frame,
+            output_path,
+            as_of_date=reference_datetime.date(),
+        )
 
     ref_frame = frame[frame["reference_date"].astype(str).eq(prediction_date.isoformat())] if not frame.empty else frame
     source_counts = ref_frame["starter_source"].replace({"manual": "confirmed"}).value_counts().to_dict() if not ref_frame.empty else {}
@@ -972,7 +1020,7 @@ def write_pitching_snapshot_accumulation_report(frame: pd.DataFrame, results_dir
         normalized_source = work["starter_source"].fillna("unknown").replace({"manual": "confirmed"})
         work["starter_source_normalized"] = normalized_source
         for (snapshot_date, reference_date), group in work.groupby(["snapshot_date", "reference_date"], sort=True):
-            duplicate_key_count = int(group.duplicated(subset=["snapshot_date", "reference_date", "team", "scheduled_game_id"]).sum())
+            duplicate_key_count = int(group.duplicated(subset=SNAPSHOT_KEY).sum())
             actual_team_rows = int(len(group))
             scheduled_games = int(actual_team_rows // 2)
             expected_team_rows = scheduled_games * 2
@@ -1021,8 +1069,7 @@ def write_pitching_snapshot_quality_reports(frame: pd.DataFrame, scheduled: pd.D
     ref_frame = frame[frame["reference_date"].astype(str).eq(reference_key)].copy() if not frame.empty else frame
     actual_team_rows = int(len(ref_frame))
     expected_team_rows = int(len(scheduled)) if not scheduled.empty else actual_team_rows
-    key_cols = ["snapshot_date", "reference_date", "team", "scheduled_game_id"]
-    duplicate_key_count = int(frame.duplicated(subset=key_cols).sum()) if not frame.empty else 0
+    duplicate_key_count = int(frame.duplicated(subset=SNAPSHOT_KEY).sum()) if not frame.empty else 0
     starter_sources = {"confirmed", "manual", "estimated"}
     missing_starter = ref_frame[
         ref_frame["starter_source"].isin(starter_sources)
@@ -1042,7 +1089,7 @@ def write_pitching_snapshot_quality_reports(frame: pd.DataFrame, scheduled: pd.D
     quality_missing = ref_frame[ref_frame["starter_info_quality"].isna()] if not ref_frame.empty else ref_frame
 
     rows = [
-        _quality_result("duplicate_key_check", duplicate_key_count, len(frame), "blocking", "snapshot_date, reference_date, team, scheduled_game_id 조합 중복 검사", "중복 키가 있으면 최신 snapshot_time 기준으로 deduplicate"),
+        _quality_result("duplicate_key_check", duplicate_key_count, len(frame), "blocking", "reference_date, scheduled_game_id, team canonical key 중복 검사", "중복 키가 있으면 경기 시작 전 최신 snapshot_time 기준으로 deduplicate"),
         _quality_result("missing_starter_name_check", len(missing_starter), actual_team_rows, "blocking", "starter_source가 confirmed/manual/estimated인데 starter_name이 비어 있는 행 검사", "선발명 파싱 또는 추정 로직 점검"),
         _quality_result("unknown_starter_ratio_check", unknown_count, actual_team_rows, "warning", f"reference_date 기준 unknown 선발 {unknown_count}건", "unknown 비율이 높으면 GameCenter 또는 추정 선발 수집 점검"),
         _quality_result("confirmed_starter_ratio_check", 0 if confirmed_count else actual_team_rows, actual_team_rows, "warning", f"reference_date 기준 confirmed 선발 {confirmed_count}건", "경기 전 확정 선발 발표 시간 이후 pregame 업데이트 확인"),
