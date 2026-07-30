@@ -1181,8 +1181,19 @@ def update_pitching_snapshot_diagnostics(results_dir: Path, status_payload: dict
             "remaining_days_to_feature_use": quality_status.get("remaining_days_to_feature_use", 30),
             "accumulation_progress_pct": quality_status.get("accumulation_progress_pct", 0),
         }
-        summary["safe_to_use_pitching_snapshot_as_features"] = bool(quality_status.get("safe_for_future_feature_use", False))
-        summary["reason_pitching_snapshot_not_used_yet"] = quality_status.get("reason_if_not_safe") or "현재 운영 모델 피처로 연결하지 않는 정책 유지"
+        candidate_gate_path = results_dir / "pitching_snapshot_candidate_gate_audit.json"
+        candidate_gate = json.loads(candidate_gate_path.read_text(encoding="utf-8")) if candidate_gate_path.exists() else {}
+        experiment_ready = bool(quality_status.get("safe_for_future_feature_use", False))
+        production_approved = bool(candidate_gate.get("production_promotion_allowed", False))
+        blocked_reason = quality_status.get("reason_if_not_safe", "")
+        if experiment_ready and not production_approved:
+            blocked_reason = candidate_gate.get(
+                "decision",
+                "품질·누적 게이트는 통과했지만 후보 모델 승격 검증을 통과하지 않았습니다.",
+            )
+        summary["pitching_snapshot_eligible_for_experiment"] = experiment_ready
+        summary["safe_to_use_pitching_snapshot_as_features"] = production_approved
+        summary["reason_pitching_snapshot_not_used_yet"] = blocked_reason
         summary["recommended_next_step_after_30_days"] = "30일 이상 누적 후 선발 정보 품질, 선발 ERA/WHIP 스냅샷, 불펜 피로 proxy를 별도 후보 모델에서 leakage-safe rolling 피처로 검증합니다."
         summary["pitching_snapshot_accumulation_gate"] = {
             "feature_use_gate_status": quality_status.get("feature_use_gate_status", "blocked_until_minimum_history"),
@@ -1200,12 +1211,10 @@ def update_pitching_snapshot_diagnostics(results_dir: Path, status_payload: dict
             "earliest_feature_experiment_date": quality_status.get("earliest_feature_experiment_date", ""),
             "plan_file": "modeling/results/pitching_feature_experiment_plan.json",
         }
-        summary["reason_pitching_features_still_blocked"] = (
-            f"투수 스냅샷은 품질 점검을 통과했지만 누적 기간이 {quality_status.get('accumulated_snapshot_days', 0)}일로 짧아 모델 피처 사용을 차단합니다. "
-            "최소 30일 이상 누적 후 baseline_plus_pitching_snapshot 실험을 진행합니다."
-        )
+        summary["pitching_snapshot_candidate_validation"] = candidate_gate
+        summary["reason_pitching_features_still_blocked"] = blocked_reason
         summary["leakage_safe_pitching_data_policy"] = "투수 스냅샷은 예측 시점에 알고 있던 정보만 누적 저장하며, 현재 운영 모델 학습 피처로 바로 사용하지 않습니다."
-        summary["next_step_after_snapshot_accumulation"] = "스냅샷이 충분히 쌓이면 선발 최근 성적, 선발 정보 품질, 불펜 피로 proxy를 날짜 기준 shift(1) 피처로 별도 후보 모델에서 검증합니다."
+        summary["next_step_after_snapshot_accumulation"] = "스냅샷 후보의 표본 수, 확률 품질, bootstrap 안정성이 승격 게이트를 통과할 때까지 운영 모델과 분리해 검증합니다."
         summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
@@ -2675,8 +2684,19 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     snapshot_days = snapshot_quality.get("accumulated_snapshot_days", 0)
     snapshot_required_days = snapshot_quality.get("minimum_required_days", 30)
     snapshot_quality_label = snapshot_quality.get("quality_status", "-")
-    snapshot_gate_label = "사용 가능" if snapshot_quality.get("safe_for_future_feature_use") else "차단됨"
-    snapshot_gate_reason = snapshot_quality.get("reason_if_not_safe", "")
+    candidate_gate_path = RESULTS_DIR / "pitching_snapshot_candidate_gate_audit.json"
+    candidate_gate = json.loads(candidate_gate_path.read_text(encoding="utf-8")) if candidate_gate_path.exists() else {}
+    snapshot_experiment_ready = bool(snapshot_quality.get("safe_for_future_feature_use", False))
+    snapshot_production_approved = bool(candidate_gate.get("production_promotion_allowed", False))
+    if snapshot_production_approved:
+        snapshot_gate_label = "운영 사용 승인"
+        snapshot_gate_reason = ""
+    elif snapshot_experiment_ready:
+        snapshot_gate_label = "후보 실험 완료 · 운영 미적용"
+        snapshot_gate_reason = candidate_gate.get("decision", "운영 승격 검증이 필요합니다.")
+    else:
+        snapshot_gate_label = "차단됨"
+        snapshot_gate_reason = snapshot_quality.get("reason_if_not_safe", "")
     featured_card = prediction_cards[0] if prediction_cards else {}
     featured_matchup = featured_card.get("경기", "-")
     featured_teams = [team.strip() for team in featured_matchup.split(" vs ", 1)]
