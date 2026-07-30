@@ -18,3 +18,13 @@ kbo_analytics/pg_data/
 kbo_analytics/metabase_data/
 kbo_analytics/.venv/
 **/.ipynb_checkpoints/
+
+# Generated model artifacts stay on trusted operating storage.
+kbo_analytics/modeling/artifacts/candidate/*
+!kbo_analytics/modeling/artifacts/candidate/.gitkeep
+kbo_analytics/modeling/artifacts/production/*
+!kbo_analytics/modeling/artifacts/production/.gitkeep
+kbo_analytics/modeling/artifacts/previous/*
+!kbo_analytics/modeling/artifacts/previous/.gitkeep
+kbo_analytics/modeling/artifacts/.promote-*
+kbo_analytics/modeling/artifacts/.rollback-*
