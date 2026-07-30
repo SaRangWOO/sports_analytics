@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss, log_loss
 
 from modeling.model_evaluation import normalize_game_probabilities
@@ -203,6 +204,130 @@ def bootstrap_accuracy_delta(
     }
 
 
+def historical_pitcher_data_audit(base_dir: Path, model_features: pd.DataFrame) -> dict:
+    player_path = base_dir / "data" / "weekly" / "player_game_stats.csv"
+    log_path = base_dir.parent / "kbo_run_model" / "data" / "pitcher_game_logs.csv"
+    player_rows = pd.read_csv(player_path) if player_path.exists() else pd.DataFrame()
+    pitcher_rows = (
+        player_rows[
+            pd.to_numeric(player_rows.get("innings_pitched"), errors="coerce").fillna(0) > 0
+        ].copy()
+        if not player_rows.empty and "innings_pitched" in player_rows
+        else pd.DataFrame()
+    )
+    explicit_logs = pd.read_csv(log_path) if log_path.exists() else pd.DataFrame()
+    model_game_ids = (
+        model_features["game_id"].astype(str).str.rsplit("_", n=1).str[0].nunique()
+    )
+    audit = {
+        "source": str(player_path.relative_to(base_dir)),
+        "player_rows": int(len(player_rows)),
+        "pitcher_rows": int(len(pitcher_rows)),
+        "covered_games": int(pitcher_rows["game_id"].nunique()) if not pitcher_rows.empty else 0,
+        "first_date": str(pitcher_rows["date"].min()) if not pitcher_rows.empty else "",
+        "last_date": str(pitcher_rows["date"].max()) if not pitcher_rows.empty else "",
+        "model_games": int(model_game_ids),
+        "explicit_pitcher_log_rows": int(len(explicit_logs)),
+        "has_explicit_starter_flag": bool(
+            not explicit_logs.empty and "is_starter" in explicit_logs
+        ),
+        "usable_for_full_historical_training": False,
+        "decision": (
+            "2026년 일부 경기만 포함하고 명시적 선발 구분이 없어 전체 역사 학습 피처로 사용하지 않습니다."
+        ),
+    }
+    pd.DataFrame([audit]).to_csv(
+        base_dir / "modeling" / "results" / "historical_pitcher_data_availability_report.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
+    return audit
+
+
+def fit_baseline(
+    all_features: pd.DataFrame,
+    prediction_frame: pd.DataFrame,
+    train_end: pd.Timestamp,
+    columns: list[str],
+) -> np.ndarray:
+    all_x, all_y = prepare_matrix(all_features)
+    prediction_x, _ = prepare_matrix(prediction_frame)
+    train_mask = pd.to_datetime(all_features["date"]) < train_end
+    x_train = all_x.loc[train_mask, columns]
+    x_prediction = prediction_x[columns]
+    train_scaled, prediction_scaled, _, _ = standardize_train_test(
+        x_train, x_prediction
+    )
+    model = conservative_model()
+    model.fit(train_scaled, all_y[train_mask])
+    raw_probability = model.predict_proba(prediction_scaled)[:, 1]
+    return normalize_game_probabilities(
+        prediction_frame.reset_index(drop=True), raw_probability
+    )
+
+
+def fit_snapshot_adjustment(
+    train_frame: pd.DataFrame,
+    train_y: np.ndarray,
+    train_baseline_probability: np.ndarray,
+    test_frame: pd.DataFrame,
+    test_baseline_probability: np.ndarray,
+    features: list[str],
+    regularization: float,
+    blend: float,
+) -> np.ndarray:
+    available = [
+        feature
+        for feature in features
+        if feature in train_frame and feature in test_frame
+    ]
+    train = train_frame[available].apply(pd.to_numeric, errors="coerce")
+    test = test_frame[available].apply(pd.to_numeric, errors="coerce")
+    medians = train.median()
+    train = train.fillna(medians).fillna(0.0)
+    test = test.fillna(medians).fillna(0.0)
+    train.insert(
+        0,
+        "baseline_logit",
+        np.log(
+            np.clip(train_baseline_probability, 1e-6, 1 - 1e-6)
+            / (1 - np.clip(train_baseline_probability, 1e-6, 1 - 1e-6))
+        ),
+    )
+    test.insert(
+        0,
+        "baseline_logit",
+        np.log(
+            np.clip(test_baseline_probability, 1e-6, 1 - 1e-6)
+            / (1 - np.clip(test_baseline_probability, 1e-6, 1 - 1e-6))
+        ),
+    )
+    mean = train.mean()
+    std = train.std(ddof=0).replace(0, 1)
+    model = LogisticRegression(
+        C=regularization,
+        max_iter=2000,
+        class_weight="balanced",
+        random_state=42,
+    )
+    model.fit((train - mean) / std, train_y)
+    adjusted_probability = model.predict_proba((test - mean) / std)[:, 1]
+    baseline_logit = np.log(
+        np.clip(test_baseline_probability, 1e-6, 1 - 1e-6)
+        / (1 - np.clip(test_baseline_probability, 1e-6, 1 - 1e-6))
+    )
+    adjusted_logit = np.log(
+        np.clip(adjusted_probability, 1e-6, 1 - 1e-6)
+        / (1 - np.clip(adjusted_probability, 1e-6, 1 - 1e-6))
+    )
+    blended_probability = 1 / (
+        1 + np.exp(-((1 - blend) * baseline_logit + blend * adjusted_logit))
+    )
+    return normalize_game_probabilities(
+        test_frame.reset_index(drop=True), blended_probability
+    )
+
+
 def run_validation(base_dir: Path) -> dict:
     results_dir = base_dir / "modeling" / "results"
     features = pd.read_csv(results_dir / "features.csv")
@@ -216,29 +341,76 @@ def run_validation(base_dir: Path) -> dict:
     cutoff = unique_dates[max(int(len(unique_dates) * 0.7), 1)]
     train_mask = dates < cutoff
     test_mask = dates >= cutoff
-    x, y = prepare_matrix(frame)
-    baseline_columns = compact_feature_columns(x)
-    candidate_columns = baseline_columns + [
-        feature for feature in PITCHING_FEATURES if feature in x.columns
-    ]
-    probabilities = {}
-    report_rows = []
-    for name, columns in [
-        ("baseline_core_snapshot_window", baseline_columns),
-        ("baseline_plus_pitching_snapshot", candidate_columns),
-    ]:
-        x_train = x.loc[train_mask, columns]
-        x_test = x.loc[test_mask, columns]
-        train_scaled, test_scaled, _, _ = standardize_train_test(x_train, x_test)
-        model = conservative_model()
-        model.fit(train_scaled, y[train_mask])
-        raw_probability = model.predict_proba(test_scaled)[:, 1]
-        test_frame = frame.loc[test_mask].reset_index(drop=True)
-        probability = normalize_game_probabilities(test_frame, raw_probability)
-        probabilities[name] = probability
-        report_rows.append(
-            metric_row(name, test_frame, y[test_mask], probability, len(columns))
+    all_x, _ = prepare_matrix(features)
+    _, y = prepare_matrix(frame)
+    baseline_columns = compact_feature_columns(all_x)
+    train_frame = frame.loc[train_mask].reset_index(drop=True)
+    test_frame = frame.loc[test_mask].reset_index(drop=True)
+    first_snapshot_date = pd.to_datetime(frame["date"]).min()
+    train_baseline_probability = fit_baseline(
+        features,
+        train_frame,
+        first_snapshot_date,
+        baseline_columns,
+    )
+    test_baseline_probability = fit_baseline(
+        features,
+        test_frame,
+        pd.Timestamp(cutoff),
+        baseline_columns,
+    )
+    report_rows = [
+        metric_row(
+            "historical_baseline",
+            test_frame,
+            y[test_mask],
+            test_baseline_probability,
+            len(baseline_columns),
         )
+    ]
+    candidate_specs = [
+        (
+            "historical_baseline_plus_starter_conservative",
+            ["starter_era_gap", "starter_whip_gap", "both_starters_confirmed"],
+            0.03,
+            0.25,
+        ),
+        (
+            "historical_baseline_plus_bullpen_proxy_conservative",
+            ["bullpen_fatigue_gap", "recent_3day_games_snapshot_gap"],
+            0.03,
+            0.25,
+        ),
+        (
+            "historical_baseline_plus_all_snapshot_conservative",
+            PITCHING_FEATURES,
+            0.01,
+            0.25,
+        ),
+    ]
+    candidate_probabilities = {}
+    for name, candidate_features, regularization, blend in candidate_specs:
+        probability = fit_snapshot_adjustment(
+            train_frame,
+            y[train_mask],
+            train_baseline_probability,
+            test_frame,
+            test_baseline_probability,
+            candidate_features,
+            regularization,
+            blend,
+        )
+        candidate_probabilities[name] = probability
+        row = metric_row(
+            name,
+            test_frame,
+            y[test_mask],
+            probability,
+            len(candidate_features) + 1,
+        )
+        row["regularization_c"] = regularization
+        row["snapshot_blend"] = blend
+        report_rows.append(row)
 
     report = pd.DataFrame(report_rows)
     report.to_csv(
@@ -248,11 +420,12 @@ def run_validation(base_dir: Path) -> dict:
     )
     baseline = report_rows[0]
     candidate = report_rows[1]
+    selected_probability = candidate_probabilities[candidate["model"]]
     bootstrap = bootstrap_accuracy_delta(
-        frame.loc[test_mask].reset_index(drop=True),
+        test_frame,
         y[test_mask],
-        probabilities["baseline_core_snapshot_window"],
-        probabilities["baseline_plus_pitching_snapshot"],
+        test_baseline_probability,
+        selected_probability,
     )
     accuracy_delta = round(candidate["accuracy"] - baseline["accuracy"], 4)
     brier_delta = round(candidate["brier_score"] - baseline["brier_score"], 4)
@@ -266,9 +439,14 @@ def run_validation(base_dir: Path) -> dict:
         "log_loss_not_worse": log_loss_delta <= 0.0,
         "bootstrap_ci_stable": bootstrap["stable_positive_delta"],
     }
+    historical_pitcher_audit = historical_pitcher_data_audit(base_dir, features)
     payload = {
-        "experiment": "baseline_plus_pitching_snapshot",
+        "experiment": "historical_baseline_plus_snapshot_adjustment",
         "status": "validated_candidate_not_promoted",
+        "training_policy": (
+            "2016~2026 기존 완료 경기로 기준 모델을 학습하고, 초기 스냅샷 구간에서 "
+            "정규화된 확률 보정층을 학습한 뒤 후기 스냅샷 구간을 검증합니다."
+        ),
         "snapshot_days": int(snapshots["snapshot_date"].nunique()),
         "canonical_snapshot_rows": int(len(snapshots)),
         "matched_games": int(frame["actual_game_id"].nunique()),
@@ -281,6 +459,12 @@ def run_validation(base_dir: Path) -> dict:
         "test_end_date": str(frame.loc[test_mask, "date"].max()),
         "baseline": baseline,
         "candidate": candidate,
+        "candidate_comparison": report_rows[1:],
+        "primary_candidate_policy": (
+            "선발 ERA/WHIP 차이와 선발 확정 여부를 사용하는 보수 후보를 사전 지정하며, "
+            "나머지 스냅샷 조합은 진단용으로만 비교한다."
+        ),
+        "historical_pitcher_data_audit": historical_pitcher_audit,
         "accuracy_delta": accuracy_delta,
         "brier_delta": brier_delta,
         "log_loss_delta": log_loss_delta,
