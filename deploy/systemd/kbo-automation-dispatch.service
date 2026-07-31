@@ -1,0 +1,12 @@
+[Unit]
+Description=KBO pregame automation dispatcher
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=wsr
+WorkingDirectory=/home/wsr/1.project/1.sports_analytics/kbo_analytics
+EnvironmentFile=-/etc/kbo-automation.env
+ExecStart=/home/wsr/1.project/1.sports_analytics/kbo_analytics/.venv/bin/python scripts/kbo_automation.py automation-dispatch --json
+TimeoutStartSec=900
+Restart=no

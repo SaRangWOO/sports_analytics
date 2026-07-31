@@ -28,3 +28,10 @@ kbo_analytics/modeling/artifacts/previous/*
 !kbo_analytics/modeling/artifacts/previous/.gitkeep
 kbo_analytics/modeling/artifacts/.promote-*
 kbo_analytics/modeling/artifacts/.rollback-*
+
+# KBO automation runtime and isolated outputs
+kbo_analytics/runtime/
+kbo_analytics/shadow/
+kbo_analytics/quarantine/
+kbo_analytics/backups/
+reports/pitching_snapshot_recovery_audit/

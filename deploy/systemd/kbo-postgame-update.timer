@@ -1,0 +1,11 @@
+[Unit]
+Description=Run KBO postgame evaluation at 23:30 Asia/Seoul
+
+[Timer]
+OnCalendar=*-*-* 23:30:00 Asia/Seoul
+AccuracySec=2min
+Persistent=true
+Unit=kbo-postgame-update.service
+
+[Install]
+WantedBy=timers.target

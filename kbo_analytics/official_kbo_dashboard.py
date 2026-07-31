@@ -35,6 +35,7 @@ from run_model.run_model_dashboard import render_prediction_board_embedded
 from run_model.run_prediction_model import DEFAULT_INPUT as RUN_MODEL_INPUT
 from run_model.run_prediction_model import DEFAULT_SCHEDULE_INPUT as RUN_MODEL_SCHEDULE_INPUT
 from run_model.run_prediction_model import run_pipeline as run_expected_runs_pipeline
+from automation.dashboard_status import render_automation_status
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -2820,6 +2821,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     )
     run_expected_runs_pipeline(RUN_MODEL_INPUT, RUN_MODEL_RESULTS, 0.8, generated_at.isoformat(), RUN_MODEL_SCHEDULE_INPUT)
     run_model_html = render_prediction_board_embedded(RUN_MODEL_RESULTS)
+    automation_status_html = render_automation_status()
     html = f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -2934,6 +2936,12 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .tab-button.active {{ background:var(--blue); color:white; box-shadow:0 12px 26px rgba(29,78,216,.20); }}
     .tab-panel {{ display:none; }}
     .tab-panel.active {{ display:block; }}
+    .automation-status-panel {{ margin:0 0 22px; padding:18px 20px; border:1px solid rgba(226,232,240,.85); border-radius:18px; background:rgba(255,255,255,.82); box-shadow:var(--shadow-soft); }}
+    .automation-status-panel h2 {{ font-size:18px; margin:4px 0 14px; }}
+    .automation-status-grid {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }}
+    .automation-metric {{ min-width:0; padding:10px 12px; border-radius:12px; background:#F8FAFC; border:1px solid var(--line); }}
+    .automation-metric span {{ display:block; color:var(--muted); font-size:11px; font-weight:800; }}
+    .automation-metric strong {{ display:block; margin-top:4px; overflow-wrap:anywhere; font-size:13px; }}
     .run-model-panel {{ display:grid; gap:22px; }}
     .run-model-hero, .run-model-section {{ background:var(--card); border:1px solid rgba(226,232,240,.72); border-radius:26px; padding:24px; box-shadow:var(--shadow); backdrop-filter:blur(10px); }}
     .run-model-hero p {{ max-width:920px; color:#475569; margin:10px 0 0; }}
@@ -2965,7 +2973,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .run-model-diagnostics {{ background:var(--card); border:1px solid rgba(226,232,240,.72); border-radius:22px; padding:18px; box-shadow:var(--shadow-soft); }}
     details {{ margin-top:16px; }}
     summary {{ cursor:pointer; font-weight:800; color:var(--blue); }}
-    @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons, .prediction-cards, .featured-match, .run-model-grid, .run-model-panel .mini-grid, .run-model-split, .match-card-grid {{ grid-template-columns: 1fr; }} main {{ padding: 0 16px 40px; }} header {{ padding:24px 16px 8px; }} .topbar {{ flex-direction:column; }} .meta-panel {{ justify-content:flex-start; min-width:0; }} .featured-result {{ justify-self:stretch; }} .dashboard-tabs {{ width:100%; }} .tab-button {{ flex:1; }} }}
+    @media (max-width: 960px) {{ .grid, .tables, .team-picker, .team-buttons, .prediction-cards, .featured-match, .run-model-grid, .run-model-panel .mini-grid, .run-model-split, .match-card-grid, .automation-status-grid {{ grid-template-columns: 1fr; }} main {{ padding: 0 16px 40px; }} header {{ padding:24px 16px 8px; }} .topbar {{ flex-direction:column; }} .meta-panel {{ justify-content:flex-start; min-width:0; }} .featured-result {{ justify-self:stretch; }} .dashboard-tabs {{ width:100%; }} .tab-button {{ flex:1; }} }}
   </style>
 </head>
 <body>
@@ -2989,6 +2997,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     <button type="button" class="tab-button active" data-tab="gamePrediction">경기 예측</button>
     <button type="button" class="tab-button" data-tab="runPrediction">득점 기반 승부 예측</button>
   </nav>
+  {automation_status_html}
   <div id="gamePrediction" class="tab-panel active">
   <section class="section hero-section">
     <div class="eyebrow">TODAY · 오늘의 판단</div>

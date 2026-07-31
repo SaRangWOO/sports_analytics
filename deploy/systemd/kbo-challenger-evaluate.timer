@@ -1,0 +1,11 @@
+[Unit]
+Description=Run KBO challenger evaluation weekly
+
+[Timer]
+OnCalendar=Mon *-*-* 04:00:00 Asia/Seoul
+AccuracySec=5min
+Persistent=true
+Unit=kbo-challenger-evaluate.service
+
+[Install]
+WantedBy=timers.target
