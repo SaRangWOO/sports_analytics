@@ -1,6 +1,6 @@
 ﻿model,feature_set,accuracy,brier,log_loss,over_55_games,over_55_accuracy,winning_streak_accuracy,losing_streak_accuracy,close_game_accuracy,recent_3year_accuracy,selected_candidate,status
 핵심 수치 GradientBoosting 일자가중 모델,baseline_core,0.545,0.248,0.689,1208.0,0.575,0.518,0.582,0.531,,False,evaluated
-Streak 피처 RandomForest 실험,baseline_plus_streak,0.54,0.247,0.688,994.0,0.573,0.516,0.567,0.485,,False,evaluated
+Streak 피처 RandomForest 시간가중 실험,baseline_plus_streak,0.543,0.247,0.687,1030.0,0.577,0.517,0.574,0.502,,False,evaluated
 not_available,baseline_plus_starter,,,,,,,,,,False,과거 시점별 선발 최근 3경기/휴식일 데이터가 없어 누수 없이 백테스트 불가
 not_available,baseline_plus_bullpen,,,,,,,,,,False,실제 불펜 이닝/투구 수 로그가 없어 일정 proxy만 존재
 not_available,baseline_plus_starter_bullpen,,,,,,,,,,False,선발 히스토리와 불펜 사용량 원천 데이터가 모두 필요
