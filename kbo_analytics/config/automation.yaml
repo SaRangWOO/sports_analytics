@@ -1,0 +1,53 @@
+{
+  "timezone": "Asia/Seoul",
+  "dispatcher_interval_minutes": 10,
+  "morning_window": "08:00",
+  "pregame_window_start_minutes": 120,
+  "pregame_window_end_minutes": 15,
+  "postgame_delay_minutes": 45,
+  "retry_count": 2,
+  "retry_delay_seconds": 30,
+  "lock_timeout_seconds": 5,
+  "snapshot_quality_thresholds": {
+    "min_snapshot_days": 30,
+    "max_canonical_duplicates": 0,
+    "max_post_start_rows": 0,
+    "max_mapping_failures": 0
+  },
+  "challenger_thresholds": {
+    "min_snapshot_days": 30,
+    "min_completed_games": 150,
+    "min_feature_coverage": 0.95
+  },
+  "promotion_thresholds": {
+    "min_shadow_passes": 3,
+    "min_accuracy_delta": 0.005,
+    "require_brier_improvement": true,
+    "require_log_loss_improvement": true,
+    "require_calibration_not_worse": true,
+    "require_recent_30_not_worse": true,
+    "require_recent_60_not_worse": true,
+    "require_high_confidence_not_worse": true,
+    "max_team_accuracy_drop": 0.03
+  },
+  "rollback_thresholds": {
+    "max_consecutive_failures": 2,
+    "max_probability_sum_error": 0.000001
+  },
+  "project_root": "/home/wsr/1.project/1.sports_analytics/kbo_analytics",
+  "artifact_root": "/home/wsr/1.project/runtime/kbo_model_artifacts",
+  "backup_root": "/home/wsr/1.project/runtime/kbo_automation/backups",
+  "runtime_root": "/home/wsr/1.project/runtime/kbo_automation",
+  "log_root": "/home/wsr/1.project/runtime/kbo_automation/logs",
+  "shadow_root": "/home/wsr/1.project/runtime/kbo_automation/shadow",
+  "dashboard_publish_path": "/home/wsr/1.project/1.sports_analytics/kbo_analytics/dashboard/latest.html",
+  "retention_policy": {
+    "normal_logs_days": 30,
+    "failed_logs_days": 90,
+    "csv_backups": 30,
+    "candidate_artifacts": 10,
+    "previous_artifacts": 3
+  },
+  "auto_promote_enabled": false,
+  "auto_rollback_enabled": true
+}

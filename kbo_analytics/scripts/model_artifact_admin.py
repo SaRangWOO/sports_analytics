@@ -22,6 +22,7 @@ ARTIFACT_ROOT = PROJECT_DIR / "modeling" / "artifacts"
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate, promote, or roll back KBO model artifacts.")
+    parser.add_argument("--artifact-root", default=str(ARTIFACT_ROOT))
     subparsers = parser.add_subparsers(dest="action", required=True)
     validate = subparsers.add_parser("validate")
     validate.add_argument("--artifact-id", required=True)
@@ -29,19 +30,20 @@ def main() -> None:
     promote.add_argument("--artifact-id", required=True)
     subparsers.add_parser("rollback")
     args = parser.parse_args()
+    artifact_root = Path(args.artifact_root).resolve()
 
     if args.action == "validate":
         result = validate_artifact(
-            ARTIFACT_ROOT,
-            candidate_path(ARTIFACT_ROOT, args.artifact_id),
+            artifact_root,
+            candidate_path(artifact_root, args.artifact_id),
             expected_approval="candidate",
         )
         print(f"[Success] candidate artifact valid: {result['metadata']['artifact_id']}")
     elif args.action == "promote":
-        path = promote_candidate(ARTIFACT_ROOT, args.artifact_id)
+        path = promote_candidate(artifact_root, args.artifact_id)
         print(f"[Success] production artifact promoted: {path}")
     else:
-        path = rollback_production(ARTIFACT_ROOT)
+        path = rollback_production(artifact_root)
         print(f"[Success] production artifact rolled back: {path}")
 
 

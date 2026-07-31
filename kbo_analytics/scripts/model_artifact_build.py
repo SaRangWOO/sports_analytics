@@ -23,6 +23,7 @@ def main() -> None:
     )
     parser.add_argument("--reference-date", default=date.today().isoformat())
     parser.add_argument("--training-start-year", type=int, default=2016)
+    parser.add_argument("--artifact-root", default=str(ARTIFACT_ROOT))
     args = parser.parse_args()
     reference_date = datetime.strptime(args.reference_date, "%Y-%m-%d").date()
     games = fetch_schedule(reference_date.year, reference_date.month)
@@ -34,7 +35,7 @@ def main() -> None:
         reference_date,
         DATA_DIR,
         RESULTS_DIR,
-        artifact_root=ARTIFACT_ROOT,
+        artifact_root=Path(args.artifact_root).resolve(),
     )
     print(f"[Success] candidate artifact generated: {payload['candidate_artifact_id']}")
 
