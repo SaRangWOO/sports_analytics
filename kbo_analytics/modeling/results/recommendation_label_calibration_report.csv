@@ -1,12 +1,12 @@
 ﻿label_type,label,games,correct,accuracy,avg_probability,expected_accuracy,accuracy_minus_expected,brier,log_loss,supported_by_results,sample_warning,recommended_label_action,interpretation
 recommendation_strength,관망,31,16,0.516,0.508,0.508,0.008,0.251,0.696,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
-recommendation_strength,약우세,63,36,0.571,0.542,0.542,0.029,0.245,0.683,True,directional reference only,keep,약우세는 실행 추천이 아니라 방향성 참고로 유지합니다.
+recommendation_strength,약우세,68,40,0.588,0.541,0.541,0.047,0.244,0.681,True,directional reference only,keep,약우세는 실행 추천이 아니라 방향성 참고로 유지합니다.
 recommendation_strength,추천,8,6,0.75,0.559,0.559,0.191,0.225,0.642,False,sample size below 30,monitor_more_games,표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다.
 recommendation_grade,B등급,8,6,0.75,0.559,0.559,0.191,0.225,0.642,False,sample size below 30,monitor_more_games,표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다.
-recommendation_grade,C등급,63,36,0.571,0.542,0.542,0.029,0.245,0.683,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
+recommendation_grade,C등급,68,40,0.588,0.541,0.541,0.047,0.244,0.681,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
 recommendation_grade,D등급,31,16,0.516,0.508,0.508,0.008,0.251,0.696,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
-daily_rank_label,오늘 TOP PICK,20,15,0.75,0.554,0.554,0.196,0.226,0.646,False,sample size below 30,monitor_more_games,표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다.
-daily_rank_label,일반 예측,82,43,0.524,0.528,0.528,-0.004,0.25,0.693,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
-market_label,win_pick,102,58,0.569,0.533,0.533,0.036,0.245,0.684,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
+daily_rank_label,오늘 TOP PICK,21,16,0.762,0.554,0.554,0.208,0.225,0.644,False,sample size below 30,monitor_more_games,표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다.
+daily_rank_label,일반 예측,86,46,0.535,0.528,0.528,0.007,0.249,0.691,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
+market_label,win_pick,107,62,0.579,0.533,0.533,0.046,0.244,0.682,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
 market_label,handicap:not_available,0,0,,,,,,,False,no valid market line data,not_available,유효한 기준 라인이 없어 평가하지 않습니다.
 market_label,over_under:not_available,0,0,,,,,,,False,no valid market line data,not_available,유효한 기준 라인이 없어 평가하지 않습니다.
