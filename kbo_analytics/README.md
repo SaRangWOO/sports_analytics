@@ -854,3 +854,5 @@ https://raw.githack.com/SaRangWOO/sports_analytics/<commit-hash>/docs/
 ```
 
 현재는 구단 분석 리포트와 기본 승패 예측 모델이 구현되어 있습니다. 다음 단계는 선수 영향도를 경기 예측 모델의 피처로 연결하고, 어떤 선수 기반 피처가 실제로 정확도와 확률 품질을 개선하는지 ablation test로 검증하는 것입니다.
+
+운영 자동화의 실행 계약, 안전 기본값, systemd 템플릿과 rollback 절차는 [AUTOMATION.md](AUTOMATION.md)를 참고하세요.
