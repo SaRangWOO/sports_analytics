@@ -1,9 +1,9 @@
 ﻿feature,feature_group,high_signal_definition,high_signal_games,production_accuracy_when_high,candidate_accuracy_when_high,accuracy_delta_when_high,candidate_wrong_games,common_failure_pattern,interpretation,recommended_action
 venue_win_rate_gap,venue_context,abs(venue_win_rate_gap) >= p75(0.2637),232,0.534,0.569,0.035,100,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
 team_month_win_rate_prior,month_phase,abs(team_month_win_rate_prior) >= p75(0.6957),231,0.567,0.571,0.004,99,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
-opponent_month_run_diff_prior,month_phase,abs(opponent_month_run_diff_prior) >= p75(2.3333),234,0.526,0.5,-0.026,117,high_signal_candidate_underperforms,2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성,remove_from_candidate_or_monitor_only
-month_run_diff_gap,month_phase,abs(month_run_diff_gap) >= p75(3.5839),230,0.522,0.513,-0.009,112,high_signal_candidate_underperforms,2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성,remove_from_candidate_or_monitor_only
 opponent_month_win_rate_prior,month_phase,abs(opponent_month_win_rate_prior) >= p75(0.6957),231,0.567,0.571,0.004,99,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
 team_month_run_diff_prior,month_phase,abs(team_month_run_diff_prior) >= p75(2.3333),234,0.526,0.5,-0.026,117,high_signal_candidate_underperforms,2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성,remove_from_candidate_or_monitor_only
+month_run_diff_gap,month_phase,abs(month_run_diff_gap) >= p75(3.5839),230,0.522,0.513,-0.009,112,high_signal_candidate_underperforms,2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성,remove_from_candidate_or_monitor_only
 season_phase,month_phase,abs(season_phase) >= p75(1.0),648,0.556,0.543,-0.013,296,high_signal_candidate_underperforms,2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성,remove_from_candidate_or_monitor_only
+opponent_month_run_diff_prior,month_phase,abs(opponent_month_run_diff_prior) >= p75(2.3333),234,0.526,0.5,-0.026,117,high_signal_candidate_underperforms,2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성,remove_from_candidate_or_monitor_only
 month_win_rate_gap,month_phase,abs(month_win_rate_gap) >= p75(0.336),230,0.548,0.53,-0.018,108,high_signal_candidate_underperforms,2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성,remove_from_candidate_or_monitor_only
