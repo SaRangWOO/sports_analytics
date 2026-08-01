@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-08-01T18:30:02.792812",
-  "reference_date": "2026-08-01",
+  "generated_at": "2026-08-02T08:00:02.579365",
+  "reference_date": "2026-08-02",
   "total_games": 5,
   "strong_recommendation_count": 0,
-  "recommendation_count": 1,
-  "weak_edge_count": 4,
+  "recommendation_count": 2,
+  "weak_edge_count": 3,
   "watch_count": 0,
   "no_info_count": 0,
   "top_pick": "삼성",
-  "top_pick_probability": "55.5%",
+  "top_pick_probability": "57.4%",
   "day_confidence_summary": "승패 방향과 시장별 추천을 분리해 표시합니다.",
   "strong_recommendation_available": false,
   "message": "오늘은 강한 추천 경기는 없지만, 상대적으로 삼성가 가장 높은 우세 후보입니다. 핸디캡과 오버/언더는 관망이 적절합니다.",
-  "audited_completed_games": 107,
-  "pending_games": 103,
+  "audited_completed_games": 109,
+  "pending_games": 106,
   "grade_performance_snapshot": [
     {
       "grade": "A",
@@ -48,9 +48,9 @@
     {
       "grade": "C",
       "recommendation_strength": "약우세",
-      "games": 68,
-      "correct": 40,
-      "accuracy": 0.588,
+      "games": 70,
+      "correct": 41,
+      "accuracy": 0.586,
       "avg_probability": 0.541,
       "brier": 0.244,
       "log_loss": 0.681,
@@ -92,18 +92,6 @@
     }
   ],
   "top_pick_performance_snapshot": [
-    {
-      "date": "2026-07-01",
-      "top_pick_game": "LG vs 키움",
-      "top_pick_team": "LG",
-      "top_pick_probability": 0.555,
-      "top_pick_grade": "B등급",
-      "actual_winner": "LG",
-      "result": "correct",
-      "all_games_max_probability": 0.555,
-      "day_confidence_summary": "4 completed audited games",
-      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
-    },
     {
       "date": "2026-07-03",
       "top_pick_game": "삼성 vs SSG",
@@ -151,12 +139,24 @@
       "all_games_max_probability": 0.546,
       "day_confidence_summary": "5 completed audited games",
       "interpretation": "TOP PICK은 상대 순위 라벨입니다."
+    },
+    {
+      "date": "2026-08-01",
+      "top_pick_game": "한화 vs KT",
+      "top_pick_team": "KT",
+      "top_pick_probability": 0.537,
+      "top_pick_grade": "C등급",
+      "actual_winner": "KT",
+      "result": "correct",
+      "all_games_max_probability": 0.537,
+      "day_confidence_summary": "2 completed audited games",
+      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
     }
   ],
   "recommendation_policy_warning": "Daily TOP PICK is a relative ranking label and should not be interpreted as a strong recommendation unless the recommendation grade is A or B.",
   "label_calibration_status": "rename_top_pick",
   "top_pick_wording_status": "오늘 모델 기준 상대 우세 1순위",
   "actionability_warning": "Recommendation labels are interpretive until enough completed-game outcomes support them.",
-  "completed_games_used_for_label_calibration": 107,
-  "pending_games_for_future_calibration": 103
+  "completed_games_used_for_label_calibration": 109,
+  "pending_games_for_future_calibration": 106
 }
