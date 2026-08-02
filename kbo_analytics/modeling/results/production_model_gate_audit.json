@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-08-02T18:40:22.317162",
+  "generated_at": "2026-08-03T08:10:07.285760",
   "current_operational_model": "GradientBoosting 시간가중 모델",
-  "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_month_phase",
-  "current_operational_accuracy": 0.554,
-  "best_candidate_accuracy": 0.557,
-  "accuracy_delta": 0.003,
+  "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_volatility",
+  "current_operational_accuracy": 0.557,
+  "best_candidate_accuracy": 0.554,
+  "accuracy_delta": -0.003,
   "required_accuracy_delta": 0.005,
   "gates": [
     {
       "gate_name": "accuracy_delta_greater_than_0_005",
       "required_condition": "accuracy delta > 0.005",
-      "baseline_value": 0.554,
-      "candidate_value": 0.557,
+      "baseline_value": 0.557,
+      "candidate_value": 0.554,
       "passed": false,
       "severity": "high",
       "explanation": "개선폭이 운영 교체 최소 기준을 넘어야 함"
@@ -19,7 +19,7 @@
     {
       "gate_name": "brier_not_worse",
       "required_condition": "candidate brier <= current brier + 0.001",
-      "baseline_value": 0.247,
+      "baseline_value": 0.246,
       "candidate_value": 0.247,
       "passed": true,
       "severity": "high",
@@ -28,9 +28,9 @@
     {
       "gate_name": "log_loss_not_worse",
       "required_condition": "candidate log_loss <= current log_loss + 0.001",
-      "baseline_value": 0.688,
-      "candidate_value": 0.686,
-      "passed": true,
+      "baseline_value": 0.685,
+      "candidate_value": 0.687,
+      "passed": false,
       "severity": "high",
       "explanation": "확률 예측 손실 악화 방지"
     },
@@ -38,7 +38,7 @@
       "gate_name": "over_55_accuracy_improved",
       "required_condition": "candidate over_55_accuracy improves",
       "baseline_value": null,
-      "candidate_value": 0.597,
+      "candidate_value": 0.587,
       "passed": true,
       "severity": "medium",
       "explanation": "확신 구간 성능은 별도 bootstrap으로 재확인"
@@ -47,7 +47,7 @@
       "gate_name": "recent_3year_accuracy_not_worse",
       "required_condition": "recent 3 year accuracy not worse",
       "baseline_value": null,
-      "candidate_value": 0.557,
+      "candidate_value": 0.554,
       "passed": true,
       "severity": "medium",
       "explanation": "최근 시즌 안정성 확인"
@@ -56,7 +56,7 @@
       "gate_name": "winning_streak_accuracy_improved",
       "required_condition": "winning streak accuracy improves",
       "baseline_value": null,
-      "candidate_value": 0.526,
+      "candidate_value": 0.531,
       "passed": true,
       "severity": "medium",
       "explanation": "기존 약점 세그먼트 개선 필요"
@@ -65,7 +65,7 @@
       "gate_name": "close_game_accuracy_not_worse",
       "required_condition": "close game accuracy not worse",
       "baseline_value": null,
-      "candidate_value": 0.539,
+      "candidate_value": 0.537,
       "passed": true,
       "severity": "medium",
       "explanation": "박빙 경기 악화 방지"
@@ -82,9 +82,9 @@
     {
       "gate_name": "calibration_not_worse",
       "required_condition": "candidate calibration error not worse",
-      "baseline_value": 0.029,
-      "candidate_value": 0.027,
-      "passed": true,
+      "baseline_value": 0.018,
+      "candidate_value": 0.034,
+      "passed": false,
       "severity": "high",
       "explanation": "확률 보정 악화 방지"
     },
@@ -109,36 +109,38 @@
   ],
   "passed_gates": [
     "brier_not_worse",
-    "log_loss_not_worse",
     "over_55_accuracy_improved",
     "recent_3year_accuracy_not_worse",
     "winning_streak_accuracy_improved",
     "close_game_accuracy_not_worse",
-    "calibration_not_worse",
     "no_data_leakage_detected"
   ],
   "failed_gates": [
     "accuracy_delta_greater_than_0_005",
+    "log_loss_not_worse",
     "bootstrap_ci_stable",
+    "calibration_not_worse",
     "current_season_evidence_gate"
   ],
   "current_season_evidence_gate": {
     "season": 2026,
-    "completed_games": 459,
+    "completed_games": 485,
     "minimum_games_required": 50,
-    "baseline_accuracy": 0.558,
-    "candidate_accuracy": 0.56,
-    "accuracy_delta": 0.002,
-    "rolling_backtest_accuracy_delta": -0.007,
-    "baseline_brier": 0.246,
-    "candidate_brier": 0.245,
-    "baseline_log_loss": 0.685,
-    "candidate_log_loss": 0.683,
-    "baseline_over_55_accuracy": 0.585,
-    "candidate_over_55_accuracy": 0.589,
+    "baseline_accuracy": 0.565,
+    "candidate_accuracy": 0.542,
+    "accuracy_delta": -0.023,
+    "rolling_backtest_accuracy_delta": -0.014,
+    "baseline_brier": 0.245,
+    "candidate_brier": 0.247,
+    "baseline_log_loss": 0.684,
+    "candidate_log_loss": 0.687,
+    "baseline_over_55_accuracy": 0.589,
+    "candidate_over_55_accuracy": 0.607,
     "passed": false,
     "failed_reasons": [
       "current_season_accuracy_delta_not_greater_than_0_005",
+      "current_season_brier_worse",
+      "current_season_log_loss_worse",
       "rolling_backtest_not_better"
     ],
     "decision": "do_not_replace_production_model"

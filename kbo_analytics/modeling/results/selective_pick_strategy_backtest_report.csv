@@ -1,208 +1,208 @@
 ﻿strategy_name,model_name,feature_set,games_total,picked_games,coverage_rate,pick_accuracy,all_game_accuracy,daily_top1_games,daily_top1_accuracy,daily_top2_games,daily_top2_accuracy,avg_pick_probability,brier,log_loss,2026_pick_accuracy,2026_daily_top1_accuracy,2026_daily_top2_accuracy,rolling_pick_accuracy,interpretation
-all_games,current production model,production_feature_set,1470,1470,1.0,0.555,0.555,340,0.571,668,0.561,0.55,0.247,0.688,0.564,0.633,0.574,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,current production model,production_feature_set,1470,1160,0.979,0.558,0.555,333,0.565,645,0.561,0.56,0.247,0.688,0.552,0.629,0.571,,실전 선택픽 성능 개선 후보
-probability_ge_53,current production model,production_feature_set,1470,987,0.962,0.556,0.555,327,0.56,621,0.556,0.567,0.247,0.688,0.566,0.621,0.569,,실전 선택픽 성능 개선 후보
-probability_ge_54,current production model,production_feature_set,1470,814,0.932,0.56,0.555,317,0.568,578,0.561,0.573,0.247,0.688,0.588,0.624,0.58,,실전 선택픽 성능 개선 후보
-probability_ge_55,current production model,production_feature_set,1470,668,0.891,0.576,0.555,303,0.571,525,0.571,0.58,0.247,0.688,0.595,0.62,0.586,,실전 선택픽 성능 개선 후보
-daily_top1,current production model,production_feature_set,1470,340,1.0,0.571,0.555,340,0.571,340,0.571,0.585,0.247,0.688,0.633,0.633,0.633,,실전 선택픽 성능 개선 후보
-daily_top2,current production model,production_feature_set,1470,668,1.0,0.561,0.555,340,0.571,668,0.561,0.573,0.247,0.688,0.574,0.633,0.574,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,current production model,production_feature_set,1470,333,0.979,0.565,0.555,333,0.565,333,0.565,0.586,0.247,0.688,0.629,0.629,0.629,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,current production model,production_feature_set,1470,327,0.962,0.56,0.555,327,0.56,327,0.56,0.587,0.247,0.688,0.621,0.621,0.621,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,current production model,production_feature_set,1470,0,0.0,,0.555,0,,0,,,0.247,0.688,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,current production model,production_feature_set,1470,1470,1.0,0.555,0.555,340,0.571,668,0.561,0.55,0.247,0.688,0.564,0.633,0.574,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,current production model,production_feature_set,1470,1470,1.0,0.555,0.555,340,0.571,668,0.561,0.55,0.247,0.688,0.564,0.633,0.574,,전체 경기 대비 선택픽 우위가 제한적
-all_games,LogisticRegression conservative model,baseline_core,1470,1470,1.0,0.529,0.529,340,0.576,668,0.549,0.559,0.249,0.691,0.536,0.561,0.544,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,LogisticRegression conservative model,baseline_core,1470,1167,0.988,0.544,0.529,336,0.571,644,0.557,0.571,0.249,0.691,0.547,0.561,0.555,,실전 선택픽 성능 개선 후보
-probability_ge_53,LogisticRegression conservative model,baseline_core,1470,1004,0.979,0.551,0.529,333,0.577,620,0.565,0.579,0.249,0.691,0.555,0.567,0.561,,실전 선택픽 성능 개선 후보
-probability_ge_54,LogisticRegression conservative model,baseline_core,1470,858,0.959,0.55,0.529,326,0.574,589,0.564,0.586,0.249,0.691,0.55,0.573,0.571,,실전 선택픽 성능 개선 후보
-probability_ge_55,LogisticRegression conservative model,baseline_core,1470,727,0.921,0.563,0.529,313,0.588,550,0.578,0.593,0.249,0.691,0.552,0.573,0.578,,실전 선택픽 성능 개선 후보
-daily_top1,LogisticRegression conservative model,baseline_core,1470,340,1.0,0.576,0.529,340,0.576,340,0.576,0.607,0.249,0.691,0.561,0.561,0.561,,실전 선택픽 성능 개선 후보
-daily_top2,LogisticRegression conservative model,baseline_core,1470,668,1.0,0.549,0.529,340,0.576,668,0.549,0.589,0.249,0.691,0.544,0.561,0.544,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,LogisticRegression conservative model,baseline_core,1470,336,0.988,0.571,0.529,336,0.571,336,0.571,0.608,0.249,0.691,0.561,0.561,0.561,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,LogisticRegression conservative model,baseline_core,1470,333,0.979,0.577,0.529,333,0.577,333,0.577,0.609,0.249,0.691,0.567,0.567,0.567,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,LogisticRegression conservative model,baseline_core,1470,0,0.0,,0.529,0,,0,,,0.249,0.691,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,LogisticRegression conservative model,baseline_core,1470,1470,1.0,0.529,0.529,340,0.576,668,0.549,0.559,0.249,0.691,0.536,0.561,0.544,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,LogisticRegression conservative model,baseline_core,1470,1470,1.0,0.529,0.529,340,0.576,668,0.549,0.559,0.249,0.691,0.536,0.561,0.544,,전체 경기 대비 선택픽 우위가 제한적
-all_games,GradientBoosting conservative model,baseline_core,1470,1470,1.0,0.548,0.548,340,0.562,668,0.566,0.55,0.248,0.689,0.547,0.571,0.559,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,GradientBoosting conservative model,baseline_core,1470,1154,0.985,0.554,0.548,335,0.558,642,0.564,0.561,0.248,0.689,0.548,0.571,0.56,,실전 선택픽 성능 개선 후보
-probability_ge_53,GradientBoosting conservative model,baseline_core,1470,997,0.974,0.553,0.548,331,0.556,617,0.562,0.567,0.248,0.689,0.562,0.577,0.572,,실전 선택픽 성능 개선 후보
-probability_ge_54,GradientBoosting conservative model,baseline_core,1470,859,0.965,0.563,0.548,328,0.558,593,0.568,0.572,0.248,0.689,0.572,0.577,0.575,,실전 선택픽 성능 개선 후보
-probability_ge_55,GradientBoosting conservative model,baseline_core,1470,672,0.912,0.57,0.548,310,0.558,528,0.566,0.58,0.248,0.689,0.589,0.583,0.59,,실전 선택픽 성능 개선 후보
-daily_top1,GradientBoosting conservative model,baseline_core,1470,340,1.0,0.562,0.548,340,0.562,340,0.562,0.586,0.248,0.689,0.571,0.571,0.571,,실전 선택픽 성능 개선 후보
-daily_top2,GradientBoosting conservative model,baseline_core,1470,668,1.0,0.566,0.548,340,0.559,668,0.566,0.574,0.248,0.689,0.559,0.561,0.559,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_core,1470,335,0.985,0.558,0.548,335,0.558,335,0.558,0.587,0.248,0.689,0.571,0.571,0.571,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_core,1470,331,0.974,0.556,0.548,331,0.556,331,0.556,0.587,0.248,0.689,0.577,0.577,0.577,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,GradientBoosting conservative model,baseline_core,1470,0,0.0,,0.548,0,,0,,,0.248,0.689,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_core,1470,1470,1.0,0.548,0.548,340,0.562,668,0.566,0.55,0.248,0.689,0.547,0.571,0.559,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_core,1470,1470,1.0,0.548,0.548,340,0.562,668,0.566,0.55,0.248,0.689,0.547,0.571,0.559,,전체 경기 대비 선택픽 우위가 제한적
-all_games,HistGradientBoosting model,baseline_core,1470,1470,1.0,0.538,0.538,340,0.574,668,0.573,0.539,0.247,0.688,0.54,0.561,0.564,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,HistGradientBoosting model,baseline_core,1470,1067,0.979,0.557,0.538,333,0.571,628,0.573,0.55,0.247,0.688,0.557,0.567,0.568,,실전 선택픽 성능 개선 후보
-probability_ge_53,HistGradientBoosting model,baseline_core,1470,931,0.956,0.559,0.538,325,0.569,607,0.568,0.554,0.247,0.688,0.574,0.573,0.574,,실전 선택픽 성능 개선 후보
-probability_ge_54,HistGradientBoosting model,baseline_core,1470,681,0.912,0.565,0.538,310,0.568,534,0.573,0.561,0.247,0.688,0.583,0.579,0.585,,실전 선택픽 성능 개선 후보
-probability_ge_55,HistGradientBoosting model,baseline_core,1470,433,0.75,0.605,0.538,255,0.596,390,0.605,0.57,0.247,0.688,0.63,0.602,0.619,,실전 선택픽 성능 개선 후보
-daily_top1,HistGradientBoosting model,baseline_core,1470,340,1.0,0.574,0.538,340,0.574,340,0.574,0.565,0.247,0.688,0.561,0.561,0.561,,실전 선택픽 성능 개선 후보
-daily_top2,HistGradientBoosting model,baseline_core,1470,668,1.0,0.573,0.538,340,0.574,668,0.573,0.557,0.247,0.688,0.559,0.561,0.559,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,HistGradientBoosting model,baseline_core,1470,333,0.979,0.571,0.538,333,0.571,333,0.571,0.566,0.247,0.688,0.567,0.567,0.567,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,HistGradientBoosting model,baseline_core,1470,325,0.956,0.569,0.538,325,0.569,325,0.569,0.567,0.247,0.688,0.573,0.573,0.573,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,HistGradientBoosting model,baseline_core,1470,0,0.0,,0.538,0,,0,,,0.247,0.688,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,HistGradientBoosting model,baseline_core,1470,1470,1.0,0.538,0.538,340,0.574,668,0.573,0.539,0.247,0.688,0.54,0.561,0.564,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,HistGradientBoosting model,baseline_core,1470,1470,1.0,0.538,0.538,340,0.574,668,0.573,0.539,0.247,0.688,0.54,0.561,0.564,,전체 경기 대비 선택픽 우위가 제한적
-all_games,RandomForest model,baseline_core,1470,1470,1.0,0.532,0.532,340,0.571,668,0.582,0.545,0.247,0.687,0.542,0.592,0.579,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,RandomForest model,baseline_core,1470,1088,0.985,0.556,0.532,335,0.57,640,0.581,0.557,0.247,0.687,0.551,0.588,0.578,,실전 선택픽 성능 개선 후보
-probability_ge_53,RandomForest model,baseline_core,1470,909,0.968,0.568,0.532,329,0.568,605,0.583,0.563,0.247,0.687,0.578,0.594,0.581,,실전 선택픽 성능 개선 후보
-probability_ge_54,RandomForest model,baseline_core,1470,779,0.938,0.573,0.532,319,0.574,562,0.582,0.568,0.247,0.687,0.593,0.594,0.582,,실전 선택픽 성능 개선 후보
-probability_ge_55,RandomForest model,baseline_core,1470,604,0.874,0.593,0.532,297,0.586,495,0.594,0.574,0.247,0.687,0.612,0.591,0.588,,실전 선택픽 성능 개선 후보
-daily_top1,RandomForest model,baseline_core,1470,340,1.0,0.571,0.532,340,0.571,340,0.571,0.577,0.247,0.687,0.592,0.592,0.592,,실전 선택픽 성능 개선 후보
-daily_top2,RandomForest model,baseline_core,1470,668,1.0,0.582,0.532,340,0.571,668,0.582,0.566,0.247,0.687,0.579,0.592,0.579,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,RandomForest model,baseline_core,1470,335,0.985,0.57,0.532,335,0.57,335,0.57,0.578,0.247,0.687,0.588,0.588,0.588,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,RandomForest model,baseline_core,1470,329,0.968,0.568,0.532,329,0.568,329,0.568,0.578,0.247,0.687,0.594,0.594,0.594,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,RandomForest model,baseline_core,1470,0,0.0,,0.532,0,,0,,,0.247,0.687,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,RandomForest model,baseline_core,1470,1470,1.0,0.532,0.532,340,0.571,668,0.582,0.545,0.247,0.687,0.542,0.592,0.579,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,RandomForest model,baseline_core,1470,1470,1.0,0.532,0.532,340,0.571,668,0.582,0.545,0.247,0.687,0.542,0.592,0.579,,전체 경기 대비 선택픽 우위가 제한적
-all_games,ExtraTrees model,baseline_core,1470,1470,1.0,0.532,0.532,340,0.579,668,0.57,0.532,0.248,0.689,0.547,0.602,0.59,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,ExtraTrees model,baseline_core,1470,986,0.982,0.56,0.532,334,0.581,623,0.568,0.543,0.248,0.689,0.569,0.604,0.592,,실전 선택픽 성능 개선 후보
-probability_ge_53,ExtraTrees model,baseline_core,1470,731,0.924,0.554,0.532,314,0.58,546,0.566,0.549,0.248,0.689,0.558,0.611,0.588,,실전 선택픽 성능 개선 후보
-probability_ge_54,ExtraTrees model,baseline_core,1470,486,0.806,0.57,0.532,274,0.599,421,0.572,0.556,0.248,0.689,0.558,0.593,0.568,,실전 선택픽 성능 개선 후보
-probability_ge_55,ExtraTrees model,baseline_core,1470,296,0.609,0.574,0.532,207,0.623,273,0.579,0.564,0.248,0.689,0.552,0.616,0.564,,실전 선택픽 성능 개선 후보
-daily_top1,ExtraTrees model,baseline_core,1470,340,1.0,0.579,0.532,340,0.579,340,0.579,0.555,0.248,0.689,0.602,0.602,0.602,,실전 선택픽 성능 개선 후보
-daily_top2,ExtraTrees model,baseline_core,1470,668,1.0,0.57,0.532,340,0.576,668,0.57,0.547,0.248,0.689,0.59,0.592,0.59,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,ExtraTrees model,baseline_core,1470,334,0.982,0.581,0.532,334,0.581,334,0.581,0.555,0.248,0.689,0.604,0.604,0.604,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,ExtraTrees model,baseline_core,1470,314,0.924,0.58,0.532,314,0.58,314,0.58,0.557,0.248,0.689,0.611,0.611,0.611,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,ExtraTrees model,baseline_core,1470,0,0.0,,0.532,0,,0,,,0.248,0.689,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,ExtraTrees model,baseline_core,1470,1470,1.0,0.532,0.532,340,0.579,668,0.57,0.532,0.248,0.689,0.547,0.602,0.59,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,ExtraTrees model,baseline_core,1470,1470,1.0,0.532,0.532,340,0.579,668,0.57,0.532,0.248,0.689,0.547,0.602,0.59,,전체 경기 대비 선택픽 우위가 제한적
-all_games,GradientBoosting conservative model,baseline_plus_streak,1470,1470,1.0,0.541,0.541,340,0.565,668,0.569,0.549,0.248,0.689,0.553,0.582,0.569,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,GradientBoosting conservative model,baseline_plus_streak,1470,1139,0.979,0.552,0.541,333,0.565,643,0.569,0.561,0.248,0.689,0.549,0.577,0.565,,실전 선택픽 성능 개선 후보
-probability_ge_53,GradientBoosting conservative model,baseline_plus_streak,1470,1008,0.968,0.552,0.541,329,0.562,621,0.565,0.565,0.248,0.689,0.561,0.577,0.566,,실전 선택픽 성능 개선 후보
-probability_ge_54,GradientBoosting conservative model,baseline_plus_streak,1470,865,0.959,0.558,0.541,326,0.564,592,0.562,0.57,0.248,0.689,0.571,0.577,0.562,,실전 선택픽 성능 개선 후보
-probability_ge_55,GradientBoosting conservative model,baseline_plus_streak,1470,658,0.909,0.573,0.541,309,0.563,518,0.575,0.578,0.248,0.689,0.587,0.579,0.58,,실전 선택픽 성능 개선 후보
-daily_top1,GradientBoosting conservative model,baseline_plus_streak,1470,340,1.0,0.565,0.541,340,0.565,340,0.565,0.582,0.248,0.689,0.582,0.582,0.582,,실전 선택픽 성능 개선 후보
-daily_top2,GradientBoosting conservative model,baseline_plus_streak,1470,668,1.0,0.569,0.541,340,0.562,668,0.569,0.571,0.248,0.689,0.569,0.582,0.569,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_plus_streak,1470,333,0.979,0.565,0.541,333,0.565,333,0.565,0.584,0.248,0.689,0.577,0.577,0.577,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_plus_streak,1470,329,0.968,0.562,0.541,329,0.562,329,0.562,0.585,0.248,0.689,0.577,0.577,0.577,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,GradientBoosting conservative model,baseline_plus_streak,1470,0,0.0,,0.541,0,,0,,,0.248,0.689,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_plus_streak,1470,1470,1.0,0.541,0.541,340,0.565,668,0.569,0.549,0.248,0.689,0.553,0.582,0.569,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_plus_streak,1470,1470,1.0,0.541,0.541,340,0.565,668,0.569,0.549,0.248,0.689,0.553,0.582,0.569,,전체 경기 대비 선택픽 우위가 제한적
-all_games,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,1470,1.0,0.552,0.552,340,0.585,668,0.6,0.545,0.247,0.687,0.558,0.602,0.579,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,1163,0.988,0.551,0.552,336,0.592,649,0.596,0.554,0.247,0.687,0.553,0.608,0.58,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_53,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,982,0.968,0.567,0.552,329,0.593,618,0.592,0.56,0.247,0.687,0.566,0.608,0.582,,실전 선택픽 성능 개선 후보
-probability_ge_54,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,790,0.938,0.57,0.552,319,0.596,565,0.591,0.566,0.247,0.687,0.576,0.604,0.583,,실전 선택픽 성능 개선 후보
-probability_ge_55,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,598,0.865,0.597,0.552,294,0.609,498,0.6,0.573,0.247,0.687,0.609,0.602,0.599,,실전 선택픽 성능 개선 후보
-daily_top1,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,340,1.0,0.585,0.552,340,0.585,340,0.585,0.574,0.247,0.687,0.602,0.602,0.602,,실전 선택픽 성능 개선 후보
-daily_top2,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,668,1.0,0.6,0.552,340,0.582,668,0.6,0.565,0.247,0.687,0.579,0.592,0.579,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,336,0.988,0.592,0.552,336,0.592,336,0.592,0.575,0.247,0.687,0.608,0.608,0.608,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,329,0.968,0.593,0.552,329,0.593,329,0.593,0.576,0.247,0.687,0.608,0.608,0.608,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,0,0.0,,0.552,0,,0,,,0.247,0.687,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,1470,1.0,0.552,0.552,340,0.585,668,0.6,0.545,0.247,0.687,0.558,0.602,0.579,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1470,1470,1.0,0.552,0.552,340,0.585,668,0.6,0.545,0.247,0.687,0.558,0.602,0.579,,전체 경기 대비 선택픽 우위가 제한적
-all_games,LogisticRegression conservative model,baseline_without_false_signal_features,1470,1470,1.0,0.527,0.527,340,0.568,668,0.57,0.561,0.248,0.69,0.503,0.571,0.59,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,LogisticRegression conservative model,baseline_without_false_signal_features,1470,1163,0.988,0.555,0.527,336,0.568,652,0.574,0.574,0.248,0.69,0.542,0.571,0.593,,실전 선택픽 성능 개선 후보
-probability_ge_53,LogisticRegression conservative model,baseline_without_false_signal_features,1470,1016,0.979,0.555,0.527,333,0.568,634,0.576,0.581,0.248,0.69,0.559,0.571,0.596,,실전 선택픽 성능 개선 후보
-probability_ge_54,LogisticRegression conservative model,baseline_without_false_signal_features,1470,896,0.976,0.552,0.527,332,0.569,609,0.575,0.588,0.248,0.69,0.564,0.571,0.602,,실전 선택픽 성능 개선 후보
-probability_ge_55,LogisticRegression conservative model,baseline_without_false_signal_features,1470,777,0.947,0.565,0.527,322,0.581,575,0.583,0.594,0.248,0.69,0.578,0.583,0.603,,실전 선택픽 성능 개선 후보
-daily_top1,LogisticRegression conservative model,baseline_without_false_signal_features,1470,340,1.0,0.568,0.527,340,0.568,340,0.568,0.609,0.248,0.69,0.571,0.571,0.571,,실전 선택픽 성능 개선 후보
-daily_top2,LogisticRegression conservative model,baseline_without_false_signal_features,1470,668,1.0,0.57,0.527,340,0.568,668,0.57,0.592,0.248,0.69,0.59,0.571,0.59,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,LogisticRegression conservative model,baseline_without_false_signal_features,1470,336,0.988,0.568,0.527,336,0.568,336,0.568,0.61,0.248,0.69,0.571,0.571,0.571,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,LogisticRegression conservative model,baseline_without_false_signal_features,1470,333,0.979,0.568,0.527,333,0.568,333,0.568,0.611,0.248,0.69,0.571,0.571,0.571,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,LogisticRegression conservative model,baseline_without_false_signal_features,1470,1470,1.0,0.527,0.527,340,0.568,668,0.57,0.561,0.248,0.69,0.503,0.571,0.59,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,LogisticRegression conservative model,baseline_without_false_signal_features,1470,1470,1.0,0.527,0.527,340,0.568,668,0.57,0.561,0.248,0.69,0.503,0.571,0.59,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,LogisticRegression conservative model,baseline_without_false_signal_features,1470,1470,1.0,0.527,0.527,340,0.568,668,0.57,0.561,0.248,0.69,0.503,0.571,0.59,,전체 경기 대비 선택픽 우위가 제한적
-all_games,GradientBoosting conservative model,baseline_without_false_signal_features,1470,1470,1.0,0.56,0.56,340,0.576,668,0.59,0.546,0.247,0.687,0.562,0.571,0.579,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,GradientBoosting conservative model,baseline_without_false_signal_features,1470,1171,0.988,0.552,0.56,336,0.58,651,0.588,0.556,0.247,0.687,0.548,0.577,0.578,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_53,GradientBoosting conservative model,baseline_without_false_signal_features,1470,1002,0.971,0.564,0.56,330,0.585,622,0.585,0.561,0.247,0.687,0.562,0.577,0.579,,실전 선택픽 성능 개선 후보
-probability_ge_54,GradientBoosting conservative model,baseline_without_false_signal_features,1470,801,0.935,0.573,0.56,318,0.588,573,0.581,0.567,0.247,0.687,0.574,0.573,0.579,,실전 선택픽 성능 개선 후보
-probability_ge_55,GradientBoosting conservative model,baseline_without_false_signal_features,1470,623,0.888,0.586,0.56,302,0.593,510,0.59,0.573,0.247,0.687,0.583,0.564,0.592,,실전 선택픽 성능 개선 후보
-daily_top1,GradientBoosting conservative model,baseline_without_false_signal_features,1470,340,1.0,0.576,0.56,340,0.576,340,0.576,0.576,0.247,0.687,0.571,0.571,0.571,,실전 선택픽 성능 개선 후보
-daily_top2,GradientBoosting conservative model,baseline_without_false_signal_features,1470,668,1.0,0.59,0.56,340,0.574,668,0.59,0.567,0.247,0.687,0.579,0.561,0.579,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_without_false_signal_features,1470,336,0.988,0.58,0.56,336,0.58,336,0.58,0.577,0.247,0.687,0.577,0.577,0.577,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_without_false_signal_features,1470,330,0.971,0.585,0.56,330,0.585,330,0.585,0.578,0.247,0.687,0.577,0.577,0.577,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,GradientBoosting conservative model,baseline_without_false_signal_features,1470,1470,1.0,0.56,0.56,340,0.576,668,0.59,0.546,0.247,0.687,0.562,0.571,0.579,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_without_false_signal_features,1470,1470,1.0,0.56,0.56,340,0.576,668,0.59,0.546,0.247,0.687,0.562,0.571,0.579,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_without_false_signal_features,1470,1470,1.0,0.56,0.56,340,0.576,668,0.59,0.546,0.247,0.687,0.562,0.571,0.579,,전체 경기 대비 선택픽 우위가 제한적
-all_games,HistGradientBoosting model,baseline_without_false_signal_features,1470,1470,1.0,0.551,0.551,340,0.591,668,0.585,0.55,0.247,0.687,0.553,0.592,0.59,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,HistGradientBoosting model,baseline_without_false_signal_features,1470,1172,0.991,0.56,0.551,337,0.591,654,0.586,0.56,0.247,0.687,0.55,0.592,0.593,,실전 선택픽 성능 개선 후보
-probability_ge_53,HistGradientBoosting model,baseline_without_false_signal_features,1470,1004,0.974,0.566,0.551,331,0.592,626,0.581,0.566,0.247,0.687,0.564,0.598,0.598,,실전 선택픽 성능 개선 후보
-probability_ge_54,HistGradientBoosting model,baseline_without_false_signal_features,1470,842,0.938,0.567,0.551,319,0.589,589,0.576,0.571,0.247,0.687,0.564,0.594,0.589,,실전 선택픽 성능 개선 후보
-probability_ge_55,HistGradientBoosting model,baseline_without_false_signal_features,1470,682,0.897,0.576,0.551,305,0.584,538,0.574,0.578,0.247,0.687,0.594,0.589,0.603,,실전 선택픽 성능 개선 후보
-daily_top1,HistGradientBoosting model,baseline_without_false_signal_features,1470,340,1.0,0.588,0.551,340,0.588,340,0.588,0.584,0.247,0.687,0.582,0.582,0.582,,실전 선택픽 성능 개선 후보
-daily_top2,HistGradientBoosting model,baseline_without_false_signal_features,1470,668,1.0,0.585,0.551,340,0.588,668,0.585,0.573,0.247,0.687,0.59,0.582,0.59,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,HistGradientBoosting model,baseline_without_false_signal_features,1470,337,0.991,0.588,0.551,337,0.588,337,0.588,0.584,0.247,0.687,0.582,0.582,0.582,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,HistGradientBoosting model,baseline_without_false_signal_features,1470,331,0.974,0.589,0.551,331,0.589,331,0.589,0.585,0.247,0.687,0.588,0.588,0.588,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,HistGradientBoosting model,baseline_without_false_signal_features,1470,1470,1.0,0.551,0.551,340,0.591,668,0.585,0.55,0.247,0.687,0.553,0.592,0.59,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,HistGradientBoosting model,baseline_without_false_signal_features,1470,1470,1.0,0.551,0.551,340,0.591,668,0.585,0.55,0.247,0.687,0.553,0.592,0.59,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,HistGradientBoosting model,baseline_without_false_signal_features,1470,1470,1.0,0.551,0.551,340,0.591,668,0.585,0.55,0.247,0.687,0.553,0.592,0.59,,전체 경기 대비 선택픽 우위가 제한적
-all_games,GradientBoosting conservative model,baseline_plus_momentum_only,1470,1470,1.0,0.545,0.545,340,0.562,668,0.561,0.547,0.247,0.688,0.545,0.582,0.554,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,GradientBoosting conservative model,baseline_plus_momentum_only,1470,1139,0.988,0.552,0.545,336,0.565,637,0.559,0.557,0.247,0.688,0.548,0.577,0.555,,실전 선택픽 성능 개선 후보
-probability_ge_53,GradientBoosting conservative model,baseline_plus_momentum_only,1470,991,0.965,0.56,0.545,328,0.567,615,0.556,0.562,0.247,0.688,0.566,0.577,0.558,,실전 선택픽 성능 개선 후보
-probability_ge_54,GradientBoosting conservative model,baseline_plus_momentum_only,1470,814,0.95,0.569,0.545,323,0.563,571,0.562,0.568,0.247,0.688,0.576,0.583,0.579,,실전 선택픽 성능 개선 후보
-probability_ge_55,GradientBoosting conservative model,baseline_plus_momentum_only,1470,634,0.888,0.574,0.545,302,0.566,503,0.569,0.574,0.247,0.688,0.593,0.57,0.584,,실전 선택픽 성능 개선 후보
-daily_top1,GradientBoosting conservative model,baseline_plus_momentum_only,1470,340,1.0,0.562,0.545,340,0.562,340,0.562,0.577,0.247,0.688,0.582,0.582,0.582,,실전 선택픽 성능 개선 후보
-daily_top2,GradientBoosting conservative model,baseline_plus_momentum_only,1470,668,1.0,0.561,0.545,340,0.562,668,0.561,0.567,0.247,0.688,0.554,0.582,0.554,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_plus_momentum_only,1470,336,0.988,0.565,0.545,336,0.565,336,0.565,0.578,0.247,0.688,0.577,0.577,0.577,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_plus_momentum_only,1470,328,0.965,0.567,0.545,328,0.567,328,0.567,0.579,0.247,0.688,0.577,0.577,0.577,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,GradientBoosting conservative model,baseline_plus_momentum_only,1470,0,0.0,,0.545,0,,0,,,0.247,0.688,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_plus_momentum_only,1470,1470,1.0,0.545,0.545,340,0.562,668,0.561,0.547,0.247,0.688,0.545,0.582,0.554,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_plus_momentum_only,1470,1470,1.0,0.545,0.545,340,0.562,668,0.561,0.547,0.247,0.688,0.545,0.582,0.554,,전체 경기 대비 선택픽 우위가 제한적
-all_games,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,1470,1.0,0.52,0.52,340,0.55,668,0.53,0.533,0.249,0.692,0.538,0.531,0.513,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,959,0.988,0.535,0.52,336,0.548,624,0.532,0.546,0.249,0.692,0.529,0.526,0.511,,실전 선택픽 성능 개선 후보
-probability_ge_53,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,784,0.959,0.542,0.52,326,0.543,574,0.535,0.55,0.249,0.692,0.535,0.521,0.514,,실전 선택픽 성능 개선 후보
-probability_ge_54,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,579,0.868,0.539,0.52,295,0.539,473,0.537,0.556,0.249,0.692,0.541,0.533,0.524,,실전 선택픽 성능 개선 후보
-probability_ge_55,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,317,0.606,0.521,0.52,206,0.529,282,0.521,0.564,0.249,0.692,0.5,0.516,0.5,,실전 선택픽 성능 개선 후보
-daily_top1,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,340,1.0,0.55,0.52,340,0.55,340,0.55,0.557,0.249,0.692,0.531,0.531,0.531,,실전 선택픽 성능 개선 후보
-daily_top2,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,668,1.0,0.531,0.52,340,0.55,668,0.531,0.548,0.249,0.692,0.518,0.531,0.518,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,336,0.988,0.548,0.52,336,0.548,336,0.548,0.557,0.249,0.692,0.526,0.526,0.526,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,326,0.959,0.543,0.52,326,0.543,326,0.543,0.558,0.249,0.692,0.521,0.521,0.521,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,0,0.0,,0.52,0,,0,,,0.249,0.692,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,1470,1.0,0.52,0.52,340,0.55,668,0.53,0.533,0.249,0.692,0.538,0.531,0.513,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_plus_recent_form_only,1470,1470,1.0,0.52,0.52,340,0.55,668,0.53,0.533,0.249,0.692,0.538,0.531,0.513,,전체 경기 대비 선택픽 우위가 제한적
-all_games,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,1470,1.0,0.537,0.537,340,0.574,668,0.555,0.552,0.248,0.689,0.549,0.561,0.549,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,1163,0.979,0.544,0.537,333,0.571,640,0.548,0.563,0.248,0.689,0.545,0.557,0.544,,실전 선택픽 성능 개선 후보
-probability_ge_53,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,1018,0.965,0.552,0.537,328,0.57,622,0.553,0.569,0.248,0.689,0.553,0.557,0.547,,실전 선택픽 성능 개선 후보
-probability_ge_54,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,875,0.953,0.561,0.537,324,0.574,593,0.558,0.574,0.248,0.689,0.567,0.562,0.554,,실전 선택픽 성능 개선 후보
-probability_ge_55,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,709,0.912,0.571,0.537,310,0.577,535,0.564,0.581,0.248,0.689,0.577,0.568,0.569,,실전 선택픽 성능 개선 후보
-daily_top1,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,340,1.0,0.571,0.537,340,0.571,340,0.571,0.589,0.248,0.689,0.551,0.551,0.551,,실전 선택픽 성능 개선 후보
-daily_top2,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,668,1.0,0.555,0.537,340,0.571,668,0.555,0.576,0.248,0.689,0.549,0.551,0.549,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,333,0.979,0.568,0.537,333,0.568,333,0.568,0.591,0.248,0.689,0.546,0.546,0.546,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,328,0.965,0.567,0.537,328,0.567,328,0.567,0.592,0.248,0.689,0.546,0.546,0.546,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,0,0.0,,0.537,0,,0,,,0.248,0.689,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,1470,1.0,0.537,0.537,340,0.574,668,0.555,0.552,0.248,0.689,0.549,0.561,0.549,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1470,0,0.0,,0.537,0,,0,,,0.248,0.689,,,,,전체 경기 대비 선택픽 우위가 제한적
-all_games,LogisticRegression conservative model,production_feature_set,1470,1470,1.0,0.516,0.516,340,0.509,668,0.53,0.559,0.252,0.698,0.497,0.5,0.503,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,LogisticRegression conservative model,production_feature_set,1470,1167,0.997,0.528,0.516,339,0.51,658,0.535,0.571,0.252,0.698,0.514,0.5,0.505,,실전 선택픽 성능 개선 후보
-probability_ge_53,LogisticRegression conservative model,production_feature_set,1470,1015,0.982,0.536,0.516,334,0.515,642,0.542,0.578,0.252,0.698,0.513,0.495,0.508,,실전 선택픽 성능 개선 후보
-probability_ge_54,LogisticRegression conservative model,production_feature_set,1470,864,0.976,0.53,0.516,332,0.515,606,0.531,0.586,0.252,0.698,0.515,0.495,0.495,,실전 선택픽 성능 개선 후보
-probability_ge_55,LogisticRegression conservative model,production_feature_set,1470,731,0.941,0.539,0.516,320,0.525,560,0.541,0.593,0.252,0.698,0.527,0.505,0.518,,실전 선택픽 성능 개선 후보
-daily_top1,LogisticRegression conservative model,production_feature_set,1470,340,1.0,0.509,0.516,340,0.509,340,0.509,0.607,0.252,0.698,0.5,0.5,0.5,,전체 경기 대비 선택픽 우위가 제한적
-daily_top2,LogisticRegression conservative model,production_feature_set,1470,668,1.0,0.53,0.516,340,0.509,668,0.53,0.59,0.252,0.698,0.503,0.5,0.503,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,LogisticRegression conservative model,production_feature_set,1470,339,0.997,0.51,0.516,339,0.51,339,0.51,0.608,0.252,0.698,0.5,0.5,0.5,,전체 경기 대비 선택픽 우위가 제한적
-daily_top1_if_probability_ge_53,LogisticRegression conservative model,production_feature_set,1470,334,0.982,0.515,0.516,334,0.515,334,0.515,0.609,0.252,0.698,0.495,0.495,0.495,,전체 경기 대비 선택픽 우위가 제한적
-avoid_false_signal_features,LogisticRegression conservative model,production_feature_set,1470,0,0.0,,0.516,0,,0,,,0.252,0.698,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,LogisticRegression conservative model,production_feature_set,1470,1470,1.0,0.516,0.516,340,0.509,668,0.53,0.559,0.252,0.698,0.497,0.5,0.503,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,LogisticRegression conservative model,production_feature_set,1470,1470,1.0,0.516,0.516,340,0.509,668,0.53,0.559,0.252,0.698,0.497,0.5,0.503,,전체 경기 대비 선택픽 우위가 제한적
-all_games,GradientBoosting conservative model,production_feature_set,1470,1470,1.0,0.552,0.552,340,0.568,668,0.566,0.551,0.248,0.688,0.551,0.561,0.554,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,GradientBoosting conservative model,production_feature_set,1470,1154,0.985,0.553,0.552,335,0.567,649,0.565,0.562,0.248,0.688,0.546,0.561,0.549,,실전 선택픽 성능 개선 후보
-probability_ge_53,GradientBoosting conservative model,production_feature_set,1470,1011,0.971,0.564,0.552,330,0.57,627,0.566,0.567,0.248,0.688,0.561,0.558,0.548,,실전 선택픽 성능 개선 후보
-probability_ge_54,GradientBoosting conservative model,production_feature_set,1470,846,0.95,0.566,0.552,323,0.57,590,0.569,0.573,0.248,0.688,0.557,0.558,0.556,,실전 선택픽 성능 개선 후보
-probability_ge_55,GradientBoosting conservative model,production_feature_set,1470,693,0.897,0.56,0.552,305,0.577,528,0.576,0.58,0.248,0.688,0.552,0.559,0.556,,실전 선택픽 성능 개선 후보
-daily_top1,GradientBoosting conservative model,production_feature_set,1470,340,1.0,0.568,0.552,340,0.568,340,0.568,0.587,0.248,0.688,0.561,0.561,0.561,,실전 선택픽 성능 개선 후보
-daily_top2,GradientBoosting conservative model,production_feature_set,1470,668,1.0,0.566,0.552,340,0.568,668,0.566,0.574,0.248,0.688,0.554,0.561,0.554,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,GradientBoosting conservative model,production_feature_set,1470,335,0.985,0.567,0.552,335,0.567,335,0.567,0.588,0.248,0.688,0.561,0.561,0.561,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,GradientBoosting conservative model,production_feature_set,1470,330,0.971,0.57,0.552,330,0.57,330,0.57,0.589,0.248,0.688,0.558,0.558,0.558,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,GradientBoosting conservative model,production_feature_set,1470,0,0.0,,0.552,0,,0,,,0.248,0.688,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,GradientBoosting conservative model,production_feature_set,1470,1470,1.0,0.552,0.552,340,0.568,668,0.566,0.551,0.248,0.688,0.551,0.561,0.554,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,GradientBoosting conservative model,production_feature_set,1470,1470,1.0,0.552,0.552,340,0.568,668,0.566,0.551,0.248,0.688,0.551,0.561,0.554,,전체 경기 대비 선택픽 우위가 제한적
-all_games,probability average ensemble,ensemble,1470,1470,1.0,0.546,0.546,340,0.582,668,0.576,0.544,0.247,0.688,0.558,0.541,0.569,,전체 경기 대비 선택픽 우위가 제한적
-probability_ge_52,probability average ensemble,ensemble,1470,1097,0.979,0.554,0.546,333,0.586,634,0.577,0.556,0.247,0.688,0.55,0.552,0.579,,실전 선택픽 성능 개선 후보
-probability_ge_53,probability average ensemble,ensemble,1470,916,0.965,0.559,0.546,328,0.582,603,0.577,0.562,0.247,0.688,0.562,0.552,0.587,,실전 선택픽 성능 개선 후보
-probability_ge_54,probability average ensemble,ensemble,1470,746,0.941,0.57,0.546,320,0.578,557,0.58,0.568,0.247,0.688,0.578,0.547,0.585,,실전 선택픽 성능 개선 후보
-probability_ge_55,probability average ensemble,ensemble,1470,572,0.85,0.586,0.546,289,0.578,476,0.59,0.574,0.247,0.688,0.609,0.548,0.596,,실전 선택픽 성능 개선 후보
-daily_top1,probability average ensemble,ensemble,1470,340,1.0,0.582,0.546,340,0.582,340,0.582,0.575,0.247,0.688,0.541,0.541,0.541,,실전 선택픽 성능 개선 후보
-daily_top2,probability average ensemble,ensemble,1470,668,1.0,0.576,0.546,340,0.582,668,0.576,0.565,0.247,0.688,0.569,0.541,0.569,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_52,probability average ensemble,ensemble,1470,333,0.979,0.586,0.546,333,0.586,333,0.586,0.577,0.247,0.688,0.552,0.552,0.552,,실전 선택픽 성능 개선 후보
-daily_top1_if_probability_ge_53,probability average ensemble,ensemble,1470,328,0.965,0.582,0.546,328,0.582,328,0.582,0.577,0.247,0.688,0.552,0.552,0.552,,실전 선택픽 성능 개선 후보
-avoid_false_signal_features,probability average ensemble,ensemble,1470,0,0.0,,0.546,0,,0,,,0.247,0.688,,,,,전체 경기 대비 선택픽 우위가 제한적
-avoid_high_volatility_false_signal,probability average ensemble,ensemble,1470,1470,1.0,0.546,0.546,340,0.582,668,0.576,0.544,0.247,0.688,0.558,0.541,0.569,,전체 경기 대비 선택픽 우위가 제한적
-avoid_venue_gap_false_signal,probability average ensemble,ensemble,1470,1470,1.0,0.546,0.546,340,0.582,668,0.576,0.544,0.247,0.688,0.558,0.541,0.569,,전체 경기 대비 선택픽 우위가 제한적
-model_consensus_only,model consensus,consensus,1470,1470,1.0,0.539,0.539,340,0.565,668,0.537,0.912,,,0.551,0.571,0.528,,전체 경기 대비 선택픽 우위가 제한적
-model_consensus_daily_top1,model consensus,consensus,1470,340,1.0,0.574,0.539,340,0.574,340,0.574,0.995,,,0.561,0.561,0.561,,실전 선택픽 성능 개선 후보
-production_vs_challenger_agreement_only,model consensus,consensus,1470,1304,0.994,0.552,0.539,338,0.562,662,0.544,0.933,,,0.56,0.577,0.557,,실전 선택픽 성능 개선 후보
+all_games,current production model,production_feature_set,1480,1480,1.0,0.559,0.559,342,0.623,672,0.618,0.542,0.246,0.685,0.567,0.625,0.614,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,current production model,production_feature_set,1480,1133,0.982,0.564,0.559,336,0.628,649,0.618,0.551,0.246,0.685,0.57,0.621,0.609,,실전 선택픽 성능 개선 후보
+probability_ge_53,current production model,production_feature_set,1480,893,0.962,0.585,0.559,329,0.626,607,0.618,0.558,0.246,0.685,0.573,0.614,0.608,,실전 선택픽 성능 개선 후보
+probability_ge_54,current production model,production_feature_set,1480,701,0.915,0.602,0.559,313,0.623,555,0.62,0.565,0.246,0.685,0.602,0.614,0.611,,실전 선택픽 성능 개선 후보
+probability_ge_55,current production model,production_feature_set,1480,540,0.836,0.606,0.559,286,0.622,471,0.611,0.57,0.246,0.685,0.608,0.612,0.605,,실전 선택픽 성능 개선 후보
+daily_top1,current production model,production_feature_set,1480,342,1.0,0.62,0.559,342,0.62,342,0.62,0.57,0.246,0.685,0.615,0.615,0.615,,실전 선택픽 성능 개선 후보
+daily_top2,current production model,production_feature_set,1480,672,1.0,0.618,0.559,342,0.623,672,0.618,0.561,0.246,0.685,0.614,0.625,0.614,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,current production model,production_feature_set,1480,336,0.982,0.625,0.559,336,0.625,336,0.625,0.571,0.246,0.685,0.612,0.612,0.612,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,current production model,production_feature_set,1480,329,0.962,0.623,0.559,329,0.623,329,0.623,0.572,0.246,0.685,0.604,0.604,0.604,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,current production model,production_feature_set,1480,0,0.0,,0.559,0,,0,,,0.246,0.685,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,current production model,production_feature_set,1480,1480,1.0,0.559,0.559,342,0.623,672,0.618,0.542,0.246,0.685,0.567,0.625,0.614,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,current production model,production_feature_set,1480,1480,1.0,0.559,0.559,342,0.623,672,0.618,0.542,0.246,0.685,0.567,0.625,0.614,,전체 경기 대비 선택픽 우위가 제한적
+all_games,LogisticRegression conservative model,baseline_core,1480,1480,1.0,0.532,0.532,342,0.579,672,0.551,0.559,0.249,0.691,0.542,0.558,0.551,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,LogisticRegression conservative model,baseline_core,1480,1182,0.988,0.547,0.532,338,0.574,650,0.558,0.571,0.249,0.691,0.556,0.558,0.562,,실전 선택픽 성능 개선 후보
+probability_ge_53,LogisticRegression conservative model,baseline_core,1480,1018,0.98,0.553,0.532,335,0.579,627,0.565,0.579,0.249,0.691,0.563,0.563,0.568,,실전 선택픽 성능 개선 후보
+probability_ge_54,LogisticRegression conservative model,baseline_core,1480,869,0.962,0.551,0.532,329,0.574,596,0.564,0.586,0.249,0.691,0.556,0.563,0.577,,실전 선택픽 성능 개선 후보
+probability_ge_55,LogisticRegression conservative model,baseline_core,1480,737,0.93,0.563,0.532,318,0.588,558,0.575,0.593,0.249,0.691,0.558,0.569,0.582,,실전 선택픽 성능 개선 후보
+daily_top1,LogisticRegression conservative model,baseline_core,1480,342,1.0,0.579,0.532,342,0.579,342,0.579,0.608,0.249,0.691,0.558,0.558,0.558,,실전 선택픽 성능 개선 후보
+daily_top2,LogisticRegression conservative model,baseline_core,1480,672,1.0,0.551,0.532,342,0.579,672,0.551,0.589,0.249,0.691,0.551,0.558,0.551,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,LogisticRegression conservative model,baseline_core,1480,338,0.988,0.574,0.532,338,0.574,338,0.574,0.609,0.249,0.691,0.558,0.558,0.558,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,LogisticRegression conservative model,baseline_core,1480,335,0.98,0.579,0.532,335,0.579,335,0.579,0.61,0.249,0.691,0.563,0.563,0.563,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,LogisticRegression conservative model,baseline_core,1480,0,0.0,,0.532,0,,0,,,0.249,0.691,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,LogisticRegression conservative model,baseline_core,1480,1480,1.0,0.532,0.532,342,0.579,672,0.551,0.559,0.249,0.691,0.542,0.558,0.551,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,LogisticRegression conservative model,baseline_core,1480,1480,1.0,0.532,0.532,342,0.579,672,0.551,0.559,0.249,0.691,0.542,0.558,0.551,,전체 경기 대비 선택픽 우위가 제한적
+all_games,GradientBoosting conservative model,baseline_core,1480,1480,1.0,0.544,0.544,342,0.576,672,0.568,0.548,0.247,0.687,0.544,0.587,0.57,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,GradientBoosting conservative model,baseline_core,1480,1170,0.985,0.556,0.544,337,0.576,650,0.566,0.558,0.247,0.687,0.565,0.583,0.569,,실전 선택픽 성능 개선 후보
+probability_ge_53,GradientBoosting conservative model,baseline_core,1480,1021,0.974,0.561,0.544,333,0.577,631,0.567,0.563,0.247,0.687,0.566,0.583,0.574,,실전 선택픽 성능 개선 후보
+probability_ge_54,GradientBoosting conservative model,baseline_core,1480,842,0.959,0.576,0.544,328,0.582,591,0.572,0.568,0.247,0.687,0.601,0.588,0.579,,실전 선택픽 성능 개선 후보
+probability_ge_55,GradientBoosting conservative model,baseline_core,1480,665,0.904,0.595,0.544,309,0.586,528,0.587,0.574,0.247,0.687,0.604,0.584,0.585,,실전 선택픽 성능 개선 후보
+daily_top1,GradientBoosting conservative model,baseline_core,1480,342,1.0,0.576,0.544,342,0.576,342,0.576,0.579,0.247,0.687,0.587,0.587,0.587,,실전 선택픽 성능 개선 후보
+daily_top2,GradientBoosting conservative model,baseline_core,1480,672,1.0,0.568,0.544,342,0.573,672,0.568,0.569,0.247,0.687,0.57,0.587,0.57,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_core,1480,337,0.985,0.576,0.544,337,0.576,337,0.576,0.58,0.247,0.687,0.583,0.583,0.583,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_core,1480,333,0.974,0.577,0.544,333,0.577,333,0.577,0.58,0.247,0.687,0.583,0.583,0.583,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,GradientBoosting conservative model,baseline_core,1480,0,0.0,,0.544,0,,0,,,0.247,0.687,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_core,1480,1480,1.0,0.544,0.544,342,0.576,672,0.568,0.548,0.247,0.687,0.544,0.587,0.57,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_core,1480,1480,1.0,0.544,0.544,342,0.576,672,0.568,0.548,0.247,0.687,0.544,0.587,0.57,,전체 경기 대비 선택픽 우위가 제한적
+all_games,HistGradientBoosting model,baseline_core,1480,1480,1.0,0.547,0.547,342,0.57,672,0.562,0.553,0.248,0.688,0.551,0.587,0.546,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,HistGradientBoosting model,baseline_core,1480,1203,0.991,0.554,0.547,339,0.569,654,0.561,0.562,0.248,0.688,0.555,0.587,0.541,,실전 선택픽 성능 개선 후보
+probability_ge_53,HistGradientBoosting model,baseline_core,1480,1046,0.977,0.554,0.547,334,0.566,635,0.557,0.568,0.248,0.688,0.561,0.592,0.55,,실전 선택픽 성능 개선 후보
+probability_ge_54,HistGradientBoosting model,baseline_core,1480,905,0.962,0.565,0.547,329,0.574,607,0.56,0.573,0.248,0.688,0.568,0.598,0.548,,실전 선택픽 성능 개선 후보
+probability_ge_55,HistGradientBoosting model,baseline_core,1480,734,0.927,0.569,0.547,317,0.568,561,0.56,0.58,0.248,0.688,0.593,0.6,0.551,,실전 선택픽 성능 개선 후보
+daily_top1,HistGradientBoosting model,baseline_core,1480,342,1.0,0.57,0.547,342,0.57,342,0.57,0.588,0.248,0.688,0.587,0.587,0.587,,실전 선택픽 성능 개선 후보
+daily_top2,HistGradientBoosting model,baseline_core,1480,672,1.0,0.562,0.547,342,0.57,672,0.562,0.576,0.248,0.688,0.546,0.587,0.546,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,HistGradientBoosting model,baseline_core,1480,339,0.991,0.569,0.547,339,0.569,339,0.569,0.589,0.248,0.688,0.587,0.587,0.587,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,HistGradientBoosting model,baseline_core,1480,334,0.977,0.566,0.547,334,0.566,334,0.566,0.59,0.248,0.688,0.592,0.592,0.592,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,HistGradientBoosting model,baseline_core,1480,0,0.0,,0.547,0,,0,,,0.248,0.688,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,HistGradientBoosting model,baseline_core,1480,1480,1.0,0.547,0.547,342,0.57,672,0.562,0.553,0.248,0.688,0.551,0.587,0.546,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,HistGradientBoosting model,baseline_core,1480,1480,1.0,0.547,0.547,342,0.57,672,0.562,0.553,0.248,0.688,0.551,0.587,0.546,,전체 경기 대비 선택픽 우위가 제한적
+all_games,RandomForest model,baseline_core,1480,1480,1.0,0.534,0.534,342,0.567,672,0.574,0.545,0.247,0.687,0.54,0.577,0.585,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,RandomForest model,baseline_core,1480,1106,0.985,0.558,0.534,337,0.567,652,0.578,0.556,0.247,0.687,0.56,0.583,0.585,,실전 선택픽 성능 개선 후보
+probability_ge_53,RandomForest model,baseline_core,1480,927,0.982,0.565,0.534,336,0.568,622,0.577,0.563,0.247,0.687,0.58,0.583,0.588,,실전 선택픽 성능 개선 후보
+probability_ge_54,RandomForest model,baseline_core,1480,769,0.944,0.584,0.534,323,0.582,574,0.582,0.568,0.247,0.687,0.602,0.594,0.588,,실전 선택픽 성능 개선 후보
+probability_ge_55,RandomForest model,baseline_core,1480,603,0.889,0.585,0.534,304,0.589,500,0.588,0.575,0.247,0.687,0.58,0.596,0.586,,실전 선택픽 성능 개선 후보
+daily_top1,RandomForest model,baseline_core,1480,342,1.0,0.567,0.534,342,0.567,342,0.567,0.578,0.247,0.687,0.577,0.577,0.577,,실전 선택픽 성능 개선 후보
+daily_top2,RandomForest model,baseline_core,1480,672,1.0,0.574,0.534,342,0.567,672,0.574,0.567,0.247,0.687,0.585,0.577,0.585,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,RandomForest model,baseline_core,1480,337,0.985,0.567,0.534,337,0.567,337,0.567,0.579,0.247,0.687,0.583,0.583,0.583,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,RandomForest model,baseline_core,1480,336,0.982,0.568,0.534,336,0.568,336,0.568,0.579,0.247,0.687,0.583,0.583,0.583,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,RandomForest model,baseline_core,1480,0,0.0,,0.534,0,,0,,,0.247,0.687,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,RandomForest model,baseline_core,1480,1480,1.0,0.534,0.534,342,0.567,672,0.574,0.545,0.247,0.687,0.54,0.577,0.585,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,RandomForest model,baseline_core,1480,1480,1.0,0.534,0.534,342,0.567,672,0.574,0.545,0.247,0.687,0.54,0.577,0.585,,전체 경기 대비 선택픽 우위가 제한적
+all_games,ExtraTrees model,baseline_core,1480,1480,1.0,0.532,0.532,342,0.585,672,0.568,0.532,0.248,0.689,0.551,0.606,0.589,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,ExtraTrees model,baseline_core,1480,1002,0.98,0.562,0.532,335,0.582,630,0.567,0.543,0.248,0.689,0.578,0.608,0.591,,실전 선택픽 성능 개선 후보
+probability_ge_53,ExtraTrees model,baseline_core,1480,745,0.944,0.554,0.532,323,0.579,558,0.565,0.549,0.248,0.689,0.558,0.61,0.586,,실전 선택픽 성능 개선 후보
+probability_ge_54,ExtraTrees model,baseline_core,1480,516,0.833,0.572,0.532,285,0.589,443,0.582,0.556,0.248,0.689,0.57,0.598,0.591,,실전 선택픽 성능 개선 후보
+probability_ge_55,ExtraTrees model,baseline_core,1480,309,0.623,0.583,0.532,213,0.615,286,0.594,0.563,0.248,0.689,0.575,0.62,0.598,,실전 선택픽 성능 개선 후보
+daily_top1,ExtraTrees model,baseline_core,1480,342,1.0,0.585,0.532,342,0.585,342,0.585,0.555,0.248,0.689,0.606,0.606,0.606,,실전 선택픽 성능 개선 후보
+daily_top2,ExtraTrees model,baseline_core,1480,672,1.0,0.568,0.532,342,0.582,672,0.568,0.547,0.248,0.689,0.589,0.596,0.589,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,ExtraTrees model,baseline_core,1480,335,0.98,0.582,0.532,335,0.582,335,0.582,0.556,0.248,0.689,0.608,0.608,0.608,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,ExtraTrees model,baseline_core,1480,323,0.944,0.579,0.532,323,0.579,323,0.579,0.557,0.248,0.689,0.61,0.61,0.61,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,ExtraTrees model,baseline_core,1480,0,0.0,,0.532,0,,0,,,0.248,0.689,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,ExtraTrees model,baseline_core,1480,1480,1.0,0.532,0.532,342,0.585,672,0.568,0.532,0.248,0.689,0.551,0.606,0.589,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,ExtraTrees model,baseline_core,1480,1480,1.0,0.532,0.532,342,0.585,672,0.568,0.532,0.248,0.689,0.551,0.606,0.589,,전체 경기 대비 선택픽 우위가 제한적
+all_games,GradientBoosting conservative model,baseline_plus_streak,1480,1480,1.0,0.539,0.539,342,0.576,672,0.558,0.551,0.248,0.688,0.555,0.587,0.56,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,GradientBoosting conservative model,baseline_plus_streak,1480,1177,0.988,0.551,0.539,338,0.574,652,0.557,0.561,0.248,0.688,0.56,0.587,0.561,,실전 선택픽 성능 개선 후보
+probability_ge_53,GradientBoosting conservative model,baseline_plus_streak,1480,1010,0.971,0.558,0.539,332,0.572,628,0.561,0.567,0.248,0.688,0.564,0.592,0.569,,실전 선택픽 성능 개선 후보
+probability_ge_54,GradientBoosting conservative model,baseline_plus_streak,1480,874,0.962,0.569,0.539,329,0.574,599,0.563,0.572,0.248,0.688,0.573,0.598,0.574,,실전 선택픽 성능 개선 후보
+probability_ge_55,GradientBoosting conservative model,baseline_plus_streak,1480,689,0.918,0.575,0.539,314,0.576,541,0.567,0.579,0.248,0.688,0.589,0.59,0.572,,실전 선택픽 성능 개선 후보
+daily_top1,GradientBoosting conservative model,baseline_plus_streak,1480,342,1.0,0.576,0.539,342,0.576,342,0.576,0.586,0.248,0.688,0.587,0.587,0.587,,실전 선택픽 성능 개선 후보
+daily_top2,GradientBoosting conservative model,baseline_plus_streak,1480,672,1.0,0.558,0.539,342,0.576,672,0.558,0.574,0.248,0.688,0.56,0.587,0.56,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_plus_streak,1480,338,0.988,0.574,0.539,338,0.574,338,0.574,0.587,0.248,0.688,0.587,0.587,0.587,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_plus_streak,1480,332,0.971,0.572,0.539,332,0.572,332,0.572,0.588,0.248,0.688,0.592,0.592,0.592,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,GradientBoosting conservative model,baseline_plus_streak,1480,0,0.0,,0.539,0,,0,,,0.248,0.688,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_plus_streak,1480,1480,1.0,0.539,0.539,342,0.576,672,0.558,0.551,0.248,0.688,0.555,0.587,0.56,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_plus_streak,1480,1480,1.0,0.539,0.539,342,0.576,672,0.558,0.551,0.248,0.688,0.555,0.587,0.56,,전체 경기 대비 선택픽 우위가 제한적
+all_games,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,1480,1.0,0.551,0.551,342,0.585,672,0.588,0.549,0.247,0.687,0.561,0.587,0.585,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,1167,0.982,0.565,0.551,336,0.589,651,0.588,0.559,0.247,0.687,0.563,0.592,0.591,,실전 선택픽 성능 개선 후보
+probability_ge_53,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,1017,0.974,0.568,0.551,333,0.592,629,0.583,0.564,0.247,0.687,0.559,0.592,0.587,,실전 선택픽 성능 개선 후보
+probability_ge_54,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,852,0.959,0.568,0.551,328,0.595,590,0.586,0.57,0.247,0.687,0.572,0.588,0.595,,실전 선택픽 성능 개선 후보
+probability_ge_55,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,673,0.909,0.578,0.551,311,0.588,535,0.583,0.576,0.247,0.687,0.591,0.596,0.597,,실전 선택픽 성능 개선 후보
+daily_top1,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,342,1.0,0.582,0.551,342,0.582,342,0.582,0.582,0.247,0.687,0.577,0.577,0.577,,실전 선택픽 성능 개선 후보
+daily_top2,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,672,1.0,0.588,0.551,342,0.582,672,0.588,0.571,0.247,0.687,0.585,0.577,0.585,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,336,0.982,0.586,0.551,336,0.586,336,0.586,0.583,0.247,0.687,0.583,0.583,0.583,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,333,0.974,0.589,0.551,333,0.589,333,0.589,0.584,0.247,0.687,0.583,0.583,0.583,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,0,0.0,,0.551,0,,0,,,0.247,0.687,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,1480,1.0,0.551,0.551,342,0.585,672,0.588,0.549,0.247,0.687,0.561,0.587,0.585,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_plus_selected_non_pitching_only,1480,1480,1.0,0.551,0.551,342,0.585,672,0.588,0.549,0.247,0.687,0.561,0.587,0.585,,전체 경기 대비 선택픽 우위가 제한적
+all_games,LogisticRegression conservative model,baseline_without_false_signal_features,1480,1480,1.0,0.534,0.534,342,0.573,672,0.57,0.561,0.248,0.689,0.522,0.567,0.585,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,LogisticRegression conservative model,baseline_without_false_signal_features,1480,1172,0.991,0.554,0.534,339,0.569,660,0.568,0.574,0.248,0.689,0.556,0.567,0.587,,실전 선택픽 성능 개선 후보
+probability_ge_53,LogisticRegression conservative model,baseline_without_false_signal_features,1480,1031,0.982,0.558,0.534,336,0.568,642,0.57,0.581,0.248,0.689,0.57,0.567,0.59,,실전 선택픽 성능 개선 후보
+probability_ge_54,LogisticRegression conservative model,baseline_without_false_signal_features,1480,906,0.977,0.556,0.534,334,0.569,619,0.572,0.587,0.248,0.689,0.569,0.567,0.598,,실전 선택픽 성능 개선 후보
+probability_ge_55,LogisticRegression conservative model,baseline_without_false_signal_features,1480,778,0.95,0.566,0.534,325,0.578,575,0.579,0.595,0.248,0.689,0.58,0.578,0.595,,실전 선택픽 성능 개선 후보
+daily_top1,LogisticRegression conservative model,baseline_without_false_signal_features,1480,342,1.0,0.573,0.534,342,0.573,342,0.573,0.61,0.248,0.689,0.567,0.567,0.567,,실전 선택픽 성능 개선 후보
+daily_top2,LogisticRegression conservative model,baseline_without_false_signal_features,1480,672,1.0,0.57,0.534,342,0.573,672,0.57,0.593,0.248,0.689,0.585,0.567,0.585,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,LogisticRegression conservative model,baseline_without_false_signal_features,1480,339,0.991,0.569,0.534,339,0.569,339,0.569,0.611,0.248,0.689,0.567,0.567,0.567,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,LogisticRegression conservative model,baseline_without_false_signal_features,1480,336,0.982,0.568,0.534,336,0.568,336,0.568,0.612,0.248,0.689,0.567,0.567,0.567,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,LogisticRegression conservative model,baseline_without_false_signal_features,1480,1480,1.0,0.534,0.534,342,0.573,672,0.57,0.561,0.248,0.689,0.522,0.567,0.585,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,LogisticRegression conservative model,baseline_without_false_signal_features,1480,1480,1.0,0.534,0.534,342,0.573,672,0.57,0.561,0.248,0.689,0.522,0.567,0.585,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,LogisticRegression conservative model,baseline_without_false_signal_features,1480,1480,1.0,0.534,0.534,342,0.573,672,0.57,0.561,0.248,0.689,0.522,0.567,0.585,,전체 경기 대비 선택픽 우위가 제한적
+all_games,GradientBoosting conservative model,baseline_without_false_signal_features,1480,1480,1.0,0.561,0.561,342,0.594,672,0.586,0.548,0.246,0.686,0.565,0.587,0.575,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,GradientBoosting conservative model,baseline_without_false_signal_features,1480,1186,0.988,0.563,0.561,338,0.595,653,0.582,0.557,0.246,0.686,0.562,0.592,0.571,,실전 선택픽 성능 개선 후보
+probability_ge_53,GradientBoosting conservative model,baseline_without_false_signal_features,1480,1024,0.974,0.566,0.561,333,0.598,629,0.582,0.563,0.246,0.686,0.56,0.592,0.569,,실전 선택픽 성능 개선 후보
+probability_ge_54,GradientBoosting conservative model,baseline_without_false_signal_features,1480,838,0.95,0.572,0.561,325,0.597,589,0.576,0.569,0.246,0.686,0.576,0.588,0.568,,실전 선택픽 성능 개선 후보
+probability_ge_55,GradientBoosting conservative model,baseline_without_false_signal_features,1480,652,0.901,0.578,0.561,308,0.601,530,0.574,0.576,0.246,0.686,0.591,0.596,0.582,,실전 선택픽 성능 개선 후보
+daily_top1,GradientBoosting conservative model,baseline_without_false_signal_features,1480,342,1.0,0.591,0.561,342,0.591,342,0.591,0.58,0.246,0.686,0.577,0.577,0.577,,실전 선택픽 성능 개선 후보
+daily_top2,GradientBoosting conservative model,baseline_without_false_signal_features,1480,672,1.0,0.586,0.561,342,0.591,672,0.586,0.57,0.246,0.686,0.575,0.577,0.575,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_without_false_signal_features,1480,338,0.988,0.592,0.561,338,0.592,338,0.592,0.581,0.246,0.686,0.583,0.583,0.583,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_without_false_signal_features,1480,333,0.974,0.595,0.561,333,0.595,333,0.595,0.582,0.246,0.686,0.583,0.583,0.583,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,GradientBoosting conservative model,baseline_without_false_signal_features,1480,1480,1.0,0.561,0.561,342,0.594,672,0.586,0.548,0.246,0.686,0.565,0.587,0.575,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_without_false_signal_features,1480,1480,1.0,0.561,0.561,342,0.594,672,0.586,0.548,0.246,0.686,0.565,0.587,0.575,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_without_false_signal_features,1480,1480,1.0,0.561,0.561,342,0.594,672,0.586,0.548,0.246,0.686,0.565,0.587,0.575,,전체 경기 대비 선택픽 우위가 제한적
+all_games,HistGradientBoosting model,baseline_without_false_signal_features,1480,1480,1.0,0.557,0.557,342,0.558,672,0.583,0.55,0.247,0.686,0.565,0.577,0.556,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,HistGradientBoosting model,baseline_without_false_signal_features,1480,1167,0.988,0.566,0.557,338,0.562,656,0.584,0.56,0.247,0.686,0.561,0.577,0.559,,실전 선택픽 성능 개선 후보
+probability_ge_53,HistGradientBoosting model,baseline_without_false_signal_features,1480,1007,0.974,0.566,0.557,333,0.562,631,0.578,0.566,0.247,0.686,0.561,0.577,0.559,,실전 선택픽 성능 개선 후보
+probability_ge_54,HistGradientBoosting model,baseline_without_false_signal_features,1480,834,0.947,0.568,0.557,324,0.565,597,0.575,0.572,0.247,0.686,0.572,0.583,0.563,,실전 선택픽 성능 개선 후보
+probability_ge_55,HistGradientBoosting model,baseline_without_false_signal_features,1480,669,0.909,0.578,0.557,311,0.569,536,0.573,0.579,0.247,0.686,0.581,0.58,0.555,,실전 선택픽 성능 개선 후보
+daily_top1,HistGradientBoosting model,baseline_without_false_signal_features,1480,342,1.0,0.556,0.557,342,0.556,342,0.556,0.585,0.247,0.686,0.567,0.567,0.567,,전체 경기 대비 선택픽 우위가 제한적
+daily_top2,HistGradientBoosting model,baseline_without_false_signal_features,1480,672,1.0,0.583,0.557,342,0.556,672,0.583,0.573,0.247,0.686,0.556,0.567,0.556,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,HistGradientBoosting model,baseline_without_false_signal_features,1480,338,0.988,0.559,0.557,338,0.559,338,0.559,0.586,0.247,0.686,0.567,0.567,0.567,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,HistGradientBoosting model,baseline_without_false_signal_features,1480,333,0.974,0.559,0.557,333,0.559,333,0.559,0.587,0.247,0.686,0.567,0.567,0.567,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,HistGradientBoosting model,baseline_without_false_signal_features,1480,1480,1.0,0.557,0.557,342,0.558,672,0.583,0.55,0.247,0.686,0.565,0.577,0.556,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,HistGradientBoosting model,baseline_without_false_signal_features,1480,1480,1.0,0.557,0.557,342,0.558,672,0.583,0.55,0.247,0.686,0.565,0.577,0.556,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,HistGradientBoosting model,baseline_without_false_signal_features,1480,1480,1.0,0.557,0.557,342,0.558,672,0.583,0.55,0.247,0.686,0.565,0.577,0.556,,전체 경기 대비 선택픽 우위가 제한적
+all_games,GradientBoosting conservative model,baseline_plus_momentum_only,1480,1480,1.0,0.557,0.557,342,0.553,672,0.562,0.551,0.247,0.687,0.567,0.548,0.565,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,GradientBoosting conservative model,baseline_plus_momentum_only,1480,1173,0.982,0.556,0.557,336,0.557,646,0.563,0.561,0.247,0.687,0.558,0.544,0.569,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_53,GradientBoosting conservative model,baseline_plus_momentum_only,1480,1029,0.98,0.566,0.557,335,0.558,635,0.562,0.566,0.247,0.687,0.571,0.544,0.567,,실전 선택픽 성능 개선 후보
+probability_ge_54,GradientBoosting conservative model,baseline_plus_momentum_only,1480,866,0.962,0.568,0.557,329,0.556,599,0.559,0.572,0.247,0.687,0.589,0.549,0.577,,실전 선택픽 성능 개선 후보
+probability_ge_55,GradientBoosting conservative model,baseline_plus_momentum_only,1480,698,0.915,0.576,0.557,313,0.559,537,0.562,0.579,0.247,0.687,0.598,0.554,0.582,,실전 선택픽 성능 개선 후보
+daily_top1,GradientBoosting conservative model,baseline_plus_momentum_only,1480,342,1.0,0.553,0.557,342,0.553,342,0.553,0.585,0.247,0.687,0.548,0.548,0.548,,전체 경기 대비 선택픽 우위가 제한적
+daily_top2,GradientBoosting conservative model,baseline_plus_momentum_only,1480,672,1.0,0.562,0.557,342,0.55,672,0.562,0.573,0.247,0.687,0.565,0.538,0.565,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_plus_momentum_only,1480,336,0.982,0.557,0.557,336,0.557,336,0.557,0.587,0.247,0.687,0.544,0.544,0.544,,전체 경기 대비 선택픽 우위가 제한적
+daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_plus_momentum_only,1480,335,0.98,0.558,0.557,335,0.558,335,0.558,0.587,0.247,0.687,0.544,0.544,0.544,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,GradientBoosting conservative model,baseline_plus_momentum_only,1480,0,0.0,,0.557,0,,0,,,0.247,0.687,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_plus_momentum_only,1480,1480,1.0,0.557,0.557,342,0.553,672,0.562,0.551,0.247,0.687,0.567,0.548,0.565,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_plus_momentum_only,1480,1480,1.0,0.557,0.557,342,0.553,672,0.562,0.551,0.247,0.687,0.567,0.548,0.565,,전체 경기 대비 선택픽 우위가 제한적
+all_games,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,1480,1.0,0.524,0.524,342,0.535,672,0.525,0.533,0.25,0.692,0.538,0.519,0.517,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,939,0.98,0.529,0.524,335,0.528,619,0.532,0.546,0.25,0.692,0.518,0.51,0.51,,실전 선택픽 성능 개선 후보
+probability_ge_53,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,765,0.944,0.54,0.524,323,0.533,560,0.537,0.551,0.25,0.692,0.527,0.51,0.516,,실전 선택픽 성능 개선 후보
+probability_ge_54,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,542,0.833,0.542,0.524,285,0.523,444,0.532,0.557,0.25,0.692,0.534,0.5,0.52,,실전 선택픽 성능 개선 후보
+probability_ge_55,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,333,0.637,0.529,0.524,218,0.541,289,0.522,0.565,0.25,0.692,0.505,0.521,0.51,,실전 선택픽 성능 개선 후보
+daily_top1,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,342,1.0,0.535,0.524,342,0.535,342,0.535,0.557,0.25,0.692,0.519,0.519,0.519,,실전 선택픽 성능 개선 후보
+daily_top2,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,672,1.0,0.527,0.524,342,0.535,672,0.527,0.548,0.25,0.692,0.517,0.519,0.517,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,335,0.98,0.528,0.524,335,0.528,335,0.528,0.558,0.25,0.692,0.51,0.51,0.51,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,323,0.944,0.533,0.524,323,0.533,323,0.533,0.559,0.25,0.692,0.51,0.51,0.51,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,0,0.0,,0.524,0,,0,,,0.25,0.692,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,1480,1.0,0.524,0.524,342,0.535,672,0.525,0.533,0.25,0.692,0.538,0.519,0.517,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_plus_recent_form_only,1480,1480,1.0,0.524,0.524,342,0.535,672,0.525,0.533,0.25,0.692,0.538,0.519,0.517,,전체 경기 대비 선택픽 우위가 제한적
+all_games,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,1480,1.0,0.539,0.539,342,0.591,672,0.586,0.546,0.247,0.688,0.548,0.587,0.575,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,1148,0.977,0.554,0.539,334,0.59,641,0.583,0.556,0.247,0.688,0.556,0.583,0.571,,실전 선택픽 성능 개선 후보
+probability_ge_53,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,1013,0.971,0.564,0.539,332,0.59,625,0.586,0.56,0.247,0.688,0.56,0.583,0.571,,실전 선택픽 성능 개선 후보
+probability_ge_54,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,807,0.939,0.572,0.539,321,0.595,574,0.592,0.567,0.247,0.688,0.581,0.588,0.585,,실전 선택픽 성능 개선 후보
+probability_ge_55,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,635,0.886,0.578,0.539,303,0.594,511,0.595,0.573,0.247,0.688,0.593,0.59,0.591,,실전 선택픽 성능 개선 후보
+daily_top1,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,342,1.0,0.591,0.539,342,0.591,342,0.591,0.576,0.247,0.688,0.587,0.587,0.587,,실전 선택픽 성능 개선 후보
+daily_top2,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,672,1.0,0.586,0.539,342,0.588,672,0.586,0.566,0.247,0.688,0.575,0.577,0.575,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,334,0.977,0.59,0.539,334,0.59,334,0.59,0.577,0.247,0.688,0.583,0.583,0.583,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,332,0.971,0.59,0.539,332,0.59,332,0.59,0.577,0.247,0.688,0.583,0.583,0.583,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,0,0.0,,0.539,0,,0,,,0.247,0.688,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,1480,1.0,0.539,0.539,342,0.591,672,0.586,0.546,0.247,0.688,0.548,0.587,0.575,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,GradientBoosting conservative model,baseline_plus_venue_context_without_venue_win_rate_gap,1480,0,0.0,,0.539,0,,0,,,0.247,0.688,,,,,전체 경기 대비 선택픽 우위가 제한적
+all_games,LogisticRegression conservative model,production_feature_set,1480,1480,1.0,0.513,0.513,342,0.515,672,0.527,0.559,0.252,0.698,0.491,0.51,0.517,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,LogisticRegression conservative model,production_feature_set,1480,1172,0.997,0.526,0.513,341,0.516,661,0.531,0.572,0.252,0.698,0.517,0.51,0.519,,실전 선택픽 성능 개선 후보
+probability_ge_53,LogisticRegression conservative model,production_feature_set,1480,1028,0.985,0.533,0.513,337,0.519,648,0.537,0.578,0.252,0.698,0.515,0.505,0.52,,실전 선택픽 성능 개선 후보
+probability_ge_54,LogisticRegression conservative model,production_feature_set,1480,868,0.98,0.531,0.513,335,0.519,612,0.529,0.586,0.252,0.698,0.518,0.505,0.505,,실전 선택픽 성능 개선 후보
+probability_ge_55,LogisticRegression conservative model,production_feature_set,1480,739,0.95,0.544,0.513,325,0.523,570,0.54,0.593,0.252,0.698,0.537,0.515,0.528,,실전 선택픽 성능 개선 후보
+daily_top1,LogisticRegression conservative model,production_feature_set,1480,342,1.0,0.515,0.513,342,0.515,342,0.515,0.608,0.252,0.698,0.51,0.51,0.51,,실전 선택픽 성능 개선 후보
+daily_top2,LogisticRegression conservative model,production_feature_set,1480,672,1.0,0.527,0.513,342,0.515,672,0.527,0.59,0.252,0.698,0.517,0.51,0.517,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,LogisticRegression conservative model,production_feature_set,1480,341,0.997,0.516,0.513,341,0.516,341,0.516,0.608,0.252,0.698,0.51,0.51,0.51,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,LogisticRegression conservative model,production_feature_set,1480,337,0.985,0.519,0.513,337,0.519,337,0.519,0.609,0.252,0.698,0.505,0.505,0.505,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,LogisticRegression conservative model,production_feature_set,1480,0,0.0,,0.513,0,,0,,,0.252,0.698,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,LogisticRegression conservative model,production_feature_set,1480,1480,1.0,0.513,0.513,342,0.515,672,0.527,0.559,0.252,0.698,0.491,0.51,0.517,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,LogisticRegression conservative model,production_feature_set,1480,1480,1.0,0.513,0.513,342,0.515,672,0.527,0.559,0.252,0.698,0.491,0.51,0.517,,전체 경기 대비 선택픽 우위가 제한적
+all_games,GradientBoosting conservative model,production_feature_set,1480,1480,1.0,0.553,0.553,342,0.567,672,0.574,0.549,0.247,0.687,0.567,0.587,0.58,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,GradientBoosting conservative model,production_feature_set,1480,1149,0.991,0.561,0.553,339,0.566,656,0.573,0.56,0.247,0.687,0.564,0.583,0.576,,실전 선택픽 성능 개선 후보
+probability_ge_53,GradientBoosting conservative model,production_feature_set,1480,977,0.965,0.567,0.553,330,0.567,625,0.578,0.567,0.247,0.687,0.571,0.574,0.576,,실전 선택픽 성능 개선 후보
+probability_ge_54,GradientBoosting conservative model,production_feature_set,1480,808,0.939,0.566,0.553,321,0.564,584,0.58,0.573,0.247,0.687,0.562,0.57,0.574,,실전 선택픽 성능 개선 후보
+probability_ge_55,GradientBoosting conservative model,production_feature_set,1480,667,0.904,0.559,0.553,309,0.57,529,0.577,0.579,0.247,0.687,0.554,0.576,0.566,,실전 선택픽 성능 개선 후보
+daily_top1,GradientBoosting conservative model,production_feature_set,1480,342,1.0,0.567,0.553,342,0.567,342,0.567,0.586,0.247,0.687,0.587,0.587,0.587,,실전 선택픽 성능 개선 후보
+daily_top2,GradientBoosting conservative model,production_feature_set,1480,672,1.0,0.574,0.553,342,0.567,672,0.574,0.573,0.247,0.687,0.58,0.587,0.58,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,GradientBoosting conservative model,production_feature_set,1480,339,0.991,0.566,0.553,339,0.566,339,0.566,0.586,0.247,0.687,0.583,0.583,0.583,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,GradientBoosting conservative model,production_feature_set,1480,330,0.965,0.567,0.553,330,0.567,330,0.567,0.588,0.247,0.687,0.574,0.574,0.574,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,GradientBoosting conservative model,production_feature_set,1480,0,0.0,,0.553,0,,0,,,0.247,0.687,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,GradientBoosting conservative model,production_feature_set,1480,1480,1.0,0.553,0.553,342,0.567,672,0.574,0.549,0.247,0.687,0.567,0.587,0.58,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,GradientBoosting conservative model,production_feature_set,1480,1480,1.0,0.553,0.553,342,0.567,672,0.574,0.549,0.247,0.687,0.567,0.587,0.58,,전체 경기 대비 선택픽 우위가 제한적
+all_games,probability average ensemble,ensemble,1480,1480,1.0,0.549,0.549,342,0.573,672,0.577,0.545,0.247,0.687,0.565,0.548,0.56,,전체 경기 대비 선택픽 우위가 제한적
+probability_ge_52,probability average ensemble,ensemble,1480,1119,0.982,0.556,0.549,336,0.58,643,0.574,0.556,0.247,0.687,0.558,0.559,0.569,,실전 선택픽 성능 개선 후보
+probability_ge_53,probability average ensemble,ensemble,1480,933,0.971,0.57,0.549,332,0.578,615,0.577,0.562,0.247,0.687,0.58,0.559,0.579,,실전 선택픽 성능 개선 후보
+probability_ge_54,probability average ensemble,ensemble,1480,759,0.944,0.577,0.549,323,0.576,563,0.581,0.568,0.247,0.687,0.586,0.554,0.572,,실전 선택픽 성능 개선 후보
+probability_ge_55,probability average ensemble,ensemble,1480,590,0.883,0.585,0.549,302,0.573,493,0.59,0.574,0.247,0.687,0.592,0.556,0.584,,실전 선택픽 성능 개선 후보
+daily_top1,probability average ensemble,ensemble,1480,342,1.0,0.573,0.549,342,0.573,342,0.573,0.576,0.247,0.687,0.548,0.548,0.548,,실전 선택픽 성능 개선 후보
+daily_top2,probability average ensemble,ensemble,1480,672,1.0,0.577,0.549,342,0.573,672,0.577,0.565,0.247,0.687,0.56,0.548,0.56,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_52,probability average ensemble,ensemble,1480,336,0.982,0.58,0.549,336,0.58,336,0.58,0.577,0.247,0.687,0.559,0.559,0.559,,실전 선택픽 성능 개선 후보
+daily_top1_if_probability_ge_53,probability average ensemble,ensemble,1480,332,0.971,0.578,0.549,332,0.578,332,0.578,0.578,0.247,0.687,0.559,0.559,0.559,,실전 선택픽 성능 개선 후보
+avoid_false_signal_features,probability average ensemble,ensemble,1480,0,0.0,,0.549,0,,0,,,0.247,0.687,,,,,전체 경기 대비 선택픽 우위가 제한적
+avoid_high_volatility_false_signal,probability average ensemble,ensemble,1480,1480,1.0,0.549,0.549,342,0.573,672,0.577,0.545,0.247,0.687,0.565,0.548,0.56,,전체 경기 대비 선택픽 우위가 제한적
+avoid_venue_gap_false_signal,probability average ensemble,ensemble,1480,1480,1.0,0.549,0.549,342,0.573,672,0.577,0.545,0.247,0.687,0.565,0.548,0.56,,전체 경기 대비 선택픽 우위가 제한적
+model_consensus_only,model consensus,consensus,1480,1480,1.0,0.546,0.546,342,0.567,672,0.542,0.914,,,0.561,0.567,0.556,,전체 경기 대비 선택픽 우위가 제한적
+model_consensus_daily_top1,model consensus,consensus,1480,342,1.0,0.567,0.546,342,0.567,342,0.567,0.995,,,0.538,0.538,0.538,,실전 선택픽 성능 개선 후보
+production_vs_challenger_agreement_only,model consensus,consensus,1480,1480,1.0,0.546,0.546,342,0.567,672,0.542,0.914,,,0.561,0.567,0.556,,전체 경기 대비 선택픽 우위가 제한적

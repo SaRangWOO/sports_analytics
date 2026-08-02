@@ -1,11 +1,11 @@
 ﻿model,feature_set,probability_bin,games,avg_predicted_probability,actual_win_rate,calibration_gap,brier,log_loss,interpretation
-GradientBoosting 시간가중 모델,current_operational_feature_set,0.50-0.53,988,0.516,0.553,-0.037,0.248,0.69,과소신 구간
-GradientBoosting 시간가중 모델,current_operational_feature_set,0.53-0.55,647,0.54,0.515,0.025,0.251,0.695,보정 양호
-GradientBoosting 시간가중 모델,current_operational_feature_set,0.55-0.58,806,0.565,0.581,-0.016,0.244,0.681,보정 양호
-GradientBoosting 시간가중 모델,current_operational_feature_set,0.58-0.60,321,0.589,0.526,0.062,0.253,0.7,과신 구간
-GradientBoosting 시간가중 모델,current_operational_feature_set,0.60+,226,0.62,0.615,0.005,0.237,0.666,보정 양호
-비투수 피처 GradientBoosting 실험 / baseline_plus_month_phase,baseline_plus_month_phase,0.50-0.53,1007,0.516,0.544,-0.028,0.249,0.691,보정 양호
-비투수 피처 GradientBoosting 실험 / baseline_plus_month_phase,baseline_plus_month_phase,0.53-0.55,1004,0.54,0.532,0.008,0.249,0.691,보정 양호
-비투수 피처 GradientBoosting 실험 / baseline_plus_month_phase,baseline_plus_month_phase,0.55-0.58,820,0.566,0.607,-0.042,0.24,0.673,과소신 구간
-비투수 피처 GradientBoosting 실험 / baseline_plus_month_phase,baseline_plus_month_phase,0.58-0.60,133,0.589,0.519,0.07,0.255,0.702,과신 구간
-비투수 피처 GradientBoosting 실험 / baseline_plus_month_phase,baseline_plus_month_phase,0.60+,24,0.603,0.667,-0.064,0.226,0.644,과소신 구간
+GradientBoosting 시간가중 모델,current_operational_feature_set,0.50-0.53,1199,0.516,0.519,-0.003,0.25,0.694,보정 양호
+GradientBoosting 시간가중 모델,current_operational_feature_set,0.53-0.55,719,0.539,0.554,-0.014,0.247,0.687,보정 양호
+GradientBoosting 시간가중 모델,current_operational_feature_set,0.55-0.58,835,0.563,0.598,-0.035,0.241,0.676,과소신 구간
+GradientBoosting 시간가중 모델,current_operational_feature_set,0.58-0.60,179,0.589,0.631,-0.042,0.235,0.663,과소신 구간
+GradientBoosting 시간가중 모델,current_operational_feature_set,0.60+,76,0.61,0.579,0.031,0.245,0.683,과신 구간
+비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,baseline_plus_volatility,0.50-0.53,986,0.515,0.556,-0.04,0.248,0.69,과소신 구간
+비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,baseline_plus_volatility,0.53-0.55,758,0.54,0.496,0.044,0.252,0.697,과신 구간
+비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,baseline_plus_volatility,0.55-0.58,1062,0.565,0.589,-0.025,0.243,0.679,보정 양호
+비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,baseline_plus_volatility,0.58-0.60,178,0.586,0.573,0.013,0.245,0.682,보정 양호
+비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,baseline_plus_volatility,0.60+,24,0.604,0.583,0.02,0.243,0.68,보정 양호

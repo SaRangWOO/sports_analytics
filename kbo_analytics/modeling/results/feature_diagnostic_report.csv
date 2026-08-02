@@ -1,15 +1,5 @@
 ﻿feature,selected_importance,selected_rank,diagnostic,note
-elo_diff,0.004,77,usable_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
-avg_allowed_last_10,0.001,12,weak_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
-opponent_recent_10_blowout_win_rate,0.001,28,weak_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
-team_run_momentum_3_vs_10,0.001,31,weak_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
-season_avg_run_diff_prior,0.001,40,weak_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
-opponent_avg_run_diff_last_10,0.001,44,weak_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
-opponent_venue_win_rate_prior,0.001,57,weak_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
-month_win_rate_gap,0.001,68,weak_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
-opponent_month_run_diff_prior,0.001,70,weak_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
-head_to_head_win_rate_gap,0.001,74,weak_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
-team_elo_pre,0.001,75,weak_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
+elo_diff,0.003,77,usable_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 is_home,0.0,1,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 month,0.0,2,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 series_game_no,0.0,3,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
@@ -21,6 +11,7 @@ avg_allowed_last_5,0.0,8,no_positive_permutation_signal,Permutation/Built-in imp
 avg_score_last_3,0.0,9,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 avg_score_last_10,0.0,10,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 avg_allowed_last_3,0.0,11,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
+avg_allowed_last_10,0.0,12,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 avg_run_diff_last_5,0.0,13,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 avg_run_diff_last_10,0.0,14,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 team_recent_5_run_std,0.0,15,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
@@ -36,8 +27,10 @@ opponent_recent_5_close_game_rate_exact,0.0,24,no_positive_permutation_signal,Pe
 close_game_rate_gap,0.0,25,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 team_recent_10_blowout_win_rate,0.0,26,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 team_recent_10_blowout_loss_rate,0.0,27,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
+opponent_recent_10_blowout_win_rate,0.0,28,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 opponent_recent_10_blowout_loss_rate,0.0,29,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 blowout_tendency_gap,0.0,30,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
+team_run_momentum_3_vs_10,0.0,31,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 opponent_run_momentum_3_vs_10,0.0,32,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 run_momentum_gap,0.0,33,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 team_allowed_momentum_3_vs_10,0.0,34,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
@@ -46,9 +39,11 @@ allowed_momentum_gap,0.0,36,no_positive_permutation_signal,Permutation/Built-in 
 season_win_rate_prior,0.0,37,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 season_avg_score_prior,0.0,38,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 season_avg_allowed_prior,0.0,39,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
+season_avg_run_diff_prior,0.0,40,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 opponent_recent_5_win_rate,0.0,41,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 opponent_recent_10_win_rate,0.0,42,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 opponent_avg_run_diff_last_5,0.0,43,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
+opponent_avg_run_diff_last_10,0.0,44,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 opponent_season_win_rate_prior,0.0,45,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 opponent_season_avg_score_prior,0.0,46,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 opponent_season_avg_allowed_prior,0.0,47,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
@@ -61,6 +56,7 @@ season_avg_allowed_gap,0.0,53,no_positive_permutation_signal,Permutation/Built-i
 season_avg_run_diff_gap,0.0,54,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 recent_run_diff_10_gap,0.0,55,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 venue_win_rate_prior,0.0,56,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
+opponent_venue_win_rate_prior,0.0,57,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 venue_win_rate_gap,0.0,58,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 team_recent_home_win_rate_prior,0.0,59,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 team_recent_away_win_rate_prior,0.0,60,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
@@ -71,10 +67,14 @@ team_recent_same_venue_run_diff,0.0,64,no_positive_permutation_signal,Permutatio
 season_phase,0.0,65,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 team_month_win_rate_prior,0.0,66,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 opponent_month_win_rate_prior,0.0,67,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
+month_win_rate_gap,0.0,68,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 team_month_run_diff_prior,0.0,69,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
+opponent_month_run_diff_prior,0.0,70,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 month_run_diff_gap,0.0,71,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 head_to_head_win_rate_prior,0.0,72,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 opponent_head_to_head_win_rate_prior,0.0,73,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
+head_to_head_win_rate_gap,0.0,74,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
+team_elo_pre,0.0,75,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 opponent_elo_pre,0.0,76,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 games_last_7_days,0.0,78,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
 back_to_back,0.0,79,no_positive_permutation_signal,Permutation/Built-in importance 기준 진단이며 단독 인과 효과가 아닙니다.
