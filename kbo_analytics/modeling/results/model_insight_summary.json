@@ -422,14 +422,14 @@
     {
       "model": "Streak 피처 RandomForest 실험",
       "feature_set": "baseline_plus_streak",
-      "accuracy": 0.541,
+      "accuracy": 0.543,
       "brier": 0.247,
       "log_loss": 0.688,
-      "over_55_games": 990,
-      "over_55_accuracy": 0.584,
-      "winning_streak_accuracy": 0.516,
-      "losing_streak_accuracy": 0.57,
-      "close_game_accuracy": 0.488,
+      "over_55_games": 980,
+      "over_55_accuracy": 0.582,
+      "winning_streak_accuracy": 0.52,
+      "losing_streak_accuracy": 0.574,
+      "close_game_accuracy": 0.49,
       "recent_3year_accuracy": null,
       "selected_candidate": false,
       "status": "evaluated"
@@ -657,7 +657,7 @@
       "over_55_accuracy_delta": -0.003,
       "improved_segments": "대승/대패 경기(+0.006)",
       "worsened_segments": "박빙 경기(-0.006)",
-      "likely_driver_features": "elo_diff, recent_run_diff_10_gap, is_home, recent_10_win_rate_gap, blowout_tendency_gap, recent_5_win_rate_gap, avg_run_diff_last_10, opponent_recent_10_win_rate",
+      "likely_driver_features": "elo_diff, recent_run_diff_10_gap, is_home, recent_10_win_rate_gap, recent_5_win_rate_gap, blowout_tendency_gap, avg_run_diff_last_10, opponent_recent_10_win_rate",
       "interpretation": "전체 정확도 개선 근거가 부족"
     },
     {
@@ -1138,7 +1138,7 @@
       "feature": "month_win_rate_gap",
       "feature_group": "month_phase",
       "importance_rank": 5,
-      "importance_mean": 0.059436,
+      "importance_mean": 0.060537,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
       "segment_hurt": "명시 연승 streak",
@@ -1240,9 +1240,24 @@
       "production_recommendation": "keep_baseline"
     },
     {
+      "feature": "month_run_diff_gap",
+      "feature_group": "month_phase",
+      "importance_rank": 12,
+      "importance_mean": 0.049885,
+      "appears_in_best_candidate": true,
+      "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
+      "segment_hurt": "명시 연승 streak",
+      "keep_candidate": "review",
+      "reason": "중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토",
+      "current_season_effect": "negative_high_signal",
+      "current_season_risk": "high",
+      "production_recommendation": "remove_from_candidate"
+    },
+    {
       "feature": "recent_10_win_rate",
       "feature_group": "baseline",
-      "importance_rank": 12,
+      "importance_rank": 13,
       "importance_mean": 0.048087,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
@@ -1257,38 +1272,8 @@
     {
       "feature": "opponent_avg_run_diff_last_5",
       "feature_group": "baseline",
-      "importance_rank": 13,
-      "importance_mean": 0.048008,
-      "appears_in_best_candidate": true,
-      "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
-      "segment_hurt": "명시 연승 streak",
-      "keep_candidate": "review",
-      "reason": "중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토",
-      "current_season_effect": "baseline",
-      "current_season_risk": "low",
-      "production_recommendation": "keep_baseline"
-    },
-    {
-      "feature": "month_run_diff_gap",
-      "feature_group": "month_phase",
       "importance_rank": 14,
-      "importance_mean": 0.047583,
-      "appears_in_best_candidate": true,
-      "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
-      "segment_hurt": "명시 연승 streak",
-      "keep_candidate": "review",
-      "reason": "중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토",
-      "current_season_effect": "negative_high_signal",
-      "current_season_risk": "high",
-      "production_recommendation": "remove_from_candidate"
-    },
-    {
-      "feature": "recent_5_win_rate",
-      "feature_group": "baseline",
-      "importance_rank": 15,
-      "importance_mean": 0.041565,
+      "importance_mean": 0.048008,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
       "segment_hurt": "명시 연승 streak",
@@ -1302,8 +1287,8 @@
     {
       "feature": "team_month_win_rate_prior",
       "feature_group": "month_phase",
-      "importance_rank": 16,
-      "importance_mean": 0.041143,
+      "importance_rank": 15,
+      "importance_mean": 0.042925,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
       "segment_hurt": "명시 연승 streak",
@@ -1313,6 +1298,21 @@
       "current_season_effect": "unstable_or_neutral",
       "current_season_risk": "medium",
       "production_recommendation": "monitor_only"
+    },
+    {
+      "feature": "recent_5_win_rate",
+      "feature_group": "baseline",
+      "importance_rank": 16,
+      "importance_mean": 0.041565,
+      "appears_in_best_candidate": true,
+      "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
+      "segment_hurt": "명시 연승 streak",
+      "keep_candidate": "review",
+      "reason": "중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토",
+      "current_season_effect": "baseline",
+      "current_season_risk": "low",
+      "production_recommendation": "keep_baseline"
     },
     {
       "feature": "opponent_recent_5_win_rate",
@@ -1343,29 +1343,29 @@
       "current_season_effect": "baseline",
       "current_season_risk": "low",
       "production_recommendation": "keep_baseline"
-    },
-    {
-      "feature": "opponent_month_win_rate_prior",
-      "feature_group": "month_phase",
-      "importance_rank": 19,
-      "importance_mean": 0.040312,
-      "appears_in_best_candidate": true,
-      "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
-      "segment_hurt": "명시 연승 streak",
-      "keep_candidate": "review",
-      "reason": "중요도는 있으나 확률 품질 또는 일부 세그먼트 영향 확인 필요",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토",
-      "current_season_effect": "unstable_or_neutral",
-      "current_season_risk": "medium",
-      "production_recommendation": "monitor_only"
     }
   ],
   "noisy_non_pitching_feature_decisions": [
     {
+      "feature": "opponent_month_win_rate_prior",
+      "feature_group": "month_phase",
+      "importance_rank": 19,
+      "importance_mean": 0.038291,
+      "appears_in_best_candidate": true,
+      "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
+      "segment_hurt": "명시 연승 streak",
+      "keep_candidate": "segment_only",
+      "reason": "특정 세그먼트 개선 후보로만 유지",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토",
+      "current_season_effect": "segment_limited",
+      "current_season_risk": "medium",
+      "production_recommendation": "segment_only"
+    },
+    {
       "feature": "team_month_run_diff_prior",
       "feature_group": "month_phase",
       "importance_rank": 20,
-      "importance_mean": 0.036645,
+      "importance_mean": 0.036603,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
       "segment_hurt": "명시 연승 streak",
@@ -1380,7 +1380,7 @@
       "feature": "opponent_month_run_diff_prior",
       "feature_group": "month_phase",
       "importance_rank": 21,
-      "importance_mean": 0.035666,
+      "importance_mean": 0.035171,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
       "segment_hurt": "명시 연승 streak",
@@ -1452,24 +1452,9 @@
       "production_recommendation": "keep_baseline"
     },
     {
-      "feature": "season_phase",
-      "feature_group": "month_phase",
-      "importance_rank": 26,
-      "importance_mean": 0.005742,
-      "appears_in_best_candidate": true,
-      "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
-      "segment_hurt": "명시 연승 streak",
-      "keep_candidate": "segment_only",
-      "reason": "특정 세그먼트 개선 후보로만 유지",
-      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토",
-      "current_season_effect": "negative_high_signal",
-      "current_season_risk": "high",
-      "production_recommendation": "remove_from_candidate"
-    },
-    {
       "feature": "games_last_7_days",
       "feature_group": "baseline",
-      "importance_rank": 27,
+      "importance_rank": 26,
       "importance_mean": 0.005377,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
@@ -1484,7 +1469,7 @@
     {
       "feature": "rest_days",
       "feature_group": "baseline",
-      "importance_rank": 28,
+      "importance_rank": 27,
       "importance_mean": 0.003107,
       "appears_in_best_candidate": true,
       "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
@@ -1495,6 +1480,21 @@
       "current_season_effect": "baseline",
       "current_season_risk": "low",
       "production_recommendation": "keep_baseline"
+    },
+    {
+      "feature": "season_phase",
+      "feature_group": "month_phase",
+      "importance_rank": 28,
+      "importance_mean": 0.002898,
+      "appears_in_best_candidate": true,
+      "segment_helped": "전체, 연승 흐름, 연패 흐름, 명시 연패 streak, 박빙 경기, 대승/대패 경기, 홈팀 관점, 원정팀 관점, 득실차 차이 큼, 최근 5경기 흐름 차이 큼, 강팀 vs 약팀, 최근 3년, 2026 시즌",
+      "segment_hurt": "명시 연승 streak",
+      "keep_candidate": "segment_only",
+      "reason": "특정 세그먼트 개선 후보로만 유지",
+      "next_action": "다음 실험에서 선택 피처 세트 후보로 검토",
+      "current_season_effect": "negative_high_signal",
+      "current_season_risk": "high",
+      "production_recommendation": "remove_from_candidate"
     }
   ],
   "next_model_experiment_plan_summary": {
@@ -1546,7 +1546,7 @@
       "opponent_avg_run_diff_last_10",
       "avg_run_diff_last_5",
       "head_to_head_win_rate_gap",
-      "recent_10_win_rate"
+      "month_run_diff_gap"
     ],
     "candidate_features_to_drop": [
       "season_avg_run_diff_gap",
@@ -1558,7 +1558,7 @@
   },
   "robustness_validation_summary": {
     "evaluated_windows": 115,
-    "production_gate_passed_windows": 38,
+    "production_gate_passed_windows": 41,
     "top_windows": [
       {
         "model": "HistGradientBoosting_validation",
@@ -1569,16 +1569,16 @@
         "test_start_date": "2025-07-01",
         "test_end_date": "2025-07-31",
         "test_games": 192,
-        "accuracy": 0.615,
-        "brier": 0.238,
-        "log_loss": 0.669,
-        "over_55_games": 104,
-        "over_55_accuracy": 0.692,
+        "accuracy": 0.604,
+        "brier": 0.24,
+        "log_loss": 0.673,
+        "over_55_games": 106,
+        "over_55_accuracy": 0.66,
         "calibration_error": 0.068,
-        "recent_3year_accuracy": 0.615,
+        "recent_3year_accuracy": 0.604,
         "winning_streak_accuracy": 0.659,
         "losing_streak_accuracy": 0.55,
-        "close_game_accuracy": 0.5,
+        "close_game_accuracy": 0.471,
         "production_gate_passed": true,
         "interpretation": "운영 교체 검토 가능"
       },
@@ -1958,7 +1958,7 @@
   ],
   "calibration_replacement_risk": "calibration gate를 통과하지 못하면 운영 모델 교체 금지",
   "production_gate_audit_summary": {
-    "generated_at": "2026-08-02T16:11:01.989276",
+    "generated_at": "2026-08-02T16:40:14.621114",
     "current_operational_model": "GradientBoosting 시간가중 모델",
     "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_month_phase",
     "current_operational_accuracy": 0.554,
@@ -2299,21 +2299,21 @@
       "feature_set": "baseline_plus_2026_adaptive_selected",
       "season": 2026,
       "games": 459,
-      "accuracy": 0.558,
+      "accuracy": 0.569,
       "brier": 0.245,
-      "log_loss": 0.683,
-      "over_55_games": 516,
-      "over_55_accuracy": 0.589,
-      "home_accuracy": 0.558,
-      "away_accuracy": 0.558,
-      "winning_streak_accuracy": 0.556,
-      "losing_streak_accuracy": 0.575,
-      "close_game_accuracy": 0.487,
-      "blowout_game_accuracy": 0.605,
-      "calibration_error": 0.035,
+      "log_loss": 0.682,
+      "over_55_games": 514,
+      "over_55_accuracy": 0.584,
+      "home_accuracy": 0.569,
+      "away_accuracy": 0.569,
+      "winning_streak_accuracy": 0.58,
+      "losing_streak_accuracy": 0.59,
+      "close_game_accuracy": 0.552,
+      "blowout_game_accuracy": 0.616,
+      "calibration_error": 0.028,
       "interpretation": "2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증",
       "test_games": 918,
-      "recent_3year_accuracy": 0.558
+      "recent_3year_accuracy": 0.569
     }
   ],
   "current_season_rolling_backtest_summary": {
@@ -2351,7 +2351,7 @@
     },
     {
       "feature_set": "best_non_pitching_candidate",
-      "selected_features": "is_home|rest_days|recent_5_win_rate|recent_10_win_rate|avg_run_diff_last_5|avg_run_diff_last_10|season_win_rate_prior|opponent_recent_5_win_rate|opponent_recent_10_win_rate|opponent_avg_run_diff_last_5|opponent_avg_run_diff_last_10|season_win_rate_gap|recent_5_win_rate_gap|recent_10_win_rate_gap|season_avg_run_diff_gap|recent_run_diff_10_gap|venue_win_rate_gap|head_to_head_win_rate_gap|elo_diff|games_last_7_days|back_to_back|opponent_month_win_rate_prior|opponent_month_run_diff_prior|team_month_win_rate_prior|season_phase|month_win_rate_gap|team_month_run_diff_prior|month_run_diff_gap",
+      "selected_features": "is_home|rest_days|recent_5_win_rate|recent_10_win_rate|avg_run_diff_last_5|avg_run_diff_last_10|season_win_rate_prior|opponent_recent_5_win_rate|opponent_recent_10_win_rate|opponent_avg_run_diff_last_5|opponent_avg_run_diff_last_10|season_win_rate_gap|recent_5_win_rate_gap|recent_10_win_rate_gap|season_avg_run_diff_gap|recent_run_diff_10_gap|venue_win_rate_gap|head_to_head_win_rate_gap|elo_diff|games_last_7_days|back_to_back|team_month_run_diff_prior|month_win_rate_gap|season_phase|opponent_month_run_diff_prior|month_run_diff_gap|opponent_month_win_rate_prior|team_month_win_rate_prior",
       "removed_features": "",
       "reason": "2026 시즌 후보 검증 세트",
       "current_season_accuracy": 0.56,
@@ -2387,7 +2387,7 @@
     },
     {
       "feature_set": "baseline_plus_recent_form_only",
-      "selected_features": "is_home|rest_days|recent_5_win_rate|recent_10_win_rate|avg_run_diff_last_5|avg_run_diff_last_10|season_win_rate_prior|opponent_recent_5_win_rate|opponent_recent_10_win_rate|opponent_avg_run_diff_last_5|opponent_avg_run_diff_last_10|season_win_rate_gap|recent_5_win_rate_gap|recent_10_win_rate_gap|season_avg_run_diff_gap|recent_run_diff_10_gap|venue_win_rate_gap|head_to_head_win_rate_gap|elo_diff|games_last_7_days|back_to_back|team_winning_streak_flag|team_losing_streak_flag|opponent_vs_losing_streak_flag|losing_streak_with_negative_run_diff|team_current_streak_length|losing_streak_allowed_runs_spike|opponent_losing_streak_flag|winning_streak_with_low_run_diff|winning_streak_after_close_games|streak_length_gap|team_current_streak_type|winning_streak_bullpen_fatigue_proxy|opponent_winning_streak_flag|opponent_current_streak_length|losing_streak_low_scoring_offense|winning_streak_regression_risk|opponent_current_streak_type",
+      "selected_features": "is_home|rest_days|recent_5_win_rate|recent_10_win_rate|avg_run_diff_last_5|avg_run_diff_last_10|season_win_rate_prior|opponent_recent_5_win_rate|opponent_recent_10_win_rate|opponent_avg_run_diff_last_5|opponent_avg_run_diff_last_10|season_win_rate_gap|recent_5_win_rate_gap|recent_10_win_rate_gap|season_avg_run_diff_gap|recent_run_diff_10_gap|venue_win_rate_gap|head_to_head_win_rate_gap|elo_diff|games_last_7_days|back_to_back|losing_streak_with_negative_run_diff|winning_streak_with_low_run_diff|winning_streak_regression_risk|opponent_winning_streak_flag|opponent_losing_streak_flag|opponent_vs_losing_streak_flag|streak_length_gap|winning_streak_bullpen_fatigue_proxy|opponent_current_streak_length|losing_streak_allowed_runs_spike|team_current_streak_type|team_current_streak_length|team_losing_streak_flag|opponent_current_streak_type|losing_streak_low_scoring_offense|winning_streak_after_close_games|team_winning_streak_flag",
       "removed_features": "",
       "reason": "2026 시즌 후보 검증 세트",
       "current_season_accuracy": 0.549,
@@ -2399,7 +2399,7 @@
     },
     {
       "feature_set": "baseline_plus_volatility_momentum_only",
-      "selected_features": "is_home|rest_days|recent_5_win_rate|recent_10_win_rate|avg_run_diff_last_5|avg_run_diff_last_10|season_win_rate_prior|opponent_recent_5_win_rate|opponent_recent_10_win_rate|opponent_avg_run_diff_last_5|opponent_avg_run_diff_last_10|season_win_rate_gap|recent_5_win_rate_gap|recent_10_win_rate_gap|season_avg_run_diff_gap|recent_run_diff_10_gap|venue_win_rate_gap|head_to_head_win_rate_gap|elo_diff|games_last_7_days|back_to_back|opponent_recent_10_run_std|opponent_recent_5_allowed_std|team_recent_5_allowed_std|team_recent_5_run_std|run_std_gap|opponent_recent_5_run_std|team_recent_10_run_std|allowed_std_gap|run_momentum_gap|allowed_momentum_gap|opponent_run_momentum_3_vs_10|team_allowed_momentum_3_vs_10|team_run_momentum_3_vs_10|opponent_allowed_momentum_3_vs_10",
+      "selected_features": "is_home|rest_days|recent_5_win_rate|recent_10_win_rate|avg_run_diff_last_5|avg_run_diff_last_10|season_win_rate_prior|opponent_recent_5_win_rate|opponent_recent_10_win_rate|opponent_avg_run_diff_last_5|opponent_avg_run_diff_last_10|season_win_rate_gap|recent_5_win_rate_gap|recent_10_win_rate_gap|season_avg_run_diff_gap|recent_run_diff_10_gap|venue_win_rate_gap|head_to_head_win_rate_gap|elo_diff|games_last_7_days|back_to_back|team_recent_10_run_std|team_recent_5_run_std|opponent_recent_5_run_std|opponent_recent_10_run_std|opponent_recent_5_allowed_std|team_recent_5_allowed_std|allowed_std_gap|run_std_gap|team_run_momentum_3_vs_10|team_allowed_momentum_3_vs_10|opponent_allowed_momentum_3_vs_10|run_momentum_gap|opponent_run_momentum_3_vs_10|allowed_momentum_gap",
       "removed_features": "",
       "reason": "2026 시즌 후보 검증 세트",
       "current_season_accuracy": 0.542,
@@ -2411,7 +2411,7 @@
     },
     {
       "feature_set": "baseline_plus_venue_month_context",
-      "selected_features": "is_home|rest_days|recent_5_win_rate|recent_10_win_rate|avg_run_diff_last_5|avg_run_diff_last_10|season_win_rate_prior|opponent_recent_5_win_rate|opponent_recent_10_win_rate|opponent_avg_run_diff_last_5|opponent_avg_run_diff_last_10|season_win_rate_gap|recent_5_win_rate_gap|recent_10_win_rate_gap|season_avg_run_diff_gap|recent_run_diff_10_gap|venue_win_rate_gap|head_to_head_win_rate_gap|elo_diff|games_last_7_days|back_to_back|opponent_recent_home_win_rate_prior|team_recent_same_venue_run_diff|venue_context_win_rate_gap|team_recent_home_win_rate_prior|opponent_recent_away_win_rate_prior|team_recent_away_win_rate_prior|opponent_month_win_rate_prior|opponent_month_run_diff_prior|team_month_win_rate_prior|season_phase|month_win_rate_gap|team_month_run_diff_prior|month_run_diff_gap",
+      "selected_features": "is_home|rest_days|recent_5_win_rate|recent_10_win_rate|avg_run_diff_last_5|avg_run_diff_last_10|season_win_rate_prior|opponent_recent_5_win_rate|opponent_recent_10_win_rate|opponent_avg_run_diff_last_5|opponent_avg_run_diff_last_10|season_win_rate_gap|recent_5_win_rate_gap|recent_10_win_rate_gap|season_avg_run_diff_gap|recent_run_diff_10_gap|venue_win_rate_gap|head_to_head_win_rate_gap|elo_diff|games_last_7_days|back_to_back|venue_context_win_rate_gap|team_recent_away_win_rate_prior|opponent_recent_home_win_rate_prior|team_recent_same_venue_run_diff|opponent_recent_away_win_rate_prior|team_recent_home_win_rate_prior|team_month_run_diff_prior|month_win_rate_gap|season_phase|opponent_month_run_diff_prior|month_run_diff_gap|opponent_month_win_rate_prior|team_month_win_rate_prior",
       "removed_features": "",
       "reason": "2026 시즌 후보 검증 세트",
       "current_season_accuracy": 0.558,
@@ -2423,14 +2423,14 @@
     },
     {
       "feature_set": "baseline_plus_2026_adaptive_selected",
-      "selected_features": "is_home|rest_days|recent_5_win_rate|recent_10_win_rate|avg_run_diff_last_5|avg_run_diff_last_10|season_win_rate_prior|opponent_recent_5_win_rate|opponent_recent_10_win_rate|opponent_avg_run_diff_last_5|opponent_avg_run_diff_last_10|season_win_rate_gap|recent_5_win_rate_gap|recent_10_win_rate_gap|season_avg_run_diff_gap|recent_run_diff_10_gap|venue_win_rate_gap|head_to_head_win_rate_gap|elo_diff|games_last_7_days|back_to_back|month_win_rate_gap|month_run_diff_gap|team_month_win_rate_prior|opponent_month_win_rate_prior",
+      "selected_features": "is_home|rest_days|recent_5_win_rate|recent_10_win_rate|avg_run_diff_last_5|avg_run_diff_last_10|season_win_rate_prior|opponent_recent_5_win_rate|opponent_recent_10_win_rate|opponent_avg_run_diff_last_5|opponent_avg_run_diff_last_10|season_win_rate_gap|recent_5_win_rate_gap|recent_10_win_rate_gap|season_avg_run_diff_gap|recent_run_diff_10_gap|venue_win_rate_gap|head_to_head_win_rate_gap|elo_diff|games_last_7_days|back_to_back|month_win_rate_gap|month_run_diff_gap|team_month_win_rate_prior",
       "removed_features": "",
       "reason": "2026 시즌 후보 검증 세트",
-      "current_season_accuracy": 0.558,
+      "current_season_accuracy": 0.569,
       "current_season_brier": 0.245,
-      "current_season_log_loss": 0.683,
+      "current_season_log_loss": 0.682,
       "rolling_backtest_accuracy": null,
-      "over_55_accuracy": 0.589,
+      "over_55_accuracy": 0.584,
       "selected_for_next_candidate": false
     }
   ],
@@ -2926,53 +2926,14 @@
       "recommended_action": "monitor_only"
     },
     {
-      "feature": "opponent_month_win_rate_prior",
+      "feature": "team_month_run_diff_prior",
       "feature_group": "month_phase",
-      "high_signal_definition": "abs(opponent_month_win_rate_prior) >= p75(0.6957)",
-      "high_signal_games": 231,
-      "production_accuracy_when_high": 0.567,
-      "candidate_accuracy_when_high": 0.571,
-      "accuracy_delta_when_high": 0.004,
-      "candidate_wrong_games": 99,
-      "common_failure_pattern": "no_clear_false_signal",
-      "interpretation": "2026 high-signal 구간에서 명확한 악화는 제한적",
-      "recommended_action": "monitor_only"
-    },
-    {
-      "feature": "opponent_month_run_diff_prior",
-      "feature_group": "month_phase",
-      "high_signal_definition": "abs(opponent_month_run_diff_prior) >= p75(2.3333)",
+      "high_signal_definition": "abs(team_month_run_diff_prior) >= p75(2.3333)",
       "high_signal_games": 234,
       "production_accuracy_when_high": 0.526,
       "candidate_accuracy_when_high": 0.5,
       "accuracy_delta_when_high": -0.026,
       "candidate_wrong_games": 117,
-      "common_failure_pattern": "high_signal_candidate_underperforms",
-      "interpretation": "2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성",
-      "recommended_action": "remove_from_candidate_or_monitor_only"
-    },
-    {
-      "feature": "team_month_win_rate_prior",
-      "feature_group": "month_phase",
-      "high_signal_definition": "abs(team_month_win_rate_prior) >= p75(0.6957)",
-      "high_signal_games": 231,
-      "production_accuracy_when_high": 0.567,
-      "candidate_accuracy_when_high": 0.571,
-      "accuracy_delta_when_high": 0.004,
-      "candidate_wrong_games": 99,
-      "common_failure_pattern": "no_clear_false_signal",
-      "interpretation": "2026 high-signal 구간에서 명확한 악화는 제한적",
-      "recommended_action": "monitor_only"
-    },
-    {
-      "feature": "season_phase",
-      "feature_group": "month_phase",
-      "high_signal_definition": "abs(season_phase) >= p75(1.0)",
-      "high_signal_games": 648,
-      "production_accuracy_when_high": 0.556,
-      "candidate_accuracy_when_high": 0.543,
-      "accuracy_delta_when_high": -0.013,
-      "candidate_wrong_games": 296,
       "common_failure_pattern": "high_signal_candidate_underperforms",
       "interpretation": "2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성",
       "recommended_action": "remove_from_candidate_or_monitor_only"
@@ -2991,9 +2952,22 @@
       "recommended_action": "remove_from_candidate_or_monitor_only"
     },
     {
-      "feature": "team_month_run_diff_prior",
+      "feature": "season_phase",
       "feature_group": "month_phase",
-      "high_signal_definition": "abs(team_month_run_diff_prior) >= p75(2.3333)",
+      "high_signal_definition": "abs(season_phase) >= p75(1.0)",
+      "high_signal_games": 648,
+      "production_accuracy_when_high": 0.556,
+      "candidate_accuracy_when_high": 0.543,
+      "accuracy_delta_when_high": -0.013,
+      "candidate_wrong_games": 296,
+      "common_failure_pattern": "high_signal_candidate_underperforms",
+      "interpretation": "2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성",
+      "recommended_action": "remove_from_candidate_or_monitor_only"
+    },
+    {
+      "feature": "opponent_month_run_diff_prior",
+      "feature_group": "month_phase",
+      "high_signal_definition": "abs(opponent_month_run_diff_prior) >= p75(2.3333)",
       "high_signal_games": 234,
       "production_accuracy_when_high": 0.526,
       "candidate_accuracy_when_high": 0.5,
@@ -3015,6 +2989,32 @@
       "common_failure_pattern": "high_signal_candidate_underperforms",
       "interpretation": "2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성",
       "recommended_action": "remove_from_candidate_or_monitor_only"
+    },
+    {
+      "feature": "opponent_month_win_rate_prior",
+      "feature_group": "month_phase",
+      "high_signal_definition": "abs(opponent_month_win_rate_prior) >= p75(0.6957)",
+      "high_signal_games": 231,
+      "production_accuracy_when_high": 0.567,
+      "candidate_accuracy_when_high": 0.571,
+      "accuracy_delta_when_high": 0.004,
+      "candidate_wrong_games": 99,
+      "common_failure_pattern": "no_clear_false_signal",
+      "interpretation": "2026 high-signal 구간에서 명확한 악화는 제한적",
+      "recommended_action": "monitor_only"
+    },
+    {
+      "feature": "team_month_win_rate_prior",
+      "feature_group": "month_phase",
+      "high_signal_definition": "abs(team_month_win_rate_prior) >= p75(0.6957)",
+      "high_signal_games": 231,
+      "production_accuracy_when_high": 0.567,
+      "candidate_accuracy_when_high": 0.571,
+      "accuracy_delta_when_high": 0.004,
+      "candidate_wrong_games": 99,
+      "common_failure_pattern": "no_clear_false_signal",
+      "interpretation": "2026 high-signal 구간에서 명확한 악화는 제한적",
+      "recommended_action": "monitor_only"
     }
   ],
   "performance_challenger_summary": [
@@ -43405,18 +43405,18 @@
     "recent_run_diff_10_gap"
   ],
   "harmful_or_noisy_non_pitching_features": [
+    "opponent_run_momentum_3_vs_10",
     "run_std_gap",
+    "opponent_current_streak_length",
+    "opponent_current_streak_length",
+    "season_phase",
     "rest_days",
     "rest_days",
     "rest_days",
     "rest_days",
     "rest_days",
     "rest_days",
-    "rest_days",
-    "rest_days",
-    "winning_streak_with_low_run_diff",
-    "winning_streak_with_low_run_diff",
-    "season_phase"
+    "rest_days"
   ],
   "recommended_next_non_pitching_step": "유용 신호가 반복 확인된 비투수 피처만 다음 후보 세트에 유지하고, 노이즈 가능성이 있는 피처는 운영 모델 교체 후보에서 제외합니다.",
   "recommendation_policy_summary": "승패 방향, 추천 강도, 핸디캡/오버언더 판단을 분리해 표시합니다. 이 정책은 해석성과 활용도를 높이지만 모델 확률이나 운영 모델은 변경하지 않습니다.",
@@ -43707,7 +43707,7 @@
   ],
   "dashboard_display_policy_note": "The recommendation policy improves interpretability and usefulness, but it does not change the underlying model probabilities or production model.",
   "pitching_snapshot_collection_status": {
-    "generated_at": "2026-08-02 16:00:02",
+    "generated_at": "2026-08-02 16:30:03",
     "reference_date": "2026-08-02",
     "snapshot_rows_total": 390,
     "snapshot_rows_for_reference_date": 10,
@@ -43744,7 +43744,7 @@
   "safe_to_replace_model": false,
   "reason_not_to_replace_if_false": "historical improvement가 작고, current-season validation과 rolling backtest가 실패했으며, production gates를 통과하지 못해 운영 모델은 유지합니다.",
   "pitching_snapshot_quality_summary": {
-    "generated_at": "2026-08-02 16:00:02",
+    "generated_at": "2026-08-02 16:30:03",
     "reference_date": "2026-08-02",
     "snapshot_file": "data/official/pitching_daily_snapshot.csv",
     "total_snapshot_rows": 390,
@@ -44434,7 +44434,7 @@
     }
   ],
   "recommendation_policy_risk_summary": {
-    "generated_at": "2026-08-02T16:00:02.511818",
+    "generated_at": "2026-08-02T16:30:03.109354",
     "audited_completed_games": 109,
     "pending_games": 106,
     "strongest_supported_label": "약우세",
@@ -44530,17 +44530,17 @@
     "today_expected_runs_prediction_rows": 5
   },
   "latest_pipeline_health_status": {
-    "generated_at": "2026-08-02T16:00:02",
+    "generated_at": "2026-08-02T16:30:03",
     "reference_date": "2026-08-02",
     "overall_status": "pass",
     "blocking_issues": [],
     "warnings": [],
     "latest_html_path": "kbo_analytics/dashboard/latest.html",
     "latest_html_exists": true,
-    "latest_html_modified_at": "2026-08-02T16:19:23",
+    "latest_html_modified_at": "2026-08-02T16:48:28",
     "docs_latest_html_path": "docs/latest.html",
     "docs_latest_html_exists": true,
-    "docs_latest_html_modified_at": "2026-08-02T16:19:23",
+    "docs_latest_html_modified_at": "2026-08-02T16:48:28",
     "scheduled_games": 5,
     "today_expected_runs_prediction_file": "kbo_analytics/run_model/results/today_expected_runs_predictions.csv",
     "today_expected_runs_prediction_rows": 5,
