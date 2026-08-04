@@ -458,6 +458,10 @@ class AutomationTest(unittest.TestCase):
             "publish-dashboard",
             "cleanup-runtime",
             "automation-smoke",
+            "player-feature-build",
+            "player-feature-quality",
+            "player-challenger-evaluate",
+            "player-contribution-report",
         }
         self.assertEqual(set(choices), required)
 
