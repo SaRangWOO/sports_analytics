@@ -1,0 +1,90 @@
+{
+  "minimum_player_sample": {
+    "batter_plate_appearances": 20,
+    "pitcher_innings": 5
+  },
+  "shrinkage_weights": {
+    "batter_prior_plate_appearances": 60,
+    "pitcher_prior_innings": 20,
+    "career_weight": 0.35,
+    "league_weight": 0.65
+  },
+  "recent_window_sizes": {
+    "pitcher_games": [3, 5],
+    "hitter_days": [7, 14, 30]
+  },
+  "lineup_position_weights": {
+    "1": 1.05,
+    "2": 1.05,
+    "3": 1.15,
+    "4": 1.20,
+    "5": 1.12,
+    "6": 1.00,
+    "7": 0.95,
+    "8": 0.90,
+    "9": 0.88
+  },
+  "starter_feature_list": [
+    "starter_era_season_to_date",
+    "starter_whip_season_to_date",
+    "starter_era_recent_3",
+    "starter_era_recent_5",
+    "starter_k_per_bb",
+    "starter_rest_days",
+    "starter_confirmed",
+    "starter_info_quality",
+    "starter_data_available"
+  ],
+  "bullpen_feature_list": [
+    "bullpen_innings_last_1d",
+    "bullpen_innings_last_3d",
+    "bullpen_pitch_count_last_1d",
+    "bullpen_pitch_count_last_3d",
+    "bullpen_consecutive_usage_count",
+    "bullpen_available_arms",
+    "bullpen_fatigue_score",
+    "bullpen_data_available"
+  ],
+  "lineup_feature_list": [
+    "lineup_ops",
+    "lineup_obp",
+    "lineup_slg",
+    "lineup_recent_7_ops",
+    "lineup_recent_14_ops",
+    "lineup_recent_30_ops",
+    "top_order_strength",
+    "middle_order_power",
+    "bottom_order_strength",
+    "confirmed_starter_count",
+    "missing_regular_count",
+    "replacement_quality_delta",
+    "lineup_confirmation_quality",
+    "lineup_data_available"
+  ],
+  "coverage_thresholds": {
+    "starter": 0.95,
+    "bullpen": 0.95,
+    "lineup": 0.80,
+    "player_id_mapping": 0.95
+  },
+  "availability_thresholds": {
+    "starter_info_quality": 0.5,
+    "lineup_info_quality": 0.5,
+    "minimum_confirmed_lineup_players": 9
+  },
+  "contribution_method": "feature_group_ablation",
+  "ablation_neutral_values": {
+    "gap": 0.0,
+    "availability": 0.0,
+    "quality": 0.5
+  },
+  "challenger_gate_thresholds": {
+    "minimum_comparable_games": 150,
+    "minimum_shadow_passes": 3,
+    "minimum_accuracy_delta": 0.005,
+    "require_brier_improvement": true,
+    "require_log_loss_improvement": true,
+    "require_calibration_not_worse": true
+  },
+  "auto_promotion_enabled": false
+}
