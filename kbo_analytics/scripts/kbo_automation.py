@@ -28,6 +28,12 @@ from automation.health import build_automation_status
 from automation.morning import run_morning
 from automation.postgame import run_postgame
 from automation.pregame import run_pregame
+from automation.player_challenger import (
+    build_player_contribution_report,
+    build_player_feature_outputs,
+    evaluate_player_challenger,
+    player_feature_quality,
+)
 from automation.prediction import run_prediction_update
 from automation.retention import cleanup_runtime
 from automation.runner import stable_checksum
@@ -37,6 +43,7 @@ from modeling.model_artifacts import (
     rollback_production,
     validate_artifact,
 )
+from modeling.player_feature_pipeline import DEFAULT_CONFIG as DEFAULT_PLAYER_CONFIG
 
 
 def _add_common(parser: argparse.ArgumentParser, *, force: bool = False) -> None:
@@ -48,6 +55,12 @@ def _add_common(parser: argparse.ArgumentParser, *, force: bool = False) -> None
     parser.add_argument("--json", dest="json_output", action="store_true")
     if force:
         parser.add_argument("--force", action="store_true")
+
+
+def _add_player_options(parser: argparse.ArgumentParser) -> None:
+    _add_common(parser)
+    parser.add_argument("--player-config", default=str(DEFAULT_PLAYER_CONFIG))
+    parser.add_argument("--output-root", default="")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -89,6 +102,10 @@ def build_parser() -> argparse.ArgumentParser:
     publish.add_argument("--source", required=True)
     _add_common(subparsers.add_parser("cleanup-runtime"))
     _add_common(subparsers.add_parser("automation-smoke"))
+    _add_player_options(subparsers.add_parser("player-feature-build"))
+    _add_player_options(subparsers.add_parser("player-feature-quality"))
+    _add_player_options(subparsers.add_parser("player-challenger-evaluate"))
+    _add_player_options(subparsers.add_parser("player-contribution-report"))
     return parser
 
 
@@ -143,6 +160,31 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     config = load_config(args.config)
     reference_date, reference_datetime, run_id = _context(args, config)
     command = args.command
+    if command in {
+        "player-feature-build",
+        "player-feature-quality",
+        "player-challenger-evaluate",
+        "player-contribution-report",
+    }:
+        output_root = (
+            Path(args.output_root).expanduser().resolve()
+            if args.output_root
+            else config.report_root / "player_challenger"
+        )
+        functions = {
+            "player-feature-build": build_player_feature_outputs,
+            "player-feature-quality": player_feature_quality,
+            "player-challenger-evaluate": evaluate_player_challenger,
+            "player-contribution-report": build_player_contribution_report,
+        }
+        result = functions[command](
+            config.project_root,
+            output_root,
+            reference_datetime,
+            Path(args.player_config),
+            dry_run=args.dry_run,
+        )
+        return {key: value for key, value in result.items() if key not in {"features", "config"}}
     if command == "automation-status":
         status = build_automation_status(config)
         if not args.dry_run:
