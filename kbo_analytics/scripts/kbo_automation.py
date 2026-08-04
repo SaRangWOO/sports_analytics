@@ -134,7 +134,6 @@ def _schedule(reference_date: date) -> pd.DataFrame:
         return pd.DataFrame(
             columns=["official_game_id", "scheduled_start_datetime", "status"]
         )
-    frame["status"] = "Scheduled"
     return frame
 
 

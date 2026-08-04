@@ -165,7 +165,15 @@ def fetch_schedule_month(year: int, month: int):
         away_team, home_team = teams[0], teams[-1]
         away_score = scores[0] if len(scores) >= 2 else np.nan
         home_score = scores[1] if len(scores) >= 2 else np.nan
-        status = "Final" if len(scores) >= 2 else "Scheduled"
+        visible_texts = [clean_html(text) for text in texts]
+        cancellation_reason = next(
+            (text for text in visible_texts if "취소" in text or "연기" in text),
+            "",
+        )
+        status = kbo_game_status(
+            cancel_name=cancellation_reason,
+            final=len(scores) >= 2,
+        )
         game_id_match = re.search(r"gameId=([A-Za-z0-9]+)", " ".join(texts))
         game_id = game_id_match.group(1) if game_id_match else f"{game_date}_{away_team}_{home_team}"
         ballpark = clean_html(texts[-2]) if len(texts) >= 2 else ""
@@ -195,6 +203,7 @@ def fetch_schedule_month(year: int, month: int):
                     "score_team": score_for,
                     "score_opp": score_against,
                     "ballpark": ballpark,
+                    "cancellation_reason": cancellation_reason,
                 }
             )
     return parsed
@@ -606,6 +615,60 @@ def fetch_kbo_game_list(game_date: date):
         return []
 
 
+def kbo_game_status(
+    *,
+    cancel_id: object = "0",
+    cancel_name: object = "",
+    final: bool = False,
+) -> str:
+    identifier = str(cancel_id or "0").strip()
+    reason = str(cancel_name or "").strip()
+    if "연기" in reason:
+        return "Postponed"
+    if identifier not in {"", "0"} or "취소" in reason:
+        return "Cancelled"
+    return "Final" if final else "Scheduled"
+
+
+def apply_live_game_status(
+    games: pd.DataFrame,
+    game_date: date,
+    source_games: list[dict] | None = None,
+) -> pd.DataFrame:
+    frame = games.copy()
+    if "cancellation_reason" not in frame.columns:
+        frame["cancellation_reason"] = ""
+    frame["date_obj"] = pd.to_datetime(frame["date"], errors="coerce").dt.date
+    for game in source_games if source_games is not None else fetch_kbo_game_list(game_date):
+        away_team = str(game.get("AWAY_NM", "")).strip()
+        home_team = str(game.get("HOME_NM", "")).strip()
+        game_id = str(game.get("G_ID", "")).strip()
+        reason = str(game.get("CANCEL_SC_NM", "") or "").strip()
+        status = kbo_game_status(
+            cancel_id=game.get("CANCEL_SC_ID", "0"),
+            cancel_name=reason,
+            final=str(game.get("GAME_RESULT_CK", "0")) == "1",
+        )
+        mask = frame["date_obj"].eq(game_date) & (
+            (
+                frame["team"].astype(str).eq(away_team)
+                & frame["opponent"].astype(str).eq(home_team)
+                & frame["home_away"].astype(str).eq("A")
+            )
+            | (
+                frame["team"].astype(str).eq(home_team)
+                & frame["opponent"].astype(str).eq(away_team)
+                & frame["home_away"].astype(str).eq("H")
+            )
+        )
+        frame.loc[mask, "status"] = status
+        frame.loc[mask, "cancellation_reason"] = reason if status != "Scheduled" else ""
+        if game_id:
+            frame.loc[mask & frame["team"].astype(str).eq(away_team), "game_id"] = f"{game_id}_{away_team}"
+            frame.loc[mask & frame["team"].astype(str).eq(home_team), "game_id"] = f"{game_id}_{home_team}"
+    return frame.drop(columns="date_obj")
+
+
 def pitching_snapshot_schedule_frame(game_date: date):
     rows = []
     for game in fetch_kbo_game_list(game_date):
@@ -623,9 +686,18 @@ def pitching_snapshot_schedule_frame(game_date: date):
                     f"{game_date_value} {game_time_value}"
                 ),
                 "official_game_id": str(game.get("G_ID", "")).strip(),
+                "status": kbo_game_status(
+                    cancel_id=game.get("CANCEL_SC_ID", "0"),
+                    cancel_name=game.get("CANCEL_SC_NM", ""),
+                    final=str(game.get("GAME_RESULT_CK", "0")) == "1",
+                ),
+                "cancellation_reason": str(game.get("CANCEL_SC_NM", "") or "").strip(),
             }
         )
-    return pd.DataFrame(rows, columns=SCHEDULE_COLUMNS)
+    return pd.DataFrame(
+        rows,
+        columns=[*SCHEDULE_COLUMNS, "status", "cancellation_reason"],
+    )
 
 
 def load_manual_confirmed_starters(prediction_date: date):
@@ -1665,6 +1737,40 @@ def today_summary(prediction_cards: list[dict]):
     }
 
 
+def cancelled_game_summaries(games: pd.DataFrame, reference_date: date) -> list[dict]:
+    frame = games.copy()
+    frame["date_obj"] = pd.to_datetime(frame["date"], errors="coerce").dt.date
+    cancelled = frame[
+        frame["date_obj"].eq(reference_date)
+        & frame["status"].isin(["Cancelled", "Postponed"])
+    ].copy()
+    rows = []
+    for game_id, group in cancelled.groupby(
+        cancelled["game_id"].astype(str).str.rsplit("_", n=1).str[0]
+    ):
+        away = group[group["home_away"].eq("A")]
+        home = group[group["home_away"].eq("H")]
+        if len(away) != 1 or len(home) != 1:
+            continue
+        reason = next(
+            (
+                str(value).strip()
+                for value in group.get("cancellation_reason", pd.Series(dtype=str))
+                if str(value).strip()
+            ),
+            "경기 취소",
+        )
+        rows.append(
+            {
+                "game_id": game_id,
+                "game": f'{away.iloc[0]["team"]} vs {home.iloc[0]["team"]}',
+                "status": group.iloc[0]["status"],
+                "reason": reason,
+            }
+        )
+    return rows
+
+
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date):
     training_games = training_games.copy()
     training_games["date"] = pd.to_datetime(training_games["date"])
@@ -2679,6 +2785,17 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context, status_payload, lineup_context)
     prediction_cards = append_pregame_prediction_history(prediction_cards, status_payload, lineup_context, reference_datetime or datetime.now(), update_stage)
     summary = today_summary(prediction_cards)
+    cancelled_games = cancelled_game_summaries(games, generated_at)
+    cancelled_html = (
+        '<div class="cancellation-notice"><strong>취소·연기 경기</strong>'
+        + "".join(
+            f'<span>{escape(row["game"])} · {escape(row["reason"])}</span>'
+            for row in cancelled_games
+        )
+        + "</div>"
+        if cancelled_games
+        else ""
+    )
     confidence_threshold = float((model_payload.get("confidence_thresholds") or {}).get("top_20_percent_confidence", 0.58))
     recommendation_enabled = bool((model_payload.get("confidence_thresholds") or {}).get("recommendation_enabled", False))
 
@@ -2967,6 +3084,8 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .match-meta strong {{ display:block; margin-top:4px; font-size:14px; }}
     .match-pills {{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }}
     .match-pills span, .match-badge {{ border-radius:999px; padding:6px 10px; font-size:12px; font-weight:850; border:1px solid var(--line); background:#F8FAFC; color:#334155; }}
+    .cancellation-notice {{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:16px 0; padding:14px 16px; border:1px solid #FED7AA; border-radius:14px; background:#FFF7ED; color:#9A3412; }}
+    .cancellation-notice span {{ padding-left:10px; border-left:1px solid #FDBA74; font-weight:750; }}
     .match-badge.pick {{ background:var(--green-bg); color:var(--green); border-color:#BBF7D0; }}
     .match-badge.watch {{ background:var(--orange-bg); color:#B45309; border-color:#FDE68A; }}
     .match-badge.risk {{ background:var(--red-bg); color:var(--red); border-color:#FECACA; }}
@@ -2988,6 +3107,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <span class="meta-pill">기준일 {generated_at.isoformat()}</span>
       <span class="meta-pill">{escape(update_stage_label)}</span>
       <span class="meta-pill">오늘 경기 {len(prediction_cards)}경기</span>
+      <span class="meta-pill">취소·연기 {len(cancelled_games)}경기</span>
       <span class="meta-pill">예측 학습 {escape(model_payload.get("prediction_training_cutoff", model_payload.get("training_cutoff", "")))}</span>
     </div>
   </div>
@@ -3003,6 +3123,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     <div class="eyebrow">TODAY · 오늘의 판단</div>
     <h2>오늘의 KBO 예측 요약</h2>
     <p class="insight-lead">{escape(summary["headline"])}</p>
+    {cancelled_html}
     {featured_html}
     <div class="grid hero-metrics">
       <div class="metric">TOP PICK<strong>{escape(str(summary["top_pick"]))}</strong><span class="note">오늘 가장 강한 예측</span></div>
@@ -3200,6 +3321,9 @@ def main():
     standings, vs_table = fetch_team_standings()
     games = fetch_schedule(ref_date.year, ref_date.month)
     training_games = fetch_training_schedule(args.training_start_year, ref_date)
+    live_games = fetch_kbo_game_list(ref_date)
+    games = apply_live_game_status(games, ref_date, live_games)
+    training_games = apply_live_game_status(training_games, ref_date, live_games)
     hitters, pitchers = fetch_player_stats()
     rosters = fetch_registered_rosters()
     export_sources(standings, vs_table, games, hitters, pitchers, rosters)

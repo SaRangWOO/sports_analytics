@@ -31,8 +31,13 @@ from automation.pregame import run_pregame
 from automation.retention import cleanup_runtime
 from automation.runner import run_managed_task
 from automation.state import StateStore, identity_key
-from scripts.kbo_automation import build_parser
+from scripts.kbo_automation import _schedule, build_parser
 from modeling.model_artifacts import ArtifactValidationError
+from official_kbo_dashboard import (
+    apply_live_game_status,
+    cancelled_game_summaries,
+    kbo_game_status,
+)
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -259,6 +264,68 @@ class AutomationTest(unittest.TestCase):
             }]
         )
         self.assertEqual(len(eligible_pregame_games(frame, current, 120, 15)), 1)
+
+    def test_cancelled_game_status_is_preserved_and_not_dispatched(self):
+        current = datetime(2026, 8, 4, 16, 0, tzinfo=timezone.utc)
+        frame = pd.DataFrame(
+            [{
+                "official_game_id": "20260804KTHT0",
+                "scheduled_start_datetime": "2026-08-04 18:30:00",
+                "status": "Cancelled",
+            }]
+        )
+        self.assertEqual(eligible_pregame_games(frame, current, 300, 15), [])
+
+    def test_kbo_cancel_fields_map_to_cancelled(self):
+        self.assertEqual(
+            kbo_game_status(cancel_id="9", cancel_name="폭염취소"),
+            "Cancelled",
+        )
+        self.assertEqual(kbo_game_status(cancel_name="정상경기"), "Scheduled")
+
+    def test_live_cancel_status_updates_both_team_rows(self):
+        games = pd.DataFrame(
+            [
+                {"game_id": "fallback_KT", "date": "2026-08-04", "team": "KT", "opponent": "KIA", "home_away": "A", "status": "Scheduled"},
+                {"game_id": "fallback_KIA", "date": "2026-08-04", "team": "KIA", "opponent": "KT", "home_away": "H", "status": "Scheduled"},
+            ]
+        )
+        source = [{
+            "AWAY_NM": "KT",
+            "HOME_NM": "KIA",
+            "G_ID": "20260804KTHT0",
+            "CANCEL_SC_ID": "9",
+            "CANCEL_SC_NM": "폭염취소",
+            "GAME_RESULT_CK": 0,
+        }]
+        with patch("official_kbo_dashboard.fetch_kbo_game_list", return_value=source):
+            updated = apply_live_game_status(games, date(2026, 8, 4))
+        self.assertEqual(set(updated["status"]), {"Cancelled"})
+        self.assertEqual(set(updated["cancellation_reason"]), {"폭염취소"})
+        self.assertEqual(set(updated["game_id"]), {"20260804KTHT0_KT", "20260804KTHT0_KIA"})
+
+    def test_cancelled_game_summary_is_one_row_per_game(self):
+        games = pd.DataFrame(
+            [
+                {"game_id": "20260804KTHT0_KT", "date": "2026-08-04", "team": "KT", "opponent": "KIA", "home_away": "A", "status": "Cancelled", "cancellation_reason": "폭염취소"},
+                {"game_id": "20260804KTHT0_KIA", "date": "2026-08-04", "team": "KIA", "opponent": "KT", "home_away": "H", "status": "Cancelled", "cancellation_reason": "폭염취소"},
+            ]
+        )
+        rows = cancelled_game_summaries(games, date(2026, 8, 4))
+        self.assertEqual(rows, [{"game_id": "20260804KTHT0", "game": "KT vs KIA", "status": "Cancelled", "reason": "폭염취소"}])
+
+    def test_schedule_does_not_overwrite_cancelled_status(self):
+        frame = pd.DataFrame(
+            [{
+                "official_game_id": "20260804KTHT0",
+                "scheduled_start_datetime": "20260804 18:30",
+                "status": "Cancelled",
+                "cancellation_reason": "폭염취소",
+            }]
+        )
+        with patch("official_kbo_dashboard.pitching_snapshot_schedule_frame", return_value=frame):
+            result = _schedule(date(2026, 8, 4))
+        self.assertEqual(result.iloc[0]["status"], "Cancelled")
 
     def test_postgame_metrics(self):
         frame = pd.DataFrame(
