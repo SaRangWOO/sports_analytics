@@ -55,6 +55,10 @@ cd /home/wsr/1.project/1.sports_analytics/kbo_analytics
 .venv/bin/python scripts/kbo_automation.py challenger-evaluate --dry-run --json
 .venv/bin/python scripts/kbo_automation.py cleanup-runtime --dry-run --json
 .venv/bin/python scripts/kbo_automation.py automation-smoke --dry-run --json
+.venv/bin/python scripts/kbo_automation.py player-feature-build --dry-run --json
+.venv/bin/python scripts/kbo_automation.py player-feature-quality --dry-run --json
+.venv/bin/python scripts/kbo_automation.py player-challenger-evaluate --dry-run --json
+.venv/bin/python scripts/kbo_automation.py player-contribution-report --dry-run --json
 ```
 
 공통 기준 시각은 `--reference-date`와 `--reference-datetime`으로 고정할 수 있다. 상태 키는 task, reference date, official gameId, update stage, input checksum으로 구성된다.
@@ -128,3 +132,5 @@ python scripts/kbo_automation.py automation-smoke --dry-run --json
 ```
 
 실제 배포 전에는 운영 artifact 존재, KBO 외부 수집 응답, PostgreSQL 연결, publish 권한을 별도로 확인한다. PostgreSQL 적재 실패가 HTML/CSV/JSON 생성과 분리되는 현재 정책은 유지하지만 상태 경고로 기록해야 한다.
+
+선수 능력치 shadow challenger의 시간 기준, 피처와 Gate는 [PLAYER_CHALLENGER.md](PLAYER_CHALLENGER.md)에 정의되어 있다. 이 경로는 morning/pregame 운영 작업에 자동 연결되지 않으며 별도 검증 명령으로만 실행한다.
