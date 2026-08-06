@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-08-06T18:30:03.299408",
-  "reference_date": "2026-08-06",
+  "generated_at": "2026-08-07T08:00:03.146168",
+  "reference_date": "2026-08-07",
   "total_games": 5,
-  "strong_recommendation_count": 0,
-  "recommendation_count": 2,
-  "weak_edge_count": 3,
-  "watch_count": 0,
+  "strong_recommendation_count": 1,
+  "recommendation_count": 1,
+  "weak_edge_count": 2,
+  "watch_count": 1,
   "no_info_count": 0,
-  "top_pick": "롯데",
-  "top_pick_probability": "57.2%",
+  "top_pick": "NC",
+  "top_pick_probability": "58.4%",
   "day_confidence_summary": "승패 방향과 시장별 추천을 분리해 표시합니다.",
-  "strong_recommendation_available": false,
-  "message": "오늘은 강한 추천 경기는 없지만, 상대적으로 롯데가 가장 높은 우세 후보입니다. 핸디캡과 오버/언더는 관망이 적절합니다.",
+  "strong_recommendation_available": true,
+  "message": "오늘 TOP PICK은 NC 우세입니다. 핸디캡과 오버/언더는 별도 보수 기준으로 확인해야 합니다.",
   "audited_completed_games": 116,
-  "pending_games": 114,
+  "pending_games": 119,
   "grade_performance_snapshot": [
     {
       "grade": "A",
@@ -158,5 +158,5 @@
   "top_pick_wording_status": "오늘 모델 기준 상대 우세 1순위",
   "actionability_warning": "Recommendation labels are interpretive until enough completed-game outcomes support them.",
   "completed_games_used_for_label_calibration": 116,
-  "pending_games_for_future_calibration": 114
+  "pending_games_for_future_calibration": 119
 }

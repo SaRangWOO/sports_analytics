@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-06 18:30:03",
-  "reference_date": "2026-08-06",
+  "generated_at": "2026-08-07 08:00:03",
+  "reference_date": "2026-08-07",
   "snapshot_file": "data/official/pitching_daily_snapshot.csv",
-  "total_snapshot_rows": 420,
+  "total_snapshot_rows": 430,
   "reference_date_rows": 10,
   "scheduled_games": 5,
   "expected_team_rows": 10,
@@ -19,13 +19,13 @@
   "safe_for_future_feature_use": true,
   "reason_if_not_safe": "",
   "minimum_required_days": 30,
-  "accumulated_snapshot_days": 42,
+  "accumulated_snapshot_days": 43,
   "remaining_days_to_feature_use": 0,
   "accumulation_progress_pct": 100.0,
   "earliest_feature_experiment_date": "2026-07-01",
   "feature_use_gate_status": "ready_for_experiment",
   "first_snapshot_date": "2026-06-02",
-  "latest_snapshot_date": "2026-08-06",
+  "latest_snapshot_date": "2026-08-07",
   "reference_dates_covered": [
     "2026-06-02",
     "2026-06-03",
@@ -68,7 +68,8 @@
     "2026-08-02",
     "2026-08-04",
     "2026-08-05",
-    "2026-08-06"
+    "2026-08-06",
+    "2026-08-07"
   ],
   "teams_covered": [
     "KIA",
