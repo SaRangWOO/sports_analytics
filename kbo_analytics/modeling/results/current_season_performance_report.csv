@@ -1,9 +1,9 @@
 ﻿model,feature_set,season,games,accuracy,brier,log_loss,over_55_games,over_55_accuracy,home_accuracy,away_accuracy,winning_streak_accuracy,losing_streak_accuracy,close_game_accuracy,blowout_game_accuracy,calibration_error,interpretation,test_games,recent_3year_accuracy
-HistGradientBoosting_current_season,current_operational_feature_set,2026,485,0.565,0.245,0.684,482,0.589,0.565,0.565,0.575,0.568,0.561,0.6,0.032,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.565
-HistGradientBoosting_current_season,best_non_pitching_candidate,2026,485,0.542,0.247,0.687,478,0.607,0.542,0.542,0.511,0.544,0.472,0.573,0.045,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.542
-HistGradientBoosting_current_season,baseline_core,2026,485,0.565,0.245,0.684,482,0.589,0.565,0.565,0.575,0.568,0.561,0.6,0.032,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.565
-HistGradientBoosting_current_season,baseline_plus_selected_non_pitching_only,2026,485,0.542,0.247,0.687,478,0.607,0.542,0.542,0.511,0.544,0.472,0.573,0.045,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.542
-HistGradientBoosting_current_season,baseline_plus_recent_form_only,2026,485,0.559,0.246,0.685,502,0.578,0.559,0.559,0.553,0.578,0.542,0.578,0.016,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.559
-HistGradientBoosting_current_season,baseline_plus_volatility_momentum_only,2026,485,0.551,0.247,0.687,496,0.605,0.551,0.551,0.521,0.553,0.476,0.584,0.061,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.551
-HistGradientBoosting_current_season,baseline_plus_venue_month_context,2026,485,0.565,0.245,0.683,520,0.585,0.565,0.565,0.562,0.573,0.532,0.605,0.019,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.565
-HistGradientBoosting_current_season,baseline_plus_2026_adaptive_selected,2026,485,0.565,0.245,0.684,482,0.589,0.565,0.565,0.575,0.568,0.561,0.6,0.032,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.565
+HistGradientBoosting_current_season,current_operational_feature_set,2026,485,0.546,0.246,0.684,478,0.594,0.546,0.546,0.539,0.558,0.493,0.573,0.024,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.546
+HistGradientBoosting_current_season,best_non_pitching_candidate,2026,485,0.557,0.246,0.684,450,0.596,0.557,0.557,0.553,0.583,0.5,0.605,0.023,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.557
+HistGradientBoosting_current_season,baseline_core,2026,485,0.546,0.246,0.684,478,0.594,0.546,0.546,0.539,0.558,0.493,0.573,0.024,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.546
+HistGradientBoosting_current_season,baseline_plus_selected_non_pitching_only,2026,485,0.557,0.246,0.684,450,0.596,0.557,0.557,0.553,0.583,0.5,0.605,0.023,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.557
+HistGradientBoosting_current_season,baseline_plus_recent_form_only,2026,485,0.548,0.246,0.684,498,0.598,0.548,0.548,0.53,0.578,0.5,0.568,0.035,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.548
+HistGradientBoosting_current_season,baseline_plus_volatility_momentum_only,2026,485,0.551,0.247,0.686,414,0.594,0.551,0.551,0.507,0.573,0.493,0.589,0.044,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.551
+HistGradientBoosting_current_season,baseline_plus_venue_month_context,2026,485,0.565,0.245,0.684,520,0.596,0.565,0.565,0.543,0.563,0.528,0.616,0.019,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.565
+HistGradientBoosting_current_season,baseline_plus_2026_adaptive_selected,2026,485,0.546,0.246,0.684,478,0.594,0.546,0.546,0.539,0.558,0.493,0.573,0.024,2026 시즌 완료 경기 기준 누수 없는 이전 시즌 학습 검증,970,0.546

@@ -1,9 +1,9 @@
 ﻿comparison,metric,baseline_mean,candidate_mean,mean_delta,ci_lower_95,ci_upper_95,statistically_stable,bootstrap_iterations,interpretation
-GradientBoosting 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,accuracy,0.556,0.553,-0.003,-0.015,0.008,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,brier,0.246,0.247,-0.001,-0.002,0.0,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,log_loss,0.685,0.688,-0.003,-0.004,-0.001,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,over_55_accuracy,0.602,0.587,-0.015,-0.034,0.008,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,recent_3year_accuracy,0.557,0.554,-0.003,-0.016,0.009,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,winning_streak_accuracy,0.535,0.513,-0.022,-0.049,0.004,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,losing_streak_accuracy,0.574,0.567,-0.007,-0.029,0.018,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,close_game_accuracy,0.517,0.555,0.038,0.005,0.079,True,300,95% CI 기준 안정 개선 신호
+핵심 수치 GradientBoosting 일자가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,accuracy,0.542,0.548,0.006,-0.003,0.017,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 일자가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,brier,0.247,0.247,0.0,-0.001,0.001,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 일자가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,log_loss,0.688,0.688,0.0,-0.001,0.002,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 일자가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,over_55_accuracy,0.583,0.581,-0.002,-0.021,0.015,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 일자가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,recent_3year_accuracy,0.542,0.547,0.006,-0.007,0.016,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 일자가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,winning_streak_accuracy,0.525,0.522,-0.003,-0.026,0.018,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 일자가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,losing_streak_accuracy,0.569,0.577,0.008,-0.01,0.026,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+핵심 수치 GradientBoosting 일자가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,close_game_accuracy,0.526,0.522,-0.004,-0.041,0.038,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움

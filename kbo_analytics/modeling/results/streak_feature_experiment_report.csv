@@ -1,11 +1,11 @@
 ﻿model,feature_set,accuracy,brier,log_loss,over_55_games,over_55_accuracy,winning_streak_accuracy,losing_streak_accuracy,close_game_accuracy,selected_candidate
-핵심 수치 RandomForest 보수 모델,compact_baseline,0.541,0.247,0.687,1130,0.581,0.516,0.569,0.482,False
-핵심 수치 RandomForest 보수 시간가중 모델,compact_baseline,0.541,0.247,0.687,1130,0.584,0.514,0.569,0.489,False
-핵심 수치 GradientBoosting 보수 모델,compact_baseline,0.545,0.247,0.688,1379,0.582,0.529,0.576,0.516,False
-핵심 수치 GradientBoosting 보수 시간가중 모델,compact_baseline,0.542,0.248,0.689,1271,0.571,0.529,0.573,0.502,False
-핵심 수치 RandomForest 일자가중 모델,compact_baseline,0.538,0.247,0.687,1126,0.584,0.525,0.574,0.474,False
-핵심 수치 GradientBoosting 일자가중 모델,compact_baseline,0.546,0.247,0.688,1236,0.571,0.524,0.577,0.513,False
-Streak 피처 RandomForest 실험,compact_plus_streak,0.538,0.247,0.687,1000,0.576,0.513,0.564,0.479,False
-Streak 피처 RandomForest 시간가중 실험,compact_plus_streak,0.538,0.247,0.687,1018,0.585,0.516,0.572,0.481,False
-Streak 피처 GradientBoosting 실험,compact_plus_streak,0.547,0.248,0.688,1413,0.577,0.537,0.574,0.538,False
-Streak 피처 GradientBoosting 시간가중 실험,compact_plus_streak,0.539,0.247,0.688,1107,0.58,0.521,0.574,0.484,False
+핵심 수치 RandomForest 보수 모델,compact_baseline,0.536,0.247,0.687,1160,0.579,0.512,0.566,0.472,False
+핵심 수치 RandomForest 보수 시간가중 모델,compact_baseline,0.532,0.247,0.687,1160,0.582,0.508,0.56,0.46,False
+핵심 수치 GradientBoosting 보수 모델,compact_baseline,0.537,0.248,0.689,1440,0.564,0.525,0.576,0.511,False
+핵심 수치 GradientBoosting 보수 시간가중 모델,compact_baseline,0.531,0.248,0.689,1250,0.581,0.517,0.57,0.472,False
+핵심 수치 RandomForest 일자가중 모델,compact_baseline,0.534,0.247,0.687,1158,0.585,0.518,0.563,0.46,False
+핵심 수치 GradientBoosting 일자가중 모델,compact_baseline,0.542,0.247,0.688,1278,0.583,0.524,0.583,0.525,True
+Streak 피처 RandomForest 실험,compact_plus_streak,0.534,0.247,0.688,1017,0.577,0.505,0.566,0.472,False
+Streak 피처 RandomForest 시간가중 실험,compact_plus_streak,0.533,0.247,0.687,1033,0.579,0.508,0.564,0.465,False
+Streak 피처 GradientBoosting 실험,compact_plus_streak,0.538,0.248,0.688,1396,0.582,0.522,0.576,0.502,False
+Streak 피처 GradientBoosting 시간가중 실험,compact_plus_streak,0.532,0.248,0.689,1214,0.578,0.524,0.568,0.48,False

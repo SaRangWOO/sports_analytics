@@ -1,13 +1,13 @@
 ﻿strategy_name,model_name,feature_set,kt_games_total,picked_games,coverage_rate,pick_accuracy,avg_probability,brier,log_loss,home_pick_accuracy,away_pick_accuracy,current_season_pick_accuracy,interpretation
-all_kt_games,ExtraTreesClassifier,kt_without_false_signal_features,300,300,1.0,0.547,0.536,0.252,0.696,0.566,0.527,0.537,KT strategy improves over production baseline
-kt_probability_ge_52,ExtraTreesClassifier,kt_without_false_signal_features,300,188,0.627,0.505,0.552,0.254,0.701,0.528,0.459,0.516,KT strategy needs more monitoring
-kt_probability_ge_53,ExtraTreesClassifier,kt_without_false_signal_features,300,147,0.49,0.537,0.56,0.253,0.7,0.564,0.459,0.531,KT strategy needs more monitoring
-kt_probability_ge_54,ExtraTreesClassifier,kt_without_false_signal_features,300,116,0.387,0.517,0.567,0.256,0.705,0.557,0.393,0.5,KT strategy needs more monitoring
-kt_probability_ge_55,ExtraTreesClassifier,kt_without_false_signal_features,300,84,0.28,0.5,0.576,0.259,0.712,0.515,0.438,0.5,KT strategy needs more monitoring
-kt_home_only,ExtraTreesClassifier,kt_without_false_signal_features,300,152,0.507,0.566,0.548,0.25,0.693,0.566,,0.604,KT strategy improves over production baseline
-kt_away_only,ExtraTreesClassifier,kt_without_false_signal_features,300,148,0.493,0.527,0.524,0.253,0.7,,0.527,0.468,KT strategy needs more monitoring
-kt_after_loss_games,ExtraTreesClassifier,kt_without_false_signal_features,300,132,0.44,0.561,0.533,0.253,0.699,0.606,0.515,0.639,KT strategy improves over production baseline
-kt_after_win_games,ExtraTreesClassifier,kt_without_false_signal_features,300,168,0.56,0.536,0.539,0.251,0.694,0.535,0.537,0.475,KT strategy needs more monitoring
-kt_model_and_production_agree,ExtraTreesClassifier,kt_without_false_signal_features,300,194,0.647,0.557,0.542,0.252,0.698,0.564,0.548,0.591,KT strategy improves over production baseline
-kt_model_disagrees_with_production,ExtraTreesClassifier,kt_without_false_signal_features,300,99,0.33,0.505,0.524,0.252,0.697,0.55,0.475,0.414,KT strategy needs more monitoring
-kt_consensus_only,ExtraTreesClassifier,kt_without_false_signal_features,300,136,0.453,0.515,0.556,0.255,0.703,0.521,0.5,0.591,KT strategy needs more monitoring
+all_kt_games,RandomForestClassifier,kt_without_false_signal_features,300,300,1.0,0.55,0.549,0.252,0.698,0.543,0.557,0.589,KT strategy improves over production baseline
+kt_probability_ge_52,RandomForestClassifier,kt_without_false_signal_features,300,235,0.783,0.549,0.561,0.253,0.7,0.546,0.552,0.553,KT strategy improves over production baseline
+kt_probability_ge_53,RandomForestClassifier,kt_without_false_signal_features,300,197,0.657,0.508,0.567,0.256,0.705,0.513,0.5,0.508,KT strategy needs more monitoring
+kt_probability_ge_54,RandomForestClassifier,kt_without_false_signal_features,300,168,0.56,0.506,0.573,0.257,0.708,0.52,0.485,0.481,KT strategy needs more monitoring
+kt_probability_ge_55,RandomForestClassifier,kt_without_false_signal_features,300,134,0.447,0.47,0.58,0.261,0.717,0.524,0.38,0.395,KT strategy needs more monitoring
+kt_home_only,RandomForestClassifier,kt_without_false_signal_features,300,151,0.503,0.543,0.557,0.251,0.696,0.543,,0.625,KT strategy improves over production baseline
+kt_away_only,RandomForestClassifier,kt_without_false_signal_features,300,149,0.497,0.557,0.541,0.253,0.699,,0.557,0.553,KT strategy improves over production baseline
+kt_after_loss_games,RandomForestClassifier,kt_without_false_signal_features,300,131,0.437,0.55,0.546,0.255,0.703,0.523,0.576,0.583,KT strategy improves over production baseline
+kt_after_win_games,RandomForestClassifier,kt_without_false_signal_features,300,169,0.563,0.55,0.552,0.25,0.694,0.558,0.542,0.593,KT strategy improves over production baseline
+kt_model_and_production_agree,RandomForestClassifier,kt_without_false_signal_features,300,203,0.677,0.552,0.554,0.253,0.7,0.548,0.557,0.592,KT strategy improves over production baseline
+kt_model_disagrees_with_production,RandomForestClassifier,kt_without_false_signal_features,300,89,0.297,0.528,0.539,0.251,0.695,0.5,0.545,0.583,KT strategy needs more monitoring
+kt_consensus_only,RandomForestClassifier,kt_without_false_signal_features,300,164,0.547,0.537,0.564,0.254,0.702,0.525,0.556,0.554,KT strategy improves over production baseline
