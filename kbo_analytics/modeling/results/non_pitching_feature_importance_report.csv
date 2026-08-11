@@ -35,29 +35,29 @@ baseline_plus_streak,opponent_recent_5_win_rate,0.046301,0.003527,12,약한 보�
 baseline_plus_streak,recent_10_win_rate,0.044805,0.004115,13,약한 보조 신호
 baseline_plus_streak,recent_5_win_rate,0.044255,0.003403,14,약한 보조 신호
 baseline_plus_streak,season_win_rate_gap,0.043719,0.004628,15,약한 보조 신호
-baseline_plus_streak,streak_length_gap,0.035811,0.000806,16,약한 보조 신호
+baseline_plus_streak,streak_length_gap,0.033134,0.006246,16,약한 보조 신호
 baseline_plus_streak,season_win_rate_prior,0.029463,0.003738,17,약한 보조 신호
 baseline_plus_streak,season_avg_run_diff_gap,0.026181,0.007783,18,약한 보조 신호
-baseline_plus_streak,opponent_winning_streak_flag,0.025838,0.004732,19,약한 보조 신호
-baseline_plus_streak,losing_streak_low_scoring_offense,0.025119,0.00205,20,약한 보조 신호
-baseline_plus_streak,winning_streak_bullpen_fatigue_proxy,0.023957,0.0024,21,약한 보조 신호
-baseline_plus_streak,opponent_current_streak_type,0.022741,0.005545,22,약한 보조 신호
-baseline_plus_streak,team_winning_streak_flag,0.021961,0.002175,23,약한 보조 신호
-baseline_plus_streak,opponent_vs_losing_streak_flag,0.020759,0.005255,24,약한 보조 신호
-baseline_plus_streak,opponent_losing_streak_flag,0.019622,0.00885,25,약한 보조 신호
-baseline_plus_streak,losing_streak_allowed_runs_spike,0.018967,0.0053,26,약한 보조 신호
-baseline_plus_streak,losing_streak_with_negative_run_diff,0.01794,0.002472,27,약한 보조 신호
-baseline_plus_streak,team_current_streak_type,0.014702,0.006224,28,기여도 제한적
-baseline_plus_streak,team_losing_streak_flag,0.013947,0.004329,29,기여도 제한적
-baseline_plus_streak,team_current_streak_length,0.01267,0.003136,30,기여도 제한적
-baseline_plus_streak,rest_days,0.007436,0.005228,31,기여도 제한적
-baseline_plus_streak,winning_streak_with_low_run_diff,0.005153,0.003868,32,기여도 제한적
+baseline_plus_streak,winning_streak_bullpen_fatigue_proxy,0.026012,0.00417,19,약한 보조 신호
+baseline_plus_streak,losing_streak_low_scoring_offense,0.02538,0.002423,20,약한 보조 신호
+baseline_plus_streak,opponent_winning_streak_flag,0.024052,0.004479,21,약한 보조 신호
+baseline_plus_streak,team_winning_streak_flag,0.022162,0.003215,22,약한 보조 신호
+baseline_plus_streak,opponent_current_streak_type,0.020804,0.003669,23,약한 보조 신호
+baseline_plus_streak,opponent_losing_streak_flag,0.02029,0.003379,24,약한 보조 신호
+baseline_plus_streak,losing_streak_allowed_runs_spike,0.018742,0.005744,25,약한 보조 신호
+baseline_plus_streak,losing_streak_with_negative_run_diff,0.01794,0.002472,26,약한 보조 신호
+baseline_plus_streak,opponent_vs_losing_streak_flag,0.017736,0.005681,27,약한 보조 신호
+baseline_plus_streak,team_losing_streak_flag,0.012849,0.00551,28,기여도 제한적
+baseline_plus_streak,team_current_streak_type,0.009434,0.006884,29,기여도 제한적
+baseline_plus_streak,rest_days,0.007436,0.005228,30,기여도 제한적
+baseline_plus_streak,team_current_streak_length,0.005798,0.004147,31,기여도 제한적
+baseline_plus_streak,winning_streak_regression_risk,0.0052,0.004146,32,기여도 제한적
 baseline_plus_streak,games_last_7_days,0.005073,0.001754,33,기여도 제한적
 baseline_plus_streak,opponent_current_streak_length,0.004934,0.002982,34,기여도 제한적
-baseline_plus_streak,winning_streak_regression_risk,0.004646,0.002289,35,기여도 제한적
-baseline_plus_streak,venue_win_rate_gap,0.004393,0.0031,36,기여도 제한적
-baseline_plus_streak,winning_streak_after_close_games,0.003687,0.002391,37,기여도 제한적
-baseline_plus_streak,back_to_back,0.003657,0.002491,38,기여도 제한적
+baseline_plus_streak,venue_win_rate_gap,0.004393,0.0031,35,기여도 제한적
+baseline_plus_streak,winning_streak_with_low_run_diff,0.003864,0.002437,36,기여도 제한적
+baseline_plus_streak,back_to_back,0.003657,0.002491,37,기여도 제한적
+baseline_plus_streak,winning_streak_after_close_games,0.002894,0.000889,38,기여도 제한적
 baseline_plus_volatility,elo_diff,0.11514,0.007242,1,예측 정확도에 긍정 신호
 baseline_plus_volatility,recent_run_diff_10_gap,0.079064,0.003754,2,약한 보조 신호
 baseline_plus_volatility,is_home,0.062993,0.001055,3,약한 보조 신호
@@ -73,25 +73,25 @@ baseline_plus_volatility,opponent_recent_5_win_rate,0.046301,0.003527,12,약한 
 baseline_plus_volatility,recent_10_win_rate,0.044805,0.004115,13,약한 보조 신호
 baseline_plus_volatility,recent_5_win_rate,0.044255,0.003403,14,약한 보조 신호
 baseline_plus_volatility,season_win_rate_gap,0.043719,0.004628,15,약한 보조 신호
-baseline_plus_volatility,season_win_rate_prior,0.029463,0.003738,16,약한 보조 신호
-baseline_plus_volatility,allowed_std_gap,0.027383,0.003774,17,약한 보조 신호
+baseline_plus_volatility,allowed_std_gap,0.030055,0.005488,16,약한 보조 신호
+baseline_plus_volatility,season_win_rate_prior,0.029463,0.003738,17,약한 보조 신호
 baseline_plus_volatility,season_avg_run_diff_gap,0.026181,0.007783,18,약한 보조 신호
-baseline_plus_volatility,opponent_recent_5_allowed_std,0.022399,0.005729,19,약한 보조 신호
-baseline_plus_volatility,team_recent_5_allowed_std,0.021237,0.003133,20,약한 보조 신호
-baseline_plus_volatility,rest_days,0.007436,0.005228,21,기여도 제한적
-baseline_plus_volatility,opponent_recent_10_run_std,0.007318,0.005059,22,기여도 제한적
-baseline_plus_volatility,team_recent_10_run_std,0.006719,0.003465,23,기여도 제한적
-baseline_plus_volatility,team_recent_5_run_std,0.006272,0.002603,24,기여도 제한적
-baseline_plus_volatility,opponent_recent_5_run_std,0.005453,0.003552,25,기여도 제한적
-baseline_plus_volatility,games_last_7_days,0.005073,0.001754,26,기여도 제한적
-baseline_plus_volatility,venue_win_rate_gap,0.004393,0.0031,27,기여도 제한적
-baseline_plus_volatility,back_to_back,0.003657,0.002491,28,기여도 제한적
-baseline_plus_volatility,run_std_gap,0.003304,0.002743,29,기여도 제한적
+baseline_plus_volatility,team_recent_5_allowed_std,0.021237,0.003133,19,약한 보조 신호
+baseline_plus_volatility,opponent_recent_5_allowed_std,0.020297,0.005404,20,약한 보조 신호
+baseline_plus_volatility,opponent_recent_10_run_std,0.008484,0.005032,21,기여도 제한적
+baseline_plus_volatility,rest_days,0.007436,0.005228,22,기여도 제한적
+baseline_plus_volatility,games_last_7_days,0.005073,0.001754,23,기여도 제한적
+baseline_plus_volatility,opponent_recent_5_run_std,0.004777,0.002302,24,기여도 제한적
+baseline_plus_volatility,run_std_gap,0.004406,0.002309,25,기여도 제한적
+baseline_plus_volatility,venue_win_rate_gap,0.004393,0.0031,26,기여도 제한적
+baseline_plus_volatility,back_to_back,0.003657,0.002491,27,기여도 제한적
+baseline_plus_volatility,team_recent_10_run_std,0.003355,0.0036,28,기여도 제한적
+baseline_plus_volatility,team_recent_5_run_std,0.002872,0.001842,29,기여도 제한적
 baseline_plus_close_blowout,elo_diff,0.11514,0.007242,1,예측 정확도에 긍정 신호
 baseline_plus_close_blowout,recent_run_diff_10_gap,0.079064,0.003754,2,약한 보조 신호
-baseline_plus_close_blowout,blowout_tendency_gap,0.066663,0.006154,3,약한 보조 신호
-baseline_plus_close_blowout,is_home,0.062993,0.001055,4,약한 보조 신호
-baseline_plus_close_blowout,recent_10_win_rate_gap,0.059847,0.008353,5,약한 보조 신호
+baseline_plus_close_blowout,is_home,0.062993,0.001055,3,약한 보조 신호
+baseline_plus_close_blowout,recent_10_win_rate_gap,0.059847,0.008353,4,약한 보조 신호
+baseline_plus_close_blowout,blowout_tendency_gap,0.059775,0.00696,5,약한 보조 신호
 baseline_plus_close_blowout,opponent_avg_run_diff_last_10,0.058495,0.005386,6,약한 보조 신호
 baseline_plus_close_blowout,recent_5_win_rate_gap,0.056702,0.004235,7,약한 보조 신호
 baseline_plus_close_blowout,avg_run_diff_last_10,0.053809,0.004036,8,약한 보조 신호
@@ -101,17 +101,17 @@ baseline_plus_close_blowout,opponent_avg_run_diff_last_5,0.048411,0.004511,11,�
 baseline_plus_close_blowout,avg_run_diff_last_5,0.047914,0.007175,12,약한 보조 신호
 baseline_plus_close_blowout,opponent_recent_5_win_rate,0.046301,0.003527,13,약한 보조 신호
 baseline_plus_close_blowout,recent_10_win_rate,0.044805,0.004115,14,약한 보조 신호
-baseline_plus_close_blowout,opponent_recent_10_blowout_win_rate,0.044664,0.00456,15,약한 보조 신호
-baseline_plus_close_blowout,recent_5_win_rate,0.044255,0.003403,16,약한 보조 신호
-baseline_plus_close_blowout,season_win_rate_gap,0.043719,0.004628,17,약한 보조 신호
-baseline_plus_close_blowout,team_recent_10_blowout_win_rate,0.040303,0.002591,18,약한 보조 신호
-baseline_plus_close_blowout,opponent_recent_10_blowout_loss_rate,0.035618,0.005355,19,약한 보조 신호
-baseline_plus_close_blowout,team_recent_10_blowout_loss_rate,0.032366,0.00502,20,약한 보조 신호
+baseline_plus_close_blowout,recent_5_win_rate,0.044255,0.003403,15,약한 보조 신호
+baseline_plus_close_blowout,season_win_rate_gap,0.043719,0.004628,16,약한 보조 신호
+baseline_plus_close_blowout,opponent_recent_10_blowout_win_rate,0.042294,0.004082,17,약한 보조 신호
+baseline_plus_close_blowout,team_recent_10_blowout_win_rate,0.039138,0.004287,18,약한 보조 신호
+baseline_plus_close_blowout,opponent_recent_10_blowout_loss_rate,0.030793,0.009199,19,약한 보조 신호
+baseline_plus_close_blowout,team_recent_10_blowout_loss_rate,0.030161,0.006306,20,약한 보조 신호
 baseline_plus_close_blowout,season_win_rate_prior,0.029463,0.003738,21,약한 보조 신호
 baseline_plus_close_blowout,season_avg_run_diff_gap,0.026181,0.007783,22,약한 보조 신호
-baseline_plus_close_blowout,close_game_rate_gap,0.025041,0.004984,23,약한 보조 신호
-baseline_plus_close_blowout,team_recent_5_close_game_rate,0.014301,0.004651,24,기여도 제한적
-baseline_plus_close_blowout,opponent_recent_5_close_game_rate_exact,0.012718,0.007869,25,기여도 제한적
+baseline_plus_close_blowout,close_game_rate_gap,0.020476,0.004694,23,약한 보조 신호
+baseline_plus_close_blowout,team_recent_5_close_game_rate,0.013103,0.005852,24,기여도 제한적
+baseline_plus_close_blowout,opponent_recent_5_close_game_rate_exact,0.013039,0.003562,25,기여도 제한적
 baseline_plus_close_blowout,rest_days,0.007436,0.005228,26,기여도 제한적
 baseline_plus_close_blowout,games_last_7_days,0.005073,0.001754,27,기여도 제한적
 baseline_plus_close_blowout,venue_win_rate_gap,0.004393,0.0031,28,기여도 제한적
@@ -133,13 +133,13 @@ baseline_plus_momentum,recent_5_win_rate,0.044255,0.003403,14,약한 보조 신�
 baseline_plus_momentum,season_win_rate_gap,0.043719,0.004628,15,약한 보조 신호
 baseline_plus_momentum,season_win_rate_prior,0.029463,0.003738,16,약한 보조 신호
 baseline_plus_momentum,season_avg_run_diff_gap,0.026181,0.007783,17,약한 보조 신호
-baseline_plus_momentum,allowed_momentum_gap,0.00992,0.005489,18,기여도 제한적
-baseline_plus_momentum,opponent_allowed_momentum_3_vs_10,0.009181,0.004574,19,기여도 제한적
-baseline_plus_momentum,run_momentum_gap,0.008592,0.004232,20,기여도 제한적
-baseline_plus_momentum,rest_days,0.007436,0.005228,21,기여도 제한적
-baseline_plus_momentum,team_run_momentum_3_vs_10,0.006831,0.002823,22,기여도 제한적
-baseline_plus_momentum,games_last_7_days,0.005073,0.001754,23,기여도 제한적
-baseline_plus_momentum,opponent_run_momentum_3_vs_10,0.004653,0.002397,24,기여도 제한적
+baseline_plus_momentum,opponent_allowed_momentum_3_vs_10,0.009181,0.004574,18,기여도 제한적
+baseline_plus_momentum,run_momentum_gap,0.008323,0.002738,19,기여도 제한적
+baseline_plus_momentum,rest_days,0.007436,0.005228,20,기여도 제한적
+baseline_plus_momentum,team_run_momentum_3_vs_10,0.006831,0.002823,21,기여도 제한적
+baseline_plus_momentum,opponent_run_momentum_3_vs_10,0.006452,0.004494,22,기여도 제한적
+baseline_plus_momentum,allowed_momentum_gap,0.005923,0.005315,23,기여도 제한적
+baseline_plus_momentum,games_last_7_days,0.005073,0.001754,24,기여도 제한적
 baseline_plus_momentum,venue_win_rate_gap,0.004393,0.0031,25,기여도 제한적
 baseline_plus_momentum,team_allowed_momentum_3_vs_10,0.004292,0.002129,26,기여도 제한적
 baseline_plus_momentum,back_to_back,0.003657,0.002491,27,기여도 제한적
@@ -159,12 +159,12 @@ baseline_plus_venue_context,recent_10_win_rate,0.044805,0.004115,13,약한 보�
 baseline_plus_venue_context,recent_5_win_rate,0.044255,0.003403,14,약한 보조 신호
 baseline_plus_venue_context,season_win_rate_gap,0.043719,0.004628,15,약한 보조 신호
 baseline_plus_venue_context,team_recent_same_venue_run_diff,0.040392,0.0089,16,약한 보조 신호
-baseline_plus_venue_context,opponent_recent_away_win_rate_prior,0.037717,0.005333,17,약한 보조 신호
-baseline_plus_venue_context,opponent_recent_home_win_rate_prior,0.031952,0.006145,18,약한 보조 신호
-baseline_plus_venue_context,team_recent_home_win_rate_prior,0.031744,0.004104,19,약한 보조 신호
-baseline_plus_venue_context,season_win_rate_prior,0.029463,0.003738,20,약한 보조 신호
-baseline_plus_venue_context,venue_context_win_rate_gap,0.029156,0.003775,21,약한 보조 신호
-baseline_plus_venue_context,team_recent_away_win_rate_prior,0.027386,0.001661,22,약한 보조 신호
+baseline_plus_venue_context,team_recent_away_win_rate_prior,0.034397,0.00723,17,약한 보조 신호
+baseline_plus_venue_context,opponent_recent_home_win_rate_prior,0.032188,0.00553,18,약한 보조 신호
+baseline_plus_venue_context,opponent_recent_away_win_rate_prior,0.032175,0.0049,19,약한 보조 신호
+baseline_plus_venue_context,venue_context_win_rate_gap,0.031493,0.004286,20,약한 보조 신호
+baseline_plus_venue_context,season_win_rate_prior,0.029463,0.003738,21,약한 보조 신호
+baseline_plus_venue_context,team_recent_home_win_rate_prior,0.02916,0.008753,22,약한 보조 신호
 baseline_plus_venue_context,season_avg_run_diff_gap,0.026181,0.007783,23,약한 보조 신호
 baseline_plus_venue_context,rest_days,0.007436,0.005228,24,기여도 제한적
 baseline_plus_venue_context,games_last_7_days,0.005073,0.001754,25,기여도 제한적
@@ -174,100 +174,100 @@ baseline_plus_month_phase,elo_diff,0.11514,0.007242,1,예측 정확도에 긍정
 baseline_plus_month_phase,recent_run_diff_10_gap,0.079064,0.003754,2,약한 보조 신호
 baseline_plus_month_phase,is_home,0.062993,0.001055,3,약한 보조 신호
 baseline_plus_month_phase,recent_10_win_rate_gap,0.059847,0.008353,4,약한 보조 신호
-baseline_plus_month_phase,month_win_rate_gap,0.059081,0.005958,5,약한 보조 신호
+baseline_plus_month_phase,month_win_rate_gap,0.058635,0.003363,5,약한 보조 신호
 baseline_plus_month_phase,opponent_avg_run_diff_last_10,0.058495,0.005386,6,약한 보조 신호
 baseline_plus_month_phase,recent_5_win_rate_gap,0.056702,0.004235,7,약한 보조 신호
 baseline_plus_month_phase,avg_run_diff_last_10,0.053809,0.004036,8,약한 보조 신호
 baseline_plus_month_phase,opponent_recent_10_win_rate,0.050424,0.003779,9,약한 보조 신호
-baseline_plus_month_phase,month_run_diff_gap,0.049748,0.005234,10,약한 보조 신호
+baseline_plus_month_phase,month_run_diff_gap,0.049595,0.005447,10,약한 보조 신호
 baseline_plus_month_phase,head_to_head_win_rate_gap,0.048816,0.004445,11,약한 보조 신호
 baseline_plus_month_phase,opponent_avg_run_diff_last_5,0.048411,0.004511,12,약한 보조 신호
 baseline_plus_month_phase,avg_run_diff_last_5,0.047914,0.007175,13,약한 보조 신호
-baseline_plus_month_phase,team_month_win_rate_prior,0.046765,0.00567,14,약한 보조 신호
-baseline_plus_month_phase,opponent_recent_5_win_rate,0.046301,0.003527,15,약한 보조 신호
+baseline_plus_month_phase,opponent_recent_5_win_rate,0.046301,0.003527,14,약한 보조 신호
+baseline_plus_month_phase,team_month_win_rate_prior,0.045642,0.008789,15,약한 보조 신호
 baseline_plus_month_phase,recent_10_win_rate,0.044805,0.004115,16,약한 보조 신호
 baseline_plus_month_phase,recent_5_win_rate,0.044255,0.003403,17,약한 보조 신호
 baseline_plus_month_phase,season_win_rate_gap,0.043719,0.004628,18,약한 보조 신호
-baseline_plus_month_phase,opponent_month_win_rate_prior,0.039232,0.003233,19,약한 보조 신호
-baseline_plus_month_phase,team_month_run_diff_prior,0.038772,0.003725,20,약한 보조 신호
-baseline_plus_month_phase,opponent_month_run_diff_prior,0.035046,0.007406,21,약한 보조 신호
+baseline_plus_month_phase,team_month_run_diff_prior,0.041203,0.003673,19,약한 보조 신호
+baseline_plus_month_phase,opponent_month_win_rate_prior,0.038382,0.003411,20,약한 보조 신호
+baseline_plus_month_phase,opponent_month_run_diff_prior,0.03407,0.005433,21,약한 보조 신호
 baseline_plus_month_phase,season_win_rate_prior,0.029463,0.003738,22,약한 보조 신호
 baseline_plus_month_phase,season_avg_run_diff_gap,0.026181,0.007783,23,약한 보조 신호
-baseline_plus_month_phase,season_phase,0.008146,0.00449,24,기여도 제한적
-baseline_plus_month_phase,rest_days,0.007436,0.005228,25,기여도 제한적
+baseline_plus_month_phase,rest_days,0.007436,0.005228,24,기여도 제한적
+baseline_plus_month_phase,season_phase,0.0069,0.00221,25,기여도 제한적
 baseline_plus_month_phase,games_last_7_days,0.005073,0.001754,26,기여도 제한적
 baseline_plus_month_phase,venue_win_rate_gap,0.004393,0.0031,27,기여도 제한적
 baseline_plus_month_phase,back_to_back,0.003657,0.002491,28,기여도 제한적
 baseline_plus_all_non_pitching,elo_diff,0.11514,0.007242,1,예측 정확도에 긍정 신호
 baseline_plus_all_non_pitching,recent_run_diff_10_gap,0.079064,0.003754,2,약한 보조 신호
-baseline_plus_all_non_pitching,month_win_rate_gap,0.063298,0.008903,3,약한 보조 신호
+baseline_plus_all_non_pitching,blowout_tendency_gap,0.066013,0.007776,3,약한 보조 신호
 baseline_plus_all_non_pitching,is_home,0.062993,0.001055,4,약한 보조 신호
-baseline_plus_all_non_pitching,blowout_tendency_gap,0.06158,0.0043,5,약한 보조 신호
-baseline_plus_all_non_pitching,recent_10_win_rate_gap,0.059847,0.008353,6,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_avg_run_diff_last_10,0.058495,0.005386,7,약한 보조 신호
+baseline_plus_all_non_pitching,recent_10_win_rate_gap,0.059847,0.008353,5,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_avg_run_diff_last_10,0.058495,0.005386,6,약한 보조 신호
+baseline_plus_all_non_pitching,month_win_rate_gap,0.057488,0.003799,7,약한 보조 신호
 baseline_plus_all_non_pitching,recent_5_win_rate_gap,0.056702,0.004235,8,약한 보조 신호
 baseline_plus_all_non_pitching,avg_run_diff_last_10,0.053809,0.004036,9,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_recent_10_win_rate,0.050424,0.003779,10,약한 보조 신호
-baseline_plus_all_non_pitching,month_run_diff_gap,0.049876,0.003132,11,약한 보조 신호
+baseline_plus_all_non_pitching,month_run_diff_gap,0.053145,0.003401,10,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_recent_10_win_rate,0.050424,0.003779,11,약한 보조 신호
 baseline_plus_all_non_pitching,head_to_head_win_rate_gap,0.048816,0.004445,12,약한 보조 신호
 baseline_plus_all_non_pitching,opponent_avg_run_diff_last_5,0.048411,0.004511,13,약한 보조 신호
 baseline_plus_all_non_pitching,avg_run_diff_last_5,0.047914,0.007175,14,약한 보조 신호
-baseline_plus_all_non_pitching,team_month_win_rate_prior,0.047727,0.002351,15,약한 보조 신호
-baseline_plus_all_non_pitching,team_recent_same_venue_run_diff,0.046457,0.006389,16,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_recent_5_win_rate,0.046301,0.003527,17,약한 보조 신호
-baseline_plus_all_non_pitching,recent_10_win_rate,0.044805,0.004115,18,약한 보조 신호
-baseline_plus_all_non_pitching,recent_5_win_rate,0.044255,0.003403,19,약한 보조 신호
-baseline_plus_all_non_pitching,season_win_rate_gap,0.043719,0.004628,20,약한 보조 신호
-baseline_plus_all_non_pitching,team_recent_10_blowout_win_rate,0.041144,0.00435,21,약한 보조 신호
-baseline_plus_all_non_pitching,team_month_run_diff_prior,0.040534,0.004044,22,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_recent_10_blowout_win_rate,0.038492,0.005855,23,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_month_win_rate_prior,0.03762,0.003199,24,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_recent_away_win_rate_prior,0.035947,0.0074,25,약한 보조 신호
-baseline_plus_all_non_pitching,streak_length_gap,0.035811,0.000806,26,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_month_run_diff_prior,0.035692,0.006926,27,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_recent_10_blowout_loss_rate,0.035013,0.006575,28,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_recent_home_win_rate_prior,0.033952,0.002332,29,약한 보조 신호
-baseline_plus_all_non_pitching,allowed_std_gap,0.033311,0.007286,30,약한 보조 신호
-baseline_plus_all_non_pitching,venue_context_win_rate_gap,0.030126,0.004668,31,약한 보조 신호
-baseline_plus_all_non_pitching,team_recent_10_blowout_loss_rate,0.029689,0.005541,32,약한 보조 신호
-baseline_plus_all_non_pitching,team_recent_away_win_rate_prior,0.029608,0.001414,33,약한 보조 신호
-baseline_plus_all_non_pitching,season_win_rate_prior,0.029463,0.003738,34,약한 보조 신호
-baseline_plus_all_non_pitching,team_recent_home_win_rate_prior,0.028698,0.008155,35,약한 보조 신호
-baseline_plus_all_non_pitching,season_avg_run_diff_gap,0.026181,0.007783,36,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_winning_streak_flag,0.025838,0.004732,37,약한 보조 신호
-baseline_plus_all_non_pitching,losing_streak_low_scoring_offense,0.025119,0.00205,38,약한 보조 신호
-baseline_plus_all_non_pitching,winning_streak_bullpen_fatigue_proxy,0.023957,0.0024,39,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_current_streak_type,0.022741,0.005545,40,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_recent_5_allowed_std,0.022195,0.002193,41,약한 보조 신호
-baseline_plus_all_non_pitching,team_winning_streak_flag,0.021961,0.002175,42,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_vs_losing_streak_flag,0.020759,0.005255,43,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_losing_streak_flag,0.019622,0.00885,44,약한 보조 신호
-baseline_plus_all_non_pitching,losing_streak_allowed_runs_spike,0.018967,0.0053,45,약한 보조 신호
+baseline_plus_all_non_pitching,team_recent_same_venue_run_diff,0.046457,0.006389,15,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_recent_5_win_rate,0.046301,0.003527,16,약한 보조 신호
+baseline_plus_all_non_pitching,recent_10_win_rate,0.044805,0.004115,17,약한 보조 신호
+baseline_plus_all_non_pitching,recent_5_win_rate,0.044255,0.003403,18,약한 보조 신호
+baseline_plus_all_non_pitching,season_win_rate_gap,0.043719,0.004628,19,약한 보조 신호
+baseline_plus_all_non_pitching,team_month_win_rate_prior,0.043522,0.003235,20,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_recent_10_blowout_win_rate,0.041889,0.007119,21,약한 보조 신호
+baseline_plus_all_non_pitching,team_month_run_diff_prior,0.041384,0.003587,22,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_month_run_diff_prior,0.040326,0.001377,23,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_month_win_rate_prior,0.039398,0.003908,24,약한 보조 신호
+baseline_plus_all_non_pitching,team_recent_10_blowout_win_rate,0.038706,0.004021,25,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_recent_away_win_rate_prior,0.034784,0.003519,26,약한 보조 신호
+baseline_plus_all_non_pitching,streak_length_gap,0.033134,0.006246,27,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_recent_10_blowout_loss_rate,0.032426,0.004041,28,약한 보조 신호
+baseline_plus_all_non_pitching,allowed_std_gap,0.03092,0.00218,29,약한 보조 신호
+baseline_plus_all_non_pitching,team_recent_away_win_rate_prior,0.029683,0.008342,30,약한 보조 신호
+baseline_plus_all_non_pitching,season_win_rate_prior,0.029463,0.003738,31,약한 보조 신호
+baseline_plus_all_non_pitching,venue_context_win_rate_gap,0.028893,0.003764,32,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_recent_home_win_rate_prior,0.028461,0.003447,33,약한 보조 신호
+baseline_plus_all_non_pitching,team_recent_10_blowout_loss_rate,0.027919,0.004684,34,약한 보조 신호
+baseline_plus_all_non_pitching,season_avg_run_diff_gap,0.026181,0.007783,35,약한 보조 신호
+baseline_plus_all_non_pitching,winning_streak_bullpen_fatigue_proxy,0.026012,0.00417,36,약한 보조 신호
+baseline_plus_all_non_pitching,losing_streak_low_scoring_offense,0.02538,0.002423,37,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_recent_5_allowed_std,0.025133,0.004829,38,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_winning_streak_flag,0.024052,0.004479,39,약한 보조 신호
+baseline_plus_all_non_pitching,close_game_rate_gap,0.023391,0.003894,40,약한 보조 신호
+baseline_plus_all_non_pitching,team_recent_home_win_rate_prior,0.022631,0.006127,41,약한 보조 신호
+baseline_plus_all_non_pitching,team_winning_streak_flag,0.022162,0.003215,42,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_current_streak_type,0.020804,0.003669,43,약한 보조 신호
+baseline_plus_all_non_pitching,opponent_losing_streak_flag,0.02029,0.003379,44,약한 보조 신호
+baseline_plus_all_non_pitching,losing_streak_allowed_runs_spike,0.018742,0.005744,45,약한 보조 신호
 baseline_plus_all_non_pitching,losing_streak_with_negative_run_diff,0.01794,0.002472,46,약한 보조 신호
 baseline_plus_all_non_pitching,team_recent_5_allowed_std,0.017783,0.003332,47,약한 보조 신호
-baseline_plus_all_non_pitching,opponent_recent_5_close_game_rate_exact,0.017546,0.007315,48,약한 보조 신호
-baseline_plus_all_non_pitching,close_game_rate_gap,0.015746,0.004743,49,약한 보조 신호
-baseline_plus_all_non_pitching,team_current_streak_type,0.014702,0.006224,50,기여도 제한적
-baseline_plus_all_non_pitching,team_losing_streak_flag,0.013947,0.004329,51,기여도 제한적
-baseline_plus_all_non_pitching,team_recent_5_close_game_rate,0.013164,0.00242,52,기여도 제한적
-baseline_plus_all_non_pitching,team_current_streak_length,0.01267,0.003136,53,기여도 제한적
-baseline_plus_all_non_pitching,allowed_momentum_gap,0.010406,0.005242,54,기여도 제한적
-baseline_plus_all_non_pitching,run_momentum_gap,0.008942,0.004475,55,기여도 제한적
+baseline_plus_all_non_pitching,opponent_vs_losing_streak_flag,0.017736,0.005681,48,약한 보조 신호
+baseline_plus_all_non_pitching,team_recent_5_close_game_rate,0.014468,0.007843,49,기여도 제한적
+baseline_plus_all_non_pitching,team_losing_streak_flag,0.012849,0.00551,50,기여도 제한적
+baseline_plus_all_non_pitching,opponent_recent_5_close_game_rate_exact,0.012716,0.004015,51,기여도 제한적
+baseline_plus_all_non_pitching,opponent_run_momentum_3_vs_10,0.011583,0.007357,52,기여도 제한적
+baseline_plus_all_non_pitching,team_current_streak_type,0.009434,0.006884,53,기여도 제한적
+baseline_plus_all_non_pitching,run_momentum_gap,0.008305,0.005358,54,기여도 제한적
+baseline_plus_all_non_pitching,allowed_momentum_gap,0.007899,0.002758,55,기여도 제한적
 baseline_plus_all_non_pitching,rest_days,0.007436,0.005228,56,기여도 제한적
-baseline_plus_all_non_pitching,opponent_recent_10_run_std,0.006853,0.002967,57,기여도 제한적
+baseline_plus_all_non_pitching,team_recent_10_run_std,0.007006,0.003591,57,기여도 제한적
 baseline_plus_all_non_pitching,opponent_allowed_momentum_3_vs_10,0.006309,0.003461,58,기여도 제한적
-baseline_plus_all_non_pitching,opponent_recent_5_run_std,0.006007,0.002254,59,기여도 제한적
-baseline_plus_all_non_pitching,winning_streak_with_low_run_diff,0.005153,0.003868,60,기여도 제한적
-baseline_plus_all_non_pitching,games_last_7_days,0.005073,0.001754,61,기여도 제한적
-baseline_plus_all_non_pitching,opponent_current_streak_length,0.004934,0.002982,62,기여도 제한적
-baseline_plus_all_non_pitching,team_run_momentum_3_vs_10,0.004749,0.002405,63,기여도 제한적
-baseline_plus_all_non_pitching,winning_streak_regression_risk,0.004646,0.002289,64,기여도 제한적
-baseline_plus_all_non_pitching,venue_win_rate_gap,0.004393,0.0031,65,기여도 제한적
-baseline_plus_all_non_pitching,team_recent_10_run_std,0.00436,0.003004,66,기여도 제한적
-baseline_plus_all_non_pitching,opponent_run_momentum_3_vs_10,0.004085,0.002785,67,기여도 제한적
-baseline_plus_all_non_pitching,winning_streak_after_close_games,0.003687,0.002391,68,기여도 제한적
-baseline_plus_all_non_pitching,back_to_back,0.003657,0.002491,69,기여도 제한적
-baseline_plus_all_non_pitching,team_recent_5_run_std,0.003227,0.001529,70,기여도 제한적
-baseline_plus_all_non_pitching,team_allowed_momentum_3_vs_10,0.003175,0.003191,71,기여도 제한적
-baseline_plus_all_non_pitching,season_phase,0.002963,0.002493,72,기여도 제한적
-baseline_plus_all_non_pitching,run_std_gap,0.001772,0.001446,73,기여도 제한적
+baseline_plus_all_non_pitching,opponent_recent_10_run_std,0.005998,0.00565,59,기여도 제한적
+baseline_plus_all_non_pitching,team_current_streak_length,0.005798,0.004147,60,기여도 제한적
+baseline_plus_all_non_pitching,team_recent_5_run_std,0.005356,0.003721,61,기여도 제한적
+baseline_plus_all_non_pitching,winning_streak_regression_risk,0.0052,0.004146,62,기여도 제한적
+baseline_plus_all_non_pitching,games_last_7_days,0.005073,0.001754,63,기여도 제한적
+baseline_plus_all_non_pitching,opponent_current_streak_length,0.004934,0.002982,64,기여도 제한적
+baseline_plus_all_non_pitching,team_run_momentum_3_vs_10,0.004749,0.002405,65,기여도 제한적
+baseline_plus_all_non_pitching,venue_win_rate_gap,0.004393,0.0031,66,기여도 제한적
+baseline_plus_all_non_pitching,winning_streak_with_low_run_diff,0.003864,0.002437,67,기여도 제한적
+baseline_plus_all_non_pitching,back_to_back,0.003657,0.002491,68,기여도 제한적
+baseline_plus_all_non_pitching,run_std_gap,0.003299,0.001857,69,기여도 제한적
+baseline_plus_all_non_pitching,team_allowed_momentum_3_vs_10,0.003175,0.003191,70,기여도 제한적
+baseline_plus_all_non_pitching,winning_streak_after_close_games,0.002894,0.000889,71,기여도 제한적
+baseline_plus_all_non_pitching,season_phase,0.002702,0.003152,72,기여도 제한적
+baseline_plus_all_non_pitching,opponent_recent_5_run_std,0.002677,0.001808,73,기여도 제한적
