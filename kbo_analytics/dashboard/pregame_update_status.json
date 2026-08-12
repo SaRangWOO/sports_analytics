@@ -1,5 +1,5 @@
 {
-  "run_time": "2026-08-12 16:00:02",
+  "run_time": "2026-08-12 16:30:02",
   "reference_date": "2026-08-12",
   "update_stage": "pregame",
   "games_checked": 5,
@@ -28,7 +28,7 @@
       "home_team": "SSG",
       "away_team": "롯데",
       "home_starter": "김민준",
-      "away_starter": "나균안",
+      "away_starter": "김한결",
       "home_starter_source": "confirmed",
       "away_starter_source": "confirmed",
       "game_starter_status": "both_confirmed",
@@ -68,7 +68,16 @@
       "status_label": "확정 선발 반영 완료"
     }
   ],
-  "changes": [],
+  "changes": [
+    {
+      "game_id": "20260812LTSK0",
+      "game": "롯데 vs SSG",
+      "field": "away_starter",
+      "before": "나균안",
+      "after": "김한결",
+      "starter": "김한결"
+    }
+  ],
   "lineup_status_summary": {
     "confirmed": 0,
     "recent": 10,
