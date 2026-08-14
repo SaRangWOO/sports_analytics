@@ -1,8 +1,8 @@
 ﻿feature,feature_group,high_signal_definition,high_signal_games,production_accuracy_when_high,candidate_accuracy_when_high,accuracy_delta_when_high,candidate_wrong_games,common_failure_pattern,interpretation,recommended_action
 venue_win_rate_gap,venue_context,abs(venue_win_rate_gap) >= p75(0.2488),244,0.525,0.5,-0.025,122,high_signal_candidate_underperforms,2026 high-signal 구간에서 후보가 baseline보다 낮아 거짓 신호 가능성,remove_from_candidate_or_monitor_only
-team_allowed_momentum_3_vs_10,momentum,abs(team_allowed_momentum_3_vs_10) >= p75(1.8333),245,0.563,0.584,0.021,102,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
-allowed_momentum_gap,momentum,abs(allowed_momentum_gap) >= p75(2.575),244,0.574,0.598,0.024,98,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
-opponent_run_momentum_3_vs_10,momentum,abs(opponent_run_momentum_3_vs_10) >= p75(1.8667),245,0.547,0.584,0.037,102,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
 opponent_allowed_momentum_3_vs_10,momentum,abs(opponent_allowed_momentum_3_vs_10) >= p75(1.8333),245,0.563,0.584,0.021,102,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
-team_run_momentum_3_vs_10,momentum,abs(team_run_momentum_3_vs_10) >= p75(1.8667),245,0.547,0.584,0.037,102,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
+opponent_run_momentum_3_vs_10,momentum,abs(opponent_run_momentum_3_vs_10) >= p75(1.8667),245,0.547,0.584,0.037,102,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
+allowed_momentum_gap,momentum,abs(allowed_momentum_gap) >= p75(2.575),244,0.574,0.598,0.024,98,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
 run_momentum_gap,momentum,abs(run_momentum_gap) >= p75(2.7),250,0.504,0.576,0.072,106,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
+team_run_momentum_3_vs_10,momentum,abs(team_run_momentum_3_vs_10) >= p75(1.8667),245,0.547,0.584,0.037,102,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
+team_allowed_momentum_3_vs_10,momentum,abs(team_allowed_momentum_3_vs_10) >= p75(1.8333),245,0.563,0.584,0.021,102,no_clear_false_signal,2026 high-signal 구간에서 명확한 악화는 제한적,monitor_only
