@@ -2,7 +2,7 @@
 duplicate_key_check,pass,blocking,470,0,0.0,"snapshot_date, reference_date, team, scheduled_game_id 조합 중복 검사",중복 키가 있으면 최신 snapshot_time 기준으로 deduplicate
 missing_starter_name_check,pass,blocking,10,0,0.0,starter_source가 confirmed/manual/estimated인데 starter_name이 비어 있는 행 검사,선발명 파싱 또는 추정 로직 점검
 unknown_starter_ratio_check,pass,warning,10,0,0.0,reference_date 기준 unknown 선발 0건,unknown 비율이 높으면 GameCenter 또는 추정 선발 수집 점검
-confirmed_starter_ratio_check,warning,warning,10,10,1.0,reference_date 기준 confirmed 선발 0건,경기 전 확정 선발 발표 시간 이후 pregame 업데이트 확인
+confirmed_starter_ratio_check,pass,warning,10,0,0.0,reference_date 기준 confirmed 선발 10건,경기 전 확정 선발 발표 시간 이후 pregame 업데이트 확인
 team_count_check,pass,blocking,10,0,0.0,예정 경기 팀 행 수와 스냅샷 행 수 일치 검사,예정 경기 수와 snapshot 생성 루프 매칭 점검
 scheduled_game_mapping_check,pass,blocking,10,0,0.0,scheduled_game_id 비어 있는 행 검사,일정 수집 game_id 생성 로직 점검
 snapshot_time_freshness_check,pass,warning,10,0,0.0,reference_date 스냅샷이 현재 실행일에 생성됐는지 검사,자동 실행 시점과 reference_date 전달값 확인
