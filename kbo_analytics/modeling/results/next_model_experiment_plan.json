@@ -5,8 +5,7 @@
   "strongest_new_feature_groups": [
     "baseline",
     "close_blowout",
-    "month_phase",
-    "venue_context"
+    "month_phase"
   ],
   "weakest_new_feature_groups": [
     "baseline"
@@ -40,16 +39,16 @@
   "candidate_features_to_review": [
     "elo_diff",
     "recent_run_diff_10_gap",
-    "recent_10_win_rate_gap",
     "month_win_rate_gap",
     "blowout_tendency_gap",
+    "recent_10_win_rate_gap",
     "recent_5_win_rate_gap",
     "is_home",
     "avg_run_diff_last_10",
     "recent_10_win_rate",
+    "month_run_diff_gap",
     "opponent_avg_run_diff_last_10",
-    "head_to_head_win_rate_gap",
-    "opponent_recent_5_win_rate"
+    "head_to_head_win_rate_gap"
   ],
   "candidate_features_to_drop": [
     "season_win_rate_gap",
