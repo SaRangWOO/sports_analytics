@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-18T18:30:02.979282",
-  "reference_date": "2026-08-18",
+  "generated_at": "2026-08-19T08:00:03.203203",
+  "reference_date": "2026-08-19",
   "total_games": 5,
   "strong_recommendation_count": 0,
   "recommendation_count": 2,
@@ -8,11 +8,11 @@
   "watch_count": 0,
   "no_info_count": 0,
   "top_pick": "롯데",
-  "top_pick_probability": "55.3%",
+  "top_pick_probability": "56.7%",
   "day_confidence_summary": "승패 방향과 시장별 추천을 분리해 표시합니다.",
   "strong_recommendation_available": false,
   "message": "오늘은 강한 추천 경기는 없지만, 상대적으로 롯데가 가장 높은 우세 후보입니다. 핸디캡과 오버/언더는 관망이 적절합니다.",
-  "audited_completed_games": 144,
+  "audited_completed_games": 149,
   "pending_games": 127,
   "grade_performance_snapshot": [
     {
@@ -33,27 +33,27 @@
     {
       "grade": "B",
       "recommendation_strength": "추천",
-      "games": 20,
-      "correct": 11,
-      "accuracy": 0.55,
+      "games": 22,
+      "correct": 13,
+      "accuracy": 0.591,
       "avg_probability": 0.559,
-      "brier": 0.248,
-      "log_loss": 0.69,
-      "top_pick_games": 11,
-      "top_pick_accuracy": 0.636,
-      "top_tier_games": 20,
-      "top_tier_accuracy": 0.55,
+      "brier": 0.244,
+      "log_loss": 0.681,
+      "top_pick_games": 12,
+      "top_pick_accuracy": 0.667,
+      "top_tier_games": 22,
+      "top_tier_accuracy": 0.591,
       "interpretation": "충분한 표본에서 C/D보다 나은지 확인해야 하는 추천 구간입니다."
     },
     {
       "grade": "C",
       "recommendation_strength": "약우세",
-      "games": 87,
-      "correct": 49,
-      "accuracy": 0.563,
-      "avg_probability": 0.541,
-      "brier": 0.246,
-      "log_loss": 0.686,
+      "games": 90,
+      "correct": 50,
+      "accuracy": 0.556,
+      "avg_probability": 0.54,
+      "brier": 0.247,
+      "log_loss": 0.687,
       "top_pick_games": 17,
       "top_pick_accuracy": 0.765,
       "top_tier_games": 38,
@@ -92,18 +92,6 @@
     }
   ],
   "top_pick_performance_snapshot": [
-    {
-      "date": "2026-08-12",
-      "top_pick_game": "롯데 vs SSG",
-      "top_pick_team": "롯데",
-      "top_pick_probability": 0.55,
-      "top_pick_grade": "B등급",
-      "actual_winner": "SSG",
-      "result": "incorrect",
-      "all_games_max_probability": 0.55,
-      "day_confidence_summary": "5 completed audited games",
-      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
-    },
     {
       "date": "2026-08-13",
       "top_pick_game": "한화 vs 두산",
@@ -151,12 +139,24 @@
       "all_games_max_probability": 0.559,
       "day_confidence_summary": "3 completed audited games",
       "interpretation": "TOP PICK은 상대 순위 라벨입니다."
+    },
+    {
+      "date": "2026-08-18",
+      "top_pick_game": "키움 vs 롯데",
+      "top_pick_team": "롯데",
+      "top_pick_probability": 0.553,
+      "top_pick_grade": "B등급",
+      "actual_winner": "롯데",
+      "result": "correct",
+      "all_games_max_probability": 0.553,
+      "day_confidence_summary": "5 completed audited games",
+      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
     }
   ],
   "recommendation_policy_warning": "Daily TOP PICK is a relative ranking label and should not be interpreted as a strong recommendation unless the recommendation grade is A or B.",
   "label_calibration_status": "rename_top_pick",
   "top_pick_wording_status": "오늘 모델 기준 상대 우세 1순위",
   "actionability_warning": "Recommendation labels are interpretive until enough completed-game outcomes support them.",
-  "completed_games_used_for_label_calibration": 144,
+  "completed_games_used_for_label_calibration": 149,
   "pending_games_for_future_calibration": 127
 }
