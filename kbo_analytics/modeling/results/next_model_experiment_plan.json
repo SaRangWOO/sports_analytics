@@ -41,15 +41,15 @@
     "elo_diff",
     "recent_run_diff_10_gap",
     "blowout_tendency_gap",
-    "month_win_rate_gap",
     "recent_10_win_rate_gap",
     "recent_5_win_rate_gap",
     "is_home",
+    "month_win_rate_gap",
     "avg_run_diff_last_10",
     "recent_10_win_rate",
     "opponent_avg_run_diff_last_10",
     "head_to_head_win_rate_gap",
-    "opponent_recent_5_win_rate"
+    "month_run_diff_gap"
   ],
   "candidate_features_to_drop": [
     "season_win_rate_gap",
