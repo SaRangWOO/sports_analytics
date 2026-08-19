@@ -1,0 +1,17 @@
+{
+  "policy": "hybrid_50_50",
+  "status": "rollback_ready_canary",
+  "validation_season": 2026,
+  "validation_games": 516,
+  "production_reproduction_accuracy": 0.5484,
+  "hybrid_accuracy": 0.5543,
+  "accuracy_delta": 0.0058,
+  "production_brier": 0.2471,
+  "hybrid_brier": 0.2471,
+  "production_log_loss": 0.6873,
+  "hybrid_log_loss": 0.6873,
+  "production_recent_100_accuracy": 0.52,
+  "hybrid_recent_100_accuracy": 0.53,
+  "bootstrap_ci_stable": false,
+  "rollback_policy": "production_only"
+}

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_DIR="/home/tera/1.project/1.sports_analytics/kbo_analytics"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 PYTHON_BIN="$PROJECT_DIR/.venv/bin/python"
 LOG_DIR="$PROJECT_DIR/logs"
 LOG_FILE="$LOG_DIR/pregame_update_$(date +%F).log"
@@ -21,7 +22,7 @@ if [ -f "$PROJECT_DIR/.env" ]; then
 fi
 
 docker compose up -d kbo-db kbo-api dashboard
-"$PYTHON_BIN" official_kbo_dashboard.py --training-start-year 2016 --update-stage pregame
+"$PYTHON_BIN" scripts/official_kbo_dashboard_hybrid.py --training-start-year 2016 --update-stage pregame
 
 curl -fsS "http://localhost:8501/latest.html" >/dev/null
 curl -fsS "http://localhost:8501/kt.html" >/dev/null
