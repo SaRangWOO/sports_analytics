@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-19T18:30:02.560765",
-  "audited_completed_games": 149,
+  "generated_at": "2026-08-20T08:00:03.205968",
+  "audited_completed_games": 154,
   "pending_games": 127,
   "strongest_supported_label": "오늘 TOP PICK",
   "weakest_supported_label": "handicap:not_available",
@@ -17,8 +17,8 @@
     {
       "label_type": "recommendation_strength",
       "label": "관망",
-      "recommended_label_action": "keep",
-      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+      "recommended_label_action": "soften_wording",
+      "interpretation": "평균 확률 대비 실제 성과가 낮아 표현 완화가 필요합니다."
     },
     {
       "label_type": "recommendation_strength",
@@ -53,8 +53,8 @@
     {
       "label_type": "recommendation_grade",
       "label": "D등급",
-      "recommended_label_action": "keep",
-      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+      "recommended_label_action": "soften_wording",
+      "interpretation": "평균 확률 대비 실제 성과가 낮아 표현 완화가 필요합니다."
     },
     {
       "label_type": "daily_rank_label",
@@ -65,8 +65,8 @@
     {
       "label_type": "daily_rank_label",
       "label": "일반 예측",
-      "recommended_label_action": "keep",
-      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
+      "recommended_label_action": "soften_wording",
+      "interpretation": "평균 확률 대비 실제 성과가 낮아 표현 완화가 필요합니다."
     },
     {
       "label_type": "market_label",
