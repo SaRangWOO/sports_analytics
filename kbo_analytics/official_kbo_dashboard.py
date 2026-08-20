@@ -1547,6 +1547,11 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             return f'{team}: {context.get("선발명", "-")} · {source_label}{era_text}{whip_text}'
 
         matchup = f'{row["기준팀"]} vs {row["상대팀"]}'
+        model_reason = str(row.get("예측 근거", ""))
+        supporting_reason = model_reason.split(";", 1)[1].strip() if ";" in model_reason else model_reason
+        predicted_team = row["예측 구단"]
+        production_probability = row.get("최종예측팀기준_기존모델승률", row.get("기존모델승률", "-"))
+        run_probability = row.get("최종예측팀기준_득점모델승률", row.get("득점모델승률", "-"))
         cards[key] = {
             "game_id": game_status.get("game_id", key),
             "home_team": home_team,
@@ -1556,7 +1561,11 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             "추천": f'{row["예측 구단"]} {tier["우세"]}',
             "예측승률": f"{confidence:.1%}",
             "신뢰도": tier["신뢰도"],
-            "핵심 근거": row.get("예측 근거", ""),
+            "핵심 근거": supporting_reason,
+            "모델 비교": f"{predicted_team} 기준 · 승패 모델 {production_probability} · 득점 모델 {run_probability}",
+            "모델 합의": row.get("모델합의상태", "모델 비교 정보 없음"),
+            "모델별 예측": f'승패 모델 {row.get("기존모델예측구단", "-")} · 득점 모델 {row.get("득점모델예측구단", "-")}',
+            "예상 스코어": row.get("최종예측팀예상스코어", row.get("예상스코어", "-")),
             "투수 신호": f'{pick_context.get("투수 표시", "예상 선발: 추정 불가")} · 불펜 피로 {pick_context.get("불펜 피로", "-")}',
             "선발 매치업": f"선발 매치업: {starter_line(away_team)} / {starter_line(home_team)}",
             "선발 상태": status_label,
@@ -2709,18 +2718,6 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             return "추천"
         return "관망"
 
-    def model_summary(row):
-        team = row.get("예측 구단", "-")
-        trust = trust_level(row)
-        recommendation = recommendation_label(row)
-        if recommendation == "추천":
-            return f"예측 우세: {team} · 승률 우위가 있고 신뢰도는 {trust}입니다."
-        if recommendation == "관망":
-            return f"예측 우세: {team} · 승률 우위는 있으나 신뢰도는 {trust}이라 관망이 적절합니다."
-        if recommendation == "정보 부족":
-            return f"예측 우세: {team} · 선발 정보 확인 전까지 보수적으로 해석해야 합니다."
-        return f"예측 우세: {team} · 확률이 높더라도 표본과 변동성을 함께 봐야 합니다."
-
     high_confidence_games = sum(1 for row in prediction_cards if recommendation_label(row) == "추천")
     watch_games = sum(1 for row in prediction_cards if recommendation_label(row) == "관망")
     average_confidence = (
@@ -2795,14 +2792,14 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             <div class="confidence-label"><span>신뢰도 {escape(trust_level(row))}</span><span>{escape(row["예측승률"])}</span></div>
             <div class="confidence-track"><span style="width:{float(row.get("confidence_value", 0)) * 100:.0f}%"></span></div>
           </div>
-          <div class="badges"><span class="badge-trust">승패 추천</span><span>핸디캡 관망</span><span>오버/언더 관망</span></div>
+          <div class="badges"><span class="badge-trust">승패 {escape(recommendation_label(row))}</span><span>핸디캡 관망</span><span>오버/언더 관망</span></div>
           <div class="judgement-box">
-            <span class="small-label">모델 판단 요약</span>
-            <p>{escape(model_summary(row))}</p>
+            <span class="small-label">모델 비교</span>
+            <p>{escape(row["모델 비교"])} · 예상 스코어 {escape(row["예상 스코어"])}</p>
+            <p><strong>{escape(row["모델 합의"])}</strong> · {escape(row["모델별 예측"])}</p>
           </div>
-          <p class="reason-text">{escape(row["핵심 근거"])}</p>
+          <p class="reason-text">핵심 근거 · {escape(row["핵심 근거"])}</p>
           <div class="signal-list">
-            <p><strong>판단 상태</strong> · {escape(row["판단"])} / 표시 등급 {escape(trust_level(row))}</p>
             <p>{escape(row["선발 상태"])}</p>
             <p>{escape(row.get("예측 변화", "이전 예측 없음"))}</p>
             <p>{escape(row["선발 매치업"])}</p>
@@ -2997,7 +2994,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     {featured_html}
     <div class="grid hero-metrics">
       <div class="metric">TOP PICK<strong>{escape(str(summary["top_pick"]))}</strong><span class="note">오늘 가장 강한 예측</span></div>
-      <div class="metric">HIGH CONFIDENCE<strong>{high_confidence_games}</strong><span class="note">고신뢰 구간 경기 수</span></div>
+      <div class="metric">추천 후보<strong>{high_confidence_games}</strong><span class="note">현재 정책 기준 추천 경기 수</span></div>
       <div class="metric">WATCH LIST<strong>{watch_games}</strong><span class="note">관망 권장 경기 수</span></div>
       <div class="metric">AVG CONFIDENCE<strong>{average_confidence}</strong><span class="note">전체 평균 신뢰도</span></div>
     </div>

@@ -72,10 +72,25 @@ def apply_probability_policy(
             raise ValueError(f"team mapping failed: {game_date} {team} vs {opponent}")
         hybrid_probability = (production_probability + run_probability) / 2
         predicted_team = team if hybrid_probability >= 0.5 else opponent
+        if predicted_team == team:
+            predicted_team_production_probability = production_probability
+            predicted_team_run_probability = run_probability
+            predicted_team_runs = team_runs
+            predicted_team_opponent_runs = opponent_runs
+        else:
+            predicted_team_production_probability = 1 - production_probability
+            predicted_team_run_probability = 1 - run_probability
+            predicted_team_runs = opponent_runs
+            predicted_team_opponent_runs = team_runs
+        production_pick = team if production_probability >= 0.5 else opponent
+        run_pick = team if run_probability >= 0.5 else opponent
+        agreement_status = "모델 합의" if production_pick == run_pick else "모델 불일치"
         existing_reason = str(row.get("예측 근거", "")).strip()
         policy_reason = (
-            f"승패 모델 {production_probability:.1%} · 득점 모델 {run_probability:.1%} · "
-            f"예상 스코어 {team_runs:.1f}-{opponent_runs:.1f}"
+            f"{predicted_team} 기준 승패 모델 {predicted_team_production_probability:.1%} · "
+            f"득점 모델 {predicted_team_run_probability:.1%} · "
+            f"예상 스코어 {predicted_team_runs:.1f}-{predicted_team_opponent_runs:.1f} · "
+            f"{agreement_status}"
         )
         row.update(
             {
@@ -89,6 +104,16 @@ def apply_probability_policy(
                 "상대예상득점": round(opponent_runs, 1),
                 "예상스코어": f"{team_runs:.1f} - {opponent_runs:.1f}",
                 "확률정책": "승패·득점 모델 50:50 결합",
+                "기존모델예측구단": production_pick,
+                "득점모델예측구단": run_pick,
+                "모델합의상태": agreement_status,
+                "최종예측팀기준_기존모델승률": f"{predicted_team_production_probability:.1%}",
+                "최종예측팀기준_득점모델승률": f"{predicted_team_run_probability:.1%}",
+                "최종예측팀예상득점": round(predicted_team_runs, 1),
+                "최종예측팀상대예상득점": round(predicted_team_opponent_runs, 1),
+                "최종예측팀예상스코어": (
+                    f"{predicted_team_runs:.1f} - {predicted_team_opponent_runs:.1f}"
+                ),
             }
         )
         updated.append(row)

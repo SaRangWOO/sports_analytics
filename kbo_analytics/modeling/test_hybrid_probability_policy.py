@@ -59,6 +59,13 @@ class HybridProbabilityPolicyTest(unittest.TestCase):
         self.assertEqual(lg["예측승률"], "47.0%")
         self.assertEqual(kt["예상스코어"], "5.2 - 4.8")
         self.assertEqual(result["operational_probability_policy"], "hybrid_50_50")
+        self.assertEqual(kt["최종예측팀기준_기존모델승률"], "54.0%")
+        self.assertEqual(lg["최종예측팀기준_기존모델승률"], "54.0%")
+        self.assertEqual(kt["최종예측팀기준_득점모델승률"], "52.0%")
+        self.assertEqual(lg["최종예측팀기준_득점모델승률"], "52.0%")
+        self.assertEqual(lg["최종예측팀예상스코어"], "5.2 - 4.8")
+        self.assertEqual(kt["모델합의상태"], "모델 합의")
+        self.assertEqual(lg["모델합의상태"], "모델 합의")
 
     def test_production_only_preserves_predictions(self):
         result = apply_probability_policy(self.payload, self.path, "production_only")
