@@ -1,0 +1,19 @@
+{
+  "schema_version": "1",
+  "feature_names": [
+    "is_home",
+    "rest_days"
+  ],
+  "feature_order": [
+    "is_home",
+    "rest_days"
+  ],
+  "feature_count": 2,
+  "required_features": [
+    "is_home",
+    "rest_days"
+  ],
+  "optional_features": [],
+  "expected_dtype": "float64",
+  "missing_value_policy": "required model inputs must be numeric and non-null after existing upstream feature generation"
+}
