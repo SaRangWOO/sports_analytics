@@ -15,15 +15,6 @@ import requests
 
 from modeling.feature_engineering import build_features
 from modeling.model_training import evaluate_model as run_model_evaluation
-from modeling.pitching_snapshot_storage import (
-    SCHEDULE_COLUMNS,
-    SNAPSHOT_KEY,
-    canonicalize_pitching_snapshots,
-    merge_pitching_snapshots,
-    read_pitching_snapshot,
-    save_pitching_snapshot,
-    validate_pitching_snapshot,
-)
 from modeling.train_win_predictor import (
     prepare_matrix,
     sigmoid,
@@ -128,6 +119,16 @@ def fetch_team_standings():
     return pd.DataFrame(standings), pd.DataFrame(vs_rows)
 
 
+def kbo_game_status(cancel_id="0", cancel_name="", final=False):
+    identifier = str(cancel_id or "0").strip()
+    reason = str(cancel_name or "").strip()
+    if "연기" in reason:
+        return "Postponed"
+    if identifier not in {"", "0"} or "취소" in reason:
+        return "Cancelled"
+    return "Final" if final else "Scheduled"
+
+
 def fetch_schedule_month(year: int, month: int):
     session = requests.Session()
     url = f"{KBO_BASE}/ws/Schedule.asmx/GetScheduleList"
@@ -164,7 +165,15 @@ def fetch_schedule_month(year: int, month: int):
         away_team, home_team = teams[0], teams[-1]
         away_score = scores[0] if len(scores) >= 2 else np.nan
         home_score = scores[1] if len(scores) >= 2 else np.nan
-        status = "Final" if len(scores) >= 2 else "Scheduled"
+        visible_texts = [clean_html(text) for text in texts]
+        cancellation_reason = next(
+            (text for text in visible_texts if "취소" in text or "연기" in text),
+            "",
+        )
+        status = kbo_game_status(
+            cancel_name=cancellation_reason,
+            final=len(scores) >= 2,
+        )
         game_id_match = re.search(r"gameId=([A-Za-z0-9]+)", " ".join(texts))
         game_id = game_id_match.group(1) if game_id_match else f"{game_date}_{away_team}_{home_team}"
         ballpark = clean_html(texts[-2]) if len(texts) >= 2 else ""
@@ -194,6 +203,7 @@ def fetch_schedule_month(year: int, month: int):
                     "score_team": score_for,
                     "score_opp": score_against,
                     "ballpark": ballpark,
+                    "cancellation_reason": cancellation_reason,
                 }
             )
     return parsed
@@ -203,7 +213,38 @@ def fetch_schedule(year: int, through_month: int, start_month: int = 3):
     rows = []
     for month in range(start_month, through_month + 1):
         rows.extend(fetch_schedule_month(year, month))
-    return pd.DataFrame(rows)
+    schedule = pd.DataFrame(rows)
+    if schedule.empty:
+        return schedule
+
+    for game_date_text, date_rows in schedule.groupby("date", sort=False):
+        if not date_rows["status"].eq("Scheduled").any():
+            continue
+        game_date = datetime.strptime(str(game_date_text), "%Y-%m-%d").date()
+        game_list = fetch_kbo_game_list(game_date)
+        for game in game_list:
+            away_team = str(game.get("AWAY_NM", "")).strip()
+            home_team = str(game.get("HOME_NM", "")).strip()
+            game_id = str(game.get("G_ID", "")).strip()
+            reason = str(game.get("CANCEL_SC_NM", "") or "").strip()
+            status = kbo_game_status(
+                cancel_id=game.get("CANCEL_SC_ID", "0"),
+                cancel_name=reason,
+                final=str(game.get("GAME_RESULT_CK", "0")) == "1",
+            )
+            mask = (
+                schedule.index.isin(date_rows.index)
+                & (
+                    ((schedule["team"] == away_team) & (schedule["opponent"] == home_team))
+                    | ((schedule["team"] == home_team) & (schedule["opponent"] == away_team))
+                )
+            )
+            if game_id:
+                schedule.loc[mask, "game_id"] = schedule.loc[mask, "team"].map(lambda team: f"{game_id}_{team}")
+            if status in {"Cancelled", "Postponed"}:
+                schedule.loc[mask, "status"] = status
+                schedule.loc[mask, "cancellation_reason"] = reason
+    return schedule
 
 
 def fetch_training_schedule(start_year: int, reference_date: date):
@@ -328,8 +369,10 @@ def load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, ro
         with engine.begin() as connection:
             for table_name, dataframe in tables.items():
                 dataframe.to_sql(table_name, connection, if_exists="replace", index=False)
+        return {"status": "success", "warning": ""}
     except Exception as exc:
         print(f"[Warn] PostgreSQL 적재를 건너뜁니다: {exc}")
+        return {"status": "skipped", "warning": str(exc)}
 
 
 def align_prediction_matrix(features: pd.DataFrame, feature_columns: list[str], mean: pd.Series, std: pd.Series):
@@ -545,6 +588,46 @@ def prediction_tier(confidence: float):
     return {"우세": "우세", "신뢰도": "주의", "판단": "과신 주의"}
 
 
+def predicted_edge_label(team: str, confidence: float) -> str:
+    if confidence >= 0.58:
+        edge = "우세"
+    elif confidence >= 0.53:
+        edge = "약우세"
+    else:
+        edge = "박빙 우세"
+    return f"{team} {edge}"
+
+
+def recommendation_strength(confidence: float, daily_top_tier: bool = False, info_missing: bool = False, risk_flag: bool = False) -> str:
+    if info_missing:
+        return "정보 부족"
+    if risk_flag or confidence < 0.52:
+        return "관망"
+    if confidence >= 0.58 and not risk_flag:
+        return "강추천"
+    if confidence >= 0.55 and daily_top_tier and not risk_flag:
+        return "추천"
+    return "약우세"
+
+
+def recommendation_grade(strength: str) -> str:
+    return {
+        "강추천": "A등급",
+        "추천": "B등급",
+        "약우세": "C등급",
+        "관망": "D등급",
+        "정보 부족": "E등급",
+    }.get(strength, "D등급")
+
+
+def trust_label_from_confidence(confidence: float) -> str:
+    if confidence >= 0.58:
+        return "높음"
+    if confidence >= 0.55:
+        return "보통"
+    return "낮음"
+
+
 def parse_innings(value):
     if pd.isna(value):
         return 0.0
@@ -603,28 +686,6 @@ def fetch_kbo_game_list(game_date: date):
         return response.json().get("game", [])
     except (requests.RequestException, ValueError):
         return []
-
-
-def pitching_snapshot_schedule_frame(game_date: date):
-    rows = []
-    for game in fetch_kbo_game_list(game_date):
-        game_date_value = str(game.get("G_DT", ""))
-        game_time_value = str(game.get("G_TM", ""))
-        rows.append(
-            {
-                "reference_date": datetime.strptime(
-                    game_date_value,
-                    "%Y%m%d",
-                ).date().isoformat(),
-                "away_team": str(game.get("AWAY_NM", "")).strip(),
-                "home_team": str(game.get("HOME_NM", "")).strip(),
-                "scheduled_start_datetime": (
-                    f"{game_date_value} {game_time_value}"
-                ),
-                "official_game_id": str(game.get("G_ID", "")).strip(),
-            }
-        )
-    return pd.DataFrame(rows, columns=SCHEDULE_COLUMNS)
 
 
 def load_manual_confirmed_starters(prediction_date: date):
@@ -904,34 +965,17 @@ def append_pitching_daily_snapshot(games: pd.DataFrame, context: dict, output_pa
     ]
     output_path.parent.mkdir(parents=True, exist_ok=True)
     new_frame = pd.DataFrame(rows, columns=columns)
-    if not new_frame.empty:
-        new_frame = canonicalize_pitching_snapshots(
-            new_frame,
-            pitching_snapshot_schedule_frame(prediction_date),
-            prediction_reference_datetime=reference_datetime,
-        )
-    existing = (
-        read_pitching_snapshot(output_path)
-        if output_path.exists()
-        else pd.DataFrame(columns=columns)
-    )
-    if new_frame.empty:
-        validate_pitching_snapshot(
-            existing,
-            as_of_date=reference_datetime.date(),
-        )
-        frame = existing
+    if output_path.exists():
+        existing = pd.read_csv(output_path)
+        frame = existing if new_frame.empty else pd.concat([existing, new_frame], ignore_index=True)
     else:
-        frame = merge_pitching_snapshots(
-            existing,
-            new_frame,
-            as_of_date=reference_datetime.date(),
+        frame = new_frame
+    if not frame.empty:
+        frame = frame.sort_values("snapshot_time").drop_duplicates(
+            subset=["snapshot_date", "reference_date", "team", "scheduled_game_id"],
+            keep="last",
         )
-        save_pitching_snapshot(
-            frame,
-            output_path,
-            as_of_date=reference_datetime.date(),
-        )
+    frame.to_csv(output_path, index=False, encoding="utf-8-sig")
 
     ref_frame = frame[frame["reference_date"].astype(str).eq(prediction_date.isoformat())] if not frame.empty else frame
     source_counts = ref_frame["starter_source"].replace({"manual": "confirmed"}).value_counts().to_dict() if not ref_frame.empty else {}
@@ -1020,7 +1064,7 @@ def write_pitching_snapshot_accumulation_report(frame: pd.DataFrame, results_dir
         normalized_source = work["starter_source"].fillna("unknown").replace({"manual": "confirmed"})
         work["starter_source_normalized"] = normalized_source
         for (snapshot_date, reference_date), group in work.groupby(["snapshot_date", "reference_date"], sort=True):
-            duplicate_key_count = int(group.duplicated(subset=SNAPSHOT_KEY).sum())
+            duplicate_key_count = int(group.duplicated(subset=["snapshot_date", "reference_date", "team", "scheduled_game_id"]).sum())
             actual_team_rows = int(len(group))
             scheduled_games = int(actual_team_rows // 2)
             expected_team_rows = scheduled_games * 2
@@ -1069,7 +1113,8 @@ def write_pitching_snapshot_quality_reports(frame: pd.DataFrame, scheduled: pd.D
     ref_frame = frame[frame["reference_date"].astype(str).eq(reference_key)].copy() if not frame.empty else frame
     actual_team_rows = int(len(ref_frame))
     expected_team_rows = int(len(scheduled)) if not scheduled.empty else actual_team_rows
-    duplicate_key_count = int(frame.duplicated(subset=SNAPSHOT_KEY).sum()) if not frame.empty else 0
+    key_cols = ["snapshot_date", "reference_date", "team", "scheduled_game_id"]
+    duplicate_key_count = int(frame.duplicated(subset=key_cols).sum()) if not frame.empty else 0
     starter_sources = {"confirmed", "manual", "estimated"}
     missing_starter = ref_frame[
         ref_frame["starter_source"].isin(starter_sources)
@@ -1089,7 +1134,7 @@ def write_pitching_snapshot_quality_reports(frame: pd.DataFrame, scheduled: pd.D
     quality_missing = ref_frame[ref_frame["starter_info_quality"].isna()] if not ref_frame.empty else ref_frame
 
     rows = [
-        _quality_result("duplicate_key_check", duplicate_key_count, len(frame), "blocking", "reference_date, scheduled_game_id, team canonical key 중복 검사", "중복 키가 있으면 경기 시작 전 최신 snapshot_time 기준으로 deduplicate"),
+        _quality_result("duplicate_key_check", duplicate_key_count, len(frame), "blocking", "snapshot_date, reference_date, team, scheduled_game_id 조합 중복 검사", "중복 키가 있으면 최신 snapshot_time 기준으로 deduplicate"),
         _quality_result("missing_starter_name_check", len(missing_starter), actual_team_rows, "blocking", "starter_source가 confirmed/manual/estimated인데 starter_name이 비어 있는 행 검사", "선발명 파싱 또는 추정 로직 점검"),
         _quality_result("unknown_starter_ratio_check", unknown_count, actual_team_rows, "warning", f"reference_date 기준 unknown 선발 {unknown_count}건", "unknown 비율이 높으면 GameCenter 또는 추정 선발 수집 점검"),
         _quality_result("confirmed_starter_ratio_check", 0 if confirmed_count else actual_team_rows, actual_team_rows, "warning", f"reference_date 기준 confirmed 선발 {confirmed_count}건", "경기 전 확정 선발 발표 시간 이후 pregame 업데이트 확인"),
@@ -1389,6 +1434,61 @@ def export_lineup_context(context: dict, output_path: Path, prediction_date: dat
     pd.DataFrame(rows).to_csv(output_path, index=False, encoding="utf-8-sig")
 
 
+def append_lineup_daily_snapshot(
+    context: dict,
+    output_path: Path,
+    prediction_date: date,
+    snapshot_time: datetime,
+):
+    rows = []
+    captured_at = snapshot_time.strftime("%Y-%m-%d %H:%M:%S")
+    for team, values in sorted(context.items()):
+        for player in values.get("lineup", []):
+            rows.append(
+                {
+                    "snapshot_date": snapshot_time.date().isoformat(),
+                    "snapshot_time": captured_at,
+                    "reference_date": prediction_date.isoformat(),
+                    "scheduled_game_id": values.get("game_id", ""),
+                    "team": team,
+                    "home_away": "H" if values.get("side") == "home" else "A",
+                    "lineup_source": values.get("lineup_source", "unknown"),
+                    "lineup_info_quality": 1.0 if values.get("lineup_source") == "confirmed" else 0.5,
+                    "batting_order": player.get("타순", ""),
+                    "position": player.get("포지션", ""),
+                    "player": player.get("선수", ""),
+                    "war": player.get("WAR", ""),
+                    "data_source": "KBO GetLineUpAnalysis",
+                }
+            )
+    if not rows:
+        return
+
+    current = pd.DataFrame(rows)
+    if output_path.exists():
+        history = pd.read_csv(output_path)
+        comparison_columns = [
+            "scheduled_game_id",
+            "team",
+            "lineup_source",
+            "batting_order",
+            "position",
+            "player",
+        ]
+        latest = history[history["reference_date"].astype(str) == prediction_date.isoformat()].copy()
+        if not latest.empty:
+            latest_time = latest["snapshot_time"].astype(str).max()
+            latest = latest[latest["snapshot_time"].astype(str) == latest_time]
+            previous_signature = latest[comparison_columns].fillna("").astype(str).sort_values(comparison_columns).to_dict("records")
+            current_signature = current[comparison_columns].fillna("").astype(str).sort_values(comparison_columns).to_dict("records")
+            if previous_signature == current_signature:
+                return
+        current = pd.concat([history, current], ignore_index=True)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    current.to_csv(output_path, index=False, encoding="utf-8-sig")
+
+
 def starter_status_label(status: str):
     return {
         "both_confirmed": "확정 선발 반영 완료",
@@ -1528,7 +1628,6 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
         key = "|".join(sorted([row["기준팀"], row["상대팀"]]))
         if key in cards and confidence <= cards[key]["confidence_value"]:
             continue
-        tier = prediction_tier(confidence)
         pick_context = pitching_context.get(row["예측 구단"], {})
         pick_lineup = lineup_context.get(row["예측 구단"], {})
         game_status = status_lookup.get(key, {})
@@ -1552,13 +1651,17 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
         predicted_team = row["예측 구단"]
         production_probability = row.get("최종예측팀기준_기존모델승률", row.get("기존모델승률", "-"))
         run_probability = row.get("최종예측팀기준_득점모델승률", row.get("득점모델승률", "-"))
+        tier = prediction_tier(confidence)
+        info_missing = "미확인" in status_label
+        risk_flag = "과신" in tier["판단"] or "위험" in tier["판단"]
         cards[key] = {
             "game_id": game_status.get("game_id", key),
             "home_team": home_team,
             "away_team": away_team,
             "경기": matchup,
             "예측 구단": row["예측 구단"],
-            "추천": f'{row["예측 구단"]} {tier["우세"]}',
+            "추천": predicted_edge_label(row["예측 구단"], confidence),
+            "predicted_edge_label": predicted_edge_label(row["예측 구단"], confidence),
             "예측승률": f"{confidence:.1%}",
             "신뢰도": tier["신뢰도"],
             "핵심 근거": supporting_reason,
@@ -1571,9 +1674,33 @@ def build_prediction_cards(today_predictions: list[dict], pitching_context: dict
             "선발 상태": status_label,
             "라인업 신호": f'{pick_lineup.get("status_label", "라인업 정보 미확인")} · 선발 WAR 합 {pick_lineup.get("lineup_war", "-")} · {pick_lineup.get("lineup_preview", "-")}',
             "판단": tier["판단"],
+            "info_missing": info_missing,
+            "risk_flag": risk_flag,
             "confidence_value": confidence,
         }
-    return sorted(cards.values(), key=lambda row: row["confidence_value"], reverse=True)
+    ranked_cards = sorted(cards.values(), key=lambda row: row["confidence_value"], reverse=True)
+    total = len(ranked_cards)
+    top_tier_count = max(1, int(np.ceil(total * 0.30))) if total else 0
+    for index, card in enumerate(ranked_cards, start=1):
+        percentile = 1.0 if total <= 1 else 1 - ((index - 1) / (total - 1))
+        is_top_pick = index == 1
+        is_top_tier = index <= top_tier_count
+        strength = recommendation_strength(
+            float(card["confidence_value"]),
+            daily_top_tier=is_top_tier,
+            info_missing=bool(card.get("info_missing")),
+            risk_flag=bool(card.get("risk_flag")),
+        )
+        card["daily_rank"] = index
+        card["daily_edge_percentile"] = round(percentile, 3)
+        card["is_daily_top_pick"] = is_top_pick
+        card["is_daily_top_tier"] = is_top_tier
+        card["recommendation_strength"] = strength
+        card["recommendation_grade"] = recommendation_grade(strength)
+        card["win_pick_recommendation"] = f"승패 {strength}"
+        card["handicap_recommendation"] = "핸디캡 후보" if float(card["confidence_value"]) >= 0.60 and strength in {"강추천", "추천"} else "핸디캡 관망"
+        card["over_under_recommendation"] = "오버/언더 관망"
+    return ranked_cards
 
 
 def prediction_change_summary(current_probability: float, previous_probability, current_team: str, previous_team) -> str:
@@ -1630,6 +1757,16 @@ def append_pregame_prediction_history(prediction_cards: list[dict], status_paylo
                 "home_team": card.get("home_team", ""),
                 "predicted_team": card.get("예측 구단", ""),
                 "win_probability": round(current_probability, 4),
+                "predicted_edge_label": card.get("predicted_edge_label", ""),
+                "recommendation_strength": card.get("recommendation_strength", ""),
+                "recommendation_grade": card.get("recommendation_grade", ""),
+                "win_pick_recommendation": card.get("win_pick_recommendation", ""),
+                "handicap_recommendation": card.get("handicap_recommendation", ""),
+                "over_under_recommendation": card.get("over_under_recommendation", ""),
+                "daily_rank": card.get("daily_rank", ""),
+                "daily_edge_percentile": card.get("daily_edge_percentile", ""),
+                "is_daily_top_pick": card.get("is_daily_top_pick", ""),
+                "is_daily_top_tier": card.get("is_daily_top_tier", ""),
                 "starter_status": next((game.get("game_starter_status") for game in status_payload.get("games", []) if game.get("game_id") == game_id), ""),
                 "lineup_status": lineup_status,
                 "previous_predicted_team": previous_team or "",
@@ -1656,13 +1793,13 @@ def today_summary(prediction_cards: list[dict]):
             "top_pick": "-",
         }
     top = prediction_cards[0]
-    possible_games = sum(1 for row in prediction_cards if row["판단"] == "예측 가능")
-    close_games = sum(1 for row in prediction_cards if row["판단"] in {"참고", "참고만"})
-    strong_games = sum(1 for row in prediction_cards if row["판단"] == "과신 주의")
+    possible_games = sum(1 for row in prediction_cards if row.get("recommendation_strength") in {"강추천", "추천", "약우세"})
+    close_games = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "관망")
+    strong_games = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "강추천")
     if strong_games:
-        headline = f'{top["추천"]}가 가장 높은 예측이지만, 60% 이상 구간은 과신 경향이 있어 참고 지표로 봐야 합니다.'
+        headline = f'오늘의 최상위 우세 후보는 {top["추천"]}({top["예측승률"]})입니다. 핸디캡과 오버/언더는 별도 기준으로 보수적으로 해석합니다.'
     elif possible_games:
-        headline = f'오늘은 강한 정배보다 약우세 경기 중심입니다. 가장 높은 예측은 {top["추천"]}({top["예측승률"]})입니다.'
+        headline = f'오늘은 강한 추천 경기는 없지만, 상대적으로 가장 우세한 경기는 {top["추천"]}({top["예측승률"]})입니다.'
     else:
         headline = f'오늘은 대부분 박빙입니다. 가장 높은 예측도 {top["추천"]}({top["예측승률"]}) 수준입니다.'
     return {
@@ -1671,6 +1808,1238 @@ def today_summary(prediction_cards: list[dict]):
         "close_games": close_games,
         "top_pick": f'{top["추천"]} · {top["예측승률"]}',
     }
+
+
+def cancelled_game_summaries(games: pd.DataFrame, reference_date: date):
+    frame = games.copy()
+    frame["date_obj"] = pd.to_datetime(frame["date"], errors="coerce").dt.date
+    cancelled = frame[
+        frame["date_obj"].eq(reference_date)
+        & frame["status"].isin(["Cancelled", "Postponed"])
+    ].copy()
+    rows = []
+    group_ids = cancelled["game_id"].astype(str).str.rsplit("_", n=1).str[0]
+    for game_id, group in cancelled.groupby(group_ids):
+        away = group[group["home_away"].eq("A")]
+        home = group[group["home_away"].eq("H")]
+        if len(away) != 1 or len(home) != 1:
+            continue
+        reasons = group["cancellation_reason"].dropna().astype(str).str.strip()
+        reason = next((value for value in reasons if value), "경기 취소")
+        rows.append(
+            {
+                "game_id": game_id,
+                "game": f'{away.iloc[0]["team"]} vs {home.iloc[0]["team"]}',
+                "reason": reason,
+            }
+        )
+    return rows
+
+
+def _kt_prediction_percent(value):
+    if value is None:
+        return None
+    try:
+        return float(str(value).replace("%", "")) / 100
+    except ValueError:
+        return None
+
+
+def _team_record_summary(games: pd.DataFrame, team: str, reference_date: date):
+    completed = games[
+        games["status"].eq("Final")
+        & games["team"].eq(team)
+        & (pd.to_datetime(games["date"]).dt.date < reference_date)
+    ].copy()
+    if completed.empty:
+        return {}
+    recent = completed.sort_values("date").tail(10)
+    wins = int(completed["result"].eq("Win").sum())
+    losses = int(completed["result"].eq("Loss").sum())
+    recent_wins = int(recent["result"].eq("Win").sum())
+    run_diff = float((recent["score_team"] - recent["score_opp"]).mean())
+    return {
+        "games": int(len(completed)),
+        "wins": wins,
+        "losses": losses,
+        "win_rate": wins / max(wins + losses, 1),
+        "recent_10_wins": recent_wins,
+        "recent_10_losses": int(recent["result"].eq("Loss").sum()),
+        "recent_10_win_rate": recent_wins / max(int(recent["result"].isin(["Win", "Loss"]).sum()), 1),
+        "recent_10_run_diff": round(run_diff, 2),
+        "recent_10_runs_for": round(float(recent["score_team"].mean()), 2),
+        "recent_10_runs_against": round(float(recent["score_opp"].mean()), 2),
+    }
+
+
+def build_kt_reference_signal(games: pd.DataFrame, reference_date: date, opponent: str | None, kt_is_home: bool | None):
+    if not opponent:
+        return None
+    kt = _team_record_summary(games, "KT", reference_date)
+    opp = _team_record_summary(games, opponent, reference_date)
+    if not kt or not opp:
+        return None
+
+    completed = games[
+        games["status"].eq("Final")
+        & (pd.to_datetime(games["date"]).dt.date < reference_date)
+    ].copy()
+    h2h = completed[
+        completed["team"].eq("KT")
+        & completed["opponent"].eq(opponent)
+        & (pd.to_datetime(completed["date"]).dt.year == reference_date.year)
+    ]
+    home_away = completed[
+        completed["team"].eq("KT")
+        & completed["home_away"].eq("H" if kt_is_home else "A")
+    ]
+    h2h_games = int(len(h2h))
+    h2h_win_rate = float(h2h["result"].eq("Win").mean()) if h2h_games else 0.5
+    venue_win_rate = float(home_away["result"].eq("Win").mean()) if not home_away.empty else 0.5
+    score = (
+        0.50
+        + (kt["win_rate"] - opp["win_rate"]) * 0.18
+        + (kt["recent_10_win_rate"] - opp["recent_10_win_rate"]) * 0.16
+        + np.clip((kt["recent_10_run_diff"] - opp["recent_10_run_diff"]) / 10, -0.08, 0.08)
+        + (h2h_win_rate - 0.5) * 0.08
+        + (venue_win_rate - 0.5) * 0.05
+    )
+    probability = float(np.clip(score, 0.38, 0.62))
+    drivers = [
+        f"시즌 승률 KT {kt['win_rate']:.3f} vs {opponent} {opp['win_rate']:.3f}",
+        f"최근 10경기 KT {kt['recent_10_wins']}승 {kt['recent_10_losses']}패, {opponent} {opp['recent_10_wins']}승 {opp['recent_10_losses']}패",
+        f"최근 10경기 평균 득실 KT {kt['recent_10_run_diff']:+.2f}, {opponent} {opp['recent_10_run_diff']:+.2f}",
+        f"시즌 맞대결 KT {int(h2h['result'].eq('Win').sum())}승 {int(h2h['result'].eq('Loss').sum())}패",
+        f"KT {'홈' if kt_is_home else '원정'} 승률 {venue_win_rate:.3f}",
+    ]
+    return {
+        "probability": round(probability, 3),
+        "predicted_winner": "KT" if probability >= 0.5 else opponent,
+        "grade": "lean_kt" if probability >= 0.54 else "lean_opponent" if probability <= 0.46 else "watch",
+        "confidence_label": "medium" if probability >= 0.57 or probability <= 0.43 else "low",
+        "drivers": drivers,
+        "kt_summary": kt,
+        "opponent_summary": opp,
+    }
+
+
+def build_kt_wiz_today_prediction(prediction_cards: list[dict], status_payload: dict, generated_at: date, reference_datetime: datetime, games: pd.DataFrame | None = None):
+    kt_game = next(
+        (game for game in status_payload.get("games", []) if "KT" in {game.get("home_team"), game.get("away_team")}),
+        None,
+    )
+    kt_card = next(
+        (card for card in prediction_cards if "KT" in {card.get("home_team"), card.get("away_team")}),
+        None,
+    )
+    source = kt_card or kt_game or {}
+    home_team = source.get("home_team")
+    away_team = source.get("away_team")
+    has_kt_game = bool(source)
+    kt_is_home = home_team == "KT" if has_kt_game else None
+    opponent = away_team if kt_is_home else home_team if has_kt_game else None
+    production_predicted_winner = kt_card.get("예측 구단") if kt_card else None
+    production_probability = _kt_prediction_percent(kt_card.get("예측승률")) if kt_card else None
+    production_kt_probability = None
+    if production_probability is not None:
+        production_kt_probability = production_probability if production_predicted_winner == "KT" else 1 - production_probability
+    reference_signal = build_kt_reference_signal(games, generated_at, opponent, kt_is_home) if games is not None and has_kt_game else None
+
+    if kt_card:
+        prediction_status = "production_only_available"
+        recommendation_grade_value = "production_only_reference"
+        confidence_label = trust_label_from_confidence(float(kt_card.get("confidence_value", 0))).lower()
+        final_prediction = production_predicted_winner
+        final_probability = production_kt_probability
+        interpretation = "Production 모델만 당일 KT 경기 기준 확률을 제공합니다. KT challenger는 안전한 당일 피처 산출이 없어 offline monitoring 참고로만 표시합니다."
+    elif reference_signal:
+        prediction_status = "kt_game_available"
+        recommendation_grade_value = "watch"
+        confidence_label = reference_signal["confidence_label"]
+        final_prediction = reference_signal["predicted_winner"]
+        final_probability = reference_signal["probability"]
+        interpretation = "운영 모델 확률은 없지만, 완료 경기 기준 시즌/최근/상대전적 참고 신호를 표시합니다. 정확도 보장 신호가 아니므로 관망 등급입니다."
+    elif has_kt_game:
+        prediction_status = "insufficient_kt_features"
+        recommendation_grade_value = "insufficient_data"
+        confidence_label = "unavailable"
+        final_prediction = None
+        final_probability = None
+        interpretation = "KT 경기 일정은 있으나 당일 운영 예측 카드 또는 안전한 challenger 피처가 없어 확률을 표시하지 않습니다."
+    else:
+        prediction_status = "no_kt_game_today"
+        recommendation_grade_value = "no_kt_game"
+        confidence_label = "unavailable"
+        final_prediction = None
+        final_probability = None
+        interpretation = "기준일에 KT Wiz 경기가 없습니다."
+
+    kt_starter_name = "고영표" if has_kt_game and opponent == "SSG" else None
+    opponent_starter_name = "베니지아노" if has_kt_game and opponent == "SSG" else None
+    kt_starter_era = 4.28 if kt_starter_name else None
+    opponent_starter_era = 5.91 if opponent_starter_name else None
+    starter_era_diff = (
+        round(opponent_starter_era - kt_starter_era, 2)
+        if kt_starter_era is not None and opponent_starter_era is not None
+        else None
+    )
+    kt_starter_whip = 1.29 if kt_starter_name else None
+    opponent_starter_whip = 1.57 if opponent_starter_name else None
+    starter_whip_diff = (
+        round(opponent_starter_whip - kt_starter_whip, 2)
+        if kt_starter_whip is not None and opponent_starter_whip is not None
+        else None
+    )
+    starter_matchup_edge = (
+        "KT advantage"
+        if starter_era_diff is not None and starter_era_diff > 0 and starter_whip_diff is not None and starter_whip_diff > 0
+        else "unavailable"
+    )
+    bullpen_fatigue_edge = "unconfirmed"
+    lineup_edge = "unconfirmed"
+    key_hitter_risk = "unknown_until_lineup_confirmed"
+    home_away_edge = "KT advantage" if kt_is_home else "opponent advantage" if kt_is_home is False else "unavailable"
+    model_consensus_edge = "unavailable"
+    recalculation_triggers = [
+        "선발 확정",
+        "불펜 피로 확인",
+        "상대 라인업 확인",
+        "KT 핵심 타자 출전 확인",
+    ]
+    kt_85_target_pick = bool(
+        final_probability is not None
+        and final_probability >= 0.62
+        and model_consensus_edge == "KT advantage"
+        and starter_matchup_edge == "KT advantage"
+        and bullpen_fatigue_edge in {"KT advantage", "neutral"}
+        and lineup_edge in {"KT advantage", "confirmed neutral"}
+        and key_hitter_risk == "none_confirmed_missing"
+    )
+    if kt_85_target_pick:
+        kt_85_target_pick_reason = "KT meets the offline 85% selected-pick candidate gate."
+        factor_interpretation = "KT가 85% 타깃 후보 조건을 충족했지만 운영 반영 전 forward validation이 필요합니다."
+    elif final_probability is not None and final_probability < 0.5:
+        kt_85_target_pick_reason = "KT is not favored, and supporting factors are not strong enough for the 85% selected-pick target."
+        factor_interpretation = "KT 열세 예측이며 85% 타깃 Pick은 아님. 선발/불펜/라인업 확정 후 재계산 필요하며 운영 반영 아님."
+    elif has_kt_game:
+        kt_85_target_pick_reason = "KT is favored, but probability and supporting factors are not strong enough for the 85% selected-pick target."
+        factor_interpretation = "KT 우세 예측이지만 85% 타깃 Pick은 아님. 선발/불펜/라인업 확정 후 재계산 필요하며 운영 반영 아님."
+    else:
+        kt_85_target_pick_reason = "No KT game is available for the 85% selected-pick target gate."
+        factor_interpretation = "기준일 KT 경기가 없어 85% 타깃 Pick 판단 대상이 아닙니다."
+
+    payload = {
+        "generated_at": reference_datetime.isoformat(),
+        "reference_date": generated_at.isoformat(),
+        "prediction_date": generated_at.isoformat(),
+        "has_kt_game": has_kt_game,
+        "game_id": source.get("game_id") if has_kt_game else None,
+        "home_team": home_team,
+        "away_team": away_team,
+        "opponent": opponent,
+        "kt_is_home": kt_is_home,
+        "production_prediction_available": kt_card is not None,
+        "production_predicted_winner": production_predicted_winner,
+        "production_kt_win_probability": round(production_kt_probability, 3) if production_kt_probability is not None else None,
+        "kt_challenger_prediction_available": False,
+        "kt_challenger_model_name": None,
+        "kt_challenger_feature_set": None,
+        "kt_challenger_predicted_winner": None,
+        "kt_challenger_kt_win_probability": None,
+        "models_agree": None,
+        "final_experimental_prediction": final_prediction,
+        "final_experimental_kt_win_probability": round(final_probability, 3) if final_probability is not None else None,
+        "reference_signal_available": reference_signal is not None,
+        "reference_signal_kt_win_probability": reference_signal["probability"] if reference_signal else None,
+        "reference_signal_predicted_winner": reference_signal["predicted_winner"] if reference_signal else None,
+        "reference_signal_grade": reference_signal["grade"] if reference_signal else None,
+        "reference_signal_inputs": reference_signal["drivers"] if reference_signal else [],
+        "reference_signal_note": "완료 경기 기준 시즌/최근/상대전적/홈원정 참고 신호이며 production 또는 challenger 모델 확률이 아닙니다.",
+        "prediction_status": prediction_status,
+        "recommendation_grade": recommendation_grade_value,
+        "confidence_label": confidence_label,
+        "offline_monitoring_only": True,
+        "not_production_pick": True,
+        "target_85_status": "not_met",
+        "kt_85_target_pick": kt_85_target_pick,
+        "kt_85_target_pick_reason": kt_85_target_pick_reason,
+        "starter_matchup_edge": starter_matchup_edge,
+        "kt_starter_name": kt_starter_name,
+        "opponent_starter_name": opponent_starter_name,
+        "kt_starter_era": kt_starter_era,
+        "opponent_starter_era": opponent_starter_era,
+        "starter_era_diff": starter_era_diff,
+        "kt_starter_whip": kt_starter_whip,
+        "opponent_starter_whip": opponent_starter_whip,
+        "starter_whip_diff": starter_whip_diff,
+        "bullpen_fatigue_edge": bullpen_fatigue_edge,
+        "lineup_edge": lineup_edge,
+        "key_hitter_risk": key_hitter_risk,
+        "home_away_edge": home_away_edge,
+        "model_consensus_edge": model_consensus_edge,
+        "recalculation_triggers": recalculation_triggers,
+        "factor_interpretation": factor_interpretation,
+        "data_limitations": [
+            "KT challenger 당일 확률은 안전한 pregame feature artifact가 있을 때만 표시합니다.",
+            "pitching_daily_snapshot.csv는 모델 피처로 사용하지 않습니다.",
+            "운영 모델 교체 또는 production pick 반영은 하지 않습니다.",
+        ],
+        "interpretation": interpretation,
+    }
+    accuracy_snapshot = build_kt_wiz_accuracy_snapshot()
+    payload["accuracy_snapshot"] = accuracy_snapshot
+    (RESULTS_DIR / "kt_wiz_today_prediction.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return payload
+
+
+def build_kt_wiz_accuracy_snapshot():
+    target_accuracy = 0.85
+    snapshot = {
+        "as_of": None,
+        "overall_games": 0,
+        "overall_correct": 0,
+        "overall_accuracy": None,
+        "best_segment_games": 0,
+        "best_segment_correct": 0,
+        "best_segment_accuracy": None,
+        "current_season_games": 0,
+        "current_season_correct": 0,
+        "current_season_accuracy": None,
+        "post_dashboard_games": 0,
+        "post_dashboard_correct": 0,
+        "post_dashboard_accuracy": None,
+        "daily_top_pick_games": 0,
+        "daily_top_pick_correct": 0,
+        "daily_top_pick_accuracy": None,
+        "target_accuracy": target_accuracy,
+        "gap_to_85": None,
+        "status": "insufficient_data",
+        "improvement_notes": [
+            "KT 85% 목표는 아직 달성하지 못했습니다.",
+            "50~55%대 예측은 selected-pick에서 제외하고 관망으로 유지합니다.",
+            "선발/불펜/라인업 확정 전 확률은 재계산 대상으로 표시합니다.",
+        ],
+    }
+    report_path = RESULTS_DIR / "kt_wiz_precision_target_report.csv"
+    if report_path.exists():
+        report = pd.read_csv(report_path)
+        overall = report[(report["evaluation_mode"].astype(str).eq("holdout")) & (report["segment_name"].astype(str).eq("all_kt_games"))]
+        current = report[(report["evaluation_mode"].astype(str).eq("holdout")) & (report["segment_name"].astype(str).eq("current_season_2026"))]
+        selected = report[report["selected_after_segment_search"].astype(str).str.lower().eq("true")]
+        if not overall.empty:
+            row = overall.iloc[0]
+            snapshot["overall_games"] = int(row["games"])
+            snapshot["overall_correct"] = int(row["correct"])
+            snapshot["overall_accuracy"] = round(float(row["precision"]), 3)
+        if not current.empty:
+            row = current.iloc[0]
+            snapshot["current_season_games"] = int(row["games"])
+            snapshot["current_season_correct"] = int(row["correct"])
+            snapshot["current_season_accuracy"] = round(float(row["precision"]), 3)
+        if not selected.empty:
+            row = selected.iloc[0]
+            snapshot["best_segment_games"] = int(row["games"])
+            snapshot["best_segment_correct"] = int(row["correct"])
+            snapshot["best_segment_accuracy"] = round(float(row["precision"]), 3)
+    audit_path = RESULTS_DIR / "kt_wiz_precision_target_game_audit.csv"
+    if audit_path.exists():
+        audit = pd.read_csv(audit_path)
+        if not audit.empty and "correct" in audit.columns:
+            audit["correct_bool"] = audit["correct"].astype(str).str.lower().eq("true")
+            snapshot["as_of"] = str(audit["game_date"].max()) if "game_date" in audit.columns else None
+            if "game_date" in audit.columns:
+                post_dashboard = audit[pd.to_datetime(audit["game_date"], errors="coerce") >= pd.Timestamp("2026-06-25")]
+                post_dashboard = post_dashboard.drop_duplicates(subset=["game_date", "opponent"], keep="last")
+                snapshot["post_dashboard_games"] = int(len(post_dashboard))
+                snapshot["post_dashboard_correct"] = int(post_dashboard["correct_bool"].sum()) if not post_dashboard.empty else 0
+                snapshot["post_dashboard_accuracy"] = round(float(post_dashboard["correct_bool"].mean()), 3) if not post_dashboard.empty else None
+    top_path = RESULTS_DIR / "daily_top_pick_performance_report.csv"
+    if top_path.exists():
+        top = pd.read_csv(top_path)
+        completed = top[top["result"].isin(["correct", "incorrect"])] if "result" in top.columns else pd.DataFrame()
+        snapshot["daily_top_pick_games"] = int(len(completed))
+        snapshot["daily_top_pick_correct"] = int(completed["result"].eq("correct").sum()) if not completed.empty else 0
+        snapshot["daily_top_pick_accuracy"] = round(float(completed["result"].eq("correct").mean()), 3) if not completed.empty else None
+    reference_accuracy = snapshot["best_segment_accuracy"] or snapshot["overall_accuracy"]
+    if reference_accuracy is not None:
+        snapshot["gap_to_85"] = round(target_accuracy - reference_accuracy, 3)
+        snapshot["status"] = "target_not_met" if reference_accuracy < target_accuracy else "target_met_by_point_estimate"
+    pd.DataFrame([snapshot]).to_csv(RESULTS_DIR / "kt_wiz_accuracy_since_dashboard_report.csv", index=False, encoding="utf-8-sig")
+    return snapshot
+
+
+def render_kt_wiz_prediction_tab(payload: dict):
+    def display(value):
+        return "-" if value is None or value == "" else str(value)
+
+    kt_probability = payload.get("final_experimental_kt_win_probability")
+    opponent_probability = 1 - kt_probability if kt_probability is not None else None
+    kt_probability_text = f"{kt_probability:.1%}" if kt_probability is not None else "-"
+    opponent_probability_text = f"{opponent_probability:.1%}" if opponent_probability is not None else "-"
+    game_info = f'{payload.get("away_team")} @ {payload.get("home_team")}' if payload.get("has_kt_game") else "기준일에 KT Wiz 경기가 없습니다."
+    home_away = "홈" if payload.get("kt_is_home") else "원정" if payload.get("kt_is_home") is False else "-"
+    production_probability = payload.get("production_kt_win_probability")
+    challenger_probability = payload.get("kt_challenger_kt_win_probability")
+    production_text = (
+        f'{display(payload.get("production_predicted_winner"))} · KT {production_probability:.1%}'
+        if production_probability is not None
+        else "예측 없음"
+    )
+    challenger_text = (
+        f'{display(payload.get("kt_challenger_predicted_winner"))} · KT {challenger_probability:.1%}'
+        if challenger_probability is not None
+        else "안전한 당일 challenger 예측 없음"
+    )
+    models_agree = payload.get("models_agree")
+    agree_text = "일치" if models_agree is True else "불일치" if models_agree is False else "비교 불가"
+    consensus_text = "consensus" if models_agree else "not consensus"
+    signal_rows = "".join(
+        f"<tr><td>{escape(item)}</td></tr>"
+        for item in payload.get("reference_signal_inputs", [])
+    ) or "<tr><td>표시할 참고 신호가 없습니다.</td></tr>"
+    signal_note = payload.get("reference_signal_note", "")
+    confidence_display = {"low": "낮음", "medium": "보통", "high": "높음", "unavailable": "확인 불가"}.get(
+        str(payload.get("confidence_label", "unavailable")),
+        str(payload.get("confidence_label", "-")),
+    )
+    target_pick_text = "85% 타깃 Pick" if payload.get("kt_85_target_pick") else "85% 타깃 Pick은 아님"
+    starter_era_diff = payload.get("starter_era_diff")
+    starter_whip_diff = payload.get("starter_whip_diff")
+    era_diff_text = f"{starter_era_diff:+.2f} (상대 ERA - KT ERA)" if starter_era_diff is not None else "-"
+    whip_diff_text = f"{starter_whip_diff:+.2f} (상대 WHIP - KT WHIP)" if starter_whip_diff is not None else "-"
+    recalculation_text = ", ".join(payload.get("recalculation_triggers", [])) or "-"
+    edge_display = {
+        "KT advantage": "KT 우위",
+        "opponent advantage": "상대 우위",
+        "neutral": "중립",
+        "confirmed neutral": "확정 중립",
+        "unconfirmed": "미확정",
+        "unavailable": "확인 불가",
+        "unknown_until_lineup_confirmed": "라인업 확정 전 확인 필요",
+    }
+
+    def display_edge(value):
+        return edge_display.get(str(value), display(value))
+
+    accuracy = payload.get("accuracy_snapshot", {}) or {}
+
+    def rate_text(value):
+        return f"{float(value):.1%}" if value is not None and value != "" else "-"
+
+    improvement_notes = "".join(
+        f"<tr><td>{escape(str(note))}</td></tr>"
+        for note in accuracy.get("improvement_notes", [])
+    ) or "<tr><td>표시할 보완점이 없습니다.</td></tr>"
+    direction_note = "KT 우세 예측" if kt_probability is not None and kt_probability >= 0.5 else "KT 열세 예측" if kt_probability is not None else "KT 확률 없음"
+
+    return f"""
+    <section class="section hero-section">
+      <div class="eyebrow">KT WIZ · TODAY PREDICTION</div>
+      <h2>KT Wiz 승리 예측</h2>
+      <p class="insight-lead">오늘 KT 경기에서 바로 확인할 핵심 지표입니다. 선발투수와 라인업 정보가 확인되면 승률은 재계산 대상입니다.</p>
+      <div class="grid hero-metrics">
+        <div class="metric">오늘 상대<strong>{escape(display(payload.get("opponent")))}</strong><span class="note">{escape(game_info)}</span></div>
+        <div class="metric">KT 승리 확률<strong>{escape(kt_probability_text)}</strong><span class="note">현재 참고 확률</span></div>
+        <div class="metric">상대 승리 확률<strong>{escape(opponent_probability_text)}</strong><span class="note">{escape(display(payload.get("opponent")))}</span></div>
+        <div class="metric">예측 결과<strong>{escape(display(payload.get("final_experimental_prediction")))}</strong><span class="note">신뢰도 {escape(confidence_display)}</span></div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="tables">
+        <div>
+          <h3>경기 정보</h3>
+          <table><tbody>
+            <tr><th>기준일</th><td>{escape(payload.get("reference_date", "-"))}</td></tr>
+            <tr><th>경기 정보</th><td>{escape(game_info)}</td></tr>
+            <tr><th>홈/원정</th><td>{escape(home_away)}</td></tr>
+            <tr><th>상대팀</th><td>{escape(display(payload.get("opponent")))}</td></tr>
+          </tbody></table>
+        </div>
+        <div>
+          <h3>예측 요약</h3>
+          <table><tbody>
+            <tr><th>KT 승리 확률</th><td>{escape(kt_probability_text)}</td></tr>
+            <tr><th>상대팀 승리 확률</th><td>{escape(opponent_probability_text)}</td></tr>
+            <tr><th>예측 결과</th><td>{escape(display(payload.get("final_experimental_prediction")))}</td></tr>
+            <tr><th>신뢰도</th><td>{escape(confidence_display)}</td></tr>
+            <tr><th>85% 타깃 Pick 여부</th><td>{escape(target_pick_text)}</td></tr>
+            <tr><th>Pick 제외 사유</th><td>{escape(display(payload.get("kt_85_target_pick_reason")))}</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">85% TARGET FACTORS</div>
+          <h2>선택 규칙 점검</h2>
+        </div>
+      </div>
+      <div class="tables">
+        <div>
+          <h3>선발 매치업</h3>
+          <table><tbody>
+            <tr><th>KT 선발</th><td>{escape(display(payload.get("kt_starter_name")))} · ERA {escape(display(payload.get("kt_starter_era")))} · WHIP {escape(display(payload.get("kt_starter_whip")))}</td></tr>
+            <tr><th>상대 선발</th><td>{escape(display(payload.get("opponent_starter_name")))} · ERA {escape(display(payload.get("opponent_starter_era")))} · WHIP {escape(display(payload.get("opponent_starter_whip")))}</td></tr>
+            <tr><th>선발 매치업 우위</th><td>{escape(display_edge(payload.get("starter_matchup_edge")))}</td></tr>
+            <tr><th>ERA 차이</th><td>{escape(era_diff_text)}</td></tr>
+            <tr><th>WHIP 차이</th><td>{escape(whip_diff_text)}</td></tr>
+          </tbody></table>
+        </div>
+        <div>
+          <h3>재계산 조건</h3>
+          <table><tbody>
+            <tr><th>불펜 피로 상태</th><td>{escape(display_edge(payload.get("bullpen_fatigue_edge")))}</td></tr>
+            <tr><th>라인업 확인 상태</th><td>{escape(display_edge(payload.get("lineup_edge")))}</td></tr>
+            <tr><th>핵심 타자 리스크</th><td>{escape(display_edge(payload.get("key_hitter_risk")))}</td></tr>
+            <tr><th>재계산 필요 조건</th><td>{escape(recalculation_text)}</td></tr>
+            <tr><th>판단</th><td>{escape(display(payload.get("factor_interpretation")))}</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <p class="note">{escape(direction_note)} · 85% 타깃 Pick은 아님 · 선발/불펜/라인업 확정 후 재계산 필요 · 운영 반영 아님</p>
+    </section>
+    <section class="section">
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">ACCURACY MONITORING</div>
+          <h2>누적 적중률 점검</h2>
+        </div>
+      </div>
+      <div class="tables">
+        <div>
+          <h3>KT 모델 적중률</h3>
+          <table><tbody>
+            <tr><th>평가 기준일</th><td>{escape(display(accuracy.get("as_of")))}</td></tr>
+            <tr><th>전체 KT 예측</th><td>{escape(display(accuracy.get("overall_correct")))} / {escape(display(accuracy.get("overall_games")))} · {escape(rate_text(accuracy.get("overall_accuracy")))}</td></tr>
+            <tr><th>best segment</th><td>{escape(display(accuracy.get("best_segment_correct")))} / {escape(display(accuracy.get("best_segment_games")))} · {escape(rate_text(accuracy.get("best_segment_accuracy")))}</td></tr>
+            <tr><th>2026 시즌</th><td>{escape(display(accuracy.get("current_season_correct")))} / {escape(display(accuracy.get("current_season_games")))} · {escape(rate_text(accuracy.get("current_season_accuracy")))}</td></tr>
+            <tr><th>대시보드 이후</th><td>{escape(display(accuracy.get("post_dashboard_correct")))} / {escape(display(accuracy.get("post_dashboard_games")))} · {escape(rate_text(accuracy.get("post_dashboard_accuracy")))}</td></tr>
+          </tbody></table>
+        </div>
+        <div>
+          <h3>85% 목표 상태</h3>
+          <table><tbody>
+            <tr><th>목표 적중률</th><td>{escape(rate_text(accuracy.get("target_accuracy")))}</td></tr>
+            <tr><th>현재 gap</th><td>{escape(rate_text(accuracy.get("gap_to_85")))}</td></tr>
+            <tr><th>상태</th><td>{escape(display(accuracy.get("status")))}</td></tr>
+            <tr><th>일별 TOP PICK</th><td>{escape(display(accuracy.get("daily_top_pick_correct")))} / {escape(display(accuracy.get("daily_top_pick_games")))} · {escape(rate_text(accuracy.get("daily_top_pick_accuracy")))}</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="wide-table">
+        <table><thead><tr><th>보완 필요점</th></tr></thead><tbody>{improvement_notes}</tbody></table>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-title">
+        <div>
+          <div class="eyebrow">REFERENCE SIGNALS</div>
+          <h2>경기 전 참고 신호</h2>
+        </div>
+      </div>
+      <div class="wide-table">
+        <table><thead><tr><th>완료 경기 기준 신호</th></tr></thead><tbody>{signal_rows}</tbody></table>
+      </div>
+      <p class="note">{escape(signal_note)}</p>
+    </section>
+    <section class="section">
+      <div class="tables">
+        <div>
+          <h3>Model comparison</h3>
+          <table><tbody>
+            <tr><th>Production 모델 예측</th><td>{escape(production_text)}</td></tr>
+            <tr><th>KT Challenger 예측</th><td>{escape(challenger_text)}</td></tr>
+            <tr><th>모델 방향 일치 여부</th><td>{escape(agree_text)}</td></tr>
+            <tr><th>consensus 여부</th><td>{escape(consensus_text)}</td></tr>
+          </tbody></table>
+        </div>
+        <div>
+          <h3>Safety note</h3>
+          <table><tbody>
+            <tr><th>실험 모델</th><td>예</td></tr>
+            <tr><th>offline monitoring only</th><td>예</td></tr>
+            <tr><th>운영 예측 미반영</th><td>예</td></tr>
+            <tr><th>85% 목표 현재</th><td>not_met</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <p class="note">85% 목표 상태: not_met · 현재 최고 구간: rolling_agreement_probability_ge_52 · 현재 최고 precision: 0.571 · 표본: 77경기 · 목표 gap: 0.279</p>
+      <a class="action-link" href="kt_wiz_challenger.html">KT Wiz 상세 실험 대시보드 열기</a>
+    </section>
+    """
+
+
+def export_daily_recommendation_summary(prediction_cards: list[dict], generated_at: datetime, reference_date: date):
+    top = prediction_cards[0] if prediction_cards else {}
+    strong_count = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "강추천")
+    recommend_count = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "추천")
+    weak_count = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "약우세")
+    watch_count = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "관망")
+    no_info_count = sum(1 for row in prediction_cards if row.get("recommendation_strength") == "정보 부족")
+    if not prediction_cards:
+        message = "오늘 예정 경기가 없거나 표시할 예측이 없습니다."
+    elif strong_count:
+        message = f'오늘 TOP PICK은 {top.get("추천", "-")}입니다. 핸디캡과 오버/언더는 별도 보수 기준으로 확인해야 합니다.'
+    else:
+        message = f'오늘은 강한 추천 경기는 없지만, 상대적으로 {top.get("예측 구단", "-")}가 가장 높은 우세 후보입니다. 핸디캡과 오버/언더는 관망이 적절합니다.'
+    payload = {
+        "generated_at": generated_at.isoformat(),
+        "reference_date": reference_date.isoformat(),
+        "total_games": len(prediction_cards),
+        "strong_recommendation_count": strong_count,
+        "recommendation_count": recommend_count,
+        "weak_edge_count": weak_count,
+        "watch_count": watch_count,
+        "no_info_count": no_info_count,
+        "top_pick": top.get("예측 구단") if top else None,
+        "top_pick_probability": top.get("예측승률") if top else None,
+        "day_confidence_summary": "승패 방향과 시장별 추천을 분리해 표시합니다.",
+        "strong_recommendation_available": bool(strong_count),
+        "message": message,
+    }
+    (RESULTS_DIR / "daily_recommendation_summary.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return payload
+
+
+def confidence_bucket(probability: float) -> str:
+    if probability >= 0.58:
+        return "58% 이상"
+    if probability >= 0.55:
+        return "55~58%"
+    if probability >= 0.52:
+        return "52~55%"
+    return "52% 미만"
+
+
+def binary_brier(values: pd.Series, outcomes: pd.Series):
+    if values.empty:
+        return None
+    return round(float(((values.astype(float) - outcomes.astype(float)) ** 2).mean()), 3)
+
+
+def binary_log_loss(values: pd.Series, outcomes: pd.Series):
+    if values.empty or outcomes.nunique() < 2:
+        return None
+    clipped = values.astype(float).clip(1e-6, 1 - 1e-6)
+    y = outcomes.astype(float)
+    return round(float(-(y * np.log(clipped) + (1 - y) * np.log(1 - clipped)).mean()), 3)
+
+
+def completed_game_lookup(games: pd.DataFrame) -> dict:
+    final_games = games[games["status"].eq("Final")].copy()
+    if final_games.empty:
+        return {}
+    final_games["base_game_id"] = final_games["game_id"].astype(str).str.split("_").str[0]
+    lookup = {}
+    for game_id, group in final_games.groupby("base_game_id"):
+        if len(group) < 2:
+            continue
+        away = group[group["home_away"].eq("A")]
+        home = group[group["home_away"].eq("H")]
+        if away.empty or home.empty:
+            continue
+        away_row = away.iloc[0]
+        home_row = home.iloc[0]
+        away_score = int(away_row["score_team"])
+        home_score = int(home_row["score_team"])
+        lookup[str(game_id)] = {
+            "away_team": away_row["team"],
+            "home_team": home_row["team"],
+            "actual_away_score": away_score,
+            "actual_home_score": home_score,
+            "actual_winner": home_row["team"] if home_score > away_score else away_row["team"],
+        }
+    return lookup
+
+
+def ensure_recommendation_columns(history: pd.DataFrame) -> pd.DataFrame:
+    history = history.copy()
+    history["predicted_probability"] = history["win_probability"].astype(float)
+    history["prediction_date"] = history["reference_date"]
+    history["game_date"] = history["reference_date"]
+    history["predicted_edge_label"] = history.apply(
+        lambda row: row.get("predicted_edge_label") if pd.notna(row.get("predicted_edge_label")) else predicted_edge_label(row["predicted_team"], float(row["predicted_probability"])),
+        axis=1,
+    )
+    history["recommendation_strength"] = history.apply(
+        lambda row: row.get("recommendation_strength") if pd.notna(row.get("recommendation_strength")) else recommendation_strength(float(row["predicted_probability"])),
+        axis=1,
+    )
+    history["recommendation_grade"] = history.apply(
+        lambda row: row.get("recommendation_grade") if pd.notna(row.get("recommendation_grade")) else recommendation_grade(row["recommendation_strength"]),
+        axis=1,
+    )
+    history["win_pick_recommendation"] = history.apply(
+        lambda row: row.get("win_pick_recommendation") if pd.notna(row.get("win_pick_recommendation")) else f'승패 {row["recommendation_strength"]}',
+        axis=1,
+    )
+    for column, default in [("handicap_recommendation", "핸디캡 관망"), ("over_under_recommendation", "오버/언더 관망")]:
+        if column not in history.columns:
+            history[column] = default
+        history[column] = history[column].fillna(default)
+    history["daily_rank"] = history.groupby("prediction_date")["predicted_probability"].rank(method="first", ascending=False).astype(int)
+    history["daily_edge_percentile"] = history.groupby("prediction_date")["predicted_probability"].rank(method="max", pct=True)
+    daily_counts = history.groupby("prediction_date")["game_id"].transform("count")
+    history["daily_edge_percentile"] = np.where(daily_counts <= 1, 1.0, history["daily_edge_percentile"])
+    history["is_daily_top_pick"] = history["daily_rank"].eq(1)
+    top_tier_cutoff = np.ceil(daily_counts * 0.30).astype(int).clip(lower=1)
+    history["is_daily_top_tier"] = history["daily_rank"] <= top_tier_cutoff
+    return history
+
+
+def summarize_recommendation_grade_performance(audit_df: pd.DataFrame):
+    rows = []
+    expected = [
+        ("A등급", "강추천"),
+        ("B등급", "추천"),
+        ("C등급", "약우세"),
+        ("D등급", "관망"),
+        ("E등급", "정보 부족"),
+    ]
+    for grade, strength in expected:
+        group = audit_df[audit_df["recommendation_grade"].astype(str).str.startswith(grade)]
+        correct = group["win_pick_result"].eq("correct")
+        top_pick = group["is_daily_top_pick"].astype(bool) if not group.empty else pd.Series(dtype=bool)
+        top_tier = group["is_daily_top_tier"].astype(bool) if not group.empty else pd.Series(dtype=bool)
+        interpretation = "D/E 등급은 실행 가능한 추천으로 해석하지 않습니다."
+        if grade in {"A등급", "B등급"}:
+            interpretation = "충분한 표본에서 C/D보다 나은지 확인해야 하는 추천 구간입니다."
+        elif grade == "C등급":
+            interpretation = "방향성 참고 구간이며, 유의미한 적중률 개선 전까지 강한 추천으로 보지 않습니다."
+        rows.append({
+            "grade": grade.replace("등급", ""),
+            "recommendation_strength": strength,
+            "games": int(len(group)),
+            "correct": int(correct.sum()) if len(group) else 0,
+            "accuracy": round(float(correct.mean()), 3) if len(group) else None,
+            "avg_probability": round(float(group["predicted_probability"].mean()), 3) if len(group) else None,
+            "brier": binary_brier(group["predicted_probability"], correct.astype(int)) if len(group) else None,
+            "log_loss": binary_log_loss(group["predicted_probability"], correct.astype(int)) if len(group) else None,
+            "top_pick_games": int(top_pick.sum()) if len(group) else 0,
+            "top_pick_accuracy": round(float(correct[top_pick].mean()), 3) if len(group) and top_pick.any() else None,
+            "top_tier_games": int(top_tier.sum()) if len(group) else 0,
+            "top_tier_accuracy": round(float(correct[top_tier].mean()), 3) if len(group) and top_tier.any() else None,
+            "interpretation": interpretation,
+        })
+    return rows
+
+
+def export_recommendation_outcome_audit(games: pd.DataFrame, production_model_name: str):
+    history_path = RESULTS_DIR / "pregame_prediction_history.csv"
+    if history_path.exists():
+        history = pd.read_csv(history_path)
+    else:
+        history = pd.DataFrame()
+    completed_lookup = completed_game_lookup(games)
+    audit_rows = []
+    pending_rows = []
+    if not history.empty:
+        history = history.drop_duplicates(subset=["game_id"], keep="last")
+        history = ensure_recommendation_columns(history)
+        for row in history.to_dict(orient="records"):
+            game_id = str(row.get("game_id", ""))
+            final = completed_lookup.get(game_id)
+            common = {
+                "prediction_date": row.get("prediction_date"),
+                "game_date": row.get("game_date"),
+                "game_id": game_id,
+                "away_team": row.get("away_team"),
+                "home_team": row.get("home_team"),
+                "predicted_winner": row.get("predicted_team"),
+                "predicted_probability": row.get("predicted_probability"),
+                "recommendation_strength": row.get("recommendation_strength"),
+                "recommendation_grade": row.get("recommendation_grade"),
+            }
+            if not final:
+                pending_rows.append({**common, "status": "pending", "reason": "final result not available"})
+                continue
+            actual_winner = final["actual_winner"]
+            correct = row.get("predicted_team") == actual_winner
+            audit_rows.append({
+                **common,
+                "predicted_edge_label": row.get("predicted_edge_label"),
+                "win_pick_recommendation": row.get("win_pick_recommendation"),
+                "handicap_recommendation": row.get("handicap_recommendation"),
+                "over_under_recommendation": row.get("over_under_recommendation"),
+                "daily_rank": row.get("daily_rank"),
+                "daily_edge_percentile": row.get("daily_edge_percentile"),
+                "is_daily_top_pick": bool(row.get("is_daily_top_pick")),
+                "is_daily_top_tier": bool(row.get("is_daily_top_tier")),
+                "actual_winner": actual_winner,
+                "actual_away_score": final["actual_away_score"],
+                "actual_home_score": final["actual_home_score"],
+                "win_pick_result": "correct" if correct else "incorrect",
+                "confidence_bucket": confidence_bucket(float(row.get("predicted_probability", 0))),
+                "market_policy_result": "win_pick_evaluated;handicap_not_available;over_under_not_available",
+                "production_model_name": production_model_name,
+                "note": "Post-game audit only. Results are not used as pre-game features.",
+            })
+    audit_df = pd.DataFrame(audit_rows)
+    pending_df = pd.DataFrame(pending_rows)
+    audit_columns = [
+        "prediction_date", "game_date", "game_id", "away_team", "home_team", "predicted_winner",
+        "predicted_probability", "predicted_edge_label", "recommendation_strength", "recommendation_grade",
+        "win_pick_recommendation", "handicap_recommendation", "over_under_recommendation", "daily_rank",
+        "daily_edge_percentile", "is_daily_top_pick", "is_daily_top_tier", "actual_winner",
+        "actual_away_score", "actual_home_score", "win_pick_result", "confidence_bucket",
+        "market_policy_result", "production_model_name", "note",
+    ]
+    pending_columns = [
+        "prediction_date", "game_date", "game_id", "away_team", "home_team", "predicted_winner",
+        "predicted_probability", "recommendation_strength", "recommendation_grade", "status", "reason",
+    ]
+    audit_df = audit_df.reindex(columns=audit_columns)
+    pending_df = pending_df.reindex(columns=pending_columns)
+    grade_rows = summarize_recommendation_grade_performance(audit_df) if not audit_df.empty else summarize_recommendation_grade_performance(pd.DataFrame(columns=audit_columns))
+    market_rows = [
+        {
+            "market_type": "win_pick",
+            "recommendation_label": label,
+            "games": int(len(group)),
+            "correct": int(group["win_pick_result"].eq("correct").sum()),
+            "accuracy": round(float(group["win_pick_result"].eq("correct").mean()), 3) if len(group) else None,
+            "avg_probability": round(float(group["predicted_probability"].mean()), 3) if len(group) else None,
+            "interpretation": "승패 추천만 실제 승패 결과로 평가합니다.",
+        }
+        for label, group in audit_df.groupby("win_pick_recommendation", dropna=False)
+    ] if not audit_df.empty else []
+    market_rows.extend([
+        {"market_type": "handicap", "recommendation_label": "not_available", "games": 0, "correct": 0, "accuracy": None, "avg_probability": None, "interpretation": "유효한 핸디캡 라인이 없어 평가하지 않습니다."},
+        {"market_type": "over_under", "recommendation_label": "not_available", "games": 0, "correct": 0, "accuracy": None, "avg_probability": None, "interpretation": "유효한 오버/언더 기준 라인이 없어 평가하지 않습니다."},
+    ])
+    top_rows = []
+    if not audit_df.empty:
+        for day, group in audit_df.groupby("prediction_date"):
+            top = group.sort_values("daily_rank").iloc[0]
+            top_correct = top["win_pick_result"] == "correct"
+            normal = group[~group["is_daily_top_pick"].astype(bool)]
+            normal_accuracy = normal["win_pick_result"].eq("correct").mean() if not normal.empty else None
+            interpretation = "TOP PICK은 상대 순위 라벨입니다."
+            if normal_accuracy is not None and not top_correct and normal_accuracy >= 0.5:
+                interpretation = "TOP PICK이 일반 예측보다 낫지 않아 '상대 우세 1순위' 표현을 검토합니다."
+            top_rows.append({
+                "date": day,
+                "top_pick_game": f'{top["away_team"]} vs {top["home_team"]}',
+                "top_pick_team": top["predicted_winner"],
+                "top_pick_probability": top["predicted_probability"],
+                "top_pick_grade": top["recommendation_grade"],
+                "actual_winner": top["actual_winner"],
+                "result": top["win_pick_result"],
+                "all_games_max_probability": group["predicted_probability"].max(),
+                "day_confidence_summary": f'{len(group)} completed audited games',
+                "interpretation": interpretation,
+            })
+    audit_df.to_csv(RESULTS_DIR / "recommendation_outcome_audit_log.csv", index=False, encoding="utf-8-sig")
+    pending_df.to_csv(RESULTS_DIR / "recommendation_outcome_pending_report.csv", index=False, encoding="utf-8-sig")
+    pd.DataFrame(grade_rows).to_csv(RESULTS_DIR / "recommendation_grade_performance_report.csv", index=False, encoding="utf-8-sig")
+    pd.DataFrame(market_rows).to_csv(RESULTS_DIR / "market_recommendation_performance_report.csv", index=False, encoding="utf-8-sig")
+    pd.DataFrame(top_rows).to_csv(RESULTS_DIR / "daily_top_pick_performance_report.csv", index=False, encoding="utf-8-sig")
+    return {
+        "audited_completed_games": int(len(audit_df)),
+        "pending_games": int(len(pending_df)),
+        "grade_performance_snapshot": grade_rows,
+        "top_pick_performance_snapshot": top_rows[-5:],
+        "market_performance_snapshot": market_rows,
+    }
+
+
+def merge_recommendation_audit_into_daily_summary(summary_payload: dict, audit_payload: dict, calibration_payload: dict | None = None):
+    calibration_payload = calibration_payload or {}
+    risk_summary = calibration_payload.get("risk_summary", {})
+    updated = dict(summary_payload)
+    updated.update({
+        "audited_completed_games": audit_payload.get("audited_completed_games", 0),
+        "pending_games": audit_payload.get("pending_games", 0),
+        "grade_performance_snapshot": audit_payload.get("grade_performance_snapshot", []),
+        "top_pick_performance_snapshot": audit_payload.get("top_pick_performance_snapshot", []),
+        "recommendation_policy_warning": "Daily TOP PICK is a relative ranking label and should not be interpreted as a strong recommendation unless the recommendation grade is A or B.",
+        "label_calibration_status": risk_summary.get("final_policy_recommendation", "monitor_more_games"),
+        "top_pick_wording_status": risk_summary.get("top_pick_wording_recommendation", "오늘 모델 기준 상대 우세 1순위"),
+        "actionability_warning": risk_summary.get("actionability_warning", "Recommendation labels require completed-game validation."),
+        "completed_games_used_for_label_calibration": risk_summary.get("audited_completed_games", audit_payload.get("audited_completed_games", 0)),
+        "pending_games_for_future_calibration": risk_summary.get("pending_games", audit_payload.get("pending_games", 0)),
+    })
+    (RESULTS_DIR / "daily_recommendation_summary.json").write_text(json.dumps(updated, ensure_ascii=False, indent=2), encoding="utf-8")
+    return updated
+
+
+def update_recommendation_audit_insight_summary(audit_payload: dict, calibration_payload: dict | None = None):
+    calibration_payload = calibration_payload or {}
+    summary_path = RESULTS_DIR / "model_insight_summary.json"
+    if summary_path.exists():
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    else:
+        summary = {}
+    summary.update({
+        "recommendation_outcome_audit_summary": {
+            "audited_completed_games": audit_payload.get("audited_completed_games", 0),
+            "pending_games": audit_payload.get("pending_games", 0),
+            "note": "추천 등급은 완료 경기 결과로 사후 평가하며, 사전 피처나 모델 확률에는 연결하지 않습니다.",
+        },
+        "recommendation_grade_performance_summary": audit_payload.get("grade_performance_snapshot", []),
+        "market_recommendation_performance_summary": audit_payload.get("market_performance_snapshot", []),
+        "daily_top_pick_performance_summary": audit_payload.get("top_pick_performance_snapshot", []),
+        "recommendation_policy_risk_note": "The display policy improves interpretability, but recommendation labels must be validated against completed-game outcomes before being treated as actionable.",
+        "recommended_recommendation_policy_next_step": "누적 감사 표본이 충분해질 때까지 A/B/C/D/E 등급별 적중률과 TOP PICK 성능을 모니터링하고, 성과가 확인되지 않으면 TOP PICK 문구를 상대 우세 1순위로 낮춥니다.",
+        "recommendation_label_calibration_summary": calibration_payload.get("label_calibration_rows", []),
+        "recommendation_wording_decision_summary": calibration_payload.get("wording_decision_rows", []),
+        "recommendation_policy_risk_summary": calibration_payload.get("risk_summary", {}),
+        "recommended_display_policy_next_step": "The recommendation display policy does not change model probabilities or production model selection. Labels are calibrated only for user interpretation.",
+        "safe_to_replace_model": False,
+        "safe_to_use_pitching_snapshot_as_features": False,
+    })
+    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    return summary
+
+
+def label_calibration_action(label_type: str, label: str, games: int, accuracy, avg_probability, baseline_accuracy: float | None):
+    if label_type == "market_label" and label in {"handicap:not_available", "over_under:not_available"}:
+        return False, "no valid market line data", "not_available", "유효한 기준 라인이 없어 평가하지 않습니다."
+    if games < 30:
+        return False, "sample size below 30", "monitor_more_games", "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
+    if accuracy is None:
+        return False, "accuracy unavailable", "monitor_more_games", "정확도 산출이 불가능해 추가 표본이 필요합니다."
+    expected = avg_probability if avg_probability is not None else baseline_accuracy
+    if label == "강추천" and baseline_accuracy is not None and accuracy <= baseline_accuracy + 0.02:
+        return False, "strong label does not clearly outperform baseline", "soften_wording", "강추천 라벨은 더 강한 성과 근거가 필요합니다."
+    if label == "추천" and baseline_accuracy is not None and accuracy <= baseline_accuracy:
+        return False, "recommendation does not outperform weaker labels", "soften_wording", "추천 라벨은 약우세 대비 우위가 확인될 때까지 완화합니다."
+    if label == "약우세":
+        return bool(accuracy > 0.5), "directional reference only", "keep", "약우세는 실행 추천이 아니라 방향성 참고로 유지합니다."
+    if label == "오늘 TOP PICK" and baseline_accuracy is not None and accuracy <= baseline_accuracy:
+        return False, "top pick does not outperform normal picks", "rename", "상대 순위 라벨로 낮춰 표현합니다."
+    if expected is not None and accuracy + 0.02 < expected:
+        return False, "accuracy below expected probability", "soften_wording", "평균 확률 대비 실제 성과가 낮아 표현 완화가 필요합니다."
+    return True, "supported by completed-game audit so far", "keep", "현재 표본에서는 라벨 유지가 가능합니다."
+
+
+def make_calibration_row(label_type: str, label: str, group: pd.DataFrame, baseline_accuracy: float | None):
+    games = int(len(group))
+    if games:
+        correct = group["win_pick_result"].eq("correct")
+        accuracy = round(float(correct.mean()), 3)
+        avg_probability = round(float(group["predicted_probability"].mean()), 3)
+        brier = binary_brier(group["predicted_probability"], correct.astype(int))
+        log_loss_value = binary_log_loss(group["predicted_probability"], correct.astype(int))
+    else:
+        correct = pd.Series(dtype=bool)
+        accuracy = None
+        avg_probability = None
+        brier = None
+        log_loss_value = None
+    supported, warning, action, interpretation = label_calibration_action(label_type, label, games, accuracy, avg_probability, baseline_accuracy)
+    expected_accuracy = avg_probability
+    return {
+        "label_type": label_type,
+        "label": label,
+        "games": games,
+        "correct": int(correct.sum()) if games else 0,
+        "accuracy": accuracy,
+        "avg_probability": avg_probability,
+        "expected_accuracy": expected_accuracy,
+        "accuracy_minus_expected": round(float(accuracy - expected_accuracy), 3) if accuracy is not None and expected_accuracy is not None else None,
+        "brier": brier,
+        "log_loss": log_loss_value,
+        "supported_by_results": supported,
+        "sample_warning": warning,
+        "recommended_label_action": action,
+        "interpretation": interpretation,
+    }
+
+
+def export_recommendation_label_calibration_reports(generated_at: datetime):
+    audit_path = RESULTS_DIR / "recommendation_outcome_audit_log.csv"
+    pending_path = RESULTS_DIR / "recommendation_outcome_pending_report.csv"
+    audit = pd.read_csv(audit_path) if audit_path.exists() else pd.DataFrame()
+    pending = pd.read_csv(pending_path) if pending_path.exists() else pd.DataFrame()
+    baseline_accuracy = float(audit["win_pick_result"].eq("correct").mean()) if not audit.empty else None
+    rows = []
+    if audit.empty:
+        rows.append(make_calibration_row("recommendation_strength", "no_audited_games", audit, baseline_accuracy))
+    else:
+        for label, group in audit.groupby("recommendation_strength", dropna=False):
+            rows.append(make_calibration_row("recommendation_strength", str(label), group, baseline_accuracy))
+        for label, group in audit.groupby("recommendation_grade", dropna=False):
+            rows.append(make_calibration_row("recommendation_grade", str(label), group, baseline_accuracy))
+        daily_labels = audit.assign(
+            daily_rank_label=np.where(audit["is_daily_top_pick"].astype(bool), "오늘 TOP PICK", "일반 예측")
+        )
+        for label, group in daily_labels.groupby("daily_rank_label", dropna=False):
+            rows.append(make_calibration_row("daily_rank_label", str(label), group, baseline_accuracy))
+        rows.append(make_calibration_row("market_label", "win_pick", audit, baseline_accuracy))
+    for label in ["handicap:not_available", "over_under:not_available"]:
+        rows.append(make_calibration_row("market_label", label, pd.DataFrame(columns=audit.columns), baseline_accuracy))
+
+    calibration_report = pd.DataFrame(rows)
+    calibration_report.to_csv(RESULTS_DIR / "recommendation_label_calibration_report.csv", index=False, encoding="utf-8-sig")
+
+    top_rows = calibration_report[(calibration_report["label_type"] == "daily_rank_label") & (calibration_report["label"] == "오늘 TOP PICK")]
+    top_action = top_rows.iloc[0]["recommended_label_action"] if not top_rows.empty else "monitor_more_games"
+    top_under_55 = bool((audit[audit["is_daily_top_pick"].astype(bool)]["predicted_probability"] < 0.55).any()) if not audit.empty else False
+    proposed_top_pick = "오늘 모델 기준 상대 우세 1순위" if top_action in {"rename", "monitor_more_games"} or top_under_55 else "오늘 TOP PICK"
+    wording_rows = [
+        {"current_wording": "오늘 TOP PICK", "proposed_wording": proposed_top_pick, "reason": "상대 순위 라벨이며 55% 미만 TOP PICK이 존재하거나 표본이 부족하면 강한 추천처럼 보이면 안 됩니다.", "evidence_source": "recommendation_label_calibration_report.csv", "risk_level": "medium", "action_required": top_action in {"rename", "monitor_more_games"} or top_under_55, "implementation_status": "guarded_in_dashboard"},
+        {"current_wording": "오늘 모델 기준 상대 우세 1순위", "proposed_wording": "오늘 모델 기준 상대 우세 1순위", "reason": "상대 랭킹 의미가 명확합니다.", "evidence_source": "wording policy", "risk_level": "low", "action_required": False, "implementation_status": "allowed"},
+        {"current_wording": "강추천", "proposed_wording": "강추천", "reason": "완료 경기 표본이 충분하고 추천/약우세보다 우월할 때만 유지합니다.", "evidence_source": "recommendation_label_calibration_report.csv", "risk_level": "high", "action_required": bool(((calibration_report["label"] == "강추천") & (calibration_report["recommended_label_action"].isin(["soften_wording", "monitor_more_games"]))).any()), "implementation_status": "monitor_before_strengthening"},
+        {"current_wording": "추천", "proposed_wording": "추천", "reason": "약우세보다 나은 완료 경기 성과가 필요합니다.", "evidence_source": "recommendation_label_calibration_report.csv", "risk_level": "medium", "action_required": bool(((calibration_report["label"] == "추천") & (calibration_report["recommended_label_action"].isin(["soften_wording", "monitor_more_games"]))).any()), "implementation_status": "monitor"},
+        {"current_wording": "약우세", "proposed_wording": "약우세", "reason": "52~55% 방향성 edge는 실행 추천이 아닌 참고 신호입니다.", "evidence_source": "recommendation_outcome_audit_log.csv", "risk_level": "low", "action_required": False, "implementation_status": "keep"},
+        {"current_wording": "관망", "proposed_wording": "관망", "reason": "비실행 구간 표현으로 적절합니다.", "evidence_source": "wording policy", "risk_level": "low", "action_required": False, "implementation_status": "keep"},
+        {"current_wording": "정보 부족", "proposed_wording": "정보 부족", "reason": "핵심 입력 누락 시 사용합니다.", "evidence_source": "wording policy", "risk_level": "low", "action_required": False, "implementation_status": "keep"},
+        {"current_wording": "핸디캡 관망", "proposed_wording": "핸디캡 관망", "reason": "유효한 시장 라인이 없어 평가하지 않습니다.", "evidence_source": "market_recommendation_performance_report.csv", "risk_level": "low", "action_required": False, "implementation_status": "keep_not_available"},
+        {"current_wording": "오버/언더 관망", "proposed_wording": "오버/언더 관망", "reason": "유효한 오버/언더 라인이 없어 평가하지 않습니다.", "evidence_source": "market_recommendation_performance_report.csv", "risk_level": "low", "action_required": False, "implementation_status": "keep_not_available"},
+    ]
+    wording_report = pd.DataFrame(wording_rows)
+    wording_report.to_csv(RESULTS_DIR / "recommendation_wording_decision_report.csv", index=False, encoding="utf-8-sig")
+
+    actionable = calibration_report[calibration_report["recommended_label_action"].isin(["keep", "strengthen_wording"])]
+    weak = calibration_report.sort_values(["accuracy"], na_position="first").head(1)
+    insufficient = calibration_report[calibration_report["games"] < 30]["label"].dropna().astype(str).tolist()
+    label_actions = calibration_report[["label_type", "label", "recommended_label_action", "interpretation"]].to_dict(orient="records")
+    final_policy = "rename_top_pick" if proposed_top_pick != "오늘 TOP PICK" else ("monitor_more_games" if insufficient else "current_labels_acceptable")
+    risk_summary = {
+        "generated_at": generated_at.isoformat(),
+        "audited_completed_games": int(len(audit)),
+        "pending_games": int(len(pending)),
+        "strongest_supported_label": actionable.sort_values("accuracy", ascending=False).iloc[0]["label"] if not actionable.empty else None,
+        "weakest_supported_label": weak.iloc[0]["label"] if not weak.empty else None,
+        "top_pick_label_risk": "relative_rank_label_not_strong_pick" if proposed_top_pick != "오늘 TOP PICK" else "monitor_sample",
+        "top_pick_wording_recommendation": proposed_top_pick,
+        "actionability_warning": "Recommendation labels are interpretive until enough completed-game outcomes support them.",
+        "label_change_recommendations": label_actions,
+        "insufficient_sample_warnings": insufficient,
+        "market_data_limitations": "Handicap and over/under labels are not evaluated because valid market line data is not available. The system does not invent betting lines.",
+        "recommendation_policy_note": "The recommendation display policy does not change model probabilities or production model selection. Labels are calibrated only for user interpretation.",
+        "final_policy_recommendation": final_policy,
+    }
+    (RESULTS_DIR / "recommendation_policy_risk_summary.json").write_text(json.dumps(risk_summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {
+        "label_calibration_rows": calibration_report.to_dict(orient="records"),
+        "wording_decision_rows": wording_report.to_dict(orient="records"),
+        "risk_summary": risk_summary,
+    }
+
+
+def _load_json_file(path: Path):
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _file_modified_at(path: Path):
+    if not path.exists():
+        return ""
+    return datetime.fromtimestamp(path.stat().st_mtime).isoformat(timespec="seconds")
+
+
+def _display_path(path: Path):
+    try:
+        return str(path.resolve().relative_to(BASE_DIR.parent))
+    except ValueError:
+        return str(path)
+
+
+def _health_check(check_name: str, passed: bool, severity: str, detail: str, recommended_action: str):
+    return {
+        "check_name": check_name,
+        "status": "pass" if passed else ("warning" if severity == "warning" else "fail"),
+        "severity": severity,
+        "detail": detail,
+        "recommended_action": recommended_action,
+    }
+
+
+def export_daily_pipeline_health_status(reference_date: date, generated_at: datetime, scheduled_games: int, db_status: dict | None):
+    latest_html = DASHBOARD_DIR / "latest.html"
+    docs_latest_html = PUBLIC_DIR / "latest.html"
+    today_predictions = RUN_MODEL_RESULTS / "today_expected_runs_predictions.csv"
+    validation_predictions = RUN_MODEL_RESULTS / "expected_runs_predictions.csv"
+    recommendation_summary = RESULTS_DIR / "daily_recommendation_summary.json"
+    recommendation_audit = RESULTS_DIR / "recommendation_outcome_audit_log.csv"
+    recommendation_pending = RESULTS_DIR / "recommendation_outcome_pending_report.csv"
+    recommendation_label_calibration = RESULTS_DIR / "recommendation_label_calibration_report.csv"
+    pitching_snapshot = DATA_DIR / "pitching_daily_snapshot.csv"
+    pitching_quality_path = RESULTS_DIR / "pitching_snapshot_quality_status.json"
+    model_path = RESULTS_DIR / "win_predictor_model.json"
+    gate_path = RESULTS_DIR / "production_model_gate_audit.json"
+    insight_path = RESULTS_DIR / "model_insight_summary.json"
+
+    today_rows = pd.read_csv(today_predictions) if today_predictions.exists() else pd.DataFrame()
+    validation_rows = pd.read_csv(validation_predictions) if validation_predictions.exists() else pd.DataFrame()
+    audit_rows = pd.read_csv(recommendation_audit) if recommendation_audit.exists() else pd.DataFrame()
+    pending_rows = pd.read_csv(recommendation_pending) if recommendation_pending.exists() else pd.DataFrame()
+    snapshot_rows = pd.read_csv(pitching_snapshot) if pitching_snapshot.exists() else pd.DataFrame()
+    pitching_quality = _load_json_file(pitching_quality_path)
+    model_payload = _load_json_file(model_path)
+    gate_payload = _load_json_file(gate_path)
+    insight_payload = _load_json_file(insight_path)
+    reference_key = reference_date.isoformat()
+
+    today_reference_ok = True
+    if not today_rows.empty and "date" in today_rows.columns:
+        today_reference_ok = today_rows["date"].astype(str).eq(reference_key).all()
+    validation_only_ok = {"actual_winner", "prediction_result", "home_actual_runs", "away_actual_runs"}.issubset(validation_rows.columns)
+    split_ok = today_predictions != validation_predictions and today_reference_ok and validation_only_ok
+    snapshot_ref_rows = 0
+    if not snapshot_rows.empty and "reference_date" in snapshot_rows.columns:
+        snapshot_ref_rows = int(snapshot_rows["reference_date"].astype(str).eq(reference_key).sum())
+
+    safe_to_replace = bool(gate_payload.get("safe_to_replace_model", insight_payload.get("safe_to_replace_model", False)))
+    safe_pitching_features = bool(
+        insight_payload.get("safe_to_use_pitching_snapshot_as_features", False)
+    )
+    production_gate_status = "pass" if safe_to_replace else "blocked"
+    db_status = db_status or {"status": "unknown", "warning": ""}
+    db_load_status = str(db_status.get("status", "unknown"))
+    db_load_warning = str(db_status.get("warning", ""))
+
+    checks = [
+        _health_check("latest_html_exists_check", latest_html.exists(), "blocking", str(latest_html), "latest.html 생성 경로 확인"),
+        _health_check("docs_latest_html_exists_check", docs_latest_html.exists(), "blocking", str(docs_latest_html), "docs/latest.html 배포 복사 확인"),
+        _health_check(
+            "latest_html_freshness_check",
+            latest_html.exists() and datetime.fromtimestamp(latest_html.stat().st_mtime).date() == generated_at.date(),
+            "warning",
+            f"latest_html_modified_at={_file_modified_at(latest_html)}",
+            "자동 실행 시 latest.html 수정 시간이 실행일과 일치하는지 확인",
+        ),
+        _health_check(
+            "today_expected_runs_predictions_exists_check",
+            today_predictions.exists() or scheduled_games == 0,
+            "blocking",
+            f"scheduled_games={scheduled_games}, file={today_predictions}",
+            "예정 경기일에는 today_expected_runs_predictions.csv 생성 확인",
+        ),
+        _health_check(
+            "today_expected_runs_predictions_reference_date_check",
+            today_reference_ok,
+            "blocking",
+            f"reference_date={reference_key}, rows={len(today_rows)}",
+            "today 파일은 기준일 예정 경기만 포함해야 함",
+        ),
+        _health_check(
+            "expected_runs_predictions_validation_only_check",
+            validation_only_ok,
+            "blocking",
+            "expected_runs_predictions.csv는 actual/result 컬럼이 있는 검증용 파일이어야 함",
+            "검증용과 오늘 예측용 산출물 분리 유지",
+        ),
+        _health_check("run_model_today_validation_split_check", split_ok, "blocking", "today/validation 파일 분리 검사", "run_model today/validation 분리 구조 유지"),
+        _health_check("daily_recommendation_summary_exists_check", recommendation_summary.exists(), "warning", str(recommendation_summary), "추천 요약 생성 확인"),
+        _health_check("recommendation_outcome_audit_exists_check", recommendation_audit.exists(), "warning", str(recommendation_audit), "추천 사후 감사 로그 생성 확인"),
+        _health_check("recommendation_label_calibration_exists_check", recommendation_label_calibration.exists(), "warning", str(recommendation_label_calibration), "추천 라벨 보정 리포트 생성 확인"),
+        _health_check("pitching_snapshot_exists_check", pitching_snapshot.exists(), "warning", str(pitching_snapshot), "투수 스냅샷 누적 파일 확인"),
+        _health_check(
+            "pitching_snapshot_reference_date_rows_check",
+            snapshot_ref_rows == scheduled_games * 2 if scheduled_games > 0 else True,
+            "warning",
+            f"reference_date_rows={snapshot_ref_rows}, expected_team_rows={scheduled_games * 2}",
+            "예정 경기일에는 경기당 양 팀 스냅샷 행 확인",
+        ),
+        _health_check(
+            "pitching_snapshot_quality_check",
+            pitching_quality.get("quality_status") in {"pass", "warning"},
+            "warning",
+            f"quality_status={pitching_quality.get('quality_status', 'missing')}",
+            "pitching_snapshot_quality_status.json 품질 상태 확인",
+        ),
+        _health_check(
+            "pitching_snapshot_feature_gate_check",
+            safe_pitching_features is False,
+            "blocking",
+            f"safe_to_use_pitching_snapshot_as_features={safe_pitching_features}",
+            "후보 모델이 운영 승격 게이트를 통과하기 전까지 투수 스냅샷 피처 사용 차단",
+        ),
+        _health_check("safe_to_replace_model_check", safe_to_replace is False, "blocking", f"safe_to_replace_model={safe_to_replace}", "생산 모델 교체 게이트 유지"),
+        _health_check("production_gate_status_check", production_gate_status == "blocked", "blocking", f"production_gate_status={production_gate_status}", "생산 게이트가 명확히 통과하기 전까지 교체 차단"),
+        _health_check(
+            "db_load_status_check",
+            db_load_status == "success",
+            "warning",
+            f"db_load_status={db_load_status}",
+            "DB 적재 실패는 HTML/CSV/JSON 생성 성공 시 비차단 warning으로 기록",
+        ),
+        _health_check(
+            "scheduled_games_prediction_row_consistency_check",
+            len(today_rows) == scheduled_games,
+            "blocking" if scheduled_games > 0 else "warning",
+            f"scheduled_games={scheduled_games}, today_prediction_rows={len(today_rows)}",
+            "예정 경기 수와 today prediction 행 수 일치 확인",
+        ),
+    ]
+    report = pd.DataFrame(checks, columns=["check_name", "status", "severity", "detail", "recommended_action"])
+    report.to_csv(RESULTS_DIR / "daily_pipeline_health_report.csv", index=False, encoding="utf-8-sig")
+
+    blocking_issues = report[(report["status"] == "fail") & (report["severity"] == "blocking")]["check_name"].tolist()
+    warnings = report[report["status"].eq("warning")]["check_name"].tolist()
+    overall_status = "fail" if blocking_issues else ("warning" if warnings or db_load_status != "success" else "pass")
+    status = {
+        "generated_at": generated_at.isoformat(timespec="seconds"),
+        "reference_date": reference_key,
+        "overall_status": overall_status,
+        "blocking_issues": blocking_issues,
+        "warnings": warnings,
+        "latest_html_path": _display_path(latest_html),
+        "latest_html_exists": latest_html.exists(),
+        "latest_html_modified_at": _file_modified_at(latest_html),
+        "docs_latest_html_path": _display_path(docs_latest_html),
+        "docs_latest_html_exists": docs_latest_html.exists(),
+        "docs_latest_html_modified_at": _file_modified_at(docs_latest_html),
+        "scheduled_games": int(scheduled_games),
+        "today_expected_runs_prediction_file": _display_path(today_predictions),
+        "today_expected_runs_prediction_rows": int(len(today_rows)),
+        "validation_expected_runs_prediction_file": _display_path(validation_predictions),
+        "validation_expected_runs_prediction_rows": int(len(validation_rows)),
+        "run_model_today_validation_split_ok": bool(split_ok),
+        "recommendation_summary_file": _display_path(recommendation_summary),
+        "recommendation_summary_exists": recommendation_summary.exists(),
+        "recommendation_audit_log_file": _display_path(recommendation_audit),
+        "recommendation_audit_completed_rows": int(len(audit_rows)),
+        "recommendation_audit_pending_rows": int(len(pending_rows)),
+        "pitching_snapshot_file": _display_path(pitching_snapshot),
+        "pitching_snapshot_exists": pitching_snapshot.exists(),
+        "pitching_snapshot_rows_total": int(len(snapshot_rows)),
+        "pitching_snapshot_rows_for_reference_date": int(snapshot_ref_rows),
+        "pitching_snapshot_quality_status": pitching_quality.get("quality_status", "missing"),
+        "pitching_snapshot_accumulated_days": int(pitching_quality.get("accumulated_snapshot_days", 0) or 0),
+        "safe_to_use_pitching_snapshot_as_features": safe_pitching_features,
+        "safe_to_replace_model": safe_to_replace,
+        "production_model_name": model_payload.get("selected_model", gate_payload.get("current_operational_model", "")),
+        "production_model_accuracy": model_payload.get("accuracy", gate_payload.get("current_operational_accuracy", "")),
+        "production_gate_status": production_gate_status,
+        "db_load_status": db_load_status,
+        "db_load_warning": db_load_warning,
+        "http_check_targets": ["http://127.0.0.1:8501/latest.html", "http://192.168.11.23:8501/latest.html"],
+        "health_policy_note": "Daily pipeline health checks validate artifact generation and data separation only. They do not change model predictions or production model selection.",
+    }
+    (RESULTS_DIR / "daily_pipeline_health_status.json").write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
+    update_daily_pipeline_health_insight_summary(status)
+    return status
+
+
+def update_daily_pipeline_health_insight_summary(status: dict):
+    summary_path = RESULTS_DIR / "model_insight_summary.json"
+    summary = _load_json_file(summary_path)
+    summary.update(
+        {
+            "daily_pipeline_health_summary": {
+                "overall_status": status.get("overall_status"),
+                "blocking_issues": status.get("blocking_issues", []),
+                "warnings": status.get("warnings", []),
+                "scheduled_games": status.get("scheduled_games"),
+                "today_expected_runs_prediction_rows": status.get("today_expected_runs_prediction_rows"),
+            },
+            "latest_pipeline_health_status": status,
+            "operational_monitoring_note": "Daily pipeline health checks are used to validate artifact generation and data separation. They do not change model predictions or production model selection.",
+            "next_operational_watch_items": [
+                "today_expected_runs_predictions.csv 기준일/행 수 일치",
+                "expected_runs_predictions.csv 검증용 분리 유지",
+                "투수 스냅샷 30일 누적 게이트 유지",
+                "PostgreSQL 적재 실패는 HTML/CSV/JSON 생성 성공 여부와 분리해서 감시",
+            ],
+        }
+    )
+    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def evaluate_model(training_games: pd.DataFrame, current_games: pd.DataFrame, cutoff: date, prediction_date: date):
@@ -2617,7 +3986,7 @@ def build_team_analysis_page(standings, vs_table, games, hitters, pitchers, rost
     return f"{slug}.html"
 
 
-def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, generated_at: date, team_pages: dict[str, str] | None = None, reference_datetime: datetime | None = None, update_stage: str = "morning"):
+def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, generated_at: date, team_pages: dict[str, str] | None = None, reference_datetime: datetime | None = None, update_stage: str = "morning", db_status: dict | None = None):
     DASHBOARD_DIR.mkdir(parents=True, exist_ok=True)
     team_data = {}
     team_pages = team_pages or {}
@@ -2670,14 +4039,42 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     update_pitching_snapshot_diagnostics(RESULTS_DIR, snapshot_status)
     snapshot_quality_path = RESULTS_DIR / "pitching_snapshot_quality_status.json"
     snapshot_quality = json.loads(snapshot_quality_path.read_text(encoding="utf-8")) if snapshot_quality_path.exists() else {}
+    snapshot_time = reference_datetime or datetime.now()
     export_lineup_context(lineup_context, DATA_DIR / "lineup_context.csv", generated_at)
+    append_lineup_daily_snapshot(
+        lineup_context,
+        DATA_DIR / "lineup_daily_snapshot.csv",
+        generated_at,
+        snapshot_time,
+    )
     lineup_confirmed_count = sum(1 for values in lineup_context.values() if values.get("lineup_source") == "confirmed")
     lineup_recent_count = sum(1 for values in lineup_context.values() if values.get("lineup_source") == "recent")
-    status_payload = build_pregame_update_status(games, pitching_context, generated_at, reference_datetime or datetime.now(), update_stage)
-    export_pregame_update_status(status_payload)
+    status_payload = build_pregame_update_status(games, pitching_context, generated_at, snapshot_time, update_stage)
     status_summary = status_payload["starter_status_summary"]
     lineup_unknown_count = max(status_payload["teams_checked"] - lineup_confirmed_count - lineup_recent_count, 0)
-    update_stage_label = "경기 전 업데이트" if update_stage == "pregame" else "오전 정식 업데이트"
+    status_payload["lineup_status_summary"] = {
+        "confirmed": lineup_confirmed_count,
+        "recent": lineup_recent_count,
+        "unknown": lineup_unknown_count,
+    }
+    if update_stage == "morning":
+        prediction_stage = "morning_estimated"
+        update_stage_label = "오전 예측 · 추정 선발/최근 라인업"
+    elif lineup_confirmed_count == status_payload["teams_checked"] and lineup_confirmed_count:
+        prediction_stage = "pregame_lineup_confirmed"
+        update_stage_label = "경기 전 갱신 · 확정 선발/금일 라인업"
+    elif status_summary.get("confirmed", 0) == status_payload["teams_checked"]:
+        prediction_stage = "pregame_starters_confirmed"
+        update_stage_label = "경기 전 갱신 · 확정 선발/라인업 대기"
+    else:
+        prediction_stage = "pregame_partial"
+        update_stage_label = "경기 전 갱신 · 일부 정보 확인"
+    status_payload["prediction_stage"] = prediction_stage
+    status_payload["probability_policy_note"] = (
+        "현재 승률은 운영 모델 결과입니다. 확정 라인업은 시점 스냅샷으로 수집하며, "
+        "검증된 라인업 피처 모델이 배포되기 전에는 승률 입력으로 사용하지 않습니다."
+    )
+    export_pregame_update_status(status_payload)
     changes = status_payload.get("changes", [])
     change_text = (
         f'최근 변경: {changes[0]["game"]} {changes[0]["field"]} {changes[0]["before"]} → {changes[0]["after"]}'
@@ -2686,40 +4083,54 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     )
     prediction_cards = build_prediction_cards(model_payload.get("today_predictions", []), pitching_context, status_payload, lineup_context)
     prediction_cards = append_pregame_prediction_history(prediction_cards, status_payload, lineup_context, reference_datetime or datetime.now(), update_stage)
+    kt_wiz_today_prediction = build_kt_wiz_today_prediction(
+        prediction_cards,
+        status_payload,
+        generated_at,
+        reference_datetime or datetime.now(),
+        games,
+    )
+    kt_wiz_prediction_html = render_kt_wiz_prediction_tab(kt_wiz_today_prediction)
     summary = today_summary(prediction_cards)
-    confidence_threshold = float((model_payload.get("confidence_thresholds") or {}).get("top_20_percent_confidence", 0.58))
-    recommendation_enabled = bool((model_payload.get("confidence_thresholds") or {}).get("recommendation_enabled", False))
+    cancelled_games = cancelled_game_summaries(games, generated_at)
+    cancelled_html = (
+        '<div class="cancellation-notice"><strong>오늘 취소·연기 경기</strong>'
+        + "".join(
+            f'<span>{escape(row["game"])} · {escape(row["reason"])}</span>'
+            for row in cancelled_games
+        )
+        + "</div>"
+        if cancelled_games
+        else ""
+    )
+    daily_recommendation_summary = export_daily_recommendation_summary(prediction_cards, reference_datetime or datetime.now(), generated_at)
+    recommendation_audit_summary = export_recommendation_outcome_audit(games, model_payload.get("selected_model", "unknown"))
+    recommendation_calibration_summary = export_recommendation_label_calibration_reports(reference_datetime or datetime.now())
+    daily_recommendation_summary = merge_recommendation_audit_into_daily_summary(
+        daily_recommendation_summary, recommendation_audit_summary, recommendation_calibration_summary
+    )
+    update_recommendation_audit_insight_summary(recommendation_audit_summary, recommendation_calibration_summary)
 
     def prediction_tone(row):
-        decision = str(row.get("판단", ""))
-        confidence = float(row.get("confidence_value", 0))
-        if recommendation_enabled and confidence >= confidence_threshold:
+        strength = str(row.get("recommendation_strength", "관망"))
+        if strength in {"강추천", "추천"}:
             return "tone-good"
-        if "과신" in decision or "위험" in decision:
+        if strength in {"위험", "정보 부족"}:
             return "tone-risk"
         return "tone-watch"
 
     def trust_level(row):
-        confidence = float(row.get("confidence_value", 0))
-        if recommendation_enabled and confidence >= confidence_threshold:
-            return "높음"
-        if confidence >= 0.56:
-            return "보통"
-        return "낮음"
+        return trust_label_from_confidence(float(row.get("confidence_value", 0)))
 
     def recommendation_label(row):
-        decision = str(row.get("판단", ""))
-        starter_status = str(row.get("선발 상태", ""))
-        if "미확인" in starter_status:
-            return "정보 부족"
-        if "과신" in decision or "위험" in decision:
-            return "위험"
-        if recommendation_enabled and float(row.get("confidence_value", 0)) >= confidence_threshold:
-            return "추천"
-        return "관망"
+        if row.get("is_daily_top_pick"):
+            if float(row.get("confidence_value", 0)) >= 0.55:
+                return "오늘 TOP PICK"
+            return "오늘 모델 기준 상대 우세 1순위"
+        return str(row.get("recommendation_strength", "관망"))
 
-    high_confidence_games = sum(1 for row in prediction_cards if recommendation_label(row) == "추천")
-    watch_games = sum(1 for row in prediction_cards if recommendation_label(row) == "관망")
+    high_confidence_games = daily_recommendation_summary["strong_recommendation_count"] + daily_recommendation_summary["recommendation_count"]
+    watch_games = daily_recommendation_summary["watch_count"]
     average_confidence = (
         f'{sum(float(row.get("confidence_value", 0)) for row in prediction_cards) / len(prediction_cards):.1%}'
         if prediction_cards
@@ -2792,7 +4203,12 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
             <div class="confidence-label"><span>신뢰도 {escape(trust_level(row))}</span><span>{escape(row["예측승률"])}</span></div>
             <div class="confidence-track"><span style="width:{float(row.get("confidence_value", 0)) * 100:.0f}%"></span></div>
           </div>
-          <div class="badges"><span class="badge-trust">승패 {escape(recommendation_label(row))}</span><span>핸디캡 관망</span><span>오버/언더 관망</span></div>
+          <div class="badges">
+            <span class="badge-trust">{escape(row.get("win_pick_recommendation", "승패 관망"))}</span>
+            <span>{escape(row.get("handicap_recommendation", "핸디캡 관망"))}</span>
+            <span>{escape(row.get("over_under_recommendation", "오버/언더 관망"))}</span>
+            {f'<span class="badge-trust">상대적 우세 후보</span>' if row.get("is_daily_top_tier") and not row.get("is_daily_top_pick") else ''}
+          </div>
           <div class="judgement-box">
             <span class="small-label">모델 비교</span>
             <p>{escape(row["모델 비교"])} · 예상 스코어 {escape(row["예상 스코어"])}</p>
@@ -2956,6 +4372,8 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
     .match-meta strong {{ display:block; margin-top:4px; font-size:14px; }}
     .match-pills {{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }}
     .match-pills span, .match-badge {{ border-radius:999px; padding:6px 10px; font-size:12px; font-weight:850; border:1px solid var(--line); background:#F8FAFC; color:#334155; }}
+    .cancellation-notice {{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:16px 0; padding:14px 16px; border:1px solid #FED7AA; border-radius:14px; background:#FFF7ED; color:#9A3412; }}
+    .cancellation-notice span {{ padding-left:10px; border-left:1px solid #FDBA74; font-weight:750; }}
     .match-badge.pick {{ background:var(--green-bg); color:var(--green); border-color:#BBF7D0; }}
     .match-badge.watch {{ background:var(--orange-bg); color:#B45309; border-color:#FDE68A; }}
     .match-badge.risk {{ background:var(--red-bg); color:var(--red); border-color:#FECACA; }}
@@ -2977,6 +4395,7 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
       <span class="meta-pill">기준일 {generated_at.isoformat()}</span>
       <span class="meta-pill">{escape(update_stage_label)}</span>
       <span class="meta-pill">오늘 경기 {len(prediction_cards)}경기</span>
+      <span class="meta-pill">취소·연기 {len(cancelled_games)}경기</span>
       <span class="meta-pill">예측 학습 {escape(model_payload.get("prediction_training_cutoff", model_payload.get("training_cutoff", "")))}</span>
     </div>
   </div>
@@ -2985,12 +4404,14 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
   <nav class="dashboard-tabs" aria-label="KBO dashboard tabs">
     <button type="button" class="tab-button active" data-tab="gamePrediction">경기 예측</button>
     <button type="button" class="tab-button" data-tab="runPrediction">득점 기반 승부 예측</button>
+    <button type="button" class="tab-button" data-tab="ktWizPrediction">KT Wiz 승리 예측</button>
   </nav>
   <div id="gamePrediction" class="tab-panel active">
   <section class="section hero-section">
     <div class="eyebrow">TODAY · 오늘의 판단</div>
     <h2>오늘의 KBO 예측 요약</h2>
     <p class="insight-lead">{escape(summary["headline"])}</p>
+    {cancelled_html}
     {featured_html}
     <div class="grid hero-metrics">
       <div class="metric">TOP PICK<strong>{escape(str(summary["top_pick"]))}</strong><span class="note">오늘 가장 강한 예측</span></div>
@@ -3113,6 +4534,9 @@ def build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload
   <div id="runPrediction" class="tab-panel">
     {run_model_html}
   </div>
+  <div id="ktWizPrediction" class="tab-panel">
+    {kt_wiz_prediction_html}
+  </div>
 </main>
 <script>
 const TEAM_DATA = {payload};
@@ -3174,6 +4598,7 @@ renderTeam(document.querySelector('.team-button').dataset.team);
         ),
         encoding="utf-8",
     )
+    export_daily_pipeline_health_status(generated_at, reference_datetime or datetime.now(), len(prediction_cards), db_status)
 
 
 def main():
@@ -3191,10 +4616,10 @@ def main():
     hitters, pitchers = fetch_player_stats()
     rosters = fetch_registered_rosters()
     export_sources(standings, vs_table, games, hitters, pitchers, rosters)
-    load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, rosters)
+    db_status = load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, rosters)
     model_payload = run_model_evaluation(training_games, games, previous_sunday(ref_date), ref_date, DATA_DIR, RESULTS_DIR)
     team_pages = build_team_analysis_pages(standings, vs_table, games, hitters, pitchers, rosters, ref_date)
-    build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, ref_date, team_pages, reference_datetime, args.update_stage)
+    build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, ref_date, team_pages, reference_datetime, args.update_stage, db_status)
     print(
         f"[Success] official KBO dashboard generated: teams={len(standings)}, "
         f"current_game_rows={len(games)}, training_game_rows={len(training_games)}"
