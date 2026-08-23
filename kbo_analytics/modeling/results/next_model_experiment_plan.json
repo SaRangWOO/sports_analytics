@@ -42,21 +42,22 @@
     "recent_run_diff_10_gap",
     "recent_10_win_rate_gap",
     "blowout_tendency_gap",
+    "is_home",
     "month_win_rate_gap",
     "recent_5_win_rate_gap",
-    "is_home",
-    "avg_run_diff_last_10",
-    "recent_10_win_rate",
     "opponent_avg_run_diff_last_10",
+    "opponent_recent_10_win_rate",
+    "month_run_diff_gap",
     "head_to_head_win_rate_gap",
-    "opponent_recent_5_win_rate"
+    "opponent_avg_run_diff_last_5"
   ],
   "candidate_features_to_drop": [
     "season_win_rate_gap",
+    "recent_5_win_rate",
     "season_avg_run_diff_gap",
     "season_win_rate_prior",
     "back_to_back",
-    "games_last_7_days",
-    "rest_days"
+    "rest_days",
+    "games_last_7_days"
   ]
 }
