@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-04T09:43:09",
-  "input_file": "/home/tera/1.project/1.sports_analytics/kbo_analytics/data/official/model_training_games.csv",
+  "generated_at": "2026-08-24T08:16:51",
+  "input_file": "/home/wsr/1.project/1.sports_analytics/kbo_analytics/data/official/model_training_games.csv",
   "model_scope": "independent_run_model",
   "notes": [
     "기존 대시보드/승패 모델과 분리된 득점 기반 모델입니다.",
@@ -8,11 +8,11 @@
     "완료 경기 원천 CSV만 읽기 전용으로 사용합니다."
   ],
   "train_ratio": 0.8,
-  "training_cutoff": "2024-05-21",
-  "feature_rows": 14622,
-  "train_rows": 11736,
-  "validation_rows": 2886,
-  "validation_games": 1443,
+  "training_cutoff": "2024-07-21",
+  "feature_rows": 15274,
+  "train_rows": 12274,
+  "validation_rows": 3000,
+  "validation_games": 1536,
   "feature_columns": [
     "is_home",
     "month",
@@ -58,125 +58,125 @@
   "run_regression_scores": [
     {
       "model": "Poisson",
-      "mae": 2.7494,
-      "rmse": 3.4977
+      "mae": 2.74,
+      "rmse": 3.4675
     },
     {
       "model": "Ridge",
-      "mae": 2.7521,
-      "rmse": 3.4986
+      "mae": 2.7438,
+      "rmse": 3.4696
     },
     {
       "model": "Tweedie",
-      "mae": 2.7492,
-      "rmse": 3.4975
+      "mae": 2.7396,
+      "rmse": 3.4673
     },
     {
       "model": "RandomForest",
-      "mae": 2.7668,
-      "rmse": 3.5118
+      "mae": 2.7489,
+      "rmse": 3.4764
     },
     {
       "model": "HistGradientBoosting",
-      "mae": 2.7538,
-      "rmse": 3.5016
+      "mae": 2.7444,
+      "rmse": 3.4686
     }
   ],
   "win_conversion_scores": [
     {
       "model": "Poisson",
-      "accuracy": 0.5232,
-      "brier_score": 0.2497,
-      "log_loss": 0.693,
-      "run_diff_direction_accuracy": 0.5343
+      "accuracy": 0.5215,
+      "brier_score": 0.25,
+      "log_loss": 0.6935,
+      "run_diff_direction_accuracy": 0.5293
     },
     {
       "model": "Ridge",
-      "accuracy": 0.5135,
-      "brier_score": 0.2503,
-      "log_loss": 0.6939,
-      "run_diff_direction_accuracy": 0.5239
+      "accuracy": 0.513,
+      "brier_score": 0.2505,
+      "log_loss": 0.6943,
+      "run_diff_direction_accuracy": 0.5215
     },
     {
       "model": "Tweedie",
-      "accuracy": 0.5239,
-      "brier_score": 0.2496,
-      "log_loss": 0.6927,
-      "run_diff_direction_accuracy": 0.5301
+      "accuracy": 0.5247,
+      "brier_score": 0.2498,
+      "log_loss": 0.6932,
+      "run_diff_direction_accuracy": 0.5273
     },
     {
       "model": "RandomForest",
-      "accuracy": 0.5246,
-      "brier_score": 0.2728,
-      "log_loss": 0.7481,
-      "run_diff_direction_accuracy": 0.5177
+      "accuracy": 0.5358,
+      "brier_score": 0.2674,
+      "log_loss": 0.7363,
+      "run_diff_direction_accuracy": 0.5326
     },
     {
       "model": "HistGradientBoosting",
-      "accuracy": 0.5204,
-      "brier_score": 0.2558,
-      "log_loss": 0.706,
-      "run_diff_direction_accuracy": 0.5198
+      "accuracy": 0.5345,
+      "brier_score": 0.2517,
+      "log_loss": 0.6971,
+      "run_diff_direction_accuracy": 0.5254
     }
   ],
   "candidate_scores": [
     {
       "model": "Poisson",
-      "mae": 2.7494,
-      "rmse": 3.4977,
-      "accuracy": 0.5232,
-      "brier_score": 0.2497,
-      "log_loss": 0.693,
-      "run_diff_direction_accuracy": 0.5343
+      "mae": 2.74,
+      "rmse": 3.4675,
+      "accuracy": 0.5215,
+      "brier_score": 0.25,
+      "log_loss": 0.6935,
+      "run_diff_direction_accuracy": 0.5293
     },
     {
       "model": "Ridge",
-      "mae": 2.7521,
-      "rmse": 3.4986,
-      "accuracy": 0.5135,
-      "brier_score": 0.2503,
-      "log_loss": 0.6939,
-      "run_diff_direction_accuracy": 0.5239
+      "mae": 2.7438,
+      "rmse": 3.4696,
+      "accuracy": 0.513,
+      "brier_score": 0.2505,
+      "log_loss": 0.6943,
+      "run_diff_direction_accuracy": 0.5215
     },
     {
       "model": "Tweedie",
-      "mae": 2.7492,
-      "rmse": 3.4975,
-      "accuracy": 0.5239,
-      "brier_score": 0.2496,
-      "log_loss": 0.6927,
-      "run_diff_direction_accuracy": 0.5301
+      "mae": 2.7396,
+      "rmse": 3.4673,
+      "accuracy": 0.5247,
+      "brier_score": 0.2498,
+      "log_loss": 0.6932,
+      "run_diff_direction_accuracy": 0.5273
     },
     {
       "model": "RandomForest",
-      "mae": 2.7668,
-      "rmse": 3.5118,
-      "accuracy": 0.5246,
-      "brier_score": 0.2728,
-      "log_loss": 0.7481,
-      "run_diff_direction_accuracy": 0.5177
+      "mae": 2.7489,
+      "rmse": 3.4764,
+      "accuracy": 0.5358,
+      "brier_score": 0.2674,
+      "log_loss": 0.7363,
+      "run_diff_direction_accuracy": 0.5326
     },
     {
       "model": "HistGradientBoosting",
-      "mae": 2.7538,
-      "rmse": 3.5016,
-      "accuracy": 0.5204,
-      "brier_score": 0.2558,
-      "log_loss": 0.706,
-      "run_diff_direction_accuracy": 0.5198
+      "mae": 2.7444,
+      "rmse": 3.4686,
+      "accuracy": 0.5345,
+      "brier_score": 0.2517,
+      "log_loss": 0.6971,
+      "run_diff_direction_accuracy": 0.5254
     }
   ],
   "selected_model": {
     "model": "Tweedie",
-    "mae": 2.7492,
-    "rmse": 3.4975,
-    "accuracy": 0.5239,
-    "brier_score": 0.2496,
-    "log_loss": 0.6927,
-    "run_diff_direction_accuracy": 0.5301
+    "mae": 2.7396,
+    "rmse": 3.4673,
+    "accuracy": 0.5247,
+    "brier_score": 0.2498,
+    "log_loss": 0.6932,
+    "run_diff_direction_accuracy": 0.5273
   },
   "today_prediction_status": {
-    "reference_date": "2026-06-02",
+    "reference_date": "2026-08-24",
     "scheduled_games": 0,
     "message": "오늘 예정 경기가 없습니다."
   },
@@ -184,151 +184,151 @@
   "error_analysis_summary": {
     "score_bucket_error": [
       {
-        "bucket": "MID_7_11",
-        "games": 587,
-        "home_mae": 1.9544,
-        "away_mae": 1.9632,
-        "total_mae": 1.645,
-        "run_diff_mae": 3.5766,
-        "accuracy": 0.506
+        "bucket": "HIGH_12_PLUS",
+        "games": 514,
+        "home_mae": 3.4132,
+        "away_mae": 3.7416,
+        "total_mae": 5.3262,
+        "run_diff_mae": 5.4255,
+        "accuracy": 0.535
       },
       {
-        "bucket": "HIGH_12_PLUS",
-        "games": 496,
-        "home_mae": 3.5125,
-        "away_mae": 3.6397,
-        "total_mae": 5.3572,
-        "run_diff_mae": 5.4496,
-        "accuracy": 0.5343
+        "bucket": "MID_7_11",
+        "games": 638,
+        "home_mae": 1.9414,
+        "away_mae": 1.9588,
+        "total_mae": 1.6018,
+        "run_diff_mae": 3.5596,
+        "accuracy": 0.5141
       },
       {
         "bucket": "LOW_0_6",
-        "games": 360,
-        "home_mae": 2.771,
-        "away_mae": 3.0265,
-        "total_mae": 5.68,
-        "run_diff_mae": 2.4315,
-        "accuracy": 0.5389
+        "games": 384,
+        "home_mae": 2.7383,
+        "away_mae": 2.9686,
+        "total_mae": 5.5858,
+        "run_diff_mae": 2.4089,
+        "accuracy": 0.5286
       }
     ],
     "error_tag_counts": [
       {
-        "tag": "RUN_DIFF_DIRECTION_MISS",
-        "games": 678
+        "tag": "NORMAL",
+        "games": 451
       },
       {
         "tag": "BLOWOUT_UNDERPREDICTED",
-        "games": 470
+        "games": 503
       },
       {
-        "tag": "HIGH_SCORING_MISS",
-        "games": 231
-      },
-      {
-        "tag": "NORMAL",
-        "games": 417
+        "tag": "RUN_DIFF_DIRECTION_MISS",
+        "games": 726
       },
       {
         "tag": "LOW_SCORING_MISS",
-        "games": 166
+        "games": 181
       },
       {
         "tag": "CLOSE_GAME_NOISE",
-        "games": 155
+        "games": 176
+      },
+      {
+        "tag": "HIGH_SCORING_MISS",
+        "games": 239
       }
     ]
   },
   "error_tag_summary": [
     {
       "tag": "LOW_0_6",
-      "games": 360,
-      "mean_mae": 2.8988,
-      "rmse": 3.2706,
-      "mean_actual_runs": 4.3472,
-      "mean_expected_runs": 10.0273,
-      "mean_error": 5.68,
-      "direction_accuracy": 0.5306
+      "games": 384,
+      "mean_mae": 2.8534,
+      "rmse": 3.225,
+      "mean_actual_runs": 4.3776,
+      "mean_expected_runs": 9.9634,
+      "mean_error": 5.5858,
+      "direction_accuracy": 0.526
     },
     {
       "tag": "HIGH_12_PLUS",
-      "games": 496,
-      "mean_mae": 3.5761,
-      "rmse": 4.594,
-      "mean_actual_runs": 15.5706,
-      "mean_expected_runs": 10.2649,
-      "mean_error": -5.3056,
-      "direction_accuracy": 0.5262
+      "games": 514,
+      "mean_mae": 3.5774,
+      "rmse": 4.5589,
+      "mean_actual_runs": 15.5097,
+      "mean_expected_runs": 10.2353,
+      "mean_error": -5.2744,
+      "direction_accuracy": 0.5292
     },
     {
       "tag": "BLOWOUT_UNDERPREDICTED",
-      "games": 470,
-      "mean_mae": 3.8122,
-      "rmse": 4.6487,
-      "mean_actual_runs": 12.4043,
-      "mean_expected_runs": 10.11,
-      "mean_error": -2.2942,
-      "direction_accuracy": 0.5553
+      "games": 503,
+      "mean_mae": 3.7733,
+      "rmse": 4.5613,
+      "mean_actual_runs": 12.2545,
+      "mean_expected_runs": 10.0641,
+      "mean_error": -2.1904,
+      "direction_accuracy": 0.5447
     },
     {
       "tag": "RUN_DIFF_DIRECTION_MISS",
-      "games": 678,
-      "mean_mae": 2.7505,
-      "rmse": 3.5069,
-      "mean_actual_runs": 10.087,
-      "mean_expected_runs": 10.1343,
-      "mean_error": 0.0473,
+      "games": 726,
+      "mean_mae": 2.7345,
+      "rmse": 3.4673,
+      "mean_actual_runs": 9.9725,
+      "mean_expected_runs": 10.0966,
+      "mean_error": 0.1242,
       "direction_accuracy": 0.0
     },
     {
       "tag": "CLOSE_GAME_NOISE",
-      "games": 155,
-      "mean_mae": 2.0655,
-      "rmse": 2.518,
-      "mean_actual_runs": 8.3419,
-      "mean_expected_runs": 10.0892,
-      "mean_error": 1.7473,
-      "direction_accuracy": 0.2516
+      "games": 176,
+      "mean_mae": 1.9651,
+      "rmse": 2.4442,
+      "mean_actual_runs": 8.4148,
+      "mean_expected_runs": 10.0446,
+      "mean_error": 1.6298,
+      "direction_accuracy": 0.2216
     }
   ],
   "high_score_error_summary": {
-    "games": 719,
-    "avg_actual_total_runs": 13.3741,
-    "avg_expected_total_runs": 10.2053,
-    "avg_total_error": -3.1688,
-    "avg_abs_total_error": 4.3276,
-    "avg_run_diff_abs_error": 5.7012,
+    "games": 757,
+    "avg_actual_total_runs": 13.2761,
+    "avg_expected_total_runs": 10.162,
+    "avg_total_error": -3.1141,
+    "avg_abs_total_error": 4.2345,
+    "avg_run_diff_abs_error": 5.7001,
     "feature_means": {
-      "home_team_recent_5g_runs": 5.0804,
-      "away_team_recent_5g_runs": 5.1053,
-      "home_team_recent_10g_runs": 5.1078,
-      "away_team_recent_10g_runs": 5.0421,
-      "home_team_season_runs": 5.0605,
-      "away_team_season_runs": 5.0108,
-      "home_team_recent_5g_allowed": 5.1054,
-      "away_team_recent_5g_allowed": 5.1744,
-      "home_team_season_allowed": 5.0314,
-      "away_team_season_allowed": 5.0915
+      "home_team_recent_5g_runs": 5.0962,
+      "away_team_recent_5g_runs": 5.0996,
+      "home_team_recent_10g_runs": 5.0698,
+      "away_team_recent_10g_runs": 5.0306,
+      "home_team_season_runs": 4.9976,
+      "away_team_season_runs": 4.9587,
+      "home_team_recent_5g_allowed": 5.0418,
+      "away_team_recent_5g_allowed": 5.1549,
+      "home_team_season_allowed": 4.9804,
+      "away_team_season_allowed": 5.0429
     },
     "interpretation": "고득점/대승 유형에서는 실제 총득점이 예측 총득점보다 크게 높아지는 경기가 많아 시즌 평균 기반 예측이 타선 폭발과 불펜 붕괴를 충분히 잡지 못합니다."
   },
   "low_score_error_summary": {
-    "games": 360,
-    "avg_actual_total_runs": 4.3472,
-    "avg_expected_total_runs": 10.0273,
-    "avg_total_error": 5.68,
-    "avg_abs_total_error": 5.68,
-    "avg_run_diff_abs_error": 2.4315,
+    "games": 384,
+    "avg_actual_total_runs": 4.3776,
+    "avg_expected_total_runs": 9.9634,
+    "avg_total_error": 5.5858,
+    "avg_abs_total_error": 5.5858,
+    "avg_run_diff_abs_error": 2.4089,
     "feature_means": {
-      "home_team_recent_5g_runs": 4.8883,
-      "away_team_recent_5g_runs": 4.9066,
-      "home_team_recent_10g_runs": 4.994,
-      "away_team_recent_10g_runs": 4.9347,
-      "home_team_season_runs": 4.8999,
-      "away_team_season_runs": 4.8871,
-      "home_team_recent_5g_allowed": 4.916,
-      "away_team_recent_5g_allowed": 5.031,
-      "home_team_season_allowed": 4.8796,
-      "away_team_season_allowed": 4.8901
+      "home_team_recent_5g_runs": 4.7745,
+      "away_team_recent_5g_runs": 4.9447,
+      "home_team_recent_10g_runs": 4.897,
+      "away_team_recent_10g_runs": 4.9352,
+      "home_team_season_runs": 4.8583,
+      "away_team_season_runs": 4.8609,
+      "home_team_recent_5g_allowed": 4.9426,
+      "away_team_recent_5g_allowed": 4.9686,
+      "home_team_season_allowed": 4.8312,
+      "away_team_season_allowed": 4.8182
     },
     "interpretation": "저득점 유형에서는 예측 총득점이 실제 총득점보다 높게 잡히는 경향이 있어 투수전, 구장, 선발 컨디션 같은 억제 요인이 추가로 필요합니다."
   },
@@ -336,103 +336,103 @@
   "feature_importance_top20": [
     {
       "feature": "opponent_season_allowed",
-      "importance_mean": 0.004541,
-      "importance_std": 0.002958
+      "importance_mean": 0.006016,
+      "importance_std": 0.002473
     },
     {
       "feature": "team_season_runs",
-      "importance_mean": 0.00165,
-      "importance_std": 0.001334
-    },
-    {
-      "feature": "back_to_back",
-      "importance_mean": 0.001291,
-      "importance_std": 0.000432
+      "importance_mean": 0.002797,
+      "importance_std": 0.00184
     },
     {
       "feature": "season_allowed_gap",
-      "importance_mean": 0.001231,
-      "importance_std": 0.001169
-    },
-    {
-      "feature": "season_runs_gap",
-      "importance_mean": 0.00105,
-      "importance_std": 0.002335
-    },
-    {
-      "feature": "opponent_season_runs",
-      "importance_mean": 0.000802,
-      "importance_std": 0.000484
-    },
-    {
-      "feature": "recent_5g_runs_gap",
-      "importance_mean": 0.000482,
-      "importance_std": 0.000604
+      "importance_mean": 0.00262,
+      "importance_std": 0.000252
     },
     {
       "feature": "opponent_recent_10g_runs",
-      "importance_mean": 0.000464,
-      "importance_std": 0.000592
+      "importance_mean": 0.002255,
+      "importance_std": 0.00116
+    },
+    {
+      "feature": "opponent_season_runs",
+      "importance_mean": 0.001775,
+      "importance_std": 0.000797
+    },
+    {
+      "feature": "opponent_recent_10g_allowed",
+      "importance_mean": 0.000988,
+      "importance_std": 0.001532
+    },
+    {
+      "feature": "season_runs_gap",
+      "importance_mean": 0.000619,
+      "importance_std": 0.002349
+    },
+    {
+      "feature": "back_to_back",
+      "importance_mean": 0.000606,
+      "importance_std": 0.000242
+    },
+    {
+      "feature": "opponent_rest_days",
+      "importance_mean": 0.000419,
+      "importance_std": 0.001376
     },
     {
       "feature": "recent_10g_runs_gap",
-      "importance_mean": 0.000363,
-      "importance_std": 0.000601
+      "importance_mean": 0.000408,
+      "importance_std": 0.000284
     },
     {
-      "feature": "rest_days_gap",
-      "importance_mean": 0.000363,
-      "importance_std": 0.000355
-    },
-    {
-      "feature": "team_season_allowed",
-      "importance_mean": 0.000351,
-      "importance_std": 0.001573
-    },
-    {
-      "feature": "recent_5g_allowed_gap",
-      "importance_mean": 0.000295,
-      "importance_std": 0.000573
-    },
-    {
-      "feature": "team_recent_10g_allowed",
-      "importance_mean": 0.000263,
-      "importance_std": 0.001434
+      "feature": "recent_10g_allowed_gap",
+      "importance_mean": 0.000396,
+      "importance_std": 0.000287
     },
     {
       "feature": "season_win_rate_gap",
-      "importance_mean": 0.000255,
-      "importance_std": 0.000443
-    },
-    {
-      "feature": "team_recent_10g_run_diff",
-      "importance_mean": 0.000218,
-      "importance_std": 0.000593
-    },
-    {
-      "feature": "opponent_recent_5g_runs",
-      "importance_mean": 0.000167,
-      "importance_std": 0.000198
-    },
-    {
-      "feature": "opponent_recent_5g_allowed",
-      "importance_mean": 0.000156,
-      "importance_std": 0.00019
-    },
-    {
-      "feature": "team_recent_3g_runs",
-      "importance_mean": 0.000139,
-      "importance_std": 0.000174
+      "importance_mean": 0.000262,
+      "importance_std": 0.000252
     },
     {
       "feature": "opponent_recent_10g_win_rate",
-      "importance_mean": 6.7e-05,
-      "importance_std": 0.000203
+      "importance_mean": 0.000138,
+      "importance_std": 0.000103
+    },
+    {
+      "feature": "team_recent_10g_run_diff",
+      "importance_mean": 8.9e-05,
+      "importance_std": 0.000263
+    },
+    {
+      "feature": "team_recent_3g_runs",
+      "importance_mean": 4.9e-05,
+      "importance_std": 0.000393
+    },
+    {
+      "feature": "team_season_win_rate",
+      "importance_mean": 4.4e-05,
+      "importance_std": 6.7e-05
+    },
+    {
+      "feature": "opponent_season_win_rate",
+      "importance_mean": 1.8e-05,
+      "importance_std": 8.9e-05
     },
     {
       "feature": "team_recent_5g_runs",
-      "importance_mean": 4.5e-05,
-      "importance_std": 0.000113
+      "importance_mean": 8e-06,
+      "importance_std": 3.1e-05
+    },
+    {
+      "feature": "is_home",
+      "importance_mean": 0.0,
+      "importance_std": 0.000315
+    },
+    {
+      "feature": "month",
+      "importance_mean": 0.0,
+      "importance_std": 0.000763
     }
   ],
   "output_files": [

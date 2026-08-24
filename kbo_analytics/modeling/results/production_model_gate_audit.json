@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-08-20T18:40:31.805280",
+  "generated_at": "2026-08-24T08:10:48.636985",
   "current_operational_model": "RandomForest 보수 시간가중 모델",
   "best_candidate_model": "비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching",
   "current_operational_accuracy": 0.542,
-  "best_candidate_accuracy": 0.544,
-  "accuracy_delta": 0.002,
+  "best_candidate_accuracy": 0.547,
+  "accuracy_delta": 0.005,
   "required_accuracy_delta": 0.005,
   "gates": [
     {
       "gate_name": "accuracy_delta_greater_than_0_005",
       "required_condition": "accuracy delta > 0.005",
       "baseline_value": 0.542,
-      "candidate_value": 0.544,
+      "candidate_value": 0.547,
       "passed": false,
       "severity": "high",
       "explanation": "개선폭이 운영 교체 최소 기준을 넘어야 함"
@@ -38,7 +38,7 @@
       "gate_name": "over_55_accuracy_improved",
       "required_condition": "candidate over_55_accuracy improves",
       "baseline_value": null,
-      "candidate_value": 0.58,
+      "candidate_value": 0.563,
       "passed": true,
       "severity": "medium",
       "explanation": "확신 구간 성능은 별도 bootstrap으로 재확인"
@@ -47,7 +47,7 @@
       "gate_name": "recent_3year_accuracy_not_worse",
       "required_condition": "recent 3 year accuracy not worse",
       "baseline_value": null,
-      "candidate_value": 0.544,
+      "candidate_value": 0.547,
       "passed": true,
       "severity": "medium",
       "explanation": "최근 시즌 안정성 확인"
@@ -56,7 +56,7 @@
       "gate_name": "winning_streak_accuracy_improved",
       "required_condition": "winning streak accuracy improves",
       "baseline_value": null,
-      "candidate_value": 0.53,
+      "candidate_value": 0.528,
       "passed": true,
       "severity": "medium",
       "explanation": "기존 약점 세그먼트 개선 필요"
@@ -65,7 +65,7 @@
       "gate_name": "close_game_accuracy_not_worse",
       "required_condition": "close game accuracy not worse",
       "baseline_value": null,
-      "candidate_value": 0.508,
+      "candidate_value": 0.52,
       "passed": true,
       "severity": "medium",
       "explanation": "박빙 경기 악화 방지"
@@ -82,8 +82,8 @@
     {
       "gate_name": "calibration_not_worse",
       "required_condition": "candidate calibration error not worse",
-      "baseline_value": 0.017,
-      "candidate_value": 0.02,
+      "baseline_value": 0.02,
+      "candidate_value": 0.013,
       "passed": true,
       "severity": "high",
       "explanation": "확률 보정 악화 방지"
@@ -101,8 +101,8 @@
       "gate_name": "current_season_evidence_gate",
       "required_condition": "2026 current-season candidate evidence passes accuracy/calibration/rolling checks",
       "baseline_value": null,
-      "candidate_value": true,
-      "passed": true,
+      "candidate_value": false,
+      "passed": false,
       "severity": "high",
       "explanation": "현재 시즌에서도 운영 교체 근거가 충분해야 함"
     }
@@ -114,31 +114,33 @@
     "winning_streak_accuracy_improved",
     "close_game_accuracy_not_worse",
     "calibration_not_worse",
-    "no_data_leakage_detected",
-    "current_season_evidence_gate"
+    "no_data_leakage_detected"
   ],
   "failed_gates": [
     "accuracy_delta_greater_than_0_005",
     "log_loss_not_worse",
-    "bootstrap_ci_stable"
+    "bootstrap_ci_stable",
+    "current_season_evidence_gate"
   ],
   "current_season_evidence_gate": {
     "season": 2026,
-    "completed_games": 516,
+    "completed_games": 542,
     "minimum_games_required": 50,
-    "baseline_accuracy": 0.537,
-    "candidate_accuracy": 0.56,
-    "accuracy_delta": 0.023,
+    "baseline_accuracy": 0.541,
+    "candidate_accuracy": 0.559,
+    "accuracy_delta": 0.018,
     "rolling_backtest_accuracy_delta": 0.002,
     "baseline_brier": 0.246,
     "candidate_brier": 0.247,
     "baseline_log_loss": 0.685,
-    "candidate_log_loss": 0.686,
-    "baseline_over_55_accuracy": 0.597,
-    "candidate_over_55_accuracy": 0.581,
-    "passed": true,
-    "failed_reasons": [],
-    "decision": "eligible_for_manual_review_only"
+    "candidate_log_loss": 0.687,
+    "baseline_over_55_accuracy": 0.59,
+    "candidate_over_55_accuracy": 0.573,
+    "passed": false,
+    "failed_reasons": [
+      "current_season_log_loss_worse"
+    ],
+    "decision": "do_not_replace_production_model"
   },
   "safe_to_replace_model": false,
   "final_decision": "keep_current_operational_model",
