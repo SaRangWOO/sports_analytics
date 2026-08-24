@@ -24,7 +24,11 @@ if [ -f "$PROJECT_DIR/.env" ]; then
 fi
 
 docker compose up -d kbo-db kbo-api dashboard
-"$PYTHON_BIN" scripts/official_kbo_dashboard_hybrid.py --training-start-year 2016 --update-stage pregame
+if [ -d "$PROJECT_DIR/modeling/artifacts/production/current" ]; then
+  "$PYTHON_BIN" scripts/predict_only_dashboard_hybrid.py --update-stage pregame
+else
+  "$PYTHON_BIN" scripts/official_kbo_dashboard_hybrid.py --training-start-year 2016 --update-stage pregame
+fi
 
 curl -fsS "http://localhost:8501/latest.html" >/dev/null
 curl -fsS "http://localhost:8501/kt.html" >/dev/null

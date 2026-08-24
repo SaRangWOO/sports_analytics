@@ -310,8 +310,16 @@ def validate_artifact(
     feature_order = schema.get("feature_order")
     if not isinstance(feature_order, list) or feature_order != schema.get("feature_names"):
         raise ArtifactValidationError("feature_names와 feature_order가 일치하지 않습니다.")
-    if len(feature_order) != schema.get("feature_count") or feature_order != schema.get("required_features"):
-        raise ArtifactValidationError("필수 피처 또는 피처 개수가 일치하지 않습니다.")
+    required_features = schema.get("required_features")
+    optional_features = schema.get("optional_features", [])
+    if len(feature_order) != schema.get("feature_count"):
+        raise ArtifactValidationError("피처 개수가 일치하지 않습니다.")
+    if not isinstance(required_features, list) or not isinstance(optional_features, list):
+        raise ArtifactValidationError("필수 또는 선택 피처 목록이 올바르지 않습니다.")
+    if set(required_features) & set(optional_features):
+        raise ArtifactValidationError("필수 피처와 선택 피처가 중복됩니다.")
+    if not set(feature_order).issubset(set(required_features) | set(optional_features)):
+        raise ArtifactValidationError("모델 피처가 필수 또는 선택 피처로 분류되지 않았습니다.")
     if metadata.get("feature_count") != len(feature_order):
         raise ArtifactValidationError("metadata와 feature schema의 피처 개수가 다릅니다.")
     _validate_compatibility(metadata)
@@ -429,6 +437,14 @@ def create_evaluation_candidate(
 ) -> Path:
     feature_order = list(payload["feature_columns"])
     available = list(prediction_bundle.get("available_feature_columns", feature_order))
+    sparse_categories = [
+        feature
+        for feature in feature_order
+        if re.fullmatch(r"(?:team|opponent)_(?:[A-Z]{2,4}|[가-힣]+)", feature)
+    ]
+    required_features = [
+        feature for feature in feature_order if feature not in sparse_categories
+    ]
     metadata = {
         "model_name": payload["selected_model"],
         "model_family": payload["model_type"],
@@ -443,10 +459,13 @@ def create_evaluation_candidate(
         "feature_names": feature_order,
         "feature_order": feature_order,
         "feature_count": len(feature_order),
-        "required_features": feature_order,
-        "optional_features": [feature for feature in available if feature not in feature_order],
+        "required_features": required_features,
+        "optional_features": sorted(
+            set(sparse_categories)
+            | {feature for feature in available if feature not in feature_order}
+        ),
         "expected_dtype": "float64",
-        "missing_value_policy": "required model inputs must be numeric and non-null after existing upstream feature generation",
+        "missing_value_policy": "required numeric features must be present; absent one-hot team categories are filled with zero",
     }
     metrics = {
         "selected_candidate_metrics": selected_metrics,

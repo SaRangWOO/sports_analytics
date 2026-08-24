@@ -17,6 +17,7 @@ from sklearn.linear_model import LogisticRegression
 from modeling.model_artifacts import (
     ArtifactValidationError,
     create_candidate_artifact,
+    create_evaluation_candidate,
     load_production_artifact,
     predict_bundle_probabilities,
     promote_candidate,
@@ -120,6 +121,60 @@ class ModelArtifactTests(unittest.TestCase):
             predict_bundle_probabilities(loaded["bundle"], scaled[["feature_a"]], schema)
         with self.assertRaises(ArtifactValidationError):
             validate_available_features(["feature_a", "feature_b", "unknown_feature"], schema)
+
+    def test_evaluation_schema_treats_sparse_team_categories_as_optional(self):
+        mean = pd.Series(
+            {"recent_5_win_rate": 0.5, "team_SK": 0.1, "opponent_넥센": 0.1}
+        )
+        std = pd.Series(
+            {"recent_5_win_rate": 0.1, "team_SK": 0.3, "opponent_넥센": 0.3}
+        )
+        model = LogisticRegression(max_iter=500).fit(
+            pd.DataFrame(
+                [
+                    [0.0, 0.0, 0.0],
+                    [1.0, 1.0, 0.0],
+                    [-1.0, 0.0, 1.0],
+                    [0.5, 1.0, 0.0],
+                ],
+                columns=mean.index,
+            ),
+            [0, 1, 0, 1],
+        )
+        bundle = {
+            "model_type": "LogisticRegression",
+            "model": model,
+            "mean": mean,
+            "std": std,
+            "available_feature_columns": list(mean.index),
+            "feature_order": list(mean.index),
+            "prediction_unit": "team",
+            "class_order": [0, 1],
+        }
+        payload = {
+            "feature_columns": list(mean.index),
+            "selected_model": "schema-test",
+            "model_type": "LogisticRegression",
+            "prediction_unit": "team",
+            "training_start_year": 2016,
+            "prediction_training_cutoff": "2026-08-23",
+        }
+
+        path = create_evaluation_candidate(
+            self.root,
+            PROJECT_ROOT,
+            bundle,
+            payload,
+            {},
+            {},
+            [],
+        )
+        schema = json.loads((path / "feature_schema.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(schema["required_features"], ["recent_5_win_rate"])
+        self.assertIn("team_SK", schema["optional_features"])
+        self.assertIn("opponent_넥센", schema["optional_features"])
+        validate_available_features(["recent_5_win_rate"], schema)
 
     def test_schema_version_checksum_complete_and_approval_fail_closed(self):
         path, _, _ = self._candidate()

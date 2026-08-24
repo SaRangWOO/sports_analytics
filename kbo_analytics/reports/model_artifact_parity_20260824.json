@@ -1,0 +1,21 @@
+{
+  "artifact_id": "2026-08-23-befe94ab5baf5496",
+  "reference_date": "2026-08-25",
+  "prediction_rows": 10,
+  "candidate_production_output_equal": true,
+  "max_raw_probability_delta": 1.1102230246251565e-16,
+  "max_normalized_probability_delta": 1.1102230246251565e-16,
+  "compared_fields": [
+    "경기일",
+    "기준팀",
+    "상대팀",
+    "예측 구단",
+    "예측승률",
+    "예측",
+    "예측 근거"
+  ],
+  "selected_model": "RandomForest 보수 시간가중 모델",
+  "feature_count": 103,
+  "probability_tolerance": 1e-12,
+  "status": "pass"
+}
