@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-exec /home/tera/1.project/1.sports_analytics/kbo_analytics/scripts/daily_kbo_update.sh
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+
+exec "$SCRIPT_DIR/daily_kbo_update.sh"

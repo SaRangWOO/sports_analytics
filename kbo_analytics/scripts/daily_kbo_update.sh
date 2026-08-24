@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
+. "$SCRIPT_DIR/git_sync_guard.sh"
 PYTHON_BIN="$PROJECT_DIR/.venv/bin/python"
 LOG_DIR="$PROJECT_DIR/logs"
 LOG_FILE="$LOG_DIR/daily_update_$(date +%F).log"
@@ -13,6 +14,7 @@ exec >> "$LOG_FILE" 2>&1
 echo "[$(date --iso-8601=seconds)] daily KBO update started"
 
 cd "$PROJECT_DIR"
+sync_main_with_origin
 
 if [ -f "$PROJECT_DIR/.env" ]; then
   set -a
@@ -46,7 +48,7 @@ PY
 if ! git diff --quiet -- dashboard data/official modeling/results ../docs; then
   git add dashboard data/official modeling/results ../docs
   git commit -m "Update KBO daily analytics outputs $(date +%F)"
-  git push origin main
+  push_main_update
 fi
 
 echo "[$(date --iso-8601=seconds)] daily KBO update completed"
