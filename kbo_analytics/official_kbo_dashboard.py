@@ -15,6 +15,16 @@ import requests
 
 from modeling.feature_engineering import build_features
 from modeling.model_training import evaluate_model as run_model_evaluation
+from modeling.pitching_snapshot_storage import (
+    PitchingSnapshotValidationError,
+    build_pitching_schedule_frame,
+    canonicalize_pitching_snapshots,
+    merge_pitching_snapshots,
+    read_pitching_snapshot,
+    save_pitching_schedule,
+    save_pitching_snapshot,
+    validate_pitching_snapshot,
+)
 from modeling.train_win_predictor import (
     prepare_matrix,
     sigmoid,
@@ -688,6 +698,10 @@ def fetch_kbo_game_list(game_date: date):
         return []
 
 
+def pitching_snapshot_schedule_frame(game_date: date):
+    return build_pitching_schedule_frame(fetch_kbo_game_list(game_date))
+
+
 def load_manual_confirmed_starters(prediction_date: date):
     path = DATA_DIR.parent / "manual" / "confirmed_starters.csv"
     if not path.exists():
@@ -963,19 +977,51 @@ def append_pitching_daily_snapshot(games: pd.DataFrame, context: dict, output_pa
         "data_source",
         "note",
     ]
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     new_frame = pd.DataFrame(rows, columns=columns)
-    if output_path.exists():
-        existing = pd.read_csv(output_path)
-        frame = existing if new_frame.empty else pd.concat([existing, new_frame], ignore_index=True)
+    schedule_frame = pitching_snapshot_schedule_frame(prediction_date)
+    schedule_path = output_path.with_name("pitching_snapshot_schedule.csv")
+    collection_warnings = []
+    if not schedule_frame.empty:
+        save_pitching_schedule(schedule_frame, schedule_path)
+
+    canonical_parts = []
+    for game_id, game_rows in new_frame.groupby("scheduled_game_id", sort=False):
+        try:
+            canonical_parts.append(
+                canonicalize_pitching_snapshots(
+                    game_rows,
+                    schedule_frame,
+                    prediction_reference_datetime=reference_datetime,
+                )
+            )
+        except PitchingSnapshotValidationError as exc:
+            collection_warnings.append(
+                {"scheduled_game_id": str(game_id), "failures": exc.failures}
+            )
+    new_frame = (
+        pd.concat(canonical_parts, ignore_index=True)
+        if canonical_parts
+        else pd.DataFrame(columns=columns)
+    )
+    existing = (
+        read_pitching_snapshot(output_path)
+        if output_path.exists()
+        else pd.DataFrame(columns=columns)
+    )
+    if new_frame.empty:
+        validate_pitching_snapshot(existing, as_of_date=reference_datetime.date())
+        frame = existing
     else:
-        frame = new_frame
-    if not frame.empty:
-        frame = frame.sort_values("snapshot_time").drop_duplicates(
-            subset=["snapshot_date", "reference_date", "team", "scheduled_game_id"],
-            keep="last",
+        frame = merge_pitching_snapshots(
+            existing,
+            new_frame,
+            as_of_date=reference_datetime.date(),
         )
-    frame.to_csv(output_path, index=False, encoding="utf-8-sig")
+        save_pitching_snapshot(
+            frame,
+            output_path,
+            as_of_date=reference_datetime.date(),
+        )
 
     ref_frame = frame[frame["reference_date"].astype(str).eq(prediction_date.isoformat())] if not frame.empty else frame
     source_counts = ref_frame["starter_source"].replace({"manual": "confirmed"}).value_counts().to_dict() if not ref_frame.empty else {}
@@ -994,6 +1040,8 @@ def append_pitching_daily_snapshot(games: pd.DataFrame, context: dict, output_pa
         "leakage_policy_note": "pitching_daily_snapshot.csv는 예측 시점에 저장된 정보만 누적하며 현재 모델 학습 피처로 사용하지 않습니다.",
         "quality_status": quality_status.get("quality_status"),
         "safe_for_future_feature_use": quality_status.get("safe_for_future_feature_use"),
+        "collection_warnings": collection_warnings,
+        "schedule_file": str(schedule_path.relative_to(BASE_DIR)),
     }
     results_dir.mkdir(parents=True, exist_ok=True)
     (results_dir / "pitching_snapshot_status.json").write_text(json.dumps(status_payload, indent=2, ensure_ascii=False), encoding="utf-8")

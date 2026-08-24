@@ -1,5 +1,5 @@
 ﻿model,feature_count,test_team_rows,test_games,accuracy,brier_score,log_loss,over_55_games,over_55_accuracy,average_confidence,regularization_c,snapshot_blend
-historical_baseline,21,98,49,0.5102,0.2457,0.6845,18,0.5,0.5446,,
-historical_baseline_plus_starter_conservative,4,98,49,0.5102,0.2433,0.6797,29,0.6207,0.554,0.03,0.25
-historical_baseline_plus_bullpen_proxy_conservative,3,98,49,0.4898,0.2548,0.7032,29,0.5517,0.5519,0.03,0.25
-historical_baseline_plus_all_snapshot_conservative,16,98,49,0.4898,0.2497,0.6925,24,0.5417,0.5478,0.01,0.25
+historical_baseline,21,306,153,0.5948,0.244,0.6811,73,0.5479,0.5484,,
+historical_baseline_plus_starter_conservative,4,306,153,0.5752,0.243,0.679,83,0.6145,0.5541,0.03,0.25
+historical_baseline_plus_bullpen_proxy_conservative,3,306,153,0.5817,0.2468,0.6869,73,0.5616,0.5509,0.03,0.25
+historical_baseline_plus_all_snapshot_conservative,16,306,153,0.5686,0.2452,0.6836,71,0.5915,0.5486,0.01,0.25

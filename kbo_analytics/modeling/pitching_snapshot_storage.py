@@ -37,6 +37,7 @@ SCHEDULE_COLUMNS = [
     "scheduled_start_datetime",
     "official_game_id",
 ]
+SCHEDULE_KEY = ["reference_date", "official_game_id"]
 OFFICIAL_GAME_ID = re.compile(r"^\d{8}[A-Z]{4}\d+$")
 FALLBACK_GAME_ID = re.compile(r"^\d{4}-\d{2}-\d{2}_.+")
 
@@ -49,6 +50,100 @@ class PitchingSnapshotValidationError(ValueError):
 
 def read_pitching_snapshot(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, dtype={"scheduled_game_id": str})
+
+
+def build_pitching_schedule_frame(raw_games: list[dict]) -> pd.DataFrame:
+    rows = []
+    for game in raw_games:
+        game_date = str(game.get("G_DT", "")).strip()
+        game_time = str(game.get("G_TM", "")).strip()
+        rows.append(
+            {
+                "reference_date": pd.to_datetime(
+                    game_date,
+                    format="%Y%m%d",
+                    errors="coerce",
+                ).date().isoformat(),
+                "away_team": str(game.get("AWAY_NM", "")).strip(),
+                "home_team": str(game.get("HOME_NM", "")).strip(),
+                "scheduled_start_datetime": pd.to_datetime(
+                    f"{game_date} {game_time}",
+                    format="%Y%m%d %H:%M",
+                    errors="coerce",
+                ),
+                "official_game_id": str(game.get("G_ID", "")).strip(),
+            }
+        )
+    frame = pd.DataFrame(rows, columns=SCHEDULE_COLUMNS)
+    return validate_pitching_schedule(frame)
+
+
+def validate_pitching_schedule(frame: pd.DataFrame) -> pd.DataFrame:
+    missing_columns = [column for column in SCHEDULE_COLUMNS if column not in frame.columns]
+    if missing_columns:
+        raise PitchingSnapshotValidationError(
+            [f"missing_schedule_columns:{','.join(missing_columns)}"]
+        )
+    schedule = frame[SCHEDULE_COLUMNS].copy()
+    schedule["reference_date"] = pd.to_datetime(
+        schedule["reference_date"], errors="coerce"
+    ).dt.date
+    schedule["scheduled_start_datetime"] = pd.to_datetime(
+        schedule["scheduled_start_datetime"], errors="coerce"
+    )
+    failures = []
+    if schedule["reference_date"].isna().any():
+        failures.append(
+            f"invalid_schedule_reference_date:{int(schedule['reference_date'].isna().sum())}"
+        )
+    if schedule["scheduled_start_datetime"].isna().any():
+        failures.append(
+            "invalid_scheduled_start_datetime:"
+            f"{int(schedule['scheduled_start_datetime'].isna().sum())}"
+        )
+    invalid_ids = ~schedule["official_game_id"].astype(str).str.fullmatch(
+        OFFICIAL_GAME_ID
+    )
+    if invalid_ids.any():
+        failures.append(f"invalid_official_game_id:{int(invalid_ids.sum())}")
+    duplicate_count = int(schedule.duplicated(SCHEDULE_KEY).sum())
+    if duplicate_count:
+        failures.append(f"duplicate_schedule_key:{duplicate_count}")
+    for column in ("away_team", "home_team"):
+        blank_count = int(schedule[column].fillna("").astype(str).str.strip().eq("").sum())
+        if blank_count:
+            failures.append(f"blank_{column}:{blank_count}")
+    if failures:
+        raise PitchingSnapshotValidationError(failures)
+    schedule["reference_date"] = schedule["reference_date"].astype(str)
+    return schedule.sort_values(SCHEDULE_KEY).reset_index(drop=True)
+
+
+def save_pitching_schedule(frame: pd.DataFrame, output_path: Path) -> None:
+    candidate = validate_pitching_schedule(frame)
+    if output_path.exists():
+        existing = validate_pitching_schedule(pd.read_csv(output_path))
+        candidate = pd.concat([existing, candidate], ignore_index=True)
+        candidate = candidate.sort_values("scheduled_start_datetime").drop_duplicates(
+            SCHEDULE_KEY,
+            keep="last",
+        )
+        candidate = validate_pitching_schedule(candidate)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    file_descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{output_path.name}.",
+        suffix=".tmp",
+        dir=output_path.parent,
+    )
+    os.close(file_descriptor)
+    temporary_path = Path(temporary_name)
+    try:
+        candidate.to_csv(temporary_path, index=False, encoding="utf-8-sig")
+        with temporary_path.open("rb") as handle:
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, output_path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
 
 
 def _date_values(frame: pd.DataFrame, column: str) -> pd.Series:

@@ -11,9 +11,12 @@ import pandas as pd
 from modeling.pitching_snapshot_storage import (
     PitchingSnapshotValidationError,
     SNAPSHOT_COLUMNS,
+    build_pitching_schedule_frame,
     canonicalize_pitching_snapshots,
     merge_pitching_snapshots,
+    save_pitching_schedule,
     save_pitching_snapshot,
+    validate_pitching_schedule,
     validate_pitching_snapshot,
 )
 
@@ -541,6 +544,56 @@ class PitchingSnapshotStorageTest(unittest.TestCase):
         )
 
         self.assertEqual(len(canonical), 2)
+
+    def test_schedule_frame_preserves_official_start_time(self):
+        frame = build_pitching_schedule_frame(
+            [
+                {
+                    "G_DT": "20260820",
+                    "G_TM": "19:00",
+                    "G_ID": "20260820KTLG0",
+                    "AWAY_NM": "KT",
+                    "HOME_NM": "LG",
+                }
+            ]
+        )
+
+        self.assertEqual(frame.loc[0, "reference_date"], "2026-08-20")
+        self.assertEqual(
+            frame.loc[0, "scheduled_start_datetime"],
+            pd.Timestamp("2026-08-20 19:00:00"),
+        )
+
+    def test_duplicate_schedule_key_is_rejected(self):
+        duplicate = schedule_frame(
+            [
+                schedule_row("2026-07-30", "20260730KTNC0"),
+                schedule_row("2026-07-30", "20260730KTNC0"),
+            ]
+        )
+
+        with self.assertRaisesRegex(
+            PitchingSnapshotValidationError,
+            "duplicate_schedule_key:1",
+        ):
+            validate_pitching_schedule(duplicate)
+
+    def test_schedule_save_is_atomic_and_keeps_doubleheader(self):
+        output = self.root / "pitching_snapshot_schedule.csv"
+        first = schedule_frame(
+            [schedule_row("2026-07-30", "20260730KTNC1", start_time="14:00:00")]
+        )
+        second = schedule_frame(
+            [schedule_row("2026-07-30", "20260730KTNC2", start_time="18:00:00")]
+        )
+
+        save_pitching_schedule(first, output)
+        save_pitching_schedule(second, output)
+        saved = pd.read_csv(output)
+
+        self.assertEqual(len(saved), 2)
+        self.assertEqual(set(saved["official_game_id"]), {"20260730KTNC1", "20260730KTNC2"})
+        self.assertFalse(list(self.root.glob(".pitching_snapshot_schedule.csv.*.tmp")))
 
 
 if __name__ == "__main__":

@@ -46,15 +46,69 @@ def conservative_model() -> HistGradientBoostingClassifier:
     )
 
 
-def attach_snapshot_features(features: pd.DataFrame, snapshots: pd.DataFrame) -> pd.DataFrame:
+def attach_snapshot_features(
+    features: pd.DataFrame,
+    snapshots: pd.DataFrame,
+    schedule: pd.DataFrame,
+) -> tuple[pd.DataFrame, dict]:
     snapshots = snapshots.copy()
     snapshots["snapshot_time"] = pd.to_datetime(snapshots["snapshot_time"], errors="coerce")
     snapshots["reference_date"] = pd.to_datetime(snapshots["reference_date"], errors="coerce")
-    snapshots = snapshots[
-        snapshots["scheduled_game_id"].astype(str).str.match(r"^\d{8}[A-Z]{4}0_.+$")
-        & snapshots["snapshot_time"].notna()
-        & (snapshots["snapshot_time"].dt.hour < 18)
-    ].copy()
+    snapshots["official_game_id"] = (
+        snapshots["scheduled_game_id"].astype(str).str.rsplit("_", n=1).str[0]
+    )
+    schedule = schedule.copy()
+    schedule["reference_date"] = pd.to_datetime(
+        schedule["reference_date"], errors="coerce"
+    )
+    schedule["scheduled_start_datetime"] = pd.to_datetime(
+        schedule["scheduled_start_datetime"], errors="coerce"
+    )
+    snapshots = snapshots.merge(
+        schedule[
+            [
+                "reference_date",
+                "official_game_id",
+                "away_team",
+                "home_team",
+                "scheduled_start_datetime",
+            ]
+        ],
+        on=["reference_date", "official_game_id"],
+        how="left",
+        validate="many_to_one",
+    )
+    valid_id = snapshots["official_game_id"].astype(str).str.match(
+        r"^\d{8}[A-Z]{4}\d+$"
+    )
+    valid_time = snapshots["snapshot_time"].notna()
+    schedule_mapped = snapshots["scheduled_start_datetime"].notna()
+    before_start = snapshots["snapshot_time"] < snapshots["scheduled_start_datetime"]
+    team_mapping = (
+        (
+            snapshots["home_away"].eq("A")
+            & snapshots["team"].eq(snapshots["away_team"])
+            & snapshots["opponent"].eq(snapshots["home_team"])
+        )
+        | (
+            snapshots["home_away"].eq("H")
+            & snapshots["team"].eq(snapshots["home_team"])
+            & snapshots["opponent"].eq(snapshots["away_team"])
+        )
+    )
+    audit = {
+        "snapshot_rows": int(len(snapshots)),
+        "invalid_official_game_id_rows": int((~valid_id).sum()),
+        "invalid_snapshot_time_rows": int((~valid_time).sum()),
+        "schedule_unmapped_rows": int((~schedule_mapped).sum()),
+        "snapshot_at_or_after_start_rows": int(
+            (schedule_mapped & valid_time & ~before_start).sum()
+        ),
+        "team_mapping_failed_rows": int((schedule_mapped & ~team_mapping).sum()),
+    }
+    eligible = valid_id & valid_time & schedule_mapped & before_start & team_mapping
+    snapshots = snapshots[eligible].copy()
+    audit["eligible_snapshot_rows"] = int(len(snapshots))
     snapshots = snapshots.sort_values("snapshot_time").drop_duplicates(
         ["reference_date", "scheduled_game_id", "team"],
         keep="last",
@@ -137,9 +191,12 @@ def attach_snapshot_features(features: pd.DataFrame, snapshots: pd.DataFrame) ->
     )
     complete_games = enriched.groupby("actual_game_id").size()
     complete_games = complete_games[complete_games.eq(2)].index
-    return enriched[enriched["actual_game_id"].isin(complete_games)].sort_values(
+    complete = enriched[enriched["actual_game_id"].isin(complete_games)].sort_values(
         ["date", "actual_game_id", "is_home"]
     )
+    audit["matched_team_rows"] = int(len(complete))
+    audit["matched_games"] = int(complete["actual_game_id"].nunique())
+    return complete.reset_index(drop=True), audit
 
 
 def metric_row(
@@ -328,46 +385,43 @@ def fit_snapshot_adjustment(
     )
 
 
+def rolling_date_folds(frame: pd.DataFrame) -> list[tuple[pd.Timestamp, pd.Timestamp]]:
+    dates = pd.Series(pd.to_datetime(frame["date"]).drop_duplicates().sort_values())
+    initial_days = max(15, int(len(dates) * 0.35))
+    validation_days = max(7, int(len(dates) * 0.15))
+    folds = []
+    start = initial_days
+    while start < len(dates):
+        stop = min(start + validation_days, len(dates))
+        folds.append((pd.Timestamp(dates.iloc[start]), pd.Timestamp(dates.iloc[stop - 1])))
+        start = stop
+    return folds
+
+
 def run_validation(base_dir: Path) -> dict:
     results_dir = base_dir / "modeling" / "results"
     features = pd.read_csv(results_dir / "features.csv")
     snapshots = pd.read_csv(base_dir / "data" / "official" / "pitching_daily_snapshot.csv")
-    frame = attach_snapshot_features(features, snapshots)
+    schedule_path = base_dir / "data" / "official" / "pitching_snapshot_schedule.csv"
+    if not schedule_path.exists():
+        raise RuntimeError(
+            "pitching_snapshot_schedule.csv가 없습니다. 공식 경기 시작 시각을 먼저 수집해야 합니다."
+        )
+    schedule = pd.read_csv(schedule_path)
+    frame, leakage_audit = attach_snapshot_features(features, snapshots, schedule)
     if frame["actual_game_id"].nunique() < 20:
         raise RuntimeError("투수 스냅샷과 완료 경기의 매칭 표본이 부족합니다.")
 
-    dates = pd.to_datetime(frame["date"])
-    unique_dates = dates.drop_duplicates().sort_values().to_list()
-    cutoff = unique_dates[max(int(len(unique_dates) * 0.7), 1)]
-    train_mask = dates < cutoff
-    test_mask = dates >= cutoff
     all_x, _ = prepare_matrix(features)
     _, y = prepare_matrix(frame)
     baseline_columns = compact_feature_columns(all_x)
-    train_frame = frame.loc[train_mask].reset_index(drop=True)
-    test_frame = frame.loc[test_mask].reset_index(drop=True)
     first_snapshot_date = pd.to_datetime(frame["date"]).min()
-    train_baseline_probability = fit_baseline(
+    prior_baseline_probability = fit_baseline(
         features,
-        train_frame,
+        frame,
         first_snapshot_date,
         baseline_columns,
     )
-    test_baseline_probability = fit_baseline(
-        features,
-        test_frame,
-        pd.Timestamp(cutoff),
-        baseline_columns,
-    )
-    report_rows = [
-        metric_row(
-            "historical_baseline",
-            test_frame,
-            y[test_mask],
-            test_baseline_probability,
-            len(baseline_columns),
-        )
-    ]
     candidate_specs = [
         (
             "historical_baseline_plus_starter_conservative",
@@ -388,23 +442,101 @@ def run_validation(base_dir: Path) -> dict:
             0.25,
         ),
     ]
-    candidate_probabilities = {}
-    for name, candidate_features, regularization, blend in candidate_specs:
-        probability = fit_snapshot_adjustment(
-            train_frame,
-            y[train_mask],
-            train_baseline_probability,
+    folds = rolling_date_folds(frame)
+    if not folds:
+        raise RuntimeError("시간순 rolling 검증 구간을 생성할 수 없습니다.")
+    fold_rows = []
+    test_frames = []
+    test_targets = []
+    baseline_probabilities = []
+    candidate_probabilities = {spec[0]: [] for spec in candidate_specs}
+    dates = pd.to_datetime(frame["date"])
+    for fold_index, (test_start, test_end) in enumerate(folds, start=1):
+        train_mask = dates < test_start
+        test_mask = dates.between(test_start, test_end)
+        train_frame = frame.loc[train_mask].reset_index(drop=True)
+        test_frame = frame.loc[test_mask].reset_index(drop=True)
+        if train_frame["actual_game_id"].nunique() < 50 or test_frame.empty:
+            continue
+        train_y = y[train_mask]
+        test_y = y[test_mask]
+        train_baseline_probability = prior_baseline_probability[train_mask]
+        test_baseline_probability = fit_baseline(
+            features,
             test_frame,
-            test_baseline_probability,
-            candidate_features,
-            regularization,
-            blend,
+            test_start,
+            baseline_columns,
         )
-        candidate_probabilities[name] = probability
+        test_frames.append(test_frame)
+        test_targets.append(test_y)
+        baseline_probabilities.append(test_baseline_probability)
+        baseline_fold = metric_row(
+            "historical_baseline",
+            test_frame,
+            test_y,
+            test_baseline_probability,
+            len(baseline_columns),
+        )
+        fold_rows.append(
+            {
+                "fold": fold_index,
+                "train_end": str(test_start.date() - pd.Timedelta(days=1)),
+                "test_start": str(test_start.date()),
+                "test_end": str(test_end.date()),
+                **baseline_fold,
+            }
+        )
+        for name, candidate_features, regularization, blend in candidate_specs:
+            probability = fit_snapshot_adjustment(
+                train_frame,
+                train_y,
+                train_baseline_probability,
+                test_frame,
+                test_baseline_probability,
+                candidate_features,
+                regularization,
+                blend,
+            )
+            candidate_probabilities[name].append(probability)
+            candidate_fold = metric_row(
+                name,
+                test_frame,
+                test_y,
+                probability,
+                len(candidate_features) + 1,
+            )
+            fold_rows.append(
+                {
+                    "fold": fold_index,
+                    "train_end": str(test_start.date() - pd.Timedelta(days=1)),
+                    "test_start": str(test_start.date()),
+                    "test_end": str(test_end.date()),
+                    **candidate_fold,
+                }
+            )
+    if not test_frames:
+        raise RuntimeError("유효한 시간순 rolling 검증 구간이 없습니다.")
+
+    test_frame = pd.concat(test_frames, ignore_index=True)
+    test_y = np.concatenate(test_targets)
+    test_baseline_probability = np.concatenate(baseline_probabilities)
+    report_rows = [
+        metric_row(
+            "historical_baseline",
+            test_frame,
+            test_y,
+            test_baseline_probability,
+            len(baseline_columns),
+        )
+    ]
+    aggregated_candidate_probabilities = {}
+    for name, candidate_features, regularization, blend in candidate_specs:
+        probability = np.concatenate(candidate_probabilities[name])
+        aggregated_candidate_probabilities[name] = probability
         row = metric_row(
             name,
             test_frame,
-            y[test_mask],
+            test_y,
             probability,
             len(candidate_features) + 1,
         )
@@ -418,12 +550,17 @@ def run_validation(base_dir: Path) -> dict:
         index=False,
         encoding="utf-8-sig",
     )
+    pd.DataFrame(fold_rows).to_csv(
+        results_dir / "pitching_snapshot_candidate_rolling_report.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
     baseline = report_rows[0]
     candidate = report_rows[1]
-    selected_probability = candidate_probabilities[candidate["model"]]
+    selected_probability = aggregated_candidate_probabilities[candidate["model"]]
     bootstrap = bootstrap_accuracy_delta(
         test_frame,
-        y[test_mask],
+        test_y,
         test_baseline_probability,
         selected_probability,
     )
@@ -440,6 +577,20 @@ def run_validation(base_dir: Path) -> dict:
         "bootstrap_ci_stable": bootstrap["stable_positive_delta"],
     }
     historical_pitcher_audit = historical_pitcher_data_audit(base_dir, features)
+    leakage_rows = [
+        {
+            "check": name,
+            "failed_rows": value,
+            "status": "pass" if value == 0 else "excluded",
+        }
+        for name, value in leakage_audit.items()
+        if name.endswith("_rows") and name not in {"snapshot_rows", "eligible_snapshot_rows", "matched_team_rows"}
+    ]
+    pd.DataFrame(leakage_rows).to_csv(
+        results_dir / "pitching_snapshot_feature_leakage_audit.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
     payload = {
         "experiment": "historical_baseline_plus_snapshot_adjustment",
         "status": "validated_candidate_not_promoted",
@@ -449,14 +600,13 @@ def run_validation(base_dir: Path) -> dict:
         ),
         "snapshot_days": int(snapshots["snapshot_date"].nunique()),
         "canonical_snapshot_rows": int(len(snapshots)),
+        "schedule_rows": int(len(schedule)),
         "matched_games": int(frame["actual_game_id"].nunique()),
         "matched_team_rows": int(len(frame)),
-        "train_games": int(frame.loc[train_mask, "actual_game_id"].nunique()),
-        "test_games": int(frame.loc[test_mask, "actual_game_id"].nunique()),
-        "train_start_date": str(frame.loc[train_mask, "date"].min()),
-        "train_end_date": str(frame.loc[train_mask, "date"].max()),
-        "test_start_date": str(frame.loc[test_mask, "date"].min()),
-        "test_end_date": str(frame.loc[test_mask, "date"].max()),
+        "rolling_folds": int(pd.DataFrame(fold_rows)["fold"].nunique()),
+        "test_games": int(test_frame["actual_game_id"].nunique()),
+        "test_start_date": str(test_frame["date"].min()),
+        "test_end_date": str(test_frame["date"].max()),
         "baseline": baseline,
         "candidate": candidate,
         "candidate_comparison": report_rows[1:],
@@ -469,6 +619,7 @@ def run_validation(base_dir: Path) -> dict:
         "brier_delta": brier_delta,
         "log_loss_delta": log_loss_delta,
         "bootstrap": bootstrap,
+        "leakage_audit": leakage_audit,
         "gates": gates,
         "failed_gates": [name for name, passed in gates.items() if not passed],
         "production_promotion_allowed": bool(all(gates.values())),
@@ -476,8 +627,8 @@ def run_validation(base_dir: Path) -> dict:
         "safe_to_use_pitching_snapshot_as_features": False,
         "snapshot_eligible_for_experiment": True,
         "leakage_policy": (
-            "표준 KBO game_id와 18시 이전 예측 시점 스냅샷만 완료 경기의 동일 팀 행에 "
-            "연결했으며 현재 경기 결과는 피처에서 제외했습니다."
+            "표준 KBO game_id와 공식 scheduled_start_datetime 이전 스냅샷만 완료 경기의 "
+            "동일 팀 행에 연결하고, 날짜 순 rolling 검증으로 현재 경기 결과를 피처에서 제외했습니다."
         ),
         "decision": (
             "후보가 모든 승격 게이트를 통과하지 않았으므로 운영 모델과 운영 확률을 변경하지 않습니다."
