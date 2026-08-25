@@ -2,7 +2,7 @@
   "available": true,
   "training_cutoff": "2026-08-23",
   "validation_cutoff": "2026-08-23",
-  "prediction_training_cutoff": "2026-08-24",
+  "prediction_training_cutoff": "2026-08-23",
   "latest_completed_game_date_used": "2026-08-23",
   "current_week_games_included_for_prediction": false,
   "training_start_year": 2016,
@@ -47553,5 +47553,8 @@
   "run_expectancy_rows": 7445,
   "operational_probability_policy": "hybrid_50_50",
   "operational_probability_policy_note": "2026 시간순 516경기 검증에서 기존 운영형 대비 정확도 +0.58%p, 최근 100경기 +1.0%p를 보인 승패·득점 모델 50:50 결합 정책입니다. bootstrap 신뢰구간은 0을 포함하므로 롤백 가능한 canary로 운영합니다.",
-  "operational_probability_policy_rollback": "KBO_WIN_PROBABILITY_POLICY=production_only"
+  "operational_probability_policy_rollback": "KBO_WIN_PROBABILITY_POLICY=production_only",
+  "production_artifact_id": "2026-08-23-befe94ab5baf5496",
+  "production_artifact_loaded": true,
+  "prediction_mode": "predict_only"
 }
