@@ -10,3 +10,4 @@ starter_identity_proxy,false,false,false,false,true,not_applied,not_available,ac
 team_recent_form,true,false,false,false,false,shift_1_applied,pass,existing rolling features use prior games only
 previous_game_run_diff,true,false,false,false,false,shift_1_applied,pass,team previous completed game only
 bullpen_appearances_last3d_proxy,true,false,false,false,false,asof_prior_date_applied,pass,team recent 3-day game count proxy only; no pitch count invented
+pitcher_game_logs.csv,true,false,false,false,false,strict_prior_game_applied,pass,starter and bullpen workload features use completed games strictly before the target game

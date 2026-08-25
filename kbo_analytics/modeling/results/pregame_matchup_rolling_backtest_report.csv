@@ -1,12 +1,12 @@
 ﻿prediction_date,train_games_before_date,test_games_on_date,model_name,feature_set,accuracy,brier,log_loss,top1_pick,top1_probability,top1_result,top2_picks,top2_accuracy,confirmed_starter_accuracy,interpretation
-2016,0,711,RandomForest,production_plus_pregame_safe_features,,,,,,skipped_insufficient_history,,,,insufficient history or no eligible columns
-2017,711,709,RandomForest,production_plus_pregame_safe_features,0.55,0.248,0.69,NC vs 한화,0.8,correct,NC vs 한화; KT vs LG,1.0,,rolling train-before-date validation
-2018,1420,710,RandomForest,production_plus_pregame_safe_features,0.508,0.255,0.704,넥센 vs KT,0.862,wrong,넥센 vs KT; LG vs SK,0.0,,rolling train-before-date validation
-2019,2130,711,RandomForest,production_plus_pregame_safe_features,0.557,0.246,0.686,삼성 vs NC,0.678,wrong,삼성 vs NC; 롯데 vs LG,0.5,,rolling train-before-date validation
-2020,2841,679,RandomForest,production_plus_pregame_safe_features,0.552,0.246,0.686,KIA vs 한화,0.8,wrong,KIA vs 한화; 두산 vs LG,0.0,,rolling train-before-date validation
-2021,3520,619,RandomForest,production_plus_pregame_safe_features,0.525,0.25,0.693,한화 vs SSG,0.714,correct,한화 vs SSG; 삼성 vs 키움,1.0,,rolling train-before-date validation
-2022,4139,708,RandomForest,production_plus_pregame_safe_features,0.523,0.249,0.691,SSG vs NC,0.706,correct,SSG vs NC; 삼성 vs KT,0.5,,rolling train-before-date validation
-2023,4847,686,RandomForest,production_plus_pregame_safe_features,0.561,0.246,0.685,삼성 vs LG,0.693,correct,삼성 vs LG; 한화 vs 키움,1.0,,rolling train-before-date validation
-2024,5533,693,RandomForest,production_plus_pregame_safe_features,0.537,0.25,0.694,한화 vs LG,0.818,wrong,한화 vs LG; KT vs 한화,0.5,,rolling train-before-date validation
-2025,6226,677,RandomForest,production_plus_pregame_safe_features,0.526,0.25,0.693,키움 vs 삼성,0.799,correct,키움 vs 삼성; NC vs KIA,0.5,,rolling train-before-date validation
-2026,6903,542,RandomForest,production_plus_pregame_safe_features,0.542,0.249,0.692,두산 vs NC,0.82,wrong,두산 vs NC; KT vs LG,0.5,,rolling train-before-date validation
+2016,0,711,RandomForest,production_plus_bullpen,,,,,,skipped_insufficient_history,,,,insufficient history or no eligible columns
+2017,711,709,RandomForest,production_plus_bullpen,0.55,0.249,0.691,NC vs 한화,0.835,correct,NC vs 한화; KT vs LG,1.0,,rolling train-before-date validation
+2018,1420,710,RandomForest,production_plus_bullpen,0.52,0.254,0.702,넥센 vs KT,0.837,wrong,넥센 vs KT; LG vs SK,0.0,,rolling train-before-date validation
+2019,2130,711,RandomForest,production_plus_bullpen,0.543,0.246,0.686,삼성 vs NC,0.678,wrong,삼성 vs NC; 롯데 vs LG,0.5,,rolling train-before-date validation
+2020,2841,679,RandomForest,production_plus_bullpen,0.551,0.246,0.685,KIA vs 한화,0.797,wrong,KIA vs 한화; 두산 vs LG,0.0,,rolling train-before-date validation
+2021,3520,619,RandomForest,production_plus_bullpen,0.523,0.25,0.693,한화 vs SSG,0.713,correct,한화 vs SSG; 삼성 vs 키움,1.0,,rolling train-before-date validation
+2022,4139,708,RandomForest,production_plus_bullpen,0.51,0.25,0.693,SSG vs NC,0.707,correct,SSG vs NC; 삼성 vs KT,0.5,,rolling train-before-date validation
+2023,4847,686,RandomForest,production_plus_bullpen,0.552,0.247,0.686,삼성 vs LG,0.691,correct,삼성 vs LG; 한화 vs 키움,1.0,,rolling train-before-date validation
+2024,5533,693,RandomForest,production_plus_bullpen,0.537,0.25,0.693,한화 vs LG,0.818,wrong,한화 vs LG; KT vs 한화,0.5,,rolling train-before-date validation
+2025,6226,677,RandomForest,production_plus_bullpen,0.526,0.25,0.692,키움 vs 삼성,0.8,correct,키움 vs 삼성; NC vs KIA,0.5,,rolling train-before-date validation
+2026,6903,542,RandomForest,production_plus_bullpen,0.546,0.25,0.694,두산 vs NC,0.82,wrong,두산 vs NC; KT vs LG,0.5,0.546,rolling train-before-date validation
