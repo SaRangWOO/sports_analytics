@@ -44,6 +44,7 @@ KBO 공식 원천
 | `data/official/lineup_context.csv` | 현재·최근 라인업 |
 | `data/official/pitching_daily_snapshot.csv` | 예측 시점별 투수 정보 |
 | `data/official/pitching_snapshot_schedule.csv` | 공식 경기 ID·시작 시각 |
+| `data/official/pitcher_game_logs.csv` | KBO 박스스코어 기반 투수별 이닝·투구 수·실점 로그 |
 
 현재 선수 통계 스냅샷은 오늘 경기 설명에 사용할 수 있지만, 과거 경기 전체의 학습 피처로 직접 결합하지 않습니다. 과거 시점에는 알 수 없었던 누적 기록이 들어갈 수 있기 때문입니다.
 
@@ -87,6 +88,10 @@ snapshot_time < scheduled_start_datetime
 
 공식 일정에 매핑되지 않거나 경기 시작 이후 생성된 행은 canonical 파일에 저장하지 않습니다. 후보 모델은 별도 rolling validation을 수행하며 production gate를 통과하기 전까지 운영 모델에 연결하지 않습니다.
 
+완료 경기의 투수 로그는 현재 경기보다 이전인 등판만 집계해 선발 최근 3경기 ERA·WHIP·평균 이닝·투구 수·휴식일과 불펜 최근 1·3일 투구 수를 만듭니다. 2026 시즌 내부 시간순 검증 결과는 `pitcher_workload_candidate_gate_audit.json`에 기록하며, bootstrap 안정성까지 통과해야 다음 production gate로 이동합니다.
+
+PostgreSQL은 CSV 원천을 대체하지 않고 조회·감사용 feature store로 사용합니다. `pitcher_game_logs`, `pregame_pitching_snapshots`, `pregame_lineup_snapshots` 테이블은 `sql/002_feature_store.sql`로 관리하며 DB 장애는 모델·HTML 생성을 막지 않습니다.
+
 ## 주요 결과 파일
 
 | 파일 | 내용 |
@@ -96,6 +101,7 @@ snapshot_time < scheduled_start_datetime
 | `modeling/results/model_insight_summary.json` | 피처·세그먼트·데이터 공백 요약 |
 | `modeling/results/daily_pipeline_health_status.json` | 일일 파이프라인 상태 |
 | `modeling/results/pitching_snapshot_candidate_gate_audit.json` | 투수 challenger 판정 |
+| `modeling/results/pitcher_workload_candidate_gate_audit.json` | 경기별 투수 사용량 challenger 판정 |
 | `run_model/results/expected_runs_model.json` | 득점 모델 성능 |
 | `run_model/results/today_expected_runs_predictions.csv` | 기준일 예정 경기 예상 득점 |
 

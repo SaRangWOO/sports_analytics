@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-08-25T10:17:31",
+  "season": 2026,
+  "train_cutoff_exclusive": "2026-07-02",
+  "baseline": {
+    "model": "RandomForest",
+    "feature_set": "production_features_only",
+    "season": 2026,
+    "train_cutoff_exclusive": "2026-07-02",
+    "train_games": 385,
+    "test_games": 157,
+    "accuracy": 0.529,
+    "brier": 0.252,
+    "log_loss": 0.696,
+    "over_55_games": 72,
+    "over_55_accuracy": 0.486,
+    "daily_top1_accuracy": 0.472,
+    "selected_candidate": false
+  },
+  "best_candidate": {
+    "model": "RandomForest",
+    "feature_set": "production_plus_starter",
+    "season": 2026,
+    "train_cutoff_exclusive": "2026-07-02",
+    "train_games": 385,
+    "test_games": 157,
+    "accuracy": 0.567,
+    "brier": 0.25,
+    "log_loss": 0.693,
+    "over_55_games": 87,
+    "over_55_accuracy": 0.563,
+    "daily_top1_accuracy": 0.5,
+    "selected_candidate": true
+  },
+  "accuracy_delta": 0.038,
+  "bootstrap_accuracy_delta_ci95": [
+    -0.051,
+    0.1338
+  ],
+  "gate_checks": {
+    "minimum_test_games": true,
+    "accuracy_delta_greater_than_0_005": true,
+    "bootstrap_ci_stable": false,
+    "brier_not_worse": true,
+    "log_loss_not_worse": true,
+    "over_55_accuracy_not_worse": true
+  },
+  "failed_gate_items": [
+    "bootstrap_ci_stable"
+  ],
+  "safe_to_replace_model": false,
+  "decision": "offline_candidate_only",
+  "leakage_policy": "Pitcher features are computed from completed games strictly before each target game."
+}

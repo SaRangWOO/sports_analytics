@@ -47,6 +47,20 @@ def build_parser():
     run_dashboard.add_argument("--output", type=Path, default=PROJECT_DIR / "run_model" / "dashboard.html")
     run_dashboard.set_defaults(task_name="run-dashboard")
 
+    pitcher_logs = subparsers.add_parser("pitcher-logs", help="Collect completed-game pitcher box scores.")
+    pitcher_logs.add_argument("--games", type=Path, default=PROJECT_DIR / "data" / "official" / "model_training_games.csv")
+    pitcher_logs.add_argument("--output", type=Path, default=PROJECT_DIR / "data" / "official" / "pitcher_game_logs.csv")
+    pitcher_logs.add_argument("--start-date", default="2026-01-01")
+    pitcher_logs.add_argument("--end-date")
+    pitcher_logs.add_argument("--no-db", action="store_true")
+    pitcher_logs.set_defaults(task_name="pitcher-logs")
+
+    pitcher_challenger = subparsers.add_parser(
+        "pitcher-challenger",
+        help="Evaluate leakage-safe pitcher workload features without promoting a model.",
+    )
+    pitcher_challenger.set_defaults(task_name="pitcher-challenger")
+
     artifact_build = subparsers.add_parser(
         "model-artifact-build",
         help="Run explicit model development and save the selected D-1 refit as a candidate artifact.",
@@ -205,6 +219,24 @@ def commands_for(args):
                 PROJECT_DIR,
             )
         ]
+    if args.task_name == "pitcher-logs":
+        command = [
+            python,
+            str(PROJECT_DIR / "scripts" / "collect_pitcher_game_logs.py"),
+            "--games",
+            str(args.games),
+            "--output",
+            str(args.output),
+            "--start-date",
+            args.start_date,
+        ]
+        if args.end_date:
+            command.extend(["--end-date", args.end_date])
+        if args.no_db:
+            command.append("--no-db")
+        return [(command, PROJECT_DIR)]
+    if args.task_name == "pitcher-challenger":
+        return [([python, str(PROJECT_DIR / "scripts" / "evaluate_pitcher_workload_challenger.py")], PROJECT_DIR)]
     if args.task_name == "model-artifact-build":
         command = [
             python,
@@ -267,6 +299,8 @@ def validate_cli_contract():
         ["features"],
         ["run-model"],
         ["run-dashboard"],
+        ["pitcher-logs", "--no-db"],
+        ["pitcher-challenger"],
         ["full"],
         ["model-artifact-build"],
         ["model-artifact-validate", "--artifact-id", "candidate-smoke"],

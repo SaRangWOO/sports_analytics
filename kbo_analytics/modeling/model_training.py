@@ -24,6 +24,7 @@ from .model_evaluation import (
     probability_scores,
 )
 from .prediction_runtime import generate_today_predictions
+from .pitcher_workload_features import attach_pitcher_workload_features, build_pitcher_workload_features
 from .run_expectancy import export_run_expectancy_dataset
 from .train_win_predictor import prepare_matrix, sigmoid, standardize_train_test, train_logistic_regression
 
@@ -3435,7 +3436,7 @@ def baseball_candidate_specs():
     ]
 
 
-def pregame_feature_availability_rows():
+def pregame_feature_availability_rows(pitcher_logs_available: bool = False):
     rows = [
         ("starter_prior_era", "starter", "A", "no", "partial", "false", "true", "medium", "투수별 과거 선발 로그가 없어 historical prior ERA를 누수 없이 재구성할 수 없습니다.", "투수 등판 로그 수집 후 shift/asof 피처로 승격"),
         ("starter_prior_whip", "starter", "A", "no", "partial", "false", "true", "medium", "투수별 과거 피안타/볼넷/이닝 로그가 없습니다.", "투수 게임 로그 수집"),
@@ -3455,7 +3456,7 @@ def pregame_feature_availability_rows():
         ("key_hitter_absence", "key_hitter", "B", "no", "no", "false", "false", "high_without_snapshots", "부상/결장 히스토리 원천이 없습니다.", "공식 엔트리/라인업 결장 로그 수집"),
         ("game_id_date_team", "metadata", "A", "yes", "yes", "false", "true", "low", "식별/조인 메타데이터이며 학습 피처가 아닙니다.", "평가/감사용으로만 유지"),
     ]
-    return [
+    result = [
         {
             "feature": feature,
             "feature_group": group,
@@ -3470,15 +3471,44 @@ def pregame_feature_availability_rows():
         }
         for feature, group, tier, hist, live, train, today, risk, reason, action in rows
     ]
+    if pitcher_logs_available:
+        available = {
+            "starter_prior_era",
+            "starter_prior_whip",
+            "starter_recent3_era",
+            "starter_recent3_ip",
+            "starter_rest_days",
+            "starter_recent_pitch_count",
+            "bullpen_pitch_count_last1d",
+            "bullpen_pitch_count_last3d",
+            "bullpen_appearances_last3d",
+            "previous_game_bullpen_usage",
+        }
+        for row in result:
+            if row["feature"] in available:
+                row.update(
+                    historical_source_available="yes",
+                    live_source_available="yes",
+                    can_use_for_training="true",
+                    can_use_for_today_prediction="true",
+                    leakage_risk="low",
+                    reason="KBO 완료 경기 투수 로그에서 현재 경기 이전 기록만 집계합니다.",
+                    recommended_action="후보 모델 검증 후 운영 승격 여부 판단",
+                )
+    return result
 
 
-def write_pregame_feature_availability_report(results_dir: Path):
-    rows = pregame_feature_availability_rows()
+def write_pregame_feature_availability_report(results_dir: Path, pitcher_logs_available: bool = False):
+    rows = pregame_feature_availability_rows(pitcher_logs_available)
     pd.DataFrame(rows).to_csv(results_dir / "pregame_feature_availability_report.csv", index=False, encoding="utf-8-sig")
     return rows
 
 
-def build_pregame_matchup_feature_store(game_level_features: pd.DataFrame, features: pd.DataFrame):
+def build_pregame_matchup_feature_store(
+    game_level_features: pd.DataFrame,
+    features: pd.DataFrame,
+    pitcher_logs: pd.DataFrame | None = None,
+):
     frame = game_level_features.dropna(subset=["target_home_win"]).copy()
     if frame.empty:
         return frame
@@ -3576,16 +3606,23 @@ def build_pregame_matchup_feature_store(game_level_features: pd.DataFrame, featu
     for column in safe_extra_columns:
         if column in frame.columns:
             output[column] = frame[column]
+    if pitcher_logs is not None and not pitcher_logs.empty:
+        output = attach_pitcher_workload_features(output, build_pitcher_workload_features(pitcher_logs))
     return output
 
 
-def write_pregame_feature_store(results_dir: Path, game_level_features: pd.DataFrame, features: pd.DataFrame):
-    store = build_pregame_matchup_feature_store(game_level_features, features)
+def write_pregame_feature_store(
+    results_dir: Path,
+    game_level_features: pd.DataFrame,
+    features: pd.DataFrame,
+    pitcher_logs: pd.DataFrame | None = None,
+):
+    store = build_pregame_matchup_feature_store(game_level_features, features, pitcher_logs)
     store.to_csv(results_dir / "pregame_matchup_feature_store.csv", index=False, encoding="utf-8-sig")
     return store
 
 
-def write_pregame_feature_leakage_audit(results_dir: Path):
+def write_pregame_feature_leakage_audit(results_dir: Path, pitcher_logs_available: bool = False):
     rows = [
         ("actual_winner", "false", "true", "false", "true", "false", "not_applicable", "evaluation_only", "label only; never used in training"),
         ("home_win", "false", "true", "false", "true", "false", "not_applicable", "evaluation_only", "target label only"),
@@ -3599,6 +3636,20 @@ def write_pregame_feature_leakage_audit(results_dir: Path):
         ("previous_game_run_diff", "true", "false", "false", "false", "false", "shift_1_applied", "pass", "team previous completed game only"),
         ("bullpen_appearances_last3d_proxy", "true", "false", "false", "false", "false", "asof_prior_date_applied", "pass", "team recent 3-day game count proxy only; no pitch count invented"),
     ]
+    if pitcher_logs_available:
+        rows.append(
+            (
+                "pitcher_game_logs.csv",
+                "true",
+                "false",
+                "false",
+                "false",
+                "false",
+                "strict_prior_game_applied",
+                "pass",
+                "starter and bullpen workload features use completed games strictly before the target game",
+            )
+        )
     audit = pd.DataFrame(
         [
             {
@@ -3968,6 +4019,7 @@ def write_pregame_performance_summary(results_dir: Path, availability_rows: list
     unavailable = [row["feature"] for row in availability_rows if row["can_use_for_training"] != "true"]
     best_strategy = max([row for row in strategy_rows if row.get("pick_accuracy") is not None], key=lambda row: (row.get("daily_top1_accuracy") or 0, row.get("pick_accuracy") or 0), default={})
     best_row = best_challenger["row"] if best_challenger else {}
+    pitcher_logs_available = "starter_recent3_era" in available_features
     summary = {
         "generated_at": date.today().isoformat(),
         "project_goal": "Improve actual KBO prediction success by adding leakage-safe pregame matchup information such as starting pitcher form, starter rest, bullpen fatigue, and previous-game fatigue, while keeping the production model unchanged until a challenger proves stable.",
@@ -3988,24 +4040,44 @@ def write_pregame_performance_summary(results_dir: Path, availability_rows: list
             "blocked_features": [row["feature"] for row in leakage_rows if row["leakage_status"] == "blocked"],
             "status": "pass" if all(row["leakage_status"] in {"pass", "evaluation_only", "blocked", "not_available"} for row in leakage_rows) else "review_required",
         },
-        "recommended_next_step": "Collect historical pitcher game logs and timestamped lineup snapshots, then rerun this challenger with starter rest/recent form and actual bullpen pitch counts.",
+        "recommended_next_step": (
+            "Validate pitcher workload candidates on a current-season chronological split and keep production unchanged until all gates pass."
+            if pitcher_logs_available
+            else "Collect historical pitcher game logs and timestamped lineup snapshots, then rerun this challenger."
+        ),
         "promotion_policy": "Do not replace production yet. A pregame challenger can be marked offline_monitoring if it improves daily top1/top2 or confirmed-starter subset accuracy. It can only be considered for dashboard production probability after rolling backtest, calibration, and leakage audits pass.",
-        "limitations": [
-            "starter recent form and rest days are not available without pitcher game logs",
-            "lineup and key hitter features are snapshot-only and excluded from historical training",
-            "bullpen pitch counts are not available; only team recent game count proxy is used",
-            "production win probability remains unchanged",
-        ],
+        "limitations": (
+            [
+                "pitcher workload history currently covers the latest season only",
+                "lineup and key hitter features are snapshot-only and excluded from historical training",
+                "production win probability remains unchanged until the candidate gate passes",
+            ]
+            if pitcher_logs_available
+            else [
+                "starter recent form and rest days are not available without pitcher game logs",
+                "lineup and key hitter features are snapshot-only and excluded from historical training",
+                "bullpen pitch counts are not available; only team recent game count proxy is used",
+                "production win probability remains unchanged",
+            ]
+        ),
         "rolling_rows": len(rolling_rows),
     }
     (results_dir / "pregame_matchup_performance_summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     return summary
 
 
-def write_pregame_matchup_reports(results_dir: Path, game_level_features: pd.DataFrame, features: pd.DataFrame):
-    availability_rows = write_pregame_feature_availability_report(results_dir)
-    store = write_pregame_feature_store(results_dir, game_level_features, features)
-    leakage_rows = write_pregame_feature_leakage_audit(results_dir)
+def write_pregame_matchup_reports(
+    results_dir: Path,
+    game_level_features: pd.DataFrame,
+    features: pd.DataFrame,
+    data_dir: Path | None = None,
+):
+    pitcher_logs_path = data_dir / "pitcher_game_logs.csv" if data_dir is not None else None
+    pitcher_logs = pd.read_csv(pitcher_logs_path) if pitcher_logs_path is not None and pitcher_logs_path.exists() else pd.DataFrame()
+    pitcher_logs_available = not pitcher_logs.empty
+    availability_rows = write_pregame_feature_availability_report(results_dir, pitcher_logs_available)
+    store = write_pregame_feature_store(results_dir, game_level_features, features, pitcher_logs)
+    leakage_rows = write_pregame_feature_leakage_audit(results_dir, pitcher_logs_available)
     model_rows, best_challenger = write_pregame_matchup_model_report(results_dir, store)
     rolling_rows = write_pregame_rolling_backtest_report(results_dir, store, best_challenger)
     strategy_rows = write_pregame_selective_pick_strategy_report(results_dir, store, best_challenger)
@@ -4094,7 +4166,7 @@ def evaluate_model(
     pitching_context = pd.read_csv(pitching_context_path) if pitching_context_path.exists() else pd.DataFrame()
     game_level_features = attach_pitching_context(build_game_level_frame(features), pitching_context)
     game_level_features.to_csv(results_dir / "game_level_features.csv", index=False, encoding="utf-8-sig")
-    pregame_matchup_bundle = write_pregame_matchup_reports(results_dir, game_level_features, features)
+    pregame_matchup_bundle = write_pregame_matchup_reports(results_dir, game_level_features, features, data_dir)
     run_expectancy_frame = export_run_expectancy_dataset(features, completed, results_dir / "run_expectancy_features.csv")
     player_feature_note = ""
     player_game_frame = pd.DataFrame()

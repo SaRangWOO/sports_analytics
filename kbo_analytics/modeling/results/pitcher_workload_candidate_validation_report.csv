@@ -1,0 +1,16 @@
+﻿model,feature_set,season,train_cutoff_exclusive,train_games,test_games,accuracy,brier,log_loss,over_55_games,over_55_accuracy,daily_top1_accuracy,selected_candidate
+LogisticRegression,production_features_only,2026,2026-07-02,385,157,0.459,0.283,0.768,98,0.408,0.417,False
+LogisticRegression,production_plus_starter,2026,2026-07-02,385,157,0.465,0.279,0.759,107,0.43,0.444,False
+LogisticRegression,production_plus_bullpen,2026,2026-07-02,385,157,0.478,0.283,0.769,97,0.433,0.444,False
+LogisticRegression,production_plus_starter_bullpen,2026,2026-07-02,385,157,0.471,0.28,0.761,115,0.47,0.5,False
+LogisticRegression,production_plus_pregame_safe_features,2026,2026-07-02,385,157,0.478,0.277,0.756,114,0.465,0.528,False
+RandomForest,production_features_only,2026,2026-07-02,385,157,0.529,0.252,0.696,72,0.486,0.472,False
+RandomForest,production_plus_starter,2026,2026-07-02,385,157,0.567,0.25,0.693,87,0.563,0.5,True
+RandomForest,production_plus_bullpen,2026,2026-07-02,385,157,0.561,0.249,0.691,89,0.517,0.583,False
+RandomForest,production_plus_starter_bullpen,2026,2026-07-02,385,157,0.541,0.248,0.689,84,0.607,0.5,False
+RandomForest,production_plus_pregame_safe_features,2026,2026-07-02,385,157,0.554,0.25,0.692,82,0.549,0.528,False
+HistGradientBoosting,production_features_only,2026,2026-07-02,385,157,0.446,0.292,0.789,125,0.416,0.528,False
+HistGradientBoosting,production_plus_starter,2026,2026-07-02,385,157,0.522,0.292,0.807,146,0.527,0.583,False
+HistGradientBoosting,production_plus_bullpen,2026,2026-07-02,385,157,0.535,0.279,0.764,125,0.52,0.528,False
+HistGradientBoosting,production_plus_starter_bullpen,2026,2026-07-02,385,157,0.529,0.293,0.813,142,0.535,0.472,False
+HistGradientBoosting,production_plus_pregame_safe_features,2026,2026-07-02,385,157,0.51,0.285,0.784,143,0.517,0.556,False

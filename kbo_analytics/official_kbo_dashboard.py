@@ -31,6 +31,8 @@ from modeling.train_win_predictor import (
     standardize_train_test,
     train_logistic_regression,
 )
+from pitcher_game_log_collector import collect_pitcher_game_logs
+from pregame_feature_store import apply_feature_store_schema, sync_feature_store, upsert_pitcher_game_logs
 from run_model.run_model_dashboard import DEFAULT_RESULTS as RUN_MODEL_RESULTS
 from run_model.run_model_dashboard import render_prediction_board_embedded
 from run_model.run_prediction_model import DEFAULT_INPUT as RUN_MODEL_INPUT
@@ -43,7 +45,7 @@ DATA_DIR = BASE_DIR / "data" / "official"
 DASHBOARD_DIR = BASE_DIR / "dashboard"
 RESULTS_DIR = BASE_DIR / "modeling" / "results"
 PUBLIC_DIR = BASE_DIR.parent / "docs"
-DB_URL = os.getenv("DB_URL", "postgresql://tera:tera@localhost:5432/baseball")
+DB_URL = os.getenv("DB_URL", "")
 KBO_BASE = "https://www.koreabaseball.com"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 TEAM_CODES = {
@@ -366,6 +368,8 @@ def export_sources(standings, vs_table, games, hitters, pitchers, rosters):
 def load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, rosters):
     from sqlalchemy import create_engine
 
+    if not DB_URL:
+        return {"status": "skipped", "warning": "DB_URL is not configured"}
     engine = create_engine(DB_URL)
     tables = {
         "game_results": games,
@@ -382,6 +386,47 @@ def load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, ro
         return {"status": "success", "warning": ""}
     except Exception as exc:
         print(f"[Warn] PostgreSQL 적재를 건너뜁니다: {exc}")
+        return {"status": "skipped", "warning": str(exc)}
+
+
+def refresh_pitcher_game_log_store(training_games: pd.DataFrame, reference_date: date):
+    output_path = DATA_DIR / "pitcher_game_logs.csv"
+    status_path = RESULTS_DIR / "pitcher_game_log_collection_status.json"
+    try:
+        logs, status = collect_pitcher_game_logs(
+            training_games,
+            output_path,
+            date(reference_date.year, 1, 1),
+            reference_date - timedelta(days=1),
+        )
+        if DB_URL:
+            apply_feature_store_schema(DB_URL, BASE_DIR / "sql" / "002_feature_store.sql")
+            status["database_rows"] = upsert_pitcher_game_logs(DB_URL, logs)
+            status["database_status"] = "success"
+        else:
+            status["database_rows"] = 0
+            status["database_status"] = "skipped"
+    except Exception as exc:
+        status = {
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+            "reference_date": reference_date.isoformat(),
+            "status": "warning",
+            "error": f"{type(exc).__name__}: {exc}",
+            "output_file": str(output_path),
+        }
+        print(f"[Warn] 투수 경기 로그 수집을 건너뜁니다: {exc}")
+    status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
+    return status
+
+
+def sync_pregame_feature_store():
+    if not DB_URL:
+        return {"status": "skipped", "warning": "DB_URL is not configured"}
+    try:
+        result = sync_feature_store(DB_URL, DATA_DIR, BASE_DIR / "sql" / "002_feature_store.sql")
+        return {"status": "success", **result}
+    except Exception as exc:
+        print(f"[Warn] 경기 전 feature store 동기화를 건너뜁니다: {exc}")
         return {"status": "skipped", "warning": str(exc)}
 
 
@@ -4665,9 +4710,11 @@ def main():
     rosters = fetch_registered_rosters()
     export_sources(standings, vs_table, games, hitters, pitchers, rosters)
     db_status = load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, rosters)
+    db_status["pitcher_game_logs"] = refresh_pitcher_game_log_store(training_games, ref_date)
     model_payload = run_model_evaluation(training_games, games, previous_sunday(ref_date), ref_date, DATA_DIR, RESULTS_DIR)
     team_pages = build_team_analysis_pages(standings, vs_table, games, hitters, pitchers, rosters, ref_date)
     build_dashboard(standings, vs_table, games, hitters, pitchers, model_payload, ref_date, team_pages, reference_datetime, args.update_stage, db_status)
+    db_status["pregame_feature_store"] = sync_pregame_feature_store()
     print(
         f"[Success] official KBO dashboard generated: teams={len(standings)}, "
         f"current_game_rows={len(games)}, training_game_rows={len(training_games)}"
