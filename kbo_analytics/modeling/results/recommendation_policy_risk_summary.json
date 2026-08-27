@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-08-27T18:30:05.233879",
-  "audited_completed_games": 175,
-  "pending_games": 135,
+  "generated_at": "2026-08-28T08:00:05.081310",
+  "audited_completed_games": 179,
+  "pending_games": 136,
   "strongest_supported_label": "오늘 TOP PICK",
   "weakest_supported_label": "handicap:not_available",
   "top_pick_label_risk": "relative_rank_label_not_strong_pick",
@@ -29,8 +29,8 @@
     {
       "label_type": "recommendation_strength",
       "label": "추천",
-      "recommended_label_action": "monitor_more_games",
-      "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
     },
     {
       "label_type": "recommendation_grade",
@@ -41,8 +41,8 @@
     {
       "label_type": "recommendation_grade",
       "label": "B등급",
-      "recommended_label_action": "monitor_more_games",
-      "interpretation": "표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다."
+      "recommended_label_action": "keep",
+      "interpretation": "현재 표본에서는 라벨 유지가 가능합니다."
     },
     {
       "label_type": "recommendation_grade",
@@ -89,9 +89,7 @@
   ],
   "insufficient_sample_warnings": [
     "강추천",
-    "추천",
     "A등급",
-    "B등급",
     "handicap:not_available",
     "over_under:not_available"
   ],
