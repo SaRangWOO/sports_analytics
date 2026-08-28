@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-08-28T17:30:04.914731",
+  "generated_at": "2026-08-28T18:00:04.998229",
   "reference_date": "2026-08-28",
-  "total_games": 1,
-  "strong_recommendation_count": 1,
+  "total_games": 0,
+  "strong_recommendation_count": 0,
   "recommendation_count": 0,
   "weak_edge_count": 0,
   "watch_count": 0,
   "no_info_count": 0,
-  "top_pick": "두산",
-  "top_pick_probability": "58.4%",
+  "top_pick": null,
+  "top_pick_probability": null,
   "day_confidence_summary": "승패 방향과 시장별 추천을 분리해 표시합니다.",
-  "strong_recommendation_available": true,
-  "message": "오늘 TOP PICK은 두산 우세입니다. 핸디캡과 오버/언더는 별도 보수 기준으로 확인해야 합니다.",
+  "strong_recommendation_available": false,
+  "message": "오늘 예정 경기가 없거나 표시할 예측이 없습니다.",
   "audited_completed_games": 179,
-  "pending_games": 140,
+  "pending_games": 141,
   "grade_performance_snapshot": [
     {
       "grade": "A",
@@ -158,5 +158,5 @@
   "top_pick_wording_status": "오늘 모델 기준 상대 우세 1순위",
   "actionability_warning": "Recommendation labels are interpretive until enough completed-game outcomes support them.",
   "completed_games_used_for_label_calibration": 179,
-  "pending_games_for_future_calibration": 140
+  "pending_games_for_future_calibration": 141
 }
