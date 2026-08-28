@@ -45566,7 +45566,7 @@
   ],
   "dashboard_display_policy_note": "The recommendation policy improves interpretability and usefulness, but it does not change the underlying model probabilities or production model.",
   "pitching_snapshot_collection_status": {
-    "generated_at": "2026-08-28 17:00:05",
+    "generated_at": "2026-08-28 17:30:04",
     "reference_date": "2026-08-28",
     "snapshot_rows_total": 582,
     "snapshot_rows_for_reference_date": 10,
@@ -45585,7 +45585,7 @@
       "키움",
       "한화"
     ],
-    "scheduled_games": 2,
+    "scheduled_games": 1,
     "snapshot_file": "data/official/pitching_daily_snapshot.csv",
     "leakage_policy_note": "pitching_daily_snapshot.csv는 예측 시점에 저장된 정보만 누적하며 현재 모델 학습 피처로 사용하지 않습니다.",
     "quality_status": "fail",
@@ -45605,13 +45605,13 @@
   "safe_to_replace_model": false,
   "reason_not_to_replace_if_false": "historical improvement가 작고, current-season validation과 rolling backtest가 실패했으며, production gates를 통과하지 못해 운영 모델은 유지합니다.",
   "pitching_snapshot_quality_summary": {
-    "generated_at": "2026-08-28 17:00:05",
+    "generated_at": "2026-08-28 17:30:04",
     "reference_date": "2026-08-28",
     "snapshot_file": "data/official/pitching_daily_snapshot.csv",
     "total_snapshot_rows": 582,
     "reference_date_rows": 10,
-    "scheduled_games": 2,
-    "expected_team_rows": 4,
+    "scheduled_games": 1,
+    "expected_team_rows": 2,
     "actual_team_rows": 10,
     "duplicate_key_count": 0,
     "unknown_starter_count": 0,
@@ -45873,7 +45873,7 @@
   "reason_pitching_features_still_blocked": "blocking quality issues: team_count_check",
   "recommendation_outcome_audit_summary": {
     "audited_completed_games": 179,
-    "pending_games": 139,
+    "pending_games": 140,
     "note": "추천 등급은 완료 경기 결과로 사후 평가하며, 사전 피처나 모델 확률에는 연결하지 않습니다."
   },
   "recommendation_grade_performance_summary": [
@@ -46367,9 +46367,9 @@
     }
   ],
   "recommendation_policy_risk_summary": {
-    "generated_at": "2026-08-28T17:00:05.582458",
+    "generated_at": "2026-08-28T17:30:04.914731",
     "audited_completed_games": 179,
-    "pending_games": 139,
+    "pending_games": 140,
     "strongest_supported_label": "오늘 TOP PICK",
     "weakest_supported_label": "handicap:not_available",
     "top_pick_label_risk": "relative_rank_label_not_strong_pick",
@@ -46473,11 +46473,11 @@
       "pitching_snapshot_reference_date_rows_check",
       "pitching_snapshot_quality_check"
     ],
-    "scheduled_games": 2,
-    "today_expected_runs_prediction_rows": 2
+    "scheduled_games": 1,
+    "today_expected_runs_prediction_rows": 1
   },
   "latest_pipeline_health_status": {
-    "generated_at": "2026-08-28T17:00:05",
+    "generated_at": "2026-08-28T17:30:04",
     "reference_date": "2026-08-28",
     "overall_status": "warning",
     "blocking_issues": [],
@@ -46487,13 +46487,13 @@
     ],
     "latest_html_path": "kbo_analytics/dashboard/latest.html",
     "latest_html_exists": true,
-    "latest_html_modified_at": "2026-08-28T17:01:55",
+    "latest_html_modified_at": "2026-08-28T17:31:52",
     "docs_latest_html_path": "docs/latest.html",
     "docs_latest_html_exists": true,
-    "docs_latest_html_modified_at": "2026-08-28T17:01:55",
-    "scheduled_games": 2,
+    "docs_latest_html_modified_at": "2026-08-28T17:31:52",
+    "scheduled_games": 1,
     "today_expected_runs_prediction_file": "kbo_analytics/run_model/results/today_expected_runs_predictions.csv",
-    "today_expected_runs_prediction_rows": 2,
+    "today_expected_runs_prediction_rows": 1,
     "validation_expected_runs_prediction_file": "kbo_analytics/run_model/results/expected_runs_predictions.csv",
     "validation_expected_runs_prediction_rows": 1536,
     "run_model_today_validation_split_ok": true,
@@ -46501,7 +46501,7 @@
     "recommendation_summary_exists": true,
     "recommendation_audit_log_file": "kbo_analytics/modeling/results/recommendation_outcome_audit_log.csv",
     "recommendation_audit_completed_rows": 179,
-    "recommendation_audit_pending_rows": 139,
+    "recommendation_audit_pending_rows": 140,
     "pitching_snapshot_file": "kbo_analytics/data/official/pitching_daily_snapshot.csv",
     "pitching_snapshot_exists": true,
     "pitching_snapshot_rows_total": 582,
