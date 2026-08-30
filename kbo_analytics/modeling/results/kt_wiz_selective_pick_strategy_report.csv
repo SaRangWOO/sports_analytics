@@ -1,13 +1,13 @@
 ﻿strategy_name,model_name,feature_set,kt_games_total,picked_games,coverage_rate,pick_accuracy,avg_probability,brier,log_loss,home_pick_accuracy,away_pick_accuracy,current_season_pick_accuracy,interpretation
-all_kt_games,RandomForestClassifier,kt_without_false_signal_features,302,302,1.0,0.56,0.551,0.253,0.7,0.566,0.553,0.6,KT strategy improves over production baseline
-kt_probability_ge_52,RandomForestClassifier,kt_without_false_signal_features,302,237,0.785,0.544,0.562,0.255,0.703,0.543,0.545,0.558,KT strategy improves over production baseline
-kt_probability_ge_53,RandomForestClassifier,kt_without_false_signal_features,302,210,0.695,0.529,0.567,0.257,0.707,0.526,0.532,0.566,KT strategy improves over production baseline
-kt_probability_ge_54,RandomForestClassifier,kt_without_false_signal_features,302,176,0.583,0.523,0.573,0.258,0.71,0.521,0.525,0.538,KT strategy improves over production baseline
-kt_probability_ge_55,RandomForestClassifier,kt_without_false_signal_features,302,147,0.487,0.483,0.579,0.263,0.721,0.5,0.459,0.491,KT strategy needs more monitoring
-kt_home_only,RandomForestClassifier,kt_without_false_signal_features,302,152,0.503,0.566,0.557,0.254,0.702,0.566,,0.627,KT strategy improves over production baseline
-kt_away_only,RandomForestClassifier,kt_without_false_signal_features,302,150,0.497,0.553,0.545,0.253,0.699,,0.553,0.574,KT strategy improves over production baseline
-kt_after_loss_games,RandomForestClassifier,kt_without_false_signal_features,302,134,0.444,0.582,0.548,0.255,0.703,0.612,0.552,0.634,KT strategy improves over production baseline
-kt_after_win_games,RandomForestClassifier,kt_without_false_signal_features,302,168,0.556,0.542,0.553,0.252,0.698,0.529,0.554,0.578,KT strategy improves over production baseline
-kt_model_and_production_agree,RandomForestClassifier,kt_without_false_signal_features,302,200,0.662,0.55,0.557,0.255,0.704,0.558,0.54,0.6,KT strategy improves over production baseline
-kt_model_disagrees_with_production,RandomForestClassifier,kt_without_false_signal_features,302,94,0.311,0.585,0.54,0.25,0.693,0.583,0.586,0.6,KT strategy improves over production baseline
-kt_consensus_only,RandomForestClassifier,kt_without_false_signal_features,302,164,0.543,0.537,0.567,0.257,0.707,0.537,0.536,0.569,KT strategy improves over production baseline
+all_kt_games,RandomForestClassifier,kt_without_false_signal_features,303,303,1.0,0.541,0.55,0.253,0.699,0.536,0.547,0.606,KT strategy improves over production baseline
+kt_probability_ge_52,RandomForestClassifier,kt_without_false_signal_features,303,245,0.809,0.559,0.56,0.253,0.7,0.561,0.558,0.604,KT strategy improves over production baseline
+kt_probability_ge_53,RandomForestClassifier,kt_without_false_signal_features,303,211,0.696,0.545,0.565,0.255,0.703,0.547,0.543,0.573,KT strategy improves over production baseline
+kt_probability_ge_54,RandomForestClassifier,kt_without_false_signal_features,303,180,0.594,0.544,0.57,0.256,0.706,0.548,0.539,0.547,KT strategy improves over production baseline
+kt_probability_ge_55,RandomForestClassifier,kt_without_false_signal_features,303,136,0.449,0.507,0.579,0.262,0.717,0.512,0.5,0.521,KT strategy needs more monitoring
+kt_home_only,RandomForestClassifier,kt_without_false_signal_features,303,153,0.505,0.536,0.555,0.254,0.701,0.536,,0.63,KT strategy improves over production baseline
+kt_away_only,RandomForestClassifier,kt_without_false_signal_features,303,150,0.495,0.547,0.545,0.252,0.697,,0.547,0.582,KT strategy improves over production baseline
+kt_after_loss_games,RandomForestClassifier,kt_without_false_signal_features,303,134,0.442,0.567,0.547,0.252,0.698,0.582,0.552,0.69,KT strategy improves over production baseline
+kt_after_win_games,RandomForestClassifier,kt_without_false_signal_features,303,169,0.558,0.521,0.553,0.253,0.7,0.5,0.542,0.552,KT strategy needs more monitoring
+kt_model_and_production_agree,RandomForestClassifier,kt_without_false_signal_features,303,201,0.663,0.542,0.555,0.254,0.702,0.542,0.543,0.619,KT strategy improves over production baseline
+kt_model_disagrees_with_production,RandomForestClassifier,kt_without_false_signal_features,303,94,0.31,0.543,0.542,0.251,0.695,0.524,0.558,0.56,KT strategy improves over production baseline
+kt_consensus_only,RandomForestClassifier,kt_without_false_signal_features,303,172,0.568,0.564,0.563,0.254,0.702,0.557,0.573,0.634,KT strategy improves over production baseline

@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-08-30T08:10:48.715995",
+  "generated_at": "2026-08-31T08:10:02.778980",
   "rejected_candidates": [
     {
-      "model": "비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching",
-      "feature_set": "baseline_plus_all_non_pitching",
+      "model": "비투수 피처 GradientBoosting 실험 / baseline_plus_momentum",
+      "feature_set": "baseline_plus_momentum",
       "status": "rejected_for_now",
-      "accuracy": 0.547,
-      "brier": 0.248,
-      "log_loss": 0.689
+      "accuracy": 0.551,
+      "brier": 0.247,
+      "log_loss": 0.688
     }
   ],
   "rejection_reason": "historical signal is not stable in 2026 current-season validation and production gates are not passed",
   "failed_gates": [
-    "accuracy_delta_greater_than_0_005",
     "bootstrap_ci_stable",
+    "calibration_not_worse",
+    "current_season_accuracy_delta_not_greater_than_0_005",
     "current_season_evidence_gate",
-    "current_season_log_loss_worse",
     "log_loss_not_worse"
   ],
   "reconsideration_condition": "Reconsider after additional 2026 games or after pitching snapshot features become eligible, but only if rolling current-season validation improves and calibration does not worsen."
