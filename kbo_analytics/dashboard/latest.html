@@ -158,10 +158,10 @@
     </div>
     <div class="meta-panel">
       <span class="meta-pill">기준일 2026-08-31</span>
-      <span class="meta-pill">오전 예측 · 추정 선발/최근 라인업</span>
+      <span class="meta-pill">경기 전 갱신 · 확정 선발/라인업 대기</span>
       <span class="meta-pill">오늘 경기 0경기</span>
       <span class="meta-pill">취소·연기 0경기</span>
-      <span class="meta-pill">예측 학습 2026-08-30</span>
+      <span class="meta-pill">예측 학습 2026-08-23</span>
     </div>
   </div>
 </header>
@@ -187,8 +187,8 @@
     <div class="subsection">
       <h3>업데이트 상태</h3>
       <div class="grid">
-        <div class="metric">마지막 갱신<strong>2026-08-31 08:00:05</strong></div>
-        <div class="metric">업데이트 단계<strong>오전 예측 · 추정 선발/최근 라인업</strong></div>
+        <div class="metric">마지막 갱신<strong>2026-08-31 11:00:05</strong></div>
+        <div class="metric">업데이트 단계<strong>경기 전 갱신 · 확정 선발/라인업 대기</strong></div>
         <div class="metric">선발 상태<strong>확정 0 · 추정 0 · 미확인 0</strong></div>
         <div class="metric">라인업 상태<strong>금일 0 · 최근 0 · 미확인 0</strong></div>
       </div>
@@ -256,11 +256,11 @@
       <div class="metric">학습 시즌<strong>2016~2026</strong></div>
       <div class="metric">학습 행<strong>12464</strong></div>
       <div class="metric">검증 행<strong>3034</strong></div>
-      <div class="metric">검증 정확도<strong>0.544</strong></div>
+      <div class="metric">검증 정확도<strong>0.542</strong></div>
     </div>
     <div class="grid">
       <div class="metric">검증 cutoff<strong>2026-08-30</strong></div>
-      <div class="metric">예측 학습 cutoff<strong>2026-08-30</strong></div>
+      <div class="metric">예측 학습 cutoff<strong>2026-08-23</strong></div>
       <div class="metric">최신 반영 경기일<strong>2026-08-30</strong></div>
       <div class="metric">이번 주 반영<strong>False</strong></div>
     </div>
@@ -269,7 +269,7 @@
       <div class="metric">스냅샷 품질<strong>pass</strong></div>
       <div class="metric">모델 사용<strong>후보 실험 완료 · 운영 미적용</strong><span class="note">후보가 모든 승격 게이트를 통과하지 않았으므로 운영 모델과 운영 확률을 변경하지 않습니다.</span></div>
     </div>
-    <p class="note">모델 상태: 전체 적중률 0.544, 55% 이상 예측 경기 적중률 0.596입니다. 현재 선택 모델은 단순 정확도 최고 모델이 아니라, Brier Score와 Log Loss를 함께 고려해 확률 품질이 상대적으로 안정적인 모델을 선택합니다. 60% 이상 구간은 평균 예측승률과 실제 승률이 비슷하더라도 표본 수가 작아 강한 정배보다는 참고 신호로 해석합니다.</p>
+    <p class="note">모델 상태: 전체 적중률 0.542, 55% 이상 예측 경기 적중률 0.596입니다. 현재 선택 모델은 단순 정확도 최고 모델이 아니라, Brier Score와 Log Loss를 함께 고려해 확률 품질이 상대적으로 안정적인 모델을 선택합니다. 60% 이상 구간은 평균 예측승률과 실제 승률이 비슷하더라도 표본 수가 작아 강한 정배보다는 참고 신호로 해석합니다.</p>
     <details>
       <summary>모델 검증 상세 보기</summary>
       <div class="subsection">
@@ -311,7 +311,7 @@
         <section class="run-model-section">
           <div class="eyebrow">BASE INFO</div>
           <h2>기준 정보</h2>
-          <div class="run-model-grid"><div class="metric"><p>생성 시간</p><strong>2026-08-31 08:16</strong></div><div class="metric"><p>기준일</p><strong>2026-08-31</strong></div><div class="metric"><p>예정 경기</p><strong>0경기</strong></div><div class="metric"><p>상태</p><strong>오늘 예정 경기가 없습니다.</strong></div></div>
+          <div class="run-model-grid"><div class="metric"><p>생성 시간</p><strong>2026-08-31 11:01</strong></div><div class="metric"><p>기준일</p><strong>2026-08-31</strong></div><div class="metric"><p>예정 경기</p><strong>0경기</strong></div><div class="metric"><p>상태</p><strong>오늘 예정 경기가 없습니다.</strong></div></div>
         </section>
 
         <section class="run-model-section">
@@ -338,7 +338,7 @@
             <div class="eyebrow">INDEPENDENT RUN MODEL</div>
             <h2>득점 기반 승부 예측</h2>
             <p>독립 득점 기반 모델 결과입니다. 기존 경기 승패 모델과 결과를 섞지 않고, 팀별 예상 득점을 먼저 예측한 뒤 예상 득실차를 홈팀 승률로 변환합니다.</p>
-            <p class="run-model-source">생성 시각: 2026-08-31T08:16:00 · 결과 JSON: /home/wsr/1.project/1.sports_analytics/kbo_analytics/run_model/results/expected_runs_model.json · 예측 CSV: /home/wsr/1.project/1.sports_analytics/kbo_analytics/run_model/results/expected_runs_predictions.csv</p>
+            <p class="run-model-source">생성 시각: 2026-08-31T11:01:56 · 결과 JSON: /home/wsr/1.project/1.sports_analytics/kbo_analytics/run_model/results/expected_runs_model.json · 예측 CSV: /home/wsr/1.project/1.sports_analytics/kbo_analytics/run_model/results/expected_runs_predictions.csv</p>
           </div>
         </section>
 
@@ -510,7 +510,7 @@
             <tr><th>목표 적중률</th><td>85.0%</td></tr>
             <tr><th>현재 gap</th><td>24.4%</td></tr>
             <tr><th>상태</th><td>target_not_met</td></tr>
-            <tr><th>일별 TOP PICK</th><td>30 / 41 · 73.2%</td></tr>
+            <tr><th>일별 TOP PICK</th><td>31 / 42 · 73.8%</td></tr>
           </tbody></table>
         </div>
       </div>
