@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-09-01 18:30:05",
-  "reference_date": "2026-09-01",
-  "snapshot_rows_total": 612,
+  "generated_at": "2026-09-02 08:00:06",
+  "reference_date": "2026-09-02",
+  "snapshot_rows_total": 622,
   "snapshot_rows_for_reference_date": 10,
-  "confirmed_starter_count": 10,
-  "estimated_starter_count": 0,
+  "confirmed_starter_count": 0,
+  "estimated_starter_count": 10,
   "unknown_starter_count": 0,
   "teams_with_snapshot": [
     "KIA",
@@ -23,67 +23,6 @@
   "leakage_policy_note": "pitching_daily_snapshot.csv는 예측 시점에 저장된 정보만 누적하며 현재 모델 학습 피처로 사용하지 않습니다.",
   "quality_status": "pass",
   "safe_for_future_feature_use": true,
-  "collection_warnings": [
-    {
-      "scheduled_game_id": "20260901LGOB0_LG",
-      "failures": [
-        "snapshot_not_before_game_start:0"
-      ]
-    },
-    {
-      "scheduled_game_id": "20260901LGOB0_두산",
-      "failures": [
-        "snapshot_not_before_game_start:1"
-      ]
-    },
-    {
-      "scheduled_game_id": "20260901LTSS0_롯데",
-      "failures": [
-        "snapshot_not_before_game_start:2"
-      ]
-    },
-    {
-      "scheduled_game_id": "20260901LTSS0_삼성",
-      "failures": [
-        "snapshot_not_before_game_start:3"
-      ]
-    },
-    {
-      "scheduled_game_id": "20260901HHKT0_한화",
-      "failures": [
-        "snapshot_not_before_game_start:4"
-      ]
-    },
-    {
-      "scheduled_game_id": "20260901HHKT0_KT",
-      "failures": [
-        "snapshot_not_before_game_start:5"
-      ]
-    },
-    {
-      "scheduled_game_id": "20260901HTNC0_KIA",
-      "failures": [
-        "snapshot_not_before_game_start:6"
-      ]
-    },
-    {
-      "scheduled_game_id": "20260901HTNC0_NC",
-      "failures": [
-        "snapshot_not_before_game_start:7"
-      ]
-    },
-    {
-      "scheduled_game_id": "20260901SKWO0_SSG",
-      "failures": [
-        "snapshot_not_before_game_start:8"
-      ]
-    },
-    {
-      "scheduled_game_id": "20260901SKWO0_키움",
-      "failures": [
-        "snapshot_not_before_game_start:9"
-      ]
-    }
-  ],
+  "collection_warnings": [],
   "schedule_file": "data/official/pitching_snapshot_schedule.csv"
 }
