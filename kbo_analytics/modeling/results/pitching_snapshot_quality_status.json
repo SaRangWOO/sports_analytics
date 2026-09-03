@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-03 08:00:05",
+  "generated_at": "2026-09-03 11:00:05",
   "reference_date": "2026-09-03",
   "snapshot_file": "data/official/pitching_daily_snapshot.csv",
   "total_snapshot_rows": 632,
@@ -9,13 +9,11 @@
   "actual_team_rows": 10,
   "duplicate_key_count": 0,
   "unknown_starter_count": 0,
-  "estimated_starter_count": 10,
-  "confirmed_starter_count": 0,
+  "estimated_starter_count": 0,
+  "confirmed_starter_count": 10,
   "quality_status": "pass",
   "blocking_issues": [],
-  "warnings": [
-    "confirmed_starter_ratio_check"
-  ],
+  "warnings": [],
   "safe_for_future_feature_use": true,
   "reason_if_not_safe": "",
   "minimum_required_days": 30,
