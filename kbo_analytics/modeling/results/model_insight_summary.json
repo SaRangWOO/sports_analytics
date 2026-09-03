@@ -44378,7 +44378,7 @@
   ],
   "dashboard_display_policy_note": "The recommendation policy improves interpretability and usefulness, but it does not change the underlying model probabilities or production model.",
   "pitching_snapshot_collection_status": {
-    "generated_at": "2026-09-03 15:30:05",
+    "generated_at": "2026-09-03 16:00:04",
     "reference_date": "2026-09-03",
     "snapshot_rows_total": 632,
     "snapshot_rows_for_reference_date": 10,
@@ -44417,7 +44417,7 @@
   "safe_to_replace_model": false,
   "reason_not_to_replace_if_false": "historical improvement가 작고, current-season validation과 rolling backtest가 실패했으며, production gates를 통과하지 못해 운영 모델은 유지합니다.",
   "pitching_snapshot_quality_summary": {
-    "generated_at": "2026-09-03 15:30:05",
+    "generated_at": "2026-09-03 16:00:04",
     "reference_date": "2026-09-03",
     "snapshot_file": "data/official/pitching_daily_snapshot.csv",
     "total_snapshot_rows": 632,
@@ -45182,7 +45182,7 @@
     }
   ],
   "recommendation_policy_risk_summary": {
-    "generated_at": "2026-09-03T15:30:05.729761",
+    "generated_at": "2026-09-03T16:00:04.787850",
     "audited_completed_games": 196,
     "pending_games": 149,
     "strongest_supported_label": "오늘 TOP PICK",
@@ -45289,17 +45289,17 @@
     "today_expected_runs_prediction_rows": 5
   },
   "latest_pipeline_health_status": {
-    "generated_at": "2026-09-03T15:30:05",
+    "generated_at": "2026-09-03T16:00:04",
     "reference_date": "2026-09-03",
     "overall_status": "pass",
     "blocking_issues": [],
     "warnings": [],
     "latest_html_path": "kbo_analytics/dashboard/latest.html",
     "latest_html_exists": true,
-    "latest_html_modified_at": "2026-09-03T15:32:08",
+    "latest_html_modified_at": "2026-09-03T16:02:04",
     "docs_latest_html_path": "docs/latest.html",
     "docs_latest_html_exists": true,
-    "docs_latest_html_modified_at": "2026-09-03T15:32:08",
+    "docs_latest_html_modified_at": "2026-09-03T16:02:04",
     "scheduled_games": 5,
     "today_expected_runs_prediction_file": "kbo_analytics/run_model/results/today_expected_runs_predictions.csv",
     "today_expected_runs_prediction_rows": 5,
