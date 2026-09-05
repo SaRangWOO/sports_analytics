@@ -44378,7 +44378,7 @@
   ],
   "dashboard_display_policy_note": "The recommendation policy improves interpretability and usefulness, but it does not change the underlying model probabilities or production model.",
   "pitching_snapshot_collection_status": {
-    "generated_at": "2026-09-05 16:30:05",
+    "generated_at": "2026-09-05 17:00:04",
     "reference_date": "2026-09-05",
     "snapshot_rows_total": 652,
     "snapshot_rows_for_reference_date": 10,
@@ -44402,7 +44402,68 @@
     "leakage_policy_note": "pitching_daily_snapshot.csv는 예측 시점에 저장된 정보만 누적하며 현재 모델 학습 피처로 사용하지 않습니다.",
     "quality_status": "pass",
     "safe_for_future_feature_use": true,
-    "collection_warnings": [],
+    "collection_warnings": [
+      {
+        "scheduled_game_id": "20260905SSLG0_삼성",
+        "failures": [
+          "snapshot_not_before_game_start:0"
+        ]
+      },
+      {
+        "scheduled_game_id": "20260905SSLG0_LG",
+        "failures": [
+          "snapshot_not_before_game_start:1"
+        ]
+      },
+      {
+        "scheduled_game_id": "20260905HHLT0_한화",
+        "failures": [
+          "snapshot_not_before_game_start:2"
+        ]
+      },
+      {
+        "scheduled_game_id": "20260905HHLT0_롯데",
+        "failures": [
+          "snapshot_not_before_game_start:3"
+        ]
+      },
+      {
+        "scheduled_game_id": "20260905OBSK0_두산",
+        "failures": [
+          "snapshot_not_before_game_start:4"
+        ]
+      },
+      {
+        "scheduled_game_id": "20260905OBSK0_SSG",
+        "failures": [
+          "snapshot_not_before_game_start:5"
+        ]
+      },
+      {
+        "scheduled_game_id": "20260905KTHT0_KT",
+        "failures": [
+          "snapshot_not_before_game_start:6"
+        ]
+      },
+      {
+        "scheduled_game_id": "20260905KTHT0_KIA",
+        "failures": [
+          "snapshot_not_before_game_start:7"
+        ]
+      },
+      {
+        "scheduled_game_id": "20260905NCWO0_NC",
+        "failures": [
+          "snapshot_not_before_game_start:8"
+        ]
+      },
+      {
+        "scheduled_game_id": "20260905NCWO0_키움",
+        "failures": [
+          "snapshot_not_before_game_start:9"
+        ]
+      }
+    ],
     "schedule_file": "data/official/pitching_snapshot_schedule.csv"
   },
   "leakage_safe_pitching_data_policy": "투수 스냅샷은 예측 시점에 알고 있던 정보만 누적 저장하며, 현재 운영 모델 학습 피처로 바로 사용하지 않습니다.",
@@ -44417,7 +44478,7 @@
   "safe_to_replace_model": false,
   "reason_not_to_replace_if_false": "historical improvement가 작고, current-season validation과 rolling backtest가 실패했으며, production gates를 통과하지 못해 운영 모델은 유지합니다.",
   "pitching_snapshot_quality_summary": {
-    "generated_at": "2026-09-05 16:30:05",
+    "generated_at": "2026-09-05 17:00:04",
     "reference_date": "2026-09-05",
     "snapshot_file": "data/official/pitching_daily_snapshot.csv",
     "total_snapshot_rows": 652,
@@ -45184,7 +45245,7 @@
     }
   ],
   "recommendation_policy_risk_summary": {
-    "generated_at": "2026-09-05T16:30:05.534379",
+    "generated_at": "2026-09-05T17:00:04.708144",
     "audited_completed_games": 205,
     "pending_games": 151,
     "strongest_supported_label": "오늘 TOP PICK",
@@ -45291,17 +45352,17 @@
     "today_expected_runs_prediction_rows": 5
   },
   "latest_pipeline_health_status": {
-    "generated_at": "2026-09-05T16:30:05",
+    "generated_at": "2026-09-05T17:00:04",
     "reference_date": "2026-09-05",
     "overall_status": "pass",
     "blocking_issues": [],
     "warnings": [],
     "latest_html_path": "kbo_analytics/dashboard/latest.html",
     "latest_html_exists": true,
-    "latest_html_modified_at": "2026-09-05T16:32:05",
+    "latest_html_modified_at": "2026-09-05T17:02:02",
     "docs_latest_html_path": "docs/latest.html",
     "docs_latest_html_exists": true,
-    "docs_latest_html_modified_at": "2026-09-05T16:32:05",
+    "docs_latest_html_modified_at": "2026-09-05T17:02:02",
     "scheduled_games": 5,
     "today_expected_runs_prediction_file": "kbo_analytics/run_model/results/today_expected_runs_predictions.csv",
     "today_expected_runs_prediction_rows": 5,
