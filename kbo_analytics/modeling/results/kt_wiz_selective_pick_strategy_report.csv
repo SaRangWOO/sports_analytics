@@ -1,13 +1,13 @@
 ﻿strategy_name,model_name,feature_set,kt_games_total,picked_games,coverage_rate,pick_accuracy,avg_probability,brier,log_loss,home_pick_accuracy,away_pick_accuracy,current_season_pick_accuracy,interpretation
-all_kt_games,RandomForestClassifier,kt_without_false_signal_features,303,303,1.0,0.541,0.55,0.253,0.699,0.536,0.547,0.606,KT strategy improves over production baseline
-kt_probability_ge_52,RandomForestClassifier,kt_without_false_signal_features,303,245,0.809,0.559,0.56,0.253,0.7,0.561,0.558,0.604,KT strategy improves over production baseline
-kt_probability_ge_53,RandomForestClassifier,kt_without_false_signal_features,303,211,0.696,0.545,0.565,0.255,0.703,0.547,0.543,0.573,KT strategy improves over production baseline
-kt_probability_ge_54,RandomForestClassifier,kt_without_false_signal_features,303,180,0.594,0.544,0.57,0.256,0.706,0.548,0.539,0.547,KT strategy improves over production baseline
-kt_probability_ge_55,RandomForestClassifier,kt_without_false_signal_features,303,136,0.449,0.507,0.579,0.262,0.717,0.512,0.5,0.521,KT strategy needs more monitoring
-kt_home_only,RandomForestClassifier,kt_without_false_signal_features,303,153,0.505,0.536,0.555,0.254,0.701,0.536,,0.63,KT strategy improves over production baseline
-kt_away_only,RandomForestClassifier,kt_without_false_signal_features,303,150,0.495,0.547,0.545,0.252,0.697,,0.547,0.582,KT strategy improves over production baseline
-kt_after_loss_games,RandomForestClassifier,kt_without_false_signal_features,303,134,0.442,0.567,0.547,0.252,0.698,0.582,0.552,0.69,KT strategy improves over production baseline
-kt_after_win_games,RandomForestClassifier,kt_without_false_signal_features,303,169,0.558,0.521,0.553,0.253,0.7,0.5,0.542,0.552,KT strategy needs more monitoring
-kt_model_and_production_agree,RandomForestClassifier,kt_without_false_signal_features,303,201,0.663,0.542,0.555,0.254,0.702,0.542,0.543,0.619,KT strategy improves over production baseline
-kt_model_disagrees_with_production,RandomForestClassifier,kt_without_false_signal_features,303,94,0.31,0.543,0.542,0.251,0.695,0.524,0.558,0.56,KT strategy improves over production baseline
-kt_consensus_only,RandomForestClassifier,kt_without_false_signal_features,303,172,0.568,0.564,0.563,0.254,0.702,0.557,0.573,0.634,KT strategy improves over production baseline
+all_kt_games,LogisticRegression,kt_all_non_pitching_safe_features,304,304,1.0,0.539,0.574,0.252,0.699,0.561,0.517,0.504,KT strategy improves over production baseline
+kt_probability_ge_52,LogisticRegression,kt_all_non_pitching_safe_features,304,258,0.849,0.527,0.585,0.253,0.7,0.563,0.488,0.51,KT strategy improves over production baseline
+kt_probability_ge_53,LogisticRegression,kt_all_non_pitching_safe_features,304,235,0.773,0.54,0.591,0.253,0.7,0.566,0.509,0.527,KT strategy improves over production baseline
+kt_probability_ge_54,LogisticRegression,kt_all_non_pitching_safe_features,304,213,0.701,0.549,0.597,0.253,0.7,0.57,0.522,0.524,KT strategy improves over production baseline
+kt_probability_ge_55,LogisticRegression,kt_all_non_pitching_safe_features,304,190,0.625,0.542,0.603,0.254,0.703,0.569,0.506,0.533,KT strategy improves over production baseline
+kt_home_only,LogisticRegression,kt_all_non_pitching_safe_features,304,155,0.51,0.561,0.58,0.245,0.683,0.561,,0.544,KT strategy improves over production baseline
+kt_away_only,LogisticRegression,kt_all_non_pitching_safe_features,304,149,0.49,0.517,0.567,0.26,0.715,,0.517,0.466,KT strategy improves over production baseline
+kt_after_loss_games,LogisticRegression,kt_all_non_pitching_safe_features,304,137,0.451,0.547,0.573,0.253,0.701,0.551,0.544,0.533,KT strategy improves over production baseline
+kt_after_win_games,LogisticRegression,kt_all_non_pitching_safe_features,304,167,0.549,0.533,0.575,0.252,0.697,0.57,0.494,0.486,KT strategy improves over production baseline
+kt_model_and_production_agree,LogisticRegression,kt_all_non_pitching_safe_features,304,198,0.651,0.535,0.585,0.253,0.701,0.576,0.495,0.53,KT strategy improves over production baseline
+kt_model_disagrees_with_production,LogisticRegression,kt_all_non_pitching_safe_features,304,98,0.322,0.551,0.552,0.251,0.695,0.549,0.553,0.438,KT strategy improves over production baseline
+kt_consensus_only,LogisticRegression,kt_all_non_pitching_safe_features,304,176,0.579,0.528,0.594,0.254,0.702,0.568,0.489,0.521,KT strategy improves over production baseline

@@ -1,14 +1,14 @@
 ﻿feature_group,feature_set,games,accuracy,brier,log_loss,over_55_games,over_55_accuracy,rolling_accuracy,rolling_brier,rolling_log_loss,delta_vs_baseline_accuracy,delta_vs_baseline_brier,delta_vs_baseline_log_loss,keep_for_future,reason
-baseline_core,baseline_core,562,0.552,0.245,0.683,546,0.597,0.562,0.246,0.685,0.0,0.0,0.0,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
-streak,streak_only,562,0.548,0.245,0.684,564,0.599,0.567,0.246,0.684,-0.004,0.0,0.001,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
-volatility,volatility_only,562,0.546,0.247,0.687,530,0.57,0.551,0.246,0.686,-0.006,0.002,0.004,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
-close_blowout,close_blowout_only,562,0.553,0.245,0.683,546,0.601,0.563,0.246,0.684,0.001,0.0,0.0,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
-momentum,momentum_only,562,0.555,0.245,0.684,506,0.593,0.567,0.246,0.685,0.003,0.0,0.001,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
-venue_context,venue_context_only,562,0.557,0.246,0.685,508,0.575,0.564,0.245,0.684,0.005,0.001,0.002,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
-month_phase,month_phase_only,562,0.564,0.245,0.683,582,0.598,0.569,0.245,0.684,0.012,0.0,0.0,True,2026 기준 baseline보다 안정 개선
-selected_all,selected_non_pitching_all,562,0.555,0.245,0.684,506,0.593,0.567,0.246,0.685,0.003,0.0,0.001,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
-selected_without_volatility,selected_non_pitching_without_volatility,562,0.555,0.245,0.684,506,0.593,0.567,0.246,0.685,0.003,0.0,0.001,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
-selected_without_momentum,selected_non_pitching_without_momentum,562,0.552,0.245,0.683,546,0.597,0.562,0.246,0.685,0.0,0.0,0.0,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
-selected_without_venue_context,selected_non_pitching_without_venue_context,562,0.555,0.245,0.684,506,0.593,0.567,0.246,0.685,0.003,0.0,0.001,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
-selected_without_month_phase,selected_non_pitching_without_month_phase,562,0.555,0.245,0.684,506,0.593,0.567,0.246,0.685,0.003,0.0,0.001,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
-selected_without_close_blowout,selected_non_pitching_without_close_blowout,562,0.555,0.245,0.684,506,0.593,0.567,0.246,0.685,0.003,0.0,0.001,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+baseline_core,baseline_core,591,0.547,0.246,0.684,576,0.587,0.556,0.246,0.686,0.0,0.0,0.0,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+streak,streak_only,591,0.541,0.246,0.685,590,0.593,0.562,0.246,0.686,-0.006,0.0,0.001,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+volatility,volatility_only,591,0.543,0.247,0.688,566,0.558,0.546,0.247,0.687,-0.004,0.001,0.004,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+close_blowout,close_blowout_only,591,0.552,0.246,0.684,570,0.596,0.557,0.246,0.685,0.005,0.0,0.0,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+momentum,momentum_only,591,0.547,0.246,0.685,540,0.585,0.56,0.247,0.686,0.0,0.0,0.001,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+venue_context,venue_context_only,591,0.55,0.246,0.686,540,0.567,0.557,0.246,0.685,0.003,0.0,0.002,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+month_phase,month_phase_only,591,0.558,0.246,0.684,612,0.595,0.561,0.246,0.685,0.011,0.0,0.0,True,2026 기준 baseline보다 안정 개선
+selected_all,selected_non_pitching_all,591,0.558,0.247,0.687,580,0.572,0.557,0.247,0.687,0.011,0.001,0.003,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+selected_without_volatility,selected_non_pitching_without_volatility,591,0.565,0.246,0.685,616,0.591,0.565,0.247,0.686,0.018,0.0,0.001,True,2026 기준 baseline보다 안정 개선
+selected_without_momentum,selected_non_pitching_without_momentum,591,0.57,0.247,0.687,602,0.581,0.56,0.247,0.687,0.023,0.001,0.003,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+selected_without_venue_context,selected_non_pitching_without_venue_context,591,0.555,0.247,0.687,602,0.578,0.554,0.247,0.687,0.008,0.001,0.003,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+selected_without_month_phase,selected_non_pitching_without_month_phase,591,0.531,0.248,0.69,564,0.571,0.539,0.247,0.688,-0.016,0.002,0.006,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족
+selected_without_close_blowout,selected_non_pitching_without_close_blowout,591,0.552,0.247,0.688,582,0.564,0.552,0.247,0.687,0.005,0.001,0.004,False,2026 기준 전체/확률 품질 또는 rolling 안정성 근거 부족

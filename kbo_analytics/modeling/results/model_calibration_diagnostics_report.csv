@@ -1,11 +1,11 @@
 ﻿model,feature_set,probability_bin,games,avg_predicted_probability,actual_win_rate,calibration_gap,brier,log_loss,interpretation
-RandomForest 시간가중 모델,current_operational_feature_set,0.50-0.53,1197,0.515,0.517,-0.002,0.249,0.692,보정 양호
-RandomForest 시간가중 모델,current_operational_feature_set,0.53-0.55,724,0.54,0.51,0.03,0.251,0.695,과신 구간
-RandomForest 시간가중 모델,current_operational_feature_set,0.55-0.58,820,0.563,0.57,-0.007,0.245,0.683,보정 양호
-RandomForest 시간가중 모델,current_operational_feature_set,0.58-0.60,224,0.589,0.705,-0.116,0.222,0.636,과소신 구간
-RandomForest 시간가중 모델,current_operational_feature_set,0.60+,69,0.609,0.551,0.059,0.252,0.696,과신 구간
-비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.50-0.53,951,0.516,0.554,-0.038,0.248,0.69,과소신 구간
-비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.53-0.55,667,0.54,0.504,0.036,0.251,0.695,과신 구간
-비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.55-0.58,965,0.566,0.58,-0.015,0.243,0.68,보정 양호
-비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.58-0.60,372,0.588,0.562,0.027,0.247,0.687,보정 양호
-비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.60+,79,0.614,0.519,0.095,0.255,0.704,과신 구간
+RandomForest 시간가중 모델,current_operational_feature_set,0.50-0.53,1230,0.515,0.507,0.009,0.25,0.693,보정 양호
+RandomForest 시간가중 모델,current_operational_feature_set,0.53-0.55,735,0.54,0.536,0.004,0.249,0.691,보정 양호
+RandomForest 시간가중 모델,current_operational_feature_set,0.55-0.58,795,0.562,0.577,-0.015,0.243,0.68,보정 양호
+RandomForest 시간가중 모델,current_operational_feature_set,0.58-0.60,207,0.589,0.667,-0.077,0.227,0.647,과소신 구간
+RandomForest 시간가중 모델,current_operational_feature_set,0.60+,79,0.608,0.582,0.026,0.245,0.683,보정 양호
+비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,baseline_plus_all_non_pitching,0.50-0.53,823,0.515,0.521,-0.006,0.25,0.693,보정 양호
+비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,baseline_plus_all_non_pitching,0.53-0.55,672,0.54,0.54,-0.0,0.248,0.69,보정 양호
+비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,baseline_plus_all_non_pitching,0.55-0.58,843,0.565,0.555,0.01,0.248,0.688,보정 양호
+비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,baseline_plus_all_non_pitching,0.58-0.60,426,0.589,0.596,-0.007,0.24,0.674,보정 양호
+비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,baseline_plus_all_non_pitching,0.60+,282,0.622,0.553,0.069,0.25,0.693,과신 구간

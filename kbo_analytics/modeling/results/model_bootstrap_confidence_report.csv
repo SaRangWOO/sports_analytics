@@ -1,9 +1,9 @@
 ﻿comparison,metric,baseline_mean,candidate_mean,mean_delta,ci_lower_95,ci_upper_95,statistically_stable,bootstrap_iterations,interpretation
-RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,accuracy,0.545,0.551,0.007,-0.005,0.018,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,brier,0.246,0.247,-0.001,-0.002,0.0,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,log_loss,0.686,0.688,-0.002,-0.004,0.0,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,over_55_accuracy,0.595,0.573,-0.023,-0.046,0.0,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,recent_3year_accuracy,0.544,0.551,0.007,-0.006,0.02,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,winning_streak_accuracy,0.515,0.521,0.006,-0.023,0.034,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,losing_streak_accuracy,0.565,0.574,0.009,-0.015,0.035,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,close_game_accuracy,0.517,0.554,0.037,-0.003,0.078,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,accuracy,0.545,0.548,0.003,-0.009,0.016,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,brier,0.246,0.248,-0.001,-0.003,0.0,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,log_loss,0.686,0.688,-0.003,-0.005,0.0,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,over_55_accuracy,0.595,0.566,-0.029,-0.051,-0.006,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,recent_3year_accuracy,0.545,0.549,0.004,-0.009,0.016,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,winning_streak_accuracy,0.508,0.502,-0.006,-0.029,0.021,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,losing_streak_accuracy,0.565,0.559,-0.006,-0.036,0.023,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 시간가중 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,close_game_accuracy,0.506,0.521,0.015,-0.027,0.057,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움

@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-06T08:14:51.751535",
+  "generated_at": "2026-09-07T08:14:42.479635",
   "target_precision": 0.85,
   "target_definition": "selected-pick precision / selected-pick accuracy for selected KT recommendation segments only",
-  "current_best_segment": "current_season_2026",
-  "current_best_display_segment": "holdout_current_season_2026",
-  "current_best_segment_games": 109,
-  "current_best_segment_precision": 0.606,
-  "current_gap_to_target": 0.244,
+  "current_best_segment": "actual_close_games_evaluation_only",
+  "current_best_display_segment": "holdout_actual_close_games_evaluation_only",
+  "current_best_segment_games": 78,
+  "current_best_segment_precision": 0.577,
+  "current_gap_to_target": 0.273,
   "status": "not_met",
   "why_current_model_is_insufficient": "The 85% selected-pick precision target is not currently achieved. Current best is 57.1% across 77 games. Model tuning alone is unlikely to reach 85% without better pregame information.",
   "required_new_information": [
