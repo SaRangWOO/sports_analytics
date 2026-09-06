@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06 13:30:05",
+  "generated_at": "2026-09-06 14:00:05",
   "reference_date": "2026-09-06",
   "snapshot_rows_total": 662,
   "snapshot_rows_for_reference_date": 10,
@@ -23,6 +23,19 @@
   "leakage_policy_note": "pitching_daily_snapshot.csv는 예측 시점에 저장된 정보만 누적하며 현재 모델 학습 피처로 사용하지 않습니다.",
   "quality_status": "pass",
   "safe_for_future_feature_use": true,
-  "collection_warnings": [],
+  "collection_warnings": [
+    {
+      "scheduled_game_id": "20260906NCWO0_NC",
+      "failures": [
+        "snapshot_not_before_game_start:0"
+      ]
+    },
+    {
+      "scheduled_game_id": "20260906NCWO0_키움",
+      "failures": [
+        "snapshot_not_before_game_start:1"
+      ]
+    }
+  ],
   "schedule_file": "data/official/pitching_snapshot_schedule.csv"
 }
