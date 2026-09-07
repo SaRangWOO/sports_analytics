@@ -2,15 +2,15 @@
   "available": true,
   "training_cutoff": "2026-09-06",
   "validation_cutoff": "2026-09-06",
-  "prediction_training_cutoff": "2026-09-06",
+  "prediction_training_cutoff": "2026-08-23",
   "latest_completed_game_date_used": "2026-09-06",
   "current_week_games_included_for_prediction": false,
   "training_start_year": 2016,
   "training_end_year": 2026,
   "train_rows": 12510,
   "test_rows": 3046,
-  "accuracy": 0.545,
-  "selected_model": "RandomForest 시간가중 모델",
+  "accuracy": 0.542,
+  "selected_model": "RandomForest 보수 시간가중 모델",
   "candidate_results": [
     {
       "모델": "기본 흐름 모델",
@@ -47608,5 +47608,8 @@
   ],
   "run_expectancy_rows": 7494,
   "operational_probability_policy": "production_only",
-  "operational_probability_policy_note": "기존 승패 모델 확률을 그대로 사용합니다."
+  "operational_probability_policy_note": "기존 승패 모델 확률을 그대로 사용합니다.",
+  "production_artifact_id": "2026-08-23-befe94ab5baf5496",
+  "production_artifact_loaded": true,
+  "prediction_mode": "predict_only"
 }
