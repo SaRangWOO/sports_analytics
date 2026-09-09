@@ -5,7 +5,8 @@
   "strongest_new_feature_groups": [
     "baseline",
     "close_blowout",
-    "month_phase"
+    "month_phase",
+    "venue_context"
   ],
   "weakest_new_feature_groups": [
     "baseline"
@@ -47,8 +48,8 @@
     "opponent_avg_run_diff_last_10",
     "opponent_recent_10_win_rate",
     "head_to_head_win_rate_gap",
-    "month_run_diff_gap",
-    "opponent_avg_run_diff_last_5"
+    "opponent_avg_run_diff_last_5",
+    "avg_run_diff_last_10"
   ],
   "candidate_features_to_drop": [
     "recent_5_win_rate",
