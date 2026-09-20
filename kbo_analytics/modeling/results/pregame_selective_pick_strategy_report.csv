@@ -1,14 +1,14 @@
 ﻿strategy_name,model_name,feature_set,games_total,picked_games,coverage_rate,pick_accuracy,daily_top1_games,daily_top1_accuracy,daily_top2_games,daily_top2_accuracy,confirmed_starter_pick_accuracy,starter_edge_pick_accuracy,bullpen_edge_pick_accuracy,avg_probability,brier,log_loss,interpretation
-all_games,RandomForest,pregame_safe_without_lineup,1493,1493,1.0,0.539,347,0.556,680,0.553,0.532,0.522,0.533,0.544,0.249,0.691,selective strategy backtest; offline monitoring only
-probability_ge_52,RandomForest,pregame_safe_without_lineup,1493,1032,0.691,0.54,343,0.557,647,0.55,0.532,0.517,0.54,0.559,0.249,0.69,selective strategy backtest; offline monitoring only
-probability_ge_53,RandomForest,pregame_safe_without_lineup,1493,857,0.574,0.545,336,0.551,611,0.55,0.529,0.509,0.55,0.566,0.248,0.69,selective strategy backtest; offline monitoring only
-probability_ge_54,RandomForest,pregame_safe_without_lineup,1493,717,0.48,0.548,327,0.544,555,0.551,0.541,0.526,0.572,0.572,0.248,0.69,selective strategy backtest; offline monitoring only
-probability_ge_55,RandomForest,pregame_safe_without_lineup,1493,603,0.404,0.561,309,0.54,503,0.557,0.554,0.536,0.593,0.577,0.247,0.688,selective strategy backtest; offline monitoring only
-daily_top1,RandomForest,pregame_safe_without_lineup,1493,347,0.232,0.556,347,0.556,347,0.556,0.56,0.545,0.641,0.58,0.249,0.691,selective strategy backtest; offline monitoring only
-daily_top2,RandomForest,pregame_safe_without_lineup,1493,680,0.455,0.553,347,0.556,680,0.553,0.562,0.555,0.591,0.567,0.248,0.689,selective strategy backtest; offline monitoring only
-confirmed_starters_only,RandomForest,pregame_safe_without_lineup,1493,616,0.413,0.532,134,0.56,267,0.562,0.532,0.522,0.533,0.544,0.25,0.692,selective strategy backtest; offline monitoring only
-starter_edge_only,RandomForest,pregame_safe_without_lineup,1493,510,0.342,0.522,110,0.545,218,0.555,0.522,0.522,0.524,0.544,0.251,0.695,selective strategy backtest; offline monitoring only
-bullpen_edge_only,RandomForest,pregame_safe_without_lineup,1493,330,0.221,0.533,78,0.641,154,0.591,0.533,0.524,0.533,0.546,0.248,0.689,selective strategy backtest; offline monitoring only
-starter_and_bullpen_edge_agree,RandomForest,pregame_safe_without_lineup,1493,273,0.183,0.524,63,0.651,124,0.597,0.524,0.524,0.524,0.545,0.248,0.689,selective strategy backtest; offline monitoring only
-production_and_pregame_agree,RandomForest,pregame_safe_without_lineup,1493,0,0.0,,0,,0,,,,,,,,production comparison unavailable in this offline challenger report
-production_and_pregame_disagree_avoid,RandomForest,pregame_safe_without_lineup,1493,0,0.0,,0,,0,,,,,,,,production comparison unavailable in this offline challenger report
+all_games,RandomForest,production_plus_pregame_safe_features,1491,1491,1.0,0.542,348,0.563,682,0.562,0.548,0.541,0.556,0.544,0.248,0.69,selective strategy backtest; offline monitoring only
+probability_ge_52,RandomForest,production_plus_pregame_safe_features,1491,1057,0.709,0.553,346,0.564,653,0.56,0.551,0.535,0.557,0.558,0.248,0.689,selective strategy backtest; offline monitoring only
+probability_ge_53,RandomForest,production_plus_pregame_safe_features,1491,856,0.574,0.561,337,0.552,610,0.562,0.551,0.537,0.576,0.566,0.247,0.687,selective strategy backtest; offline monitoring only
+probability_ge_54,RandomForest,production_plus_pregame_safe_features,1491,717,0.481,0.558,327,0.544,561,0.556,0.553,0.538,0.587,0.572,0.247,0.688,selective strategy backtest; offline monitoring only
+probability_ge_55,RandomForest,production_plus_pregame_safe_features,1491,599,0.402,0.553,305,0.538,494,0.553,0.542,0.53,0.596,0.578,0.248,0.689,selective strategy backtest; offline monitoring only
+daily_top1,RandomForest,production_plus_pregame_safe_features,1491,348,0.233,0.563,348,0.563,348,0.563,0.543,0.539,0.655,0.58,0.248,0.69,selective strategy backtest; offline monitoring only
+daily_top2,RandomForest,production_plus_pregame_safe_features,1491,682,0.457,0.562,348,0.563,682,0.562,0.57,0.559,0.617,0.567,0.247,0.688,selective strategy backtest; offline monitoring only
+confirmed_starters_only,RandomForest,production_plus_pregame_safe_features,1491,637,0.427,0.548,140,0.543,279,0.57,0.548,0.541,0.556,0.544,0.249,0.691,selective strategy backtest; offline monitoring only
+starter_edge_only,RandomForest,production_plus_pregame_safe_features,1491,527,0.353,0.541,115,0.539,227,0.559,0.541,0.541,0.552,0.544,0.25,0.693,selective strategy backtest; offline monitoring only
+bullpen_edge_only,RandomForest,production_plus_pregame_safe_features,1491,347,0.233,0.556,84,0.655,162,0.617,0.556,0.552,0.556,0.546,0.246,0.685,selective strategy backtest; offline monitoring only
+starter_and_bullpen_edge_agree,RandomForest,production_plus_pregame_safe_features,1491,286,0.192,0.552,67,0.672,130,0.623,0.552,0.552,0.552,0.545,0.246,0.686,selective strategy backtest; offline monitoring only
+production_and_pregame_agree,RandomForest,production_plus_pregame_safe_features,1491,0,0.0,,0,,0,,,,,,,,production comparison unavailable in this offline challenger report
+production_and_pregame_disagree_avoid,RandomForest,production_plus_pregame_safe_features,1491,0,0.0,,0,,0,,,,,,,,production comparison unavailable in this offline challenger report

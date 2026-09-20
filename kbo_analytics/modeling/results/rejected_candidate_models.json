@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-09-20T08:11:24.620257",
+  "generated_at": "2026-09-21T08:11:49.572582",
   "rejected_candidates": [
     {
       "model": "비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching",
       "feature_set": "baseline_plus_all_non_pitching",
       "status": "rejected_for_now",
-      "accuracy": 0.552,
-      "brier": 0.247,
-      "log_loss": 0.688
+      "accuracy": 0.556,
+      "brier": 0.246,
+      "log_loss": 0.686
     }
   ],
   "rejection_reason": "historical signal is not stable in 2026 current-season validation and production gates are not passed",
   "failed_gates": [
-    "accuracy_delta_greater_than_0_005",
     "bootstrap_ci_stable",
+    "current_season_brier_worse",
     "current_season_evidence_gate",
     "current_season_log_loss_worse",
     "rolling_backtest_not_better"

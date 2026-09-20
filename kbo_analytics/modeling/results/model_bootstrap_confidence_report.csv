@@ -1,9 +1,9 @@
 ﻿comparison,metric,baseline_mean,candidate_mean,mean_delta,ci_lower_95,ci_upper_95,statistically_stable,bootstrap_iterations,interpretation
-GradientBoosting 비선형 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,accuracy,0.553,0.551,-0.002,-0.009,0.004,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 비선형 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,brier,0.247,0.247,-0.0,-0.001,0.001,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 비선형 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,log_loss,0.687,0.688,-0.001,-0.003,0.001,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 비선형 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,over_55_accuracy,0.58,0.564,-0.017,-0.033,0.001,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 비선형 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,recent_3year_accuracy,0.553,0.551,-0.002,-0.011,0.005,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 비선형 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,winning_streak_accuracy,0.508,0.506,-0.002,-0.019,0.017,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 비선형 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,losing_streak_accuracy,0.568,0.555,-0.013,-0.03,0.003,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
-GradientBoosting 비선형 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,close_game_accuracy,0.517,0.518,0.002,-0.033,0.035,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,accuracy,0.547,0.556,0.009,-0.002,0.02,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,brier,0.246,0.246,-0.0,-0.001,0.001,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,log_loss,0.685,0.686,-0.001,-0.003,0.001,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,over_55_accuracy,0.611,0.578,-0.033,-0.056,-0.006,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,recent_3year_accuracy,0.547,0.556,0.008,-0.003,0.019,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,winning_streak_accuracy,0.507,0.515,0.008,-0.019,0.035,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,losing_streak_accuracy,0.568,0.568,0.0,-0.023,0.02,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
+RandomForest 보수 모델 vs 비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,close_game_accuracy,0.497,0.525,0.028,-0.007,0.068,False,300,95% CI가 0을 넘지 않아 안정 개선으로 보기 어려움
