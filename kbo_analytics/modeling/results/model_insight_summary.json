@@ -46046,7 +46046,7 @@
   ],
   "dashboard_display_policy_note": "The recommendation policy improves interpretability and usefulness, but it does not change the underlying model probabilities or production model.",
   "pitching_snapshot_collection_status": {
-    "generated_at": "2026-09-20 18:00:04",
+    "generated_at": "2026-09-20 18:30:05",
     "reference_date": "2026-09-20",
     "snapshot_rows_total": 758,
     "snapshot_rows_for_reference_date": 10,
@@ -46070,68 +46070,7 @@
     "leakage_policy_note": "pitching_daily_snapshot.csv는 예측 시점에 저장된 정보만 누적하며 현재 모델 학습 피처로 사용하지 않습니다.",
     "quality_status": "pass",
     "safe_for_future_feature_use": true,
-    "collection_warnings": [
-      {
-        "scheduled_game_id": "20260920HHLG0_한화",
-        "failures": [
-          "snapshot_not_before_game_start:0"
-        ]
-      },
-      {
-        "scheduled_game_id": "20260920HHLG0_LG",
-        "failures": [
-          "snapshot_not_before_game_start:1"
-        ]
-      },
-      {
-        "scheduled_game_id": "20260920SSLT0_삼성",
-        "failures": [
-          "snapshot_not_before_game_start:2"
-        ]
-      },
-      {
-        "scheduled_game_id": "20260920SSLT0_롯데",
-        "failures": [
-          "snapshot_not_before_game_start:3"
-        ]
-      },
-      {
-        "scheduled_game_id": "20260920WOSK0_키움",
-        "failures": [
-          "snapshot_not_before_game_start:4"
-        ]
-      },
-      {
-        "scheduled_game_id": "20260920WOSK0_SSG",
-        "failures": [
-          "snapshot_not_before_game_start:5"
-        ]
-      },
-      {
-        "scheduled_game_id": "20260920OBKT0_두산",
-        "failures": [
-          "snapshot_not_before_game_start:6"
-        ]
-      },
-      {
-        "scheduled_game_id": "20260920OBKT0_KT",
-        "failures": [
-          "snapshot_not_before_game_start:7"
-        ]
-      },
-      {
-        "scheduled_game_id": "20260920HTNC0_KIA",
-        "failures": [
-          "snapshot_not_before_game_start:8"
-        ]
-      },
-      {
-        "scheduled_game_id": "20260920HTNC0_NC",
-        "failures": [
-          "snapshot_not_before_game_start:9"
-        ]
-      }
-    ],
+    "collection_warnings": [],
     "schedule_file": "data/official/pitching_snapshot_schedule.csv"
   },
   "leakage_safe_pitching_data_policy": "투수 스냅샷은 예측 시점에 알고 있던 정보만 누적 저장하며, 현재 운영 모델 학습 피처로 바로 사용하지 않습니다.",
@@ -46146,7 +46085,7 @@
   "safe_to_replace_model": false,
   "reason_not_to_replace_if_false": "historical improvement가 작고, current-season validation과 rolling backtest가 실패했으며, production gates를 통과하지 못해 운영 모델은 유지합니다.",
   "pitching_snapshot_quality_summary": {
-    "generated_at": "2026-09-20 18:00:04",
+    "generated_at": "2026-09-20 18:30:05",
     "reference_date": "2026-09-20",
     "snapshot_file": "data/official/pitching_daily_snapshot.csv",
     "total_snapshot_rows": 758,
@@ -46431,24 +46370,24 @@
   },
   "reason_pitching_features_still_blocked": "후보가 모든 승격 게이트를 통과하지 않았으므로 운영 모델과 운영 확률을 변경하지 않습니다.",
   "recommendation_outcome_audit_summary": {
-    "audited_completed_games": 256,
-    "pending_games": 153,
+    "audited_completed_games": 261,
+    "pending_games": 148,
     "note": "추천 등급은 완료 경기 결과로 사후 평가하며, 사전 피처나 모델 확률에는 연결하지 않습니다."
   },
   "recommendation_grade_performance_summary": [
     {
       "grade": "A",
       "recommendation_strength": "강추천",
-      "games": 5,
-      "correct": 4,
-      "accuracy": 0.8,
-      "avg_probability": 0.587,
-      "brier": 0.205,
-      "log_loss": 0.602,
+      "games": 6,
+      "correct": 5,
+      "accuracy": 0.833,
+      "avg_probability": 0.589,
+      "brier": 0.197,
+      "log_loss": 0.587,
       "top_pick_games": 5,
       "top_pick_accuracy": 0.8,
-      "top_tier_games": 5,
-      "top_tier_accuracy": 0.8,
+      "top_tier_games": 6,
+      "top_tier_accuracy": 0.833,
       "interpretation": "충분한 표본에서 C/D보다 나은지 확인해야 하는 추천 구간입니다."
     },
     {
@@ -46469,12 +46408,12 @@
     {
       "grade": "C",
       "recommendation_strength": "약우세",
-      "games": 133,
-      "correct": 76,
-      "accuracy": 0.571,
+      "games": 136,
+      "correct": 78,
+      "accuracy": 0.574,
       "avg_probability": 0.539,
       "brier": 0.247,
-      "log_loss": 0.686,
+      "log_loss": 0.687,
       "top_pick_games": 19,
       "top_pick_accuracy": 0.684,
       "top_tier_games": 51,
@@ -46484,15 +46423,15 @@
     {
       "grade": "D",
       "recommendation_strength": "관망",
-      "games": 70,
-      "correct": 38,
-      "accuracy": 0.543,
-      "avg_probability": 0.514,
-      "brier": 0.246,
-      "log_loss": 0.684,
-      "top_pick_games": 3,
+      "games": 71,
+      "correct": 39,
+      "accuracy": 0.549,
+      "avg_probability": 0.515,
+      "brier": 0.244,
+      "log_loss": 0.681,
+      "top_pick_games": 4,
       "top_pick_accuracy": 1.0,
-      "top_tier_games": 3,
+      "top_tier_games": 4,
       "top_tier_accuracy": 1.0,
       "interpretation": "D/E 등급은 실행 가능한 추천으로 해석하지 않습니다."
     },
@@ -46516,27 +46455,27 @@
     {
       "market_type": "win_pick",
       "recommendation_label": "승패 강추천",
-      "games": 5,
-      "correct": 4,
-      "accuracy": 0.8,
-      "avg_probability": 0.587,
+      "games": 6,
+      "correct": 5,
+      "accuracy": 0.833,
+      "avg_probability": 0.589,
       "interpretation": "승패 추천만 실제 승패 결과로 평가합니다."
     },
     {
       "market_type": "win_pick",
       "recommendation_label": "승패 관망",
-      "games": 70,
-      "correct": 38,
-      "accuracy": 0.543,
-      "avg_probability": 0.514,
+      "games": 71,
+      "correct": 39,
+      "accuracy": 0.549,
+      "avg_probability": 0.515,
       "interpretation": "승패 추천만 실제 승패 결과로 평가합니다."
     },
     {
       "market_type": "win_pick",
       "recommendation_label": "승패 약우세",
-      "games": 133,
-      "correct": 76,
-      "accuracy": 0.571,
+      "games": 136,
+      "correct": 78,
+      "accuracy": 0.574,
       "avg_probability": 0.539,
       "interpretation": "승패 추천만 실제 승패 결과로 평가합니다."
     },
@@ -46569,18 +46508,6 @@
     }
   ],
   "daily_top_pick_performance_summary": [
-    {
-      "date": "2026-09-15",
-      "top_pick_game": "롯데 vs 삼성",
-      "top_pick_team": "삼성",
-      "top_pick_probability": 0.602,
-      "top_pick_grade": "D등급",
-      "actual_winner": "삼성",
-      "result": "correct",
-      "all_games_max_probability": 0.602,
-      "day_confidence_summary": "4 completed audited games",
-      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
-    },
     {
       "date": "2026-09-16",
       "top_pick_game": "LG vs NC",
@@ -46628,6 +46555,18 @@
       "all_games_max_probability": 0.616,
       "day_confidence_summary": "4 completed audited games",
       "interpretation": "TOP PICK은 상대 순위 라벨입니다."
+    },
+    {
+      "date": "2026-09-20",
+      "top_pick_game": "두산 vs KT",
+      "top_pick_team": "KT",
+      "top_pick_probability": 0.619,
+      "top_pick_grade": "D등급",
+      "actual_winner": "KT",
+      "result": "correct",
+      "all_games_max_probability": 0.619,
+      "day_confidence_summary": "5 completed audited games",
+      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
     }
   ],
   "recommendation_policy_risk_note": "The display policy improves interpretability, but recommendation labels must be validated against completed-game outcomes before being treated as actionable.",
@@ -46636,14 +46575,14 @@
     {
       "label_type": "recommendation_strength",
       "label": "강추천",
-      "games": 5,
-      "correct": 4,
-      "accuracy": 0.8,
-      "avg_probability": 0.587,
-      "expected_accuracy": 0.587,
-      "accuracy_minus_expected": 0.213,
-      "brier": 0.205,
-      "log_loss": 0.602,
+      "games": 6,
+      "correct": 5,
+      "accuracy": 0.833,
+      "avg_probability": 0.589,
+      "expected_accuracy": 0.589,
+      "accuracy_minus_expected": 0.244,
+      "brier": 0.197,
+      "log_loss": 0.587,
       "supported_by_results": false,
       "sample_warning": "sample size below 30",
       "recommended_label_action": "monitor_more_games",
@@ -46652,14 +46591,14 @@
     {
       "label_type": "recommendation_strength",
       "label": "관망",
-      "games": 70,
-      "correct": 38,
-      "accuracy": 0.543,
-      "avg_probability": 0.514,
-      "expected_accuracy": 0.514,
-      "accuracy_minus_expected": 0.029,
-      "brier": 0.246,
-      "log_loss": 0.684,
+      "games": 71,
+      "correct": 39,
+      "accuracy": 0.549,
+      "avg_probability": 0.515,
+      "expected_accuracy": 0.515,
+      "accuracy_minus_expected": 0.034,
+      "brier": 0.244,
+      "log_loss": 0.681,
       "supported_by_results": true,
       "sample_warning": "supported by completed-game audit so far",
       "recommended_label_action": "keep",
@@ -46668,14 +46607,14 @@
     {
       "label_type": "recommendation_strength",
       "label": "약우세",
-      "games": 133,
-      "correct": 76,
-      "accuracy": 0.571,
+      "games": 136,
+      "correct": 78,
+      "accuracy": 0.574,
       "avg_probability": 0.539,
       "expected_accuracy": 0.539,
-      "accuracy_minus_expected": 0.032,
+      "accuracy_minus_expected": 0.035,
       "brier": 0.247,
-      "log_loss": 0.686,
+      "log_loss": 0.687,
       "supported_by_results": true,
       "sample_warning": "directional reference only",
       "recommended_label_action": "keep",
@@ -46700,14 +46639,14 @@
     {
       "label_type": "recommendation_grade",
       "label": "A등급",
-      "games": 5,
-      "correct": 4,
-      "accuracy": 0.8,
-      "avg_probability": 0.587,
-      "expected_accuracy": 0.587,
-      "accuracy_minus_expected": 0.213,
-      "brier": 0.205,
-      "log_loss": 0.602,
+      "games": 6,
+      "correct": 5,
+      "accuracy": 0.833,
+      "avg_probability": 0.589,
+      "expected_accuracy": 0.589,
+      "accuracy_minus_expected": 0.244,
+      "brier": 0.197,
+      "log_loss": 0.587,
       "supported_by_results": false,
       "sample_warning": "sample size below 30",
       "recommended_label_action": "monitor_more_games",
@@ -46732,14 +46671,14 @@
     {
       "label_type": "recommendation_grade",
       "label": "C등급",
-      "games": 133,
-      "correct": 76,
-      "accuracy": 0.571,
+      "games": 136,
+      "correct": 78,
+      "accuracy": 0.574,
       "avg_probability": 0.539,
       "expected_accuracy": 0.539,
-      "accuracy_minus_expected": 0.032,
+      "accuracy_minus_expected": 0.035,
       "brier": 0.247,
-      "log_loss": 0.686,
+      "log_loss": 0.687,
       "supported_by_results": true,
       "sample_warning": "supported by completed-game audit so far",
       "recommended_label_action": "keep",
@@ -46748,14 +46687,14 @@
     {
       "label_type": "recommendation_grade",
       "label": "D등급",
-      "games": 70,
-      "correct": 38,
-      "accuracy": 0.543,
-      "avg_probability": 0.514,
-      "expected_accuracy": 0.514,
-      "accuracy_minus_expected": 0.029,
-      "brier": 0.246,
-      "log_loss": 0.684,
+      "games": 71,
+      "correct": 39,
+      "accuracy": 0.549,
+      "avg_probability": 0.515,
+      "expected_accuracy": 0.515,
+      "accuracy_minus_expected": 0.034,
+      "brier": 0.244,
+      "log_loss": 0.681,
       "supported_by_results": true,
       "sample_warning": "supported by completed-game audit so far",
       "recommended_label_action": "keep",
@@ -46764,14 +46703,14 @@
     {
       "label_type": "daily_rank_label",
       "label": "오늘 TOP PICK",
-      "games": 54,
-      "correct": 39,
-      "accuracy": 0.722,
-      "avg_probability": 0.564,
-      "expected_accuracy": 0.564,
-      "accuracy_minus_expected": 0.158,
-      "brier": 0.222,
-      "log_loss": 0.637,
+      "games": 55,
+      "correct": 40,
+      "accuracy": 0.727,
+      "avg_probability": 0.565,
+      "expected_accuracy": 0.565,
+      "accuracy_minus_expected": 0.162,
+      "brier": 0.221,
+      "log_loss": 0.634,
       "supported_by_results": true,
       "sample_warning": "supported by completed-game audit so far",
       "recommended_label_action": "keep",
@@ -46780,14 +46719,14 @@
     {
       "label_type": "daily_rank_label",
       "label": "일반 예측",
-      "games": 202,
-      "correct": 106,
-      "accuracy": 0.525,
-      "avg_probability": 0.53,
-      "expected_accuracy": 0.53,
-      "accuracy_minus_expected": -0.005,
+      "games": 206,
+      "correct": 109,
+      "accuracy": 0.529,
+      "avg_probability": 0.531,
+      "expected_accuracy": 0.531,
+      "accuracy_minus_expected": -0.002,
       "brier": 0.251,
-      "log_loss": 0.696,
+      "log_loss": 0.695,
       "supported_by_results": true,
       "sample_warning": "supported by completed-game audit so far",
       "recommended_label_action": "keep",
@@ -46796,14 +46735,14 @@
     {
       "label_type": "market_label",
       "label": "win_pick",
-      "games": 256,
-      "correct": 145,
-      "accuracy": 0.566,
-      "avg_probability": 0.537,
-      "expected_accuracy": 0.537,
-      "accuracy_minus_expected": 0.029,
+      "games": 261,
+      "correct": 149,
+      "accuracy": 0.571,
+      "avg_probability": 0.538,
+      "expected_accuracy": 0.538,
+      "accuracy_minus_expected": 0.033,
       "brier": 0.245,
-      "log_loss": 0.683,
+      "log_loss": 0.682,
       "supported_by_results": true,
       "sample_warning": "supported by completed-game audit so far",
       "recommended_label_action": "keep",
@@ -46926,9 +46865,9 @@
     }
   ],
   "recommendation_policy_risk_summary": {
-    "generated_at": "2026-09-20T18:00:04.856789",
-    "audited_completed_games": 256,
-    "pending_games": 153,
+    "generated_at": "2026-09-20T18:30:05.516221",
+    "audited_completed_games": 261,
+    "pending_games": 148,
     "strongest_supported_label": "오늘 TOP PICK",
     "weakest_supported_label": "handicap:not_available",
     "top_pick_label_risk": "relative_rank_label_not_strong_pick",
@@ -47029,32 +46968,32 @@
     "overall_status": "pass",
     "blocking_issues": [],
     "warnings": [],
-    "scheduled_games": 5,
-    "today_expected_runs_prediction_rows": 5
+    "scheduled_games": 0,
+    "today_expected_runs_prediction_rows": 0
   },
   "latest_pipeline_health_status": {
-    "generated_at": "2026-09-20T18:00:04",
+    "generated_at": "2026-09-20T18:30:05",
     "reference_date": "2026-09-20",
     "overall_status": "pass",
     "blocking_issues": [],
     "warnings": [],
     "latest_html_path": "kbo_analytics/dashboard/latest.html",
     "latest_html_exists": true,
-    "latest_html_modified_at": "2026-09-20T18:01:52",
+    "latest_html_modified_at": "2026-09-20T18:31:50",
     "docs_latest_html_path": "docs/latest.html",
     "docs_latest_html_exists": true,
-    "docs_latest_html_modified_at": "2026-09-20T18:01:52",
-    "scheduled_games": 5,
+    "docs_latest_html_modified_at": "2026-09-20T18:31:50",
+    "scheduled_games": 0,
     "today_expected_runs_prediction_file": "kbo_analytics/run_model/results/today_expected_runs_predictions.csv",
-    "today_expected_runs_prediction_rows": 5,
+    "today_expected_runs_prediction_rows": 0,
     "validation_expected_runs_prediction_file": "kbo_analytics/run_model/results/expected_runs_predictions.csv",
     "validation_expected_runs_prediction_rows": 1555,
     "run_model_today_validation_split_ok": true,
     "recommendation_summary_file": "kbo_analytics/modeling/results/daily_recommendation_summary.json",
     "recommendation_summary_exists": true,
     "recommendation_audit_log_file": "kbo_analytics/modeling/results/recommendation_outcome_audit_log.csv",
-    "recommendation_audit_completed_rows": 256,
-    "recommendation_audit_pending_rows": 153,
+    "recommendation_audit_completed_rows": 261,
+    "recommendation_audit_pending_rows": 148,
     "pitching_snapshot_file": "kbo_analytics/data/official/pitching_daily_snapshot.csv",
     "pitching_snapshot_exists": true,
     "pitching_snapshot_rows_total": 758,
