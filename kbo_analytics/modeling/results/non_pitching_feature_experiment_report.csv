@@ -1,9 +1,9 @@
 ﻿model,feature_set,accuracy,brier,log_loss,over_55_games,over_55_accuracy,winning_streak_accuracy,losing_streak_accuracy,close_game_accuracy,blowout_game_accuracy,recent_3year_accuracy,selected_candidate
-비투수 피처 GradientBoosting 실험 / baseline_core,baseline_core,0.546,0.247,0.686,1409,0.578,0.544,0.583,0.512,0.584,0.546,False
-비투수 피처 GradientBoosting 실험 / baseline_plus_streak,baseline_plus_streak,0.545,0.247,0.686,1451,0.574,0.542,0.584,0.515,0.579,0.545,False
-비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,baseline_plus_volatility,0.55,0.247,0.687,1302,0.577,0.534,0.59,0.517,0.591,0.55,False
-비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout,baseline_plus_close_blowout,0.551,0.246,0.686,1408,0.587,0.547,0.593,0.512,0.588,0.551,False
-비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.554,0.247,0.686,1459,0.58,0.54,0.593,0.52,0.589,0.554,False
-비투수 피처 GradientBoosting 실험 / baseline_plus_venue_context,baseline_plus_venue_context,0.55,0.247,0.686,1486,0.574,0.536,0.587,0.538,0.58,0.55,False
-비투수 피처 GradientBoosting 실험 / baseline_plus_month_phase,baseline_plus_month_phase,0.555,0.246,0.685,1428,0.59,0.54,0.593,0.533,0.599,0.555,False
-비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,baseline_plus_all_non_pitching,0.556,0.246,0.686,1459,0.579,0.54,0.593,0.526,0.59,0.556,False
+비투수 피처 GradientBoosting 실험 / baseline_core,baseline_core,0.556,0.246,0.686,1405,0.586,0.54,0.594,0.52,0.606,0.556,False
+비투수 피처 GradientBoosting 실험 / baseline_plus_streak,baseline_plus_streak,0.558,0.246,0.686,1396,0.583,0.544,0.592,0.525,0.602,0.558,False
+비투수 피처 GradientBoosting 실험 / baseline_plus_volatility,baseline_plus_volatility,0.554,0.247,0.687,1352,0.578,0.54,0.595,0.52,0.584,0.554,False
+비투수 피처 GradientBoosting 실험 / baseline_plus_close_blowout,baseline_plus_close_blowout,0.554,0.246,0.686,1360,0.585,0.535,0.586,0.531,0.604,0.554,False
+비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.552,0.246,0.686,1410,0.567,0.531,0.588,0.525,0.598,0.552,False
+비투수 피처 GradientBoosting 실험 / baseline_plus_venue_context,baseline_plus_venue_context,0.55,0.246,0.686,1499,0.584,0.533,0.588,0.531,0.581,0.55,False
+비투수 피처 GradientBoosting 실험 / baseline_plus_month_phase,baseline_plus_month_phase,0.554,0.246,0.685,1537,0.588,0.54,0.588,0.527,0.589,0.554,False
+비투수 피처 GradientBoosting 실험 / baseline_plus_all_non_pitching,baseline_plus_all_non_pitching,0.554,0.246,0.686,1388,0.58,0.536,0.592,0.524,0.595,0.554,False
