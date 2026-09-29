@@ -54,15 +54,15 @@
   "candidate_features_to_drop": [
     "season_win_rate_gap",
     "streak_length_gap",
-    "losing_streak_low_scoring_offense",
     "season_win_rate_prior",
-    "season_avg_run_diff_gap",
-    "opponent_winning_streak_flag",
     "opponent_current_streak_type",
-    "opponent_vs_losing_streak_flag",
+    "season_avg_run_diff_gap",
+    "losing_streak_low_scoring_offense",
+    "losing_streak_with_negative_run_diff",
+    "opponent_winning_streak_flag",
     "opponent_losing_streak_flag",
-    "winning_streak_bullpen_fatigue_proxy",
     "team_winning_streak_flag",
-    "team_losing_streak_flag"
+    "winning_streak_bullpen_fatigue_proxy",
+    "opponent_vs_losing_streak_flag"
   ]
 }
