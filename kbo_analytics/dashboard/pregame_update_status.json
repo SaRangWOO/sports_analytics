@@ -1,68 +1,23 @@
 {
-  "run_time": "2026-10-01 18:30:05",
-  "reference_date": "2026-10-01",
-  "update_stage": "pregame",
-  "games_checked": 4,
-  "teams_checked": 8,
+  "run_time": "2026-10-02 08:00:04",
+  "reference_date": "2026-10-02",
+  "update_stage": "morning",
+  "games_checked": 0,
+  "teams_checked": 0,
   "starter_status_summary": {
-    "confirmed": 8,
+    "confirmed": 0,
     "estimated": 0,
     "unknown": 0
   },
   "dashboard_updated": true,
   "github_pushed": true,
-  "games": [
-    {
-      "game_id": "20261001NCOB0",
-      "home_team": "두산",
-      "away_team": "NC",
-      "home_starter": "최민석",
-      "away_starter": "송명기",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "20261001HHSS0",
-      "home_team": "삼성",
-      "away_team": "한화",
-      "home_starter": "원태인",
-      "away_starter": "황준서",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "20261001LGSK0",
-      "home_team": "SSG",
-      "away_team": "LG",
-      "home_starter": "김민준",
-      "away_starter": "임찬규",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "20261001KTHT0",
-      "home_team": "KIA",
-      "away_team": "KT",
-      "home_starter": "양현종",
-      "away_starter": "소형준",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    }
-  ],
+  "games": [],
   "changes": [],
   "lineup_status_summary": {
-    "confirmed": 8,
+    "confirmed": 0,
     "recent": 0,
     "unknown": 0
   },
-  "prediction_stage": "pregame_lineup_confirmed",
+  "prediction_stage": "morning_estimated",
   "probability_policy_note": "현재 승률은 운영 모델 결과입니다. 확정 라인업은 시점 스냅샷으로 수집하며, 검증된 라인업 피처 모델이 배포되기 전에는 승률 입력으로 사용하지 않습니다."
 }
