@@ -1,11 +1,11 @@
 ﻿model,feature_set,probability_bin,games,avg_predicted_probability,actual_win_rate,calibration_gap,brier,log_loss,interpretation
-핵심 수치 GradientBoosting 보수 모델,current_operational_feature_set,0.50-0.53,995,0.515,0.511,0.005,0.25,0.693,보정 양호
-핵심 수치 GradientBoosting 보수 모델,current_operational_feature_set,0.53-0.55,714,0.54,0.567,-0.027,0.246,0.685,보정 양호
-핵심 수치 GradientBoosting 보수 모델,current_operational_feature_set,0.55-0.58,1193,0.563,0.579,-0.016,0.244,0.68,보정 양호
-핵심 수치 GradientBoosting 보수 모델,current_operational_feature_set,0.58-0.60,142,0.585,0.563,0.022,0.246,0.685,보정 양호
-핵심 수치 GradientBoosting 보수 모델,current_operational_feature_set,0.60+,6,0.61,0.833,-0.223,0.188,0.567,과소신 구간
-비투수 피처 GradientBoosting 실험 / baseline_plus_streak,baseline_plus_streak,0.50-0.53,949,0.515,0.517,-0.003,0.25,0.693,보정 양호
-비투수 피처 GradientBoosting 실험 / baseline_plus_streak,baseline_plus_streak,0.53-0.55,705,0.54,0.563,-0.023,0.247,0.687,보정 양호
-비투수 피처 GradientBoosting 실험 / baseline_plus_streak,baseline_plus_streak,0.55-0.58,1249,0.562,0.58,-0.018,0.244,0.681,보정 양호
-비투수 피처 GradientBoosting 실험 / baseline_plus_streak,baseline_plus_streak,0.58-0.60,141,0.586,0.596,-0.01,0.241,0.674,보정 양호
-비투수 피처 GradientBoosting 실험 / baseline_plus_streak,baseline_plus_streak,0.60+,6,0.609,0.833,-0.224,0.19,0.571,과소신 구간
+RandomForest 보수 시간가중 모델,current_operational_feature_set,0.50-0.53,1346,0.515,0.527,-0.012,0.249,0.691,보정 양호
+RandomForest 보수 시간가중 모델,current_operational_feature_set,0.53-0.55,836,0.54,0.535,0.005,0.249,0.691,보정 양호
+RandomForest 보수 시간가중 모델,current_operational_feature_set,0.55-0.58,708,0.562,0.631,-0.069,0.237,0.668,과소신 구간
+RandomForest 보수 시간가중 모델,current_operational_feature_set,0.58-0.60,158,0.587,0.646,-0.058,0.233,0.658,과소신 구간
+RandomForest 보수 시간가중 모델,current_operational_feature_set,0.60+,10,0.605,0.2,0.405,0.322,0.839,과신 구간
+비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.50-0.53,1003,0.516,0.513,0.003,0.25,0.693,보정 양호
+비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.53-0.55,751,0.54,0.57,-0.03,0.246,0.685,보정 양호
+비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.55-0.58,1249,0.562,0.581,-0.019,0.244,0.681,보정 양호
+비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.58-0.60,55,0.585,0.6,-0.015,0.241,0.674,보정 양호
+비투수 피처 GradientBoosting 실험 / baseline_plus_momentum,baseline_plus_momentum,0.60+,0,,,,,,표본 없음

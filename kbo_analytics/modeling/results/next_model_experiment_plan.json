@@ -1,15 +1,12 @@
 {
-  "current_best_accuracy": 0.554,
-  "current_best_model": "핵심 수치 GradientBoosting 보수 모델",
+  "current_best_accuracy": 0.559,
+  "current_best_model": "RandomForest 보수 시간가중 모델",
   "why_not_replaced": "전체 accuracy만이 아니라 Brier Score, Log Loss, over_55_accuracy, 최근 3년, 연승, 박빙 gate를 동시에 통과하지 못했습니다.",
   "strongest_new_feature_groups": [
     "baseline"
   ],
   "weakest_new_feature_groups": [
-    "baseline",
-    "close_blowout",
-    "streak",
-    "venue_context"
+    "baseline"
   ],
   "next_candidate_feature_sets": [
     "baseline_core",
@@ -41,28 +38,22 @@
     "elo_diff",
     "recent_run_diff_10_gap",
     "recent_10_win_rate_gap",
-    "is_home",
     "recent_5_win_rate_gap",
-    "head_to_head_win_rate_gap",
+    "opponent_avg_run_diff_last_5",
+    "is_home",
     "opponent_avg_run_diff_last_10",
     "avg_run_diff_last_10",
     "opponent_recent_10_win_rate",
-    "opponent_avg_run_diff_last_5",
     "recent_10_win_rate",
-    "avg_run_diff_last_5"
+    "avg_run_diff_last_5",
+    "head_to_head_win_rate_gap"
   ],
   "candidate_features_to_drop": [
-    "season_win_rate_gap",
-    "streak_length_gap",
-    "season_win_rate_prior",
+    "recent_5_win_rate",
     "season_avg_run_diff_gap",
-    "opponent_current_streak_type",
-    "opponent_winning_streak_flag",
-    "losing_streak_with_negative_run_diff",
-    "losing_streak_low_scoring_offense",
-    "opponent_vs_losing_streak_flag",
-    "winning_streak_bullpen_fatigue_proxy",
-    "losing_streak_allowed_runs_spike",
-    "opponent_losing_streak_flag"
+    "season_win_rate_prior",
+    "games_last_7_days",
+    "rest_days",
+    "back_to_back"
   ]
 }
