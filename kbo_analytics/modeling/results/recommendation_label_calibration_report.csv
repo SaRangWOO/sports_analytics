@@ -1,14 +1,14 @@
 ﻿label_type,label,games,correct,accuracy,avg_probability,expected_accuracy,accuracy_minus_expected,brier,log_loss,supported_by_results,sample_warning,recommended_label_action,interpretation
 recommendation_strength,강추천,9,8,0.889,0.59,0.59,0.299,0.187,0.565,False,sample size below 30,monitor_more_games,표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다.
-recommendation_strength,관망,78,42,0.538,0.515,0.515,0.023,0.245,0.683,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
-recommendation_strength,약우세,150,88,0.587,0.538,0.538,0.049,0.246,0.685,True,directional reference only,keep,약우세는 실행 추천이 아니라 방향성 참고로 유지합니다.
-recommendation_strength,추천,56,34,0.607,0.562,0.562,0.045,0.24,0.673,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
+recommendation_strength,관망,80,43,0.537,0.516,0.516,0.021,0.244,0.681,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
+recommendation_strength,약우세,152,89,0.586,0.538,0.538,0.048,0.246,0.685,True,directional reference only,keep,약우세는 실행 추천이 아니라 방향성 참고로 유지합니다.
+recommendation_strength,추천,57,35,0.614,0.562,0.562,0.052,0.239,0.67,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
 recommendation_grade,A등급,9,8,0.889,0.59,0.59,0.299,0.187,0.565,False,sample size below 30,monitor_more_games,표본이 30경기 미만이라 라벨 성능을 확정하지 않습니다.
-recommendation_grade,B등급,56,34,0.607,0.562,0.562,0.045,0.24,0.673,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
-recommendation_grade,C등급,150,88,0.587,0.538,0.538,0.049,0.246,0.685,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
-recommendation_grade,D등급,78,42,0.538,0.515,0.515,0.023,0.245,0.683,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
-daily_rank_label,오늘 TOP PICK,62,46,0.742,0.566,0.566,0.176,0.218,0.629,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
-daily_rank_label,일반 예측,231,126,0.545,0.53,0.53,0.015,0.249,0.691,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
-market_label,win_pick,293,172,0.587,0.538,0.538,0.049,0.243,0.678,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
+recommendation_grade,B등급,57,35,0.614,0.562,0.562,0.052,0.239,0.67,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
+recommendation_grade,C등급,152,89,0.586,0.538,0.538,0.048,0.246,0.685,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
+recommendation_grade,D등급,80,43,0.537,0.516,0.516,0.021,0.244,0.681,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
+daily_rank_label,오늘 TOP PICK,63,47,0.746,0.567,0.567,0.179,0.217,0.627,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
+daily_rank_label,일반 예측,235,128,0.545,0.531,0.531,0.014,0.249,0.691,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
+market_label,win_pick,298,175,0.587,0.538,0.538,0.049,0.242,0.677,True,supported by completed-game audit so far,keep,현재 표본에서는 라벨 유지가 가능합니다.
 market_label,handicap:not_available,0,0,,,,,,,False,no valid market line data,not_available,유효한 기준 라인이 없어 평가하지 않습니다.
 market_label,over_under:not_available,0,0,,,,,,,False,no valid market line data,not_available,유효한 기준 라인이 없어 평가하지 않습니다.
