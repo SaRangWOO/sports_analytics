@@ -2,14 +2,14 @@
   "available": true,
   "training_cutoff": "2026-10-04",
   "validation_cutoff": "2026-10-04",
-  "prediction_training_cutoff": "2026-10-07",
+  "prediction_training_cutoff": "2026-08-23",
   "latest_completed_game_date_used": "2026-10-07",
   "current_week_games_included_for_prediction": true,
   "training_start_year": 2016,
   "training_end_year": 2026,
   "train_rows": 12670,
   "test_rows": 3058,
-  "accuracy": 0.559,
+  "accuracy": 0.542,
   "selected_model": "RandomForest 보수 시간가중 모델",
   "candidate_results": [
     {
@@ -46622,5 +46622,8 @@
   ],
   "run_expectancy_rows": 7580,
   "operational_probability_policy": "production_only",
-  "operational_probability_policy_note": "기존 승패 모델 확률을 그대로 사용합니다."
+  "operational_probability_policy_note": "기존 승패 모델 확률을 그대로 사용합니다.",
+  "production_artifact_id": "2026-08-23-befe94ab5baf5496",
+  "production_artifact_loaded": true,
+  "prediction_mode": "predict_only"
 }
