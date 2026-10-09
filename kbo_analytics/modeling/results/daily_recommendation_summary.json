@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-10-09T17:00:04.893212",
+  "generated_at": "2026-10-09T17:30:05.083680",
   "reference_date": "2026-10-09",
-  "total_games": 3,
+  "total_games": 0,
   "strong_recommendation_count": 0,
-  "recommendation_count": 1,
-  "weak_edge_count": 2,
+  "recommendation_count": 0,
+  "weak_edge_count": 0,
   "watch_count": 0,
   "no_info_count": 0,
-  "top_pick": "LG",
-  "top_pick_probability": "57.2%",
+  "top_pick": null,
+  "top_pick_probability": null,
   "day_confidence_summary": "승패 방향과 시장별 추천을 분리해 표시합니다.",
   "strong_recommendation_available": false,
-  "message": "오늘은 강한 추천 경기는 없지만, 상대적으로 LG가 가장 높은 우세 후보입니다. 핸디캡과 오버/언더는 관망이 적절합니다.",
-  "audited_completed_games": 303,
-  "pending_games": 157,
+  "message": "오늘 예정 경기가 없거나 표시할 예측이 없습니다.",
+  "audited_completed_games": 306,
+  "pending_games": 155,
   "grade_performance_snapshot": [
     {
       "grade": "A",
@@ -33,25 +33,25 @@
     {
       "grade": "B",
       "recommendation_strength": "추천",
-      "games": 59,
+      "games": 60,
       "correct": 37,
-      "accuracy": 0.627,
+      "accuracy": 0.617,
       "avg_probability": 0.562,
-      "brier": 0.237,
-      "log_loss": 0.667,
-      "top_pick_games": 32,
-      "top_pick_accuracy": 0.719,
-      "top_tier_games": 59,
-      "top_tier_accuracy": 0.627,
+      "brier": 0.239,
+      "log_loss": 0.67,
+      "top_pick_games": 33,
+      "top_pick_accuracy": 0.697,
+      "top_tier_games": 60,
+      "top_tier_accuracy": 0.617,
       "interpretation": "충분한 표본에서 C/D보다 나은지 확인해야 하는 추천 구간입니다."
     },
     {
       "grade": "C",
       "recommendation_strength": "약우세",
-      "games": 154,
-      "correct": 90,
-      "accuracy": 0.584,
-      "avg_probability": 0.538,
+      "games": 156,
+      "correct": 91,
+      "accuracy": 0.583,
+      "avg_probability": 0.539,
       "brier": 0.246,
       "log_loss": 0.685,
       "top_pick_games": 19,
@@ -92,18 +92,6 @@
     }
   ],
   "top_pick_performance_snapshot": [
-    {
-      "date": "2026-10-03",
-      "top_pick_game": "두산 vs 삼성",
-      "top_pick_team": "삼성",
-      "top_pick_probability": 0.57,
-      "top_pick_grade": "B등급",
-      "actual_winner": "삼성",
-      "result": "correct",
-      "all_games_max_probability": 0.57,
-      "day_confidence_summary": "5 completed audited games",
-      "interpretation": "TOP PICK은 상대 순위 라벨입니다."
-    },
     {
       "date": "2026-10-04",
       "top_pick_game": "두산 vs 삼성",
@@ -151,12 +139,24 @@
       "all_games_max_probability": 0.565,
       "day_confidence_summary": "5 completed audited games",
       "interpretation": "TOP PICK은 상대 순위 라벨입니다."
+    },
+    {
+      "date": "2026-10-09",
+      "top_pick_game": "LG vs 롯데",
+      "top_pick_team": "LG",
+      "top_pick_probability": 0.572,
+      "top_pick_grade": "B등급",
+      "actual_winner": "롯데",
+      "result": "incorrect",
+      "all_games_max_probability": 0.572,
+      "day_confidence_summary": "3 completed audited games",
+      "interpretation": "TOP PICK이 일반 예측보다 낫지 않아 '상대 우세 1순위' 표현을 검토합니다."
     }
   ],
   "recommendation_policy_warning": "Daily TOP PICK is a relative ranking label and should not be interpreted as a strong recommendation unless the recommendation grade is A or B.",
   "label_calibration_status": "rename_top_pick",
   "top_pick_wording_status": "오늘 모델 기준 상대 우세 1순위",
   "actionability_warning": "Recommendation labels are interpretive until enough completed-game outcomes support them.",
-  "completed_games_used_for_label_calibration": 303,
-  "pending_games_for_future_calibration": 157
+  "completed_games_used_for_label_calibration": 306,
+  "pending_games_for_future_calibration": 155
 }
