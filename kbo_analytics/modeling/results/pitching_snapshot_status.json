@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-10 13:30:05",
+  "generated_at": "2026-10-10 14:00:04",
   "reference_date": "2026-10-10",
   "snapshot_rows_total": 856,
   "snapshot_rows_for_reference_date": 6,
@@ -19,6 +19,19 @@
   "leakage_policy_note": "pitching_daily_snapshot.csv는 예측 시점에 저장된 정보만 누적하며 현재 모델 학습 피처로 사용하지 않습니다.",
   "quality_status": "pass",
   "safe_for_future_feature_use": true,
-  "collection_warnings": [],
+  "collection_warnings": [
+    {
+      "scheduled_game_id": "20261010LGLT0_LG",
+      "failures": [
+        "snapshot_not_before_game_start:0"
+      ]
+    },
+    {
+      "scheduled_game_id": "20261010LGLT0_롯데",
+      "failures": [
+        "snapshot_not_before_game_start:1"
+      ]
+    }
+  ],
   "schedule_file": "data/official/pitching_snapshot_schedule.csv"
 }
