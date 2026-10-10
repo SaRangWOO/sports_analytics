@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-10 16:30:04",
+  "generated_at": "2026-10-10 17:00:05",
   "reference_date": "2026-10-10",
   "snapshot_rows_total": 856,
   "snapshot_rows_for_reference_date": 6,
@@ -30,6 +30,30 @@
       "scheduled_game_id": "20261010LGLT0_롯데",
       "failures": [
         "snapshot_not_before_game_start:1"
+      ]
+    },
+    {
+      "scheduled_game_id": "20261010SKHT0_SSG",
+      "failures": [
+        "snapshot_not_before_game_start:2"
+      ]
+    },
+    {
+      "scheduled_game_id": "20261010SKHT0_KIA",
+      "failures": [
+        "snapshot_not_before_game_start:3"
+      ]
+    },
+    {
+      "scheduled_game_id": "20261010NCHH0_NC",
+      "failures": [
+        "snapshot_not_before_game_start:4"
+      ]
+    },
+    {
+      "scheduled_game_id": "20261010NCHH0_한화",
+      "failures": [
+        "snapshot_not_before_game_start:5"
       ]
     }
   ],

@@ -44819,7 +44819,7 @@
   ],
   "dashboard_display_policy_note": "The recommendation policy improves interpretability and usefulness, but it does not change the underlying model probabilities or production model.",
   "pitching_snapshot_collection_status": {
-    "generated_at": "2026-10-10 16:30:04",
+    "generated_at": "2026-10-10 17:00:05",
     "reference_date": "2026-10-10",
     "snapshot_rows_total": 856,
     "snapshot_rows_for_reference_date": 6,
@@ -44851,6 +44851,30 @@
         "failures": [
           "snapshot_not_before_game_start:1"
         ]
+      },
+      {
+        "scheduled_game_id": "20261010SKHT0_SSG",
+        "failures": [
+          "snapshot_not_before_game_start:2"
+        ]
+      },
+      {
+        "scheduled_game_id": "20261010SKHT0_KIA",
+        "failures": [
+          "snapshot_not_before_game_start:3"
+        ]
+      },
+      {
+        "scheduled_game_id": "20261010NCHH0_NC",
+        "failures": [
+          "snapshot_not_before_game_start:4"
+        ]
+      },
+      {
+        "scheduled_game_id": "20261010NCHH0_한화",
+        "failures": [
+          "snapshot_not_before_game_start:5"
+        ]
       }
     ],
     "schedule_file": "data/official/pitching_snapshot_schedule.csv"
@@ -44867,7 +44891,7 @@
   "safe_to_replace_model": false,
   "reason_not_to_replace_if_false": "historical improvement가 작고, current-season validation과 rolling backtest가 실패했으며, production gates를 통과하지 못해 운영 모델은 유지합니다.",
   "pitching_snapshot_quality_summary": {
-    "generated_at": "2026-10-10 16:30:04",
+    "generated_at": "2026-10-10 17:00:05",
     "reference_date": "2026-10-10",
     "snapshot_file": "data/official/pitching_daily_snapshot.csv",
     "total_snapshot_rows": 856,
@@ -45658,7 +45682,7 @@
     }
   ],
   "recommendation_policy_risk_summary": {
-    "generated_at": "2026-10-10T16:30:04.960515",
+    "generated_at": "2026-10-10T17:00:05.574650",
     "audited_completed_games": 306,
     "pending_games": 158,
     "strongest_supported_label": "오늘 TOP PICK",
@@ -45765,17 +45789,17 @@
     "today_expected_runs_prediction_rows": 3
   },
   "latest_pipeline_health_status": {
-    "generated_at": "2026-10-10T16:30:04",
+    "generated_at": "2026-10-10T17:00:05",
     "reference_date": "2026-10-10",
     "overall_status": "pass",
     "blocking_issues": [],
     "warnings": [],
     "latest_html_path": "kbo_analytics/dashboard/latest.html",
     "latest_html_exists": true,
-    "latest_html_modified_at": "2026-10-10T16:31:57",
+    "latest_html_modified_at": "2026-10-10T17:01:53",
     "docs_latest_html_path": "docs/latest.html",
     "docs_latest_html_exists": true,
-    "docs_latest_html_modified_at": "2026-10-10T16:31:57",
+    "docs_latest_html_modified_at": "2026-10-10T17:01:53",
     "scheduled_games": 3,
     "today_expected_runs_prediction_file": "kbo_analytics/run_model/results/today_expected_runs_predictions.csv",
     "today_expected_runs_prediction_rows": 3,
