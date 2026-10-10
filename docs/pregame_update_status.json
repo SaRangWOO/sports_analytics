@@ -1,5 +1,5 @@
 {
-  "run_time": "2026-10-10 11:00:05",
+  "run_time": "2026-10-10 11:30:05",
   "reference_date": "2026-10-10",
   "update_stage": "pregame",
   "games_checked": 3,
@@ -46,80 +46,7 @@
       "status_label": "확정 선발 반영 완료"
     }
   ],
-  "changes": [
-    {
-      "game_id": "20261010LGLT0",
-      "game": "LG vs 롯데",
-      "field": "home_starter_source",
-      "before": "estimated",
-      "after": "confirmed",
-      "starter": "나균안"
-    },
-    {
-      "game_id": "20261010LGLT0",
-      "game": "LG vs 롯데",
-      "field": "away_starter_source",
-      "before": "estimated",
-      "after": "confirmed",
-      "starter": "톨허스트"
-    },
-    {
-      "game_id": "20261010SKHT0",
-      "game": "SSG vs KIA",
-      "field": "home_starter_source",
-      "before": "estimated",
-      "after": "confirmed",
-      "starter": "시라카와"
-    },
-    {
-      "game_id": "20261010SKHT0",
-      "game": "SSG vs KIA",
-      "field": "away_starter_source",
-      "before": "estimated",
-      "after": "confirmed",
-      "starter": "최민준"
-    },
-    {
-      "game_id": "20261010SKHT0",
-      "game": "SSG vs KIA",
-      "field": "away_starter",
-      "before": "아빌라",
-      "after": "최민준",
-      "starter": "최민준"
-    },
-    {
-      "game_id": "20261010NCHH0",
-      "game": "NC vs 한화",
-      "field": "home_starter_source",
-      "before": "estimated",
-      "after": "confirmed",
-      "starter": "황준서"
-    },
-    {
-      "game_id": "20261010NCHH0",
-      "game": "NC vs 한화",
-      "field": "away_starter_source",
-      "before": "estimated",
-      "after": "confirmed",
-      "starter": "클레빈저"
-    },
-    {
-      "game_id": "20261010NCHH0",
-      "game": "NC vs 한화",
-      "field": "home_starter",
-      "before": "박준영",
-      "after": "황준서",
-      "starter": "황준서"
-    },
-    {
-      "game_id": "20261010NCHH0",
-      "game": "NC vs 한화",
-      "field": "away_starter",
-      "before": "토다",
-      "after": "클레빈저",
-      "starter": "클레빈저"
-    }
-  ],
+  "changes": [],
   "lineup_status_summary": {
     "confirmed": 0,
     "recent": 6,
