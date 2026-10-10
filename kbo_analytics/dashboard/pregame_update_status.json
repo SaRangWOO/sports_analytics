@@ -1,57 +1,46 @@
 {
-  "run_time": "2026-10-10 18:30:05",
-  "reference_date": "2026-10-10",
-  "update_stage": "pregame",
-  "games_checked": 3,
-  "teams_checked": 6,
+  "run_time": "2026-10-11 08:00:04",
+  "reference_date": "2026-10-11",
+  "update_stage": "morning",
+  "games_checked": 2,
+  "teams_checked": 4,
   "starter_status_summary": {
-    "confirmed": 6,
-    "estimated": 0,
+    "confirmed": 0,
+    "estimated": 4,
     "unknown": 0
   },
   "dashboard_updated": true,
   "github_pushed": true,
   "games": [
     {
-      "game_id": "20261010LGLT0",
-      "home_team": "롯데",
-      "away_team": "LG",
-      "home_starter": "나균안",
-      "away_starter": "톨허스트",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
+      "game_id": "20261011KTSS0",
+      "home_team": "삼성",
+      "away_team": "KT",
+      "home_starter": "오러클린",
+      "away_starter": "사우어",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
     },
     {
-      "game_id": "20261010SKHT0",
+      "game_id": "20261011LTHT0",
       "home_team": "KIA",
-      "away_team": "SSG",
-      "home_starter": "시라카와",
-      "away_starter": "최민준",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
-    },
-    {
-      "game_id": "20261010NCHH0",
-      "home_team": "한화",
-      "away_team": "NC",
-      "home_starter": "황준서",
-      "away_starter": "클레빈저",
-      "home_starter_source": "confirmed",
-      "away_starter_source": "confirmed",
-      "game_starter_status": "both_confirmed",
-      "status_label": "확정 선발 반영 완료"
+      "away_team": "롯데",
+      "home_starter": "네일",
+      "away_starter": "김진욱",
+      "home_starter_source": "estimated",
+      "away_starter_source": "estimated",
+      "game_starter_status": "estimated_only",
+      "status_label": "추정 선발 기준"
     }
   ],
   "changes": [],
   "lineup_status_summary": {
-    "confirmed": 6,
-    "recent": 0,
+    "confirmed": 0,
+    "recent": 4,
     "unknown": 0
   },
-  "prediction_stage": "pregame_lineup_confirmed",
+  "prediction_stage": "morning_estimated",
   "probability_policy_note": "현재 승률은 운영 모델 결과입니다. 확정 라인업은 시점 스냅샷으로 수집하며, 검증된 라인업 피처 모델이 배포되기 전에는 승률 입력으로 사용하지 않습니다."
 }
