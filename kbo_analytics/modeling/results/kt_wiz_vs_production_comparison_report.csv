@@ -1,9 +1,9 @@
 ﻿comparison_scope,games,production_accuracy,kt_challenger_accuracy,accuracy_delta,production_brier,kt_challenger_brier,brier_delta,production_log_loss,kt_challenger_log_loss,log_loss_delta,production_top_pick_accuracy,kt_challenger_pick_accuracy,agreement_games,agreement_accuracy,disagreement_games,production_accuracy_when_disagree,kt_accuracy_when_disagree,interpretation
-all_kt_games,308,0.523,0.568,0.045,0.246,0.25,0.004,0.685,0.694,0.009,0.523,0.568,208,0.572,90,0.467,0.533,KT challenger outperforms production in this scope
-current_season_kt_games,134,0.59,0.597,0.007,0.242,0.248,0.006,0.678,0.689,0.011,0.59,0.597,103,0.621,31,0.484,0.516,KT challenger outperforms production in this scope
-kt_home_games,158,0.538,0.589,0.051,0.247,0.248,0.001,0.687,0.69,0.003,0.538,0.589,114,0.596,37,0.459,0.541,KT challenger outperforms production in this scope
-kt_away_games,150,0.507,0.547,0.04,0.245,0.252,0.007,0.684,0.698,0.014,0.507,0.547,94,0.543,53,0.472,0.528,KT challenger outperforms production in this scope
-kt_close_games,78,0.474,0.564,0.09,0.248,0.251,0.003,0.688,0.695,0.007,0.474,0.564,55,0.545,20,0.35,0.65,KT challenger outperforms production in this scope
-kt_high_confidence_games,138,0.551,0.522,-0.029,0.244,0.256,0.012,0.681,0.706,0.025,0.551,0.522,111,0.55,25,0.6,0.4,No confirmed KT-specific edge in this scope
-kt_model_and_production_agree,208,0.572,0.572,0.0,0.243,0.25,0.007,0.68,0.693,0.013,0.572,0.572,208,0.572,0,,,No confirmed KT-specific edge in this scope
-kt_model_disagrees_with_production,90,0.467,0.533,0.066,0.252,0.252,0.0,0.697,0.698,0.001,0.467,0.533,0,,90,0.467,0.533,KT challenger outperforms production in this scope
+all_kt_games,308,0.568,0.568,0.0,0.244,0.249,0.005,0.681,0.692,0.011,0.568,0.568,214,0.612,83,0.53,0.47,No confirmed KT-specific edge in this scope
+current_season_kt_games,138,0.63,0.63,0.0,0.237,0.245,0.008,0.667,0.684,0.017,0.63,0.63,106,0.67,32,0.5,0.5,No confirmed KT-specific edge in this scope
+kt_home_games,158,0.595,0.595,0.0,0.245,0.246,0.001,0.683,0.686,0.003,0.595,0.595,122,0.631,30,0.567,0.433,No confirmed KT-specific edge in this scope
+kt_away_games,150,0.54,0.54,0.0,0.242,0.253,0.011,0.678,0.699,0.021,0.54,0.54,92,0.587,53,0.509,0.491,No confirmed KT-specific edge in this scope
+kt_close_games,78,0.551,0.551,0.0,0.246,0.251,0.005,0.684,0.695,0.011,0.551,0.551,57,0.596,16,0.562,0.438,No confirmed KT-specific edge in this scope
+kt_high_confidence_games,148,0.547,0.541,-0.006,0.241,0.254,0.013,0.675,0.702,0.027,0.547,0.541,121,0.562,24,0.542,0.458,No confirmed KT-specific edge in this scope
+kt_model_and_production_agree,214,0.612,0.612,0.0,0.239,0.246,0.007,0.671,0.686,0.015,0.612,0.612,214,0.612,0,,,No confirmed KT-specific edge in this scope
+kt_model_disagrees_with_production,83,0.53,0.47,-0.06,0.255,0.257,0.002,0.704,0.707,0.003,0.53,0.47,0,,83,0.53,0.47,No confirmed KT-specific edge in this scope
