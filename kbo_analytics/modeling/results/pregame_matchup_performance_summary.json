@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-12",
+  "generated_at": "2026-10-13",
   "project_goal": "Improve actual KBO prediction success by adding leakage-safe pregame matchup information such as starting pitcher form, starter rest, bullpen fatigue, and previous-game fatigue, while keeping the production model unchanged until a challenger proves stable.",
   "production_model_baseline": {
     "model_name": "production baseline on same games",
@@ -13,14 +13,14 @@
     "over_55_games": 556,
     "over_55_accuracy": 0.554,
     "daily_top1_accuracy": 0.554,
-    "daily_top2_accuracy": 0.554,
+    "daily_top2_accuracy": 0.556,
     "confirmed_starter_games": 700,
-    "confirmed_starter_accuracy": 0.54,
+    "confirmed_starter_accuracy": 0.541,
     "starter_edge_games": 582,
-    "starter_edge_accuracy": 0.524,
+    "starter_edge_accuracy": 0.526,
     "bullpen_edge_games": 393,
-    "bullpen_edge_accuracy": 0.552,
-    "current_season_accuracy": 0.54,
+    "bullpen_edge_accuracy": 0.555,
+    "current_season_accuracy": 0.541,
     "rolling_accuracy": null,
     "selected_as_pregame_challenger": false,
     "interpretation": "offline monitoring candidate; not production probability input"
