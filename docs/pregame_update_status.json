@@ -1,12 +1,12 @@
 {
-  "run_time": "2026-10-12 08:00:04",
+  "run_time": "2026-10-12 11:00:05",
   "reference_date": "2026-10-12",
-  "update_stage": "morning",
+  "update_stage": "pregame",
   "games_checked": 3,
   "teams_checked": 6,
   "starter_status_summary": {
-    "confirmed": 0,
-    "estimated": 6,
+    "confirmed": 6,
+    "estimated": 0,
     "unknown": 0
   },
   "dashboard_updated": true,
@@ -16,42 +16,139 @@
       "game_id": "20261012LTOB0",
       "home_team": "두산",
       "away_team": "롯데",
-      "home_starter": "벤자민",
-      "away_starter": "로드리게스",
-      "home_starter_source": "estimated",
-      "away_starter_source": "estimated",
-      "game_starter_status": "estimated_only",
-      "status_label": "추정 선발 기준"
+      "home_starter": "이용찬",
+      "away_starter": "박세웅",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
     },
     {
       "game_id": "20261012KTSS0",
       "home_team": "삼성",
       "away_team": "KT",
-      "home_starter": "후라도",
-      "away_starter": "오원석",
-      "home_starter_source": "estimated",
-      "away_starter_source": "estimated",
-      "game_starter_status": "estimated_only",
-      "status_label": "추정 선발 기준"
+      "home_starter": "양창섭",
+      "away_starter": "소형준",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
     },
     {
       "game_id": "20261012LGHT0",
       "home_team": "KIA",
       "away_team": "LG",
-      "home_starter": "올러",
-      "away_starter": "웰스",
-      "home_starter_source": "estimated",
-      "away_starter_source": "estimated",
-      "game_starter_status": "estimated_only",
-      "status_label": "추정 선발 기준"
+      "home_starter": "양현종",
+      "away_starter": "임찬규",
+      "home_starter_source": "confirmed",
+      "away_starter_source": "confirmed",
+      "game_starter_status": "both_confirmed",
+      "status_label": "확정 선발 반영 완료"
     }
   ],
-  "changes": [],
+  "changes": [
+    {
+      "game_id": "20261012LTOB0",
+      "game": "롯데 vs 두산",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "이용찬"
+    },
+    {
+      "game_id": "20261012LTOB0",
+      "game": "롯데 vs 두산",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "박세웅"
+    },
+    {
+      "game_id": "20261012LTOB0",
+      "game": "롯데 vs 두산",
+      "field": "home_starter",
+      "before": "벤자민",
+      "after": "이용찬",
+      "starter": "이용찬"
+    },
+    {
+      "game_id": "20261012LTOB0",
+      "game": "롯데 vs 두산",
+      "field": "away_starter",
+      "before": "로드리게스",
+      "after": "박세웅",
+      "starter": "박세웅"
+    },
+    {
+      "game_id": "20261012KTSS0",
+      "game": "KT vs 삼성",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "양창섭"
+    },
+    {
+      "game_id": "20261012KTSS0",
+      "game": "KT vs 삼성",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "소형준"
+    },
+    {
+      "game_id": "20261012KTSS0",
+      "game": "KT vs 삼성",
+      "field": "home_starter",
+      "before": "후라도",
+      "after": "양창섭",
+      "starter": "양창섭"
+    },
+    {
+      "game_id": "20261012KTSS0",
+      "game": "KT vs 삼성",
+      "field": "away_starter",
+      "before": "오원석",
+      "after": "소형준",
+      "starter": "소형준"
+    },
+    {
+      "game_id": "20261012LGHT0",
+      "game": "LG vs KIA",
+      "field": "home_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "양현종"
+    },
+    {
+      "game_id": "20261012LGHT0",
+      "game": "LG vs KIA",
+      "field": "away_starter_source",
+      "before": "estimated",
+      "after": "confirmed",
+      "starter": "임찬규"
+    },
+    {
+      "game_id": "20261012LGHT0",
+      "game": "LG vs KIA",
+      "field": "home_starter",
+      "before": "올러",
+      "after": "양현종",
+      "starter": "양현종"
+    },
+    {
+      "game_id": "20261012LGHT0",
+      "game": "LG vs KIA",
+      "field": "away_starter",
+      "before": "웰스",
+      "after": "임찬규",
+      "starter": "임찬규"
+    }
+  ],
   "lineup_status_summary": {
     "confirmed": 0,
     "recent": 6,
     "unknown": 0
   },
-  "prediction_stage": "morning_estimated",
+  "prediction_stage": "pregame_starters_confirmed",
   "probability_policy_note": "현재 승률은 운영 모델 결과입니다. 확정 라인업은 시점 스냅샷으로 수집하며, 검증된 라인업 피처 모델이 배포되기 전에는 승률 입력으로 사용하지 않습니다."
 }
