@@ -1,7 +1,7 @@
 ﻿check_name,status,severity,detail,recommended_action
 latest_html_exists_check,pass,blocking,/home/wsr/1.project/1.sports_analytics/kbo_analytics/dashboard/latest.html,latest.html 생성 경로 확인
 docs_latest_html_exists_check,pass,blocking,/home/wsr/1.project/1.sports_analytics/docs/latest.html,docs/latest.html 배포 복사 확인
-latest_html_freshness_check,pass,warning,latest_html_modified_at=2026-10-13T14:31:54,자동 실행 시 latest.html 수정 시간이 실행일과 일치하는지 확인
+latest_html_freshness_check,pass,warning,latest_html_modified_at=2026-10-13T14:37:39,자동 실행 시 latest.html 수정 시간이 실행일과 일치하는지 확인
 today_expected_runs_predictions_exists_check,pass,blocking,"scheduled_games=0, file=/home/wsr/1.project/1.sports_analytics/kbo_analytics/run_model/results/today_expected_runs_predictions.csv",예정 경기일에는 today_expected_runs_predictions.csv 생성 확인
 today_expected_runs_predictions_reference_date_check,pass,blocking,"reference_date=2026-10-13, rows=0",today 파일은 기준일 예정 경기만 포함해야 함
 expected_runs_predictions_validation_only_check,pass,blocking,expected_runs_predictions.csv는 actual/result 컬럼이 있는 검증용 파일이어야 함,검증용과 오늘 예측용 산출물 분리 유지
@@ -17,3 +17,6 @@ safe_to_replace_model_check,pass,blocking,safe_to_replace_model=False,생산 모
 production_gate_status_check,pass,blocking,production_gate_status=blocked,생산 게이트가 명확히 통과하기 전까지 교체 차단
 db_load_status_check,pass,warning,db_load_status=success,DB 적재 실패는 HTML/CSV/JSON 생성 성공 시 비차단 warning으로 기록
 scheduled_games_prediction_row_consistency_check,pass,warning,"scheduled_games=0, today_prediction_rows=0",예정 경기 수와 today prediction 행 수 일치 확인
+production_metric_identity_check,pass,blocking,"artifact=2026-08-23-befe94ab5baf5496, metrics=2026-08-23-befe94ab5baf5496",Use evaluation metrics from the approved artifact only.
+production_artifact_age_check,warning,warning,"training_cutoff=2026-08-23, age_days=51, warning_after_days=30",Review recent-season evidence; do not automatically promote a model.
+production_validation_period_check,warning,warning,not_recorded_in_legacy_artifact,Legacy artifacts need verified validation dates; never infer them from another run.
