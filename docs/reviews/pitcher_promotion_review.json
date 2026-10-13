@@ -1,0 +1,118 @@
+{
+  "generated_at": "2026-10-13T14:48:48.342869+09:00",
+  "production_artifact_id": "2026-08-23-befe94ab5baf5496",
+  "production_training_cutoff": "2026-08-23",
+  "comparison_type": "frozen_candidate_vs_approved_artifact_point_in_time_replay",
+  "selection_cutoff": "2026-07-22",
+  "holdout_start": "2026-09-04",
+  "holdout_end": "2026-10-11",
+  "production_metrics": {
+    "games": 124,
+    "accuracy": 0.6290322580645161,
+    "brier": 0.24117819113996244,
+    "log_loss": 0.6754418237222429,
+    "calibration_error_10_bins": 0.09271796207138902,
+    "over_55_games": 38,
+    "over_55_accuracy": 0.6578947368421053
+  },
+  "candidate_metrics": {
+    "games": 124,
+    "accuracy": 0.6451612903225806,
+    "brier": 0.23309977617077424,
+    "log_loss": 0.659216838263945,
+    "calibration_error_10_bins": 0.08734118157857325,
+    "over_55_games": 71,
+    "over_55_accuracy": 0.676056338028169
+  },
+  "accuracy_delta": 0.016129032258064502,
+  "bootstrap_ci95": [
+    -0.08198414848936468,
+    0.11570247933884292
+  ],
+  "starter_identity_status_counts": {
+    "verified": 222,
+    "schedule_unverified": 26
+  },
+  "both_starters_asof_verified_games": 111,
+  "verified_subset_metrics": {
+    "production": {
+      "games": 111,
+      "accuracy": 0.6486486486486487,
+      "brier": 0.2391925643036615,
+      "log_loss": 0.6714437163240157,
+      "calibration_error_10_bins": 0.11325671695178774,
+      "over_55_games": 32,
+      "over_55_accuracy": 0.71875
+    },
+    "candidate": {
+      "games": 111,
+      "accuracy": 0.6486486486486487,
+      "brier": 0.23157894338889812,
+      "log_loss": 0.6561345474849605,
+      "calibration_error_10_bins": 0.09238383044370975,
+      "over_55_games": 65,
+      "over_55_accuracy": 0.676923076923077
+    }
+  },
+  "missing_runtime_features": [
+    "away_starter_recent3_era_missing",
+    "away_starter_recent3_ip_missing",
+    "away_starter_recent3_pitch_count_missing",
+    "away_starter_recent3_whip_missing",
+    "away_starter_rest_days_missing",
+    "bullpen_fatigue_gap",
+    "bullpen_fatigue_score_gap",
+    "games_last_7_days_gap",
+    "home_starter_recent3_era_missing",
+    "home_starter_recent3_ip_missing",
+    "home_starter_recent3_pitch_count_missing",
+    "home_starter_recent3_whip_missing",
+    "home_starter_rest_days_missing",
+    "recent_10_run_creation_gap",
+    "recent_3day_games_gap",
+    "recent_5_allowed_avg_gap",
+    "recent_5_run_creation_gap",
+    "recent_5_runs_avg_gap",
+    "rest_days_gap",
+    "starter_era_gap",
+    "starter_recent3_era_gap",
+    "starter_recent3_ip_gap",
+    "starter_recent3_pitch_count_gap",
+    "starter_rest_days_gap",
+    "starter_whip_gap"
+  ],
+  "gate_checks": {
+    "minimum_final_holdout_100": true,
+    "production_same_games_compared": true,
+    "accuracy_delta_greater_than_0_005": true,
+    "brier_not_worse": true,
+    "log_loss_not_worse": true,
+    "bootstrap_ci_stable": false,
+    "over_55_accuracy_improved": true,
+    "calibration_not_worse": true,
+    "all_holdout_starter_identities_asof_verified": false,
+    "candidate_features_supported_by_runtime": false
+  },
+  "failed_gates": [
+    "bootstrap_ci_stable",
+    "all_holdout_starter_identities_asof_verified",
+    "candidate_features_supported_by_runtime"
+  ],
+  "safe_to_replace_model": false,
+  "safe_to_use_pitching_snapshot_as_features": false,
+  "decision": "blocked",
+  "source_sha256": {
+    "data/official/model_training_games.csv": "c97481554641d8ac124d7cdb14a84e8dda45bb30e419a24061a37eab54cdba91",
+    "data/official/pitcher_game_logs.csv": "bca5da02522537b8a92206929959e768832f5125e61d700097707af2fc0ac559",
+    "data/official/pitching_daily_snapshot.csv": "63d564737dbe19ea4f9488d8f5256d17f764fa5f39ebc7b0e6326edb89562f85",
+    "data/official/pitching_snapshot_schedule.csv": "f99f7d73e608c4969ca7b323ebf93cd17194baab81aa772bdc64106e532858b4",
+    "modeling/results/pregame_prediction_history.csv": "a8c36cdaeae8ccbb4bc8023188088860abdacbe7ff7c42ea73c1d1f956df4c78",
+    "modeling/results/pregame_matchup_feature_store.csv": "c14cb90076485767f5ea7b190a66ce7da07bb554f17d2bbea8b6af7523061a72"
+  },
+  "limitations": [
+    "This is a reconstructed replay, not an archived live probability log.",
+    "Post-hoc starter identity is not accepted without a pre-prediction snapshot.",
+    "Development data and historical core features still require full leakage/segment audits.",
+    "No promotion is performed by this audit command."
+  ]
+}

@@ -13,22 +13,17 @@ KBO 공식 기록을 수집하고 승패 확률, 예상 득점, 선발·라인�
 - 승패 모델과 독립 득점 모델 비교
 - 경기 전 예측 변화 이력 저장
 - 모델 아티팩트 검증·승격·롤백
-- predict-only 경기 전 갱신
+- 동일 승인 artifact 기반 predict-only 오전·경기 전 갱신
 - pipeline health와 recommendation outcome 감사
 
 ## 데이터 흐름
 
 ```text
-KBO 공식 원천
-→ official_kbo_dashboard.py
-→ data/official/*.csv
-→ modeling/feature_engineering.py
-→ modeling/model_training.py
-→ modeling/results/*.csv|json
-→ run_model/run_prediction_model.py
-→ dashboard/latest.html
-→ ../docs/latest.html
+운영: KBO 공식 원천 → data/official → 승인 artifact 추론 → 독립 득점 모델 → HTML
+연구: 완료 경기 → 피처 → 후보 선택 → 미사용 최종 검증 → 승격 심사
 ```
+
+오전과 경기 전 작업은 `scripts/predict_only_dashboard_hybrid.py`를 사용합니다. 데이터 수집과 승인 모델 재학습은 별개이며, 매일 새 모델을 자동 선택하지 않습니다. 세 갱신 shell 진입점은 공통 잠금을 사용하고 승패·득점 결과를 함께 동기화합니다.
 
 ## 주요 데이터
 
@@ -36,7 +31,7 @@ KBO 공식 원천
 | --- | --- |
 | `data/official/game_results.csv` | 일정·완료 결과·취소 상태 |
 | `data/official/model_training_games.csv` | 승패·득점 모델 학습 입력 |
-| `data/official/prediction_games.csv` | 기준일 예정 경기 |
+| `data/official/prediction_games.csv` | 추론 피처용 일정·이력 입력; 출력 단계에서 기준일 예정 경기만 선택 |
 | `data/official/team_standings.csv` | 팀 순위 |
 | `data/official/hitter_stats.csv` | 현재 타자 기록 |
 | `data/official/pitcher_stats.csv` | 현재 투수 기록 |
@@ -63,7 +58,9 @@ KBO 공식 원천
 - 연승·연패와 득점 변동성
 - 상대전적과 월별 흐름
 
-모든 rolling 피처는 현재 경기 이전 데이터만 사용합니다.
+rolling 피처는 현재 경기 이전 데이터만 사용하는 것이 원칙입니다. 과거 기본 피처의 전기간 평균 결측 대체는 추가 감사 대상이며, 아직 전체 피처의 누수 감사를 완료했다는 의미는 아닙니다.
+
+평가 지표는 `model_id`·`metrics_model_id`가 같은 승인 아티팩트에서만 가져옵니다. 구형 아티팩트의 검증 기간이 없으면 미기록 상태로 남기고, 30일이 지난 아티팩트는 경고합니다. 노후화 경고만으로 모델을 교체하지 않습니다.
 
 ### 독립 득점 모델
 
@@ -88,7 +85,9 @@ snapshot_time < scheduled_start_datetime
 
 공식 일정에 매핑되지 않거나 경기 시작 이후 생성된 행은 canonical 파일에 저장하지 않습니다. 후보 모델은 별도 rolling validation을 수행하며 production gate를 통과하기 전까지 운영 모델에 연결하지 않습니다.
 
-완료 경기의 투수 로그는 현재 경기보다 이전인 등판만 집계해 선발 최근 3경기 ERA·WHIP·평균 이닝·투구 수·휴식일과 불펜 최근 1·3일 투구 수를 만듭니다. 2026 시즌 내부 시간순 검증 결과는 `pitcher_workload_candidate_gate_audit.json`에 기록하며, bootstrap 안정성까지 통과해야 다음 production gate로 이동합니다.
+완료 경기 로그의 이전 날짜 등판으로 선발 최근 3경기 기록과 불펜 최근 1·3일 사용량을 만듭니다. WHIP 필드는 BB/HBP 합계 기반 proxy이고 휴식일은 직전 선발 등판과의 날짜 차이입니다. 결측값은 실측 0과 구분합니다. 실제 등판 선발과 경기 전 확정 선발은 같다고 가정하지 않습니다.
+
+후보 선택 기간과 최종 검증 기간은 분리하고 bootstrap은 경기일 단위로 수행합니다. [승격 검토 기록](../docs/reviews/PITCHER_PROMOTION_20261013.md)은 실제 승인 아티팩트의 동일 경기 재현과 `snapshot_time <= prediction_reference_datetime < scheduled_start_datetime` 검사를 함께 기록합니다.
 
 PostgreSQL은 CSV 원천을 대체하지 않고 조회·감사용 feature store로 사용합니다. `pitcher_game_logs`, `pregame_pitching_snapshots`, `pregame_lineup_snapshots` 테이블은 `sql/002_feature_store.sql`로 관리하며 DB 장애는 모델·HTML 생성을 막지 않습니다.
 
@@ -117,11 +116,13 @@ cp .env.example .env
 docker compose up -d
 ```
 
-### 전체 갱신
+### 연구용 전체 평가
+
+격리된 작업 경로에서만 실행합니다. 운영 갱신 명령이 아니며 자동 승격하지 않습니다.
 
 ```bash
 .venv/bin/python official_kbo_dashboard.py \
-  --reference-date 2026-08-25 \
+  --reference-date YYYY-MM-DD \
   --training-start-year 2016 \
   --update-stage morning
 ```
@@ -198,8 +199,9 @@ kbo_analytics/
 ## 현재 한계
 
 - 장기간의 확정 라인업 스냅샷이 부족합니다.
-- 실제 불펜 투구 수와 핵심 불펜 연투 피처가 필요합니다.
-- 투수 challenger는 최소 표본과 bootstrap 안정성 gate를 통과하지 못했습니다.
+- 실제 투구 수는 수집 중이며 선발 정체성의 as-of 검증과 운영 피처 계약이 추가로 필요합니다.
+- 재학습 기준 모델 대비 개선을 실제 배포 모델 대비 개선으로 간주하지 않습니다.
+- 득점 모델의 OOF 보정은 `--temporal-oof --output-dir <격리된 경로>`로만 실험합니다.
 - 모델 정확도는 강한 상업 예측 성능으로 해석할 수준이 아닙니다.
 
 다음 우선순위는 선발 최근 3경기·휴식일·불펜 실제 투구 수를 as-of 기준으로 축적하고, walk-forward 검증으로 재평가하는 것입니다.

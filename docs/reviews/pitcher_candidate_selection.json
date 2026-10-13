@@ -1,0 +1,62 @@
+{
+  "generated_at": "2026-10-13T09:13:20",
+  "season": 2026,
+  "selection_cutoff": "2026-07-22",
+  "final_holdout_start": "2026-09-04",
+  "final_holdout_end": "2026-10-11",
+  "baseline_type": "refit_feature_ablation_not_deployed_production_model",
+  "production_comparison_verified": false,
+  "starter_identity_asof_verified": false,
+  "bootstrap_unit": "game_date_block",
+  "train_cutoff_exclusive": "2026-09-04",
+  "baseline": {
+    "model": "RandomForest",
+    "feature_set": "production_features_only",
+    "evaluation_split": "untouched_final_holdout",
+    "test_games": 124,
+    "accuracy": 0.532,
+    "brier": 0.247,
+    "log_loss": 0.688,
+    "over_55_games": 52,
+    "over_55_accuracy": 0.577
+  },
+  "best_candidate": {
+    "model": "RandomForest",
+    "feature_set": "production_plus_starter",
+    "evaluation_split": "untouched_final_holdout",
+    "test_games": 124,
+    "accuracy": 0.645,
+    "brier": 0.233,
+    "log_loss": 0.659,
+    "over_55_games": 71,
+    "over_55_accuracy": 0.676
+  },
+  "accuracy_delta": 0.113,
+  "bootstrap_accuracy_delta_ci95": [
+    0.0165,
+    0.2138
+  ],
+  "gate_checks": {
+    "minimum_test_games": true,
+    "accuracy_delta_greater_than_0_005": true,
+    "bootstrap_ci_stable": true,
+    "brier_not_worse": true,
+    "log_loss_not_worse": true,
+    "over_55_accuracy_not_worse": true
+  },
+  "failed_gate_items": [],
+  "safe_to_replace_model": false,
+  "safe_to_use_pitching_snapshot_as_features": false,
+  "eligible_for_production_comparison": true,
+  "decision": "offline_candidate_only",
+  "promotion_blockers": [
+    "deployed_model_same_game_comparison_missing",
+    "starter_identity_asof_not_verified",
+    "full_production_gate_not_run"
+  ],
+  "leakage_policy": "Prior-date workload only. Historical boxscore starter identity is not proof of pregame availability. No pitching snapshots are used.",
+  "feature_semantics": {
+    "starter_recent3_whip": "H+BB+HBP per inning proxy, not official WHIP",
+    "starter_rest_days": "calendar days since prior start, not all pitching appearances"
+  }
+}
