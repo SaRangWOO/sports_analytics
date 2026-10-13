@@ -7,6 +7,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.base import clone
+from sklearn.model_selection import TimeSeriesSplit
 from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
 from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression, PoissonRegressor, Ridge, TweedieRegressor
@@ -294,7 +296,21 @@ def to_game_level_prediction(frame: pd.DataFrame, pred_col: str):
     return games
 
 
-def evaluate_win_conversion(trained_models: dict, train_df: pd.DataFrame, val_df: pd.DataFrame, features: list[str]):
+def chronological_oof_runs(model, frame: pd.DataFrame, features: list[str], splits: int = 3):
+    dates = pd.to_datetime(frame["date"]).dt.normalize()
+    unique_dates = np.sort(dates.unique())
+    if len(unique_dates) <= splits:
+        raise ValueError("Not enough dates for chronological OOF calibration")
+    predictions = pd.Series(np.nan, index=frame.index)
+    for train_index, test_index in TimeSeriesSplit(n_splits=splits).split(unique_dates):
+        train = frame.loc[dates.isin(unique_dates[train_index])]
+        test = frame.loc[dates.isin(unique_dates[test_index])]
+        estimator = clone(model).fit(train[features], train["target_runs"])
+        predictions.loc[test.index] = np.clip(estimator.predict(test[features]), 0, None)
+    return predictions
+
+
+def evaluate_win_conversion(trained_models: dict, train_df: pd.DataFrame, val_df: pd.DataFrame, features: list[str], *, temporal_oof: bool = False):
     scores = []
     predictions = {}
     win_models = {}
@@ -302,7 +318,8 @@ def evaluate_win_conversion(trained_models: dict, train_df: pd.DataFrame, val_df
         train_scored = train_df.copy()
         val_scored = val_df.copy()
         pred_col = f"pred_runs_{name}"
-        train_scored[pred_col] = np.clip(model.predict(train_scored[features]), 0, None)
+        train_scored[pred_col] = chronological_oof_runs(model, train_scored, features) if temporal_oof else np.clip(model.predict(train_scored[features]), 0, None)
+        train_scored = train_scored.dropna(subset=[pred_col])
         val_scored[pred_col] = np.clip(model.predict(val_scored[features]), 0, None)
         train_games = to_game_level_prediction(train_scored, pred_col)
         val_games = to_game_level_prediction(val_scored, pred_col)
@@ -556,7 +573,9 @@ def build_today_predictions(input_path: Path, schedule_path: Path, reference_dat
     }
 
 
-def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float, reference_date: str | None = None, schedule_path: Path = DEFAULT_SCHEDULE_INPUT):
+def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float, reference_date: str | None = None, schedule_path: Path = DEFAULT_SCHEDULE_INPUT, *, temporal_oof: bool = False):
+    if temporal_oof and output_dir.resolve() == DEFAULT_RESULTS.resolve():
+        raise ValueError("OOF calibration is a candidate experiment; use an isolated output directory")
     output_dir.mkdir(parents=True, exist_ok=True)
     team_games = load_completed_team_games(input_path)
     run_df = build_base_run_df(team_games)
@@ -567,7 +586,7 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float, referen
 
     train_df, val_df, cutoff = chronological_split(run_df, train_ratio)
     trained_models, run_scores = train_run_regressors(train_df, val_df, features)
-    win_scores, prediction_map, win_models = evaluate_win_conversion(trained_models, train_df, val_df, features)
+    win_scores, prediction_map, win_models = evaluate_win_conversion(trained_models, train_df, val_df, features, temporal_oof=temporal_oof)
     selected, candidate_scores = select_model(run_scores, win_scores)
     ref_date = pd.Timestamp(reference_date or datetime.now().date())
     today_predictions, today_status = build_today_predictions(input_path, schedule_path, ref_date, trained_models[selected["model"]], win_models[selected["model"]], features, output_dir)
@@ -632,6 +651,7 @@ def run_pipeline(input_path: Path, output_dir: Path, train_ratio: float, referen
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "input_file": str(input_path),
         "model_scope": "independent_run_model",
+        "win_calibration_method": "chronological_oof_candidate" if temporal_oof else "legacy_in_sample",
         "notes": [
             "기존 대시보드/승패 모델과 분리된 득점 기반 모델입니다.",
             "기존 modeling/results 산출물은 사용하지 않습니다.",
@@ -677,12 +697,13 @@ def parse_args():
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_RESULTS, help="Directory for run model outputs")
     parser.add_argument("--train-ratio", type=float, default=0.8, help="Chronological train split ratio")
     parser.add_argument("--reference-date", default=datetime.now().date().isoformat(), help="Scheduled game prediction date")
+    parser.add_argument("--temporal-oof", action="store_true", help="Experiment only: calibrate on chronological out-of-fold predictions")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    payload = run_pipeline(args.input, args.output_dir, args.train_ratio, args.reference_date, args.schedule_input)
+    payload = run_pipeline(args.input, args.output_dir, args.train_ratio, args.reference_date, args.schedule_input, temporal_oof=args.temporal_oof)
     selected = payload["selected_model"]
     print("Independent KBO run model completed")
     print(f"selected_model={selected['model']}")

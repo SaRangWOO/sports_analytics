@@ -32,13 +32,15 @@ def _model_specs():
     }
 
 
-def _paired_bootstrap_delta(y_true, baseline_probability, candidate_probability, iterations=2000):
+def _paired_bootstrap_delta(y_true, baseline_probability, candidate_probability, dates, iterations=2000):
     baseline_correct = (np.asarray(baseline_probability) >= 0.5) == np.asarray(y_true)
     candidate_correct = (np.asarray(candidate_probability) >= 0.5) == np.asarray(y_true)
     rng = np.random.default_rng(42)
     deltas = np.empty(iterations)
+    dates = np.asarray(dates)
+    blocks = [np.flatnonzero(dates == day) for day in pd.unique(dates)]
     for index in range(iterations):
-        sample = rng.integers(0, len(y_true), len(y_true))
+        sample = np.concatenate([blocks[i] for i in rng.integers(0, len(blocks), len(blocks))])
         deltas[index] = candidate_correct[sample].mean() - baseline_correct[sample].mean()
     return float(np.quantile(deltas, 0.025)), float(np.quantile(deltas, 0.975))
 
@@ -57,11 +59,12 @@ def validate_pitcher_workload_candidate(store: pd.DataFrame, results_dir: Path):
     latest_year = pd.to_datetime(frame["game_date"]).dt.year.max()
     frame = frame[pd.to_datetime(frame["game_date"]).dt.year.eq(latest_year)]
     frame = frame.sort_values(["game_date", "game_id"]).reset_index(drop=True)
-    train, test, cutoff = _chronological_current_season_split(frame)
-    if len(train) < 250 or len(test) < 100:
+    development, test, cutoff = _chronological_current_season_split(frame, 0.8)
+    train, selection, selection_cutoff = _chronological_current_season_split(development, 0.75)
+    if len(train) < 250 or len(selection) < 50 or len(test) < 100:
         raise ValueError("현재 시즌 투수 challenger 검증에 필요한 시간순 표본이 부족합니다.")
 
-    sets = pregame_feature_sets(frame)
+    sets = pregame_feature_sets(train)
     evaluated_sets = [
         "production_features_only",
         "production_plus_starter",
@@ -71,28 +74,30 @@ def validate_pitcher_workload_candidate(store: pd.DataFrame, results_dir: Path):
     ]
     y_train = train["home_win"].astype(int).to_numpy()
     y_test = test["home_win"].astype(int).to_numpy()
+    y_selection = selection["home_win"].astype(int).to_numpy()
     rows = []
-    predictions = {}
     for model_name, factory in _model_specs().items():
         for feature_set in evaluated_sets:
             columns = sets.get(feature_set, [])
+            if not columns:
+                continue
             probability = _fit_predict_pregame_model(
                 model_name,
                 factory(),
-                train[columns].fillna(0),
+                train[columns],
                 y_train,
-                test[columns].fillna(0),
+                selection[columns],
             )
-            metrics = _pregame_metrics(test, y_test, probability)
-            predictions[(model_name, feature_set)] = probability
+            metrics = _pregame_metrics(selection, y_selection, probability)
             rows.append(
                 {
                     "model": model_name,
                     "feature_set": feature_set,
                     "season": int(latest_year),
-                    "train_cutoff_exclusive": cutoff.isoformat(),
+                    "evaluation_split": "candidate_selection_only",
+                    "train_cutoff_exclusive": selection_cutoff.isoformat(),
                     "train_games": int(len(train)),
-                    "test_games": int(len(test)),
+                    "test_games": int(len(selection)),
                     "accuracy": metrics["accuracy"],
                     "brier": metrics["brier"],
                     "log_loss": metrics["log_loss"],
@@ -105,14 +110,25 @@ def validate_pitcher_workload_candidate(store: pd.DataFrame, results_dir: Path):
 
     candidates = [row for row in rows if row["feature_set"] != "production_features_only"]
     best = max(candidates, key=lambda row: (row["accuracy"], -row["brier"], row["over_55_accuracy"] or 0))
-    baseline = next(
-        row for row in rows
-        if row["model"] == best["model"] and row["feature_set"] == "production_features_only"
-    )
     best["selected_candidate"] = True
-    baseline_probability = predictions[(baseline["model"], baseline["feature_set"])]
-    candidate_probability = predictions[(best["model"], best["feature_set"])]
-    ci_low, ci_high = _paired_bootstrap_delta(y_test, baseline_probability, candidate_probability)
+    factory = _model_specs()[best["model"]]
+    holdout = []
+    probabilities = []
+    for feature_set in ("production_features_only", best["feature_set"]):
+        columns = sets[feature_set]
+        probability = _fit_predict_pregame_model(
+            best["model"], factory(), development[columns],
+            development["home_win"].astype(int).to_numpy(), test[columns],
+        )
+        metrics = _pregame_metrics(test, y_test, probability)
+        holdout.append({"model": best["model"], "feature_set": feature_set,
+                        "evaluation_split": "untouched_final_holdout", "test_games": len(test),
+                        **{key: metrics[key] for key in ("accuracy", "brier", "log_loss", "over_55_games", "over_55_accuracy")}})
+        probabilities.append(probability)
+    baseline, best_holdout = holdout
+    baseline_probability, candidate_probability = probabilities
+    best = best_holdout
+    ci_low, ci_high = _paired_bootstrap_delta(y_test, baseline_probability, candidate_probability, test["game_date"].to_numpy())
     accuracy_delta = round(best["accuracy"] - baseline["accuracy"], 4)
     checks = {
         "minimum_test_games": len(test) >= 100,
@@ -129,6 +145,13 @@ def validate_pitcher_workload_candidate(store: pd.DataFrame, results_dir: Path):
     gate = {
         "generated_at": pd.Timestamp.now().isoformat(timespec="seconds"),
         "season": int(latest_year),
+        "selection_cutoff": selection_cutoff.isoformat(),
+        "final_holdout_start": cutoff.isoformat(),
+        "final_holdout_end": str(test["game_date"].max()),
+        "baseline_type": "refit_feature_ablation_not_deployed_production_model",
+        "production_comparison_verified": False,
+        "starter_identity_asof_verified": False,
+        "bootstrap_unit": "game_date_block",
         "train_cutoff_exclusive": cutoff.isoformat(),
         "baseline": baseline,
         "best_candidate": best,
@@ -136,12 +159,16 @@ def validate_pitcher_workload_candidate(store: pd.DataFrame, results_dir: Path):
         "bootstrap_accuracy_delta_ci95": [round(ci_low, 4), round(ci_high, 4)],
         "gate_checks": checks,
         "failed_gate_items": [name for name, passed in checks.items() if not passed],
-        "safe_to_replace_model": all(checks.values()),
-        "decision": "eligible_for_full_production_gate" if all(checks.values()) else "offline_candidate_only",
-        "leakage_policy": "Pitcher features are computed from completed games strictly before each target game.",
+        "safe_to_replace_model": False,
+        "safe_to_use_pitching_snapshot_as_features": False,
+        "eligible_for_production_comparison": all(checks.values()),
+        "decision": "offline_candidate_only",
+        "promotion_blockers": ["deployed_model_same_game_comparison_missing", "starter_identity_asof_not_verified", "full_production_gate_not_run"],
+        "leakage_policy": "Prior-date workload only. Historical boxscore starter identity is not proof of pregame availability. No pitching snapshots are used.",
+        "feature_semantics": {"starter_recent3_whip": "H+BB+HBP per inning proxy, not official WHIP", "starter_rest_days": "calendar days since prior start, not all pitching appearances"},
     }
     results_dir.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(rows).to_csv(
+    pd.DataFrame(rows + holdout).to_csv(
         results_dir / "pitcher_workload_candidate_validation_report.csv",
         index=False,
         encoding="utf-8-sig",

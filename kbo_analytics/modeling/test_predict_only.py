@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tempfile
+import json
 import unittest
 from datetime import date
 from pathlib import Path
@@ -136,6 +137,23 @@ class PredictOnlyTests(unittest.TestCase):
         self.assertEqual(list(rows[0]), PREDICTION_OUTPUT_COLUMNS)
         probabilities = [float(row["예측승률"].rstrip("%")) / 100 for row in rows]
         self.assertAlmostEqual(sum(probabilities), 1.0, places=3)
+
+    def test_stale_evaluation_is_not_inherited(self):
+        results = self.base / "results"
+        results.mkdir()
+        (results / "win_predictor_model.json").write_text(json.dumps({
+            "accuracy": 0.9, "selected_model_probability_spread": {"model": "other", "accuracy": 0.9},
+            "train_rows": 999, "feature_importance": {"wrong": 1}, "validation_cutoff": "2099-01-01",
+        }))
+        with patch("modeling.predict_only.generate_today_predictions", return_value=[]):
+            payload = run_predict_only(pd.DataFrame(), date(2026, 7, 29), self.base, results, self.artifacts)
+        self.assertEqual(payload["accuracy"], 0.5)
+        self.assertNotIn("selected_model_probability_spread", payload)
+        self.assertNotIn("train_rows", payload)
+        self.assertNotIn("feature_importance", payload)
+        self.assertNotIn("validation_cutoff", payload)
+        self.assertEqual(payload["metrics_model_id"], payload["production_artifact_id"])
+        self.assertEqual(payload["validation_period_status"], "not_recorded_in_legacy_artifact")
 
 
 if __name__ == "__main__":

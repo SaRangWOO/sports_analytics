@@ -3,6 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
+exec 9>/tmp/kbo_pipeline_update.lock
+flock -n 9 || exit 0
 PYTHON_BIN="$PROJECT_DIR/.venv/bin/python"
 LOG_DIR="$PROJECT_DIR/logs"
 LOG_FILE="$LOG_DIR/pregame_context_refresh_$(date +%F).log"

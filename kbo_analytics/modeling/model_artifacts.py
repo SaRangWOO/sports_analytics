@@ -468,6 +468,12 @@ def create_evaluation_candidate(
         "missing_value_policy": "required numeric features must be present; absent one-hot team categories are filled with zero",
     }
     metrics = {
+        "evaluation_context": {key: payload[key] for key in (
+            "validation_cutoff", "validation_start_date", "validation_end_date",
+            "training_end_year", "train_rows", "test_rows",
+        ) if key in payload},
+        "confidence_thresholds": payload.get("confidence_thresholds"),
+        "confidence_bucket_performance": payload.get("confidence_bucket_performance"),
         "selected_candidate_metrics": selected_metrics,
         "confidence_metrics": payload.get("confidence_metrics"),
         "calibration_table": payload.get("calibration_table"),

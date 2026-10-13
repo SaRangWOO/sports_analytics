@@ -5,6 +5,8 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
+import pandas as pd
+
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 if str(PROJECT_DIR) not in sys.path:
@@ -22,10 +24,23 @@ from official_kbo_dashboard import (
     fetch_schedule,
     fetch_team_standings,
     load_official_tables_to_db,
+    refresh_pitcher_game_log_store,
 )
 
 
 ARTIFACT_ROOT = PROJECT_DIR / "modeling" / "artifacts"
+
+
+def refresh_completed_history(games: pd.DataFrame, reference_date: date) -> pd.DataFrame:
+    path = DATA_DIR / "model_training_games.csv"
+    history = pd.read_csv(path)
+    completed = games[games["status"].eq("Final") & (pd.to_datetime(games["date"]).dt.date < reference_date)]
+    updated = pd.concat([history, completed], ignore_index=True).drop_duplicates("game_id", keep="last")
+    updated = updated.sort_values(["date", "game_id"])
+    temporary = path.with_suffix(".tmp")
+    updated.to_csv(temporary, index=False, encoding="utf-8-sig")
+    temporary.replace(path)
+    return updated
 
 
 def main() -> None:
@@ -46,6 +61,9 @@ def main() -> None:
     rosters = fetch_registered_rosters()
     export_sources(standings, vs_table, games, hitters, pitchers, rosters)
     db_status = load_official_tables_to_db(standings, vs_table, games, hitters, pitchers, rosters)
+    if args.update_stage == "morning":
+        history = refresh_completed_history(games, reference_date)
+        db_status["pitcher_game_logs"] = refresh_pitcher_game_log_store(history, reference_date)
     model_payload = run_predict_only(games, reference_date, DATA_DIR, RESULTS_DIR, ARTIFACT_ROOT)
     team_pages = build_team_analysis_pages(
         standings,

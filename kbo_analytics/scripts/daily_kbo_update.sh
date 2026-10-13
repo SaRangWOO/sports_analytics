@@ -3,6 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
+exec 9>/tmp/kbo_pipeline_update.lock
+flock -n 9 || exit 0
 . "$SCRIPT_DIR/git_sync_guard.sh"
 PYTHON_BIN="$PROJECT_DIR/.venv/bin/python"
 LOG_DIR="$PROJECT_DIR/logs"
@@ -24,7 +26,7 @@ if [ -f "$PROJECT_DIR/.env" ]; then
 fi
 
 docker compose up -d kbo-db kbo-api dashboard
-"$PYTHON_BIN" scripts/official_kbo_dashboard_hybrid.py --training-start-year 2016
+"$PYTHON_BIN" scripts/predict_only_dashboard_hybrid.py --update-stage morning
 
 curl -fsS "http://localhost:8501/latest.html" >/dev/null
 curl -fsS "http://localhost:8501/kt.html" >/dev/null
@@ -45,8 +47,8 @@ for path in [
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 PY
 
-if ! git diff --quiet -- dashboard data/official modeling/results ../docs; then
-  git add dashboard data/official modeling/results ../docs
+if ! git diff --quiet -- dashboard data/official modeling/results run_model/results ../docs; then
+  git add dashboard data/official modeling/results run_model/results ../docs
   git commit -m "Update KBO daily analytics outputs $(date +%F)"
   push_main_update
 fi

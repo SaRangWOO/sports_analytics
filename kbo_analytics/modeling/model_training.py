@@ -3565,7 +3565,7 @@ def build_pregame_matchup_feature_store(
             "starter_rest_days_gap": np.nan,
             "home_starter_recent_pitch_count": np.nan,
             "away_starter_recent_pitch_count": np.nan,
-            "starter_recent_pitch_count_gap": np.nan,
+            "starter_recent3_pitch_count_gap": np.nan,
             "home_bullpen_pitch_count_last1d": np.nan,
             "away_bullpen_pitch_count_last1d": np.nan,
             "bullpen_pitch_count_last1d_gap": np.nan,
@@ -3757,7 +3757,7 @@ def pregame_feature_sets(frame: pd.DataFrame):
             "starter_recent3_era_gap",
             "starter_recent3_ip_gap",
             "starter_rest_days_gap",
-            "starter_recent_pitch_count_gap",
+            "starter_recent3_pitch_count_gap",
             "starter_info_quality",
         ],
     )
@@ -3770,6 +3770,15 @@ def pregame_feature_sets(frame: pd.DataFrame):
         ],
     )
     previous = _available_training_columns(frame, ["previous_game_run_diff_gap", "previous_game_bullpen_usage_gap"])
+    starter += _available_training_columns(frame, [
+        f"{side}_{feature}_missing" for side in ("home", "away")
+        for feature in ("starter_recent3_era", "starter_recent3_whip", "starter_recent3_ip",
+                        "starter_recent3_pitch_count", "starter_rest_days")
+    ])
+    bullpen += _available_training_columns(frame, [
+        f"{side}_{feature}_missing" for side in ("home", "away")
+        for feature in ("bullpen_pitch_count_last1d", "bullpen_pitch_count_last3d", "bullpen_appearances_last3d")
+    ])
     sets = {
         "production_features_only": production,
         "starter_features_only": starter,
@@ -3786,6 +3795,9 @@ def pregame_feature_sets(frame: pd.DataFrame):
 
 
 def _fit_predict_pregame_model(model_name: str, model, x_train, y_train, x_test):
+    medians = x_train.median().fillna(0)
+    x_train = x_train.fillna(medians)
+    x_test = x_test.fillna(medians)
     train_scaled, test_scaled, _, _ = standardize_train_test(x_train, x_test)
     model.fit(train_scaled, y_train)
     return model.predict_proba(test_scaled)[:, 1]
@@ -3804,9 +3816,9 @@ def write_pregame_matchup_model_report(results_dir: Path, store: pd.DataFrame):
     train, test = frame.iloc[:split].copy(), frame.iloc[split:].copy()
     y_train = train["home_win"].astype(int).to_numpy()
     y_test = test["home_win"].astype(int).to_numpy()
-    feature_sets = pregame_feature_sets(frame)
+    feature_sets = pregame_feature_sets(train)
     families = [
-        ("production baseline on same games", LogisticRegression(max_iter=1000)),
+        ("refit baseline on same games", LogisticRegression(max_iter=1000)),
         ("LogisticRegression", LogisticRegression(max_iter=1000)),
         ("HistGradientBoosting", HistGradientBoostingClassifier(max_iter=180, learning_rate=0.04, max_leaf_nodes=12, l2_regularization=0.1, random_state=42)),
         ("RandomForest", RandomForestClassifier(n_estimators=300, max_depth=6, min_samples_leaf=10, random_state=42, n_jobs=-1)),
@@ -3843,11 +3855,11 @@ def write_pregame_matchup_model_report(results_dir: Path, store: pd.DataFrame):
             )
             continue
         for model_name, model in families:
-            if model_name == "production baseline on same games" and feature_set != "production_features_only":
+            if model_name == "refit baseline on same games" and feature_set != "production_features_only":
                 continue
-            probability = _fit_predict_pregame_model(model_name, model, train[columns].fillna(0), y_train, test[columns].fillna(0))
+            probability = _fit_predict_pregame_model(model_name, model, train[columns], y_train, test[columns])
             metrics = _pregame_metrics(test, y_test, probability)
-            prediction_cache[(model_name, feature_set)] = {"probability": probability, "metrics": metrics, "columns": columns}
+            prediction_cache[(model_name, feature_set)] = {"probability": probability, "metrics": metrics, "columns": columns, "estimator": model}
             rows.append(
                 {
                     "model_name": model_name,
@@ -3891,16 +3903,16 @@ def write_pregame_rolling_backtest_report(results_dir: Path, store: pd.DataFrame
     if store.empty or not best_challenger:
         pd.DataFrame(rows).to_csv(results_dir / "pregame_matchup_rolling_backtest_report.csv", index=False, encoding="utf-8-sig")
         return rows
-    from sklearn.linear_model import LogisticRegression
+    from sklearn.base import clone
 
     frame = store.dropna(subset=["home_win"]).sort_values(["game_date", "game_id"]).reset_index(drop=True)
     feature_set = best_challenger["row"]["feature_set"]
-    columns = pregame_feature_sets(frame).get(feature_set, [])
     frame["prediction_season"] = frame["game_date"].astype(str).str.slice(0, 4)
     seasons = sorted(frame["prediction_season"].unique())
     for prediction_season in seasons:
         train = frame[frame["prediction_season"] < prediction_season]
         test = frame[frame["prediction_season"] == prediction_season]
+        columns = pregame_feature_sets(train).get(feature_set, [])
         if len(train) < 200 or test.empty or not columns:
             rows.append(
                 {
@@ -3925,11 +3937,11 @@ def write_pregame_rolling_backtest_report(results_dir: Path, store: pd.DataFrame
         y_train = train["home_win"].astype(int).to_numpy()
         y_test = test["home_win"].astype(int).to_numpy()
         probability = _fit_predict_pregame_model(
-            "rolling LogisticRegression",
-            LogisticRegression(max_iter=1000),
-            train[columns].fillna(0),
+            best_challenger["row"]["model_name"],
+            clone(best_challenger["estimator"]),
+            train[columns],
             y_train,
-            test[columns].fillna(0),
+            test[columns],
         )
         metrics = _pregame_metrics(test, y_test, probability)
         picks = metrics["picks"].sort_values("pick_probability", ascending=False)
@@ -5408,6 +5420,8 @@ def build_payload(
         "available": True,
         "training_cutoff": cutoff.isoformat(),
         "validation_cutoff": cutoff.isoformat(),
+        "validation_start_date": str(pd.to_datetime(best["test_frame"]["date"]).min().date()),
+        "validation_end_date": str(pd.to_datetime(best["test_frame"]["date"]).max().date()),
         "prediction_training_cutoff": prediction_training_cutoff.isoformat(),
         "latest_completed_game_date_used": latest_completed_game_date,
         "current_week_games_included_for_prediction": current_week_games_included,

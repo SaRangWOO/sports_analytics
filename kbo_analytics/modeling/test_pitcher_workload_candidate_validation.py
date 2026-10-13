@@ -11,7 +11,7 @@ class PitcherWorkloadCandidateValidationTest(unittest.TestCase):
         baseline = np.where(target == 1, 0.51, 0.49).astype(float)
         candidate = baseline.copy()
         candidate[:10] = 1 - candidate[:10]
-        low, high = _paired_bootstrap_delta(target, baseline, candidate, iterations=500)
+        low, high = _paired_bootstrap_delta(target, baseline, candidate, np.arange(len(target)) // 5, iterations=500)
         self.assertLessEqual(low, 0)
         self.assertLessEqual(high, 0)
 

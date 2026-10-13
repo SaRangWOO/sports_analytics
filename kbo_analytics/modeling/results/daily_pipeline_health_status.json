@@ -36,7 +36,7 @@
   "db_load_warning": "",
   "http_check_targets": [
     "http://127.0.0.1:8501/latest.html",
-    "http://192.168.11.23:8501/latest.html"
+    "http://192.168.11.70:8501/latest.html"
   ],
   "health_policy_note": "Daily pipeline health checks validate artifact generation and data separation only. They do not change model predictions or production model selection."
 }

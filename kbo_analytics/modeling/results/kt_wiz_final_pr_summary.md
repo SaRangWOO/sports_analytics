@@ -32,7 +32,7 @@ A target segment must have precision >= 0.85, at least 50 games, a medium or lar
 ## 9. Dashboard validation
 Dashboard file: `kbo_analytics/dashboard/kt_wiz_challenger.html`.
 Local URL: `http://127.0.0.1:8501/kt_wiz_challenger.html`.
-Server URL: `http://192.168.11.23:8501/kt_wiz_challenger.html`.
+Server URL: `http://192.168.11.70:8501/kt_wiz_challenger.html`.
 
 ## 10. Limitations
 This is not a production replacement. It does not use betting odds, handicap lines, over/under lines, post-game data, or future data as model features.

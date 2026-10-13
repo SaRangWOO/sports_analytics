@@ -3060,6 +3060,8 @@ def export_daily_pipeline_health_status(reference_date: date, generated_at: date
             "예정 경기 수와 today prediction 행 수 일치 확인",
         ),
     ]
+    from modeling.production_health import production_health_checks
+    checks.extend(production_health_checks(model_payload, reference_date))
     report = pd.DataFrame(checks, columns=["check_name", "status", "severity", "detail", "recommended_action"])
     report.to_csv(RESULTS_DIR / "daily_pipeline_health_report.csv", index=False, encoding="utf-8-sig")
 
@@ -3102,7 +3104,7 @@ def export_daily_pipeline_health_status(reference_date: date, generated_at: date
         "production_gate_status": production_gate_status,
         "db_load_status": db_load_status,
         "db_load_warning": db_load_warning,
-        "http_check_targets": ["http://127.0.0.1:8501/latest.html", "http://192.168.11.23:8501/latest.html"],
+        "http_check_targets": ["http://127.0.0.1:8501/latest.html", "http://192.168.11.70:8501/latest.html"],
         "health_policy_note": "Daily pipeline health checks validate artifact generation and data separation only. They do not change model predictions or production model selection.",
     }
     (RESULTS_DIR / "daily_pipeline_health_status.json").write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")

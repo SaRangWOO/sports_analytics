@@ -49,7 +49,7 @@ def build_pitcher_workload_features(logs: pd.DataFrame) -> pd.DataFrame:
     for _, group in starters.groupby("pitcher_key", sort=False):
         group = group.reset_index(drop=True)
         for index, row in group.iterrows():
-            prior = group.iloc[max(0, index - 3):index]
+            prior = group[group["game_date"].lt(row["game_date"])].tail(3)
             outs = float(prior["innings_outs"].sum())
             starter_rows.append(
                 {
@@ -61,19 +61,24 @@ def build_pitcher_workload_features(logs: pd.DataFrame) -> pd.DataFrame:
                     "starter_recent3_whip": _ratio(float(prior["hits_allowed"].sum() + prior["walks_hbp"].sum()), outs, 3),
                     "starter_recent3_ip": float(prior["innings_outs"].mean() / 3) if len(prior) else np.nan,
                     "starter_recent3_pitch_count": float(prior["pitch_count"].mean()) if len(prior) else np.nan,
-                    "starter_rest_days": int((row["game_date"] - group.iloc[index - 1]["game_date"]).days) if index else np.nan,
+                    "starter_rest_days": int((row["game_date"] - prior.iloc[-1]["game_date"]).days) if len(prior) else np.nan,
                 }
             )
     starter_features = pd.DataFrame(starter_rows)
 
     bullpen = frame[~frame["is_starter"]].copy()
+    game_teams = frame[["game_id", "game_date", "team"]].drop_duplicates().sort_values(["team", "game_date", "game_id"])
+    per_game = game_teams.merge(
+        bullpen.groupby(["game_id", "team"], as_index=False).agg(
+            bullpen_pitch_count=("pitch_count", "sum"), bullpen_appearances=("pitcher_index", "count")
+        ), on=["game_id", "team"], how="left", validate="one_to_one",
+    ).fillna({"bullpen_pitch_count": 0, "bullpen_appearances": 0})
     daily = (
-        bullpen.groupby(["team", "game_date"], as_index=False)
-        .agg(bullpen_pitch_count=("pitch_count", "sum"), bullpen_appearances=("pitcher_index", "count"))
+        per_game.groupby(["team", "game_date"], as_index=False)
+        .agg(bullpen_pitch_count=("bullpen_pitch_count", "sum"), bullpen_appearances=("bullpen_appearances", "sum"))
         .sort_values(["team", "game_date"])
     )
     workload_rows = []
-    game_teams = frame[["game_id", "game_date", "team"]].drop_duplicates().sort_values(["team", "game_date", "game_id"])
     for team, group in game_teams.groupby("team", sort=False):
         team_daily = daily[daily["team"].eq(team)]
         for _, row in group.iterrows():
@@ -83,7 +88,7 @@ def build_pitcher_workload_features(logs: pd.DataFrame) -> pd.DataFrame:
                 team_daily["game_date"].lt(game_date)
                 & team_daily["game_date"].ge(game_date - timedelta(days=3))
             ]
-            previous = team_daily[team_daily["game_date"].lt(game_date)].tail(1)
+            previous = per_game[per_game["team"].eq(team) & per_game["game_date"].lt(game_date)].tail(1)
             workload_rows.append(
                 {
                     "game_id": row["game_id"],
@@ -117,12 +122,15 @@ def attach_pitcher_workload_features(game_frame: pd.DataFrame, workload: pd.Data
     output["away_starter"] = output["away_starter_name"].fillna("")
     output["both_starters_known"] = output["home_starter_name"].notna() & output["away_starter_name"].notna()
     output["starter_info_quality"] = output["both_starters_known"].astype(float)
+    output["starter_identity_asof_verified"] = False
     for feature in [
         "starter_recent3_era", "starter_recent3_whip", "starter_recent3_ip",
         "starter_recent3_pitch_count", "starter_rest_days", "bullpen_pitch_count_last1d",
         "bullpen_pitch_count_last3d", "bullpen_appearances_last3d", "previous_game_bullpen_pitch_count",
     ]:
-        output[f"{feature}_gap"] = output[f"home_{feature}"].fillna(0) - output[f"away_{feature}"].fillna(0)
+        output[f"{feature}_gap"] = output[f"home_{feature}"] - output[f"away_{feature}"]
+        for side in ("home", "away"):
+            output[f"{side}_{feature}_missing"] = output[f"{side}_{feature}"].isna().astype(int)
     output["home_starter_era_prior"] = output["home_starter_recent3_era"]
     output["away_starter_era_prior"] = output["away_starter_recent3_era"]
     output["starter_era_gap"] = output["starter_recent3_era_gap"]
